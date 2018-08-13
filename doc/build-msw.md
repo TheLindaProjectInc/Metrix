@@ -98,7 +98,7 @@ In Mingw32 Msys shell :
 	tar xvfz boost_1_58_0.tar.gz
 
 From DOS prompt configured for MingW :<br>
-(c:\msys64\win32\config32.bat must be executed before using c:\msys64\win32env.bat as DOS prompt)
+(You must remember to set your path properly for the architecture you are compiling for. msys64/mingw32/bin for x86 and msys64/mingw64/bin for x64. Also, in both of those directories, you must rename mingw32make.exe to make.exe in order to run make in the CMD enviroment. To switch to x64 you will have to switch your path. (Settings > Enviroment Variables)
 
 	cd c:\deps\boost_1_58_0
 	bootstrap.bat mingw
@@ -113,7 +113,7 @@ and place it in your deps folder, next from the msys shell unpack it like this.
 	cd /c/deps/
 	tar xvfz miniupnpc-1.9.tar.gz
 
-From DOS prompt configured for MingW (launch c:\msys64\win32env.bat) :
+From DOS prompt configured for MingW (launch cmd after setting PATH variable) :
 
 	cd c:\deps\miniupnpc-1.9
 	make -f Makefile.mingw init upnpc-static
@@ -125,7 +125,7 @@ Build Linda QT
 First we need to adapt c:\Linda\Linda-qt.pro file to fit dependencies compiled above. Modify this section at the beginning of the file accordingly :
 
     windows {
-      DEPS_PATH = /c/deps
+      DEPS_PATH = C:/deps
       SECP256K1_LIB_PATH = src/secp256k1/.libs
       SECP256K1_INCLUDE_PATH = src/secp256k1/include
       MINIUPNPC_LIB_PATH = $$DEPS_PATH/miniupnpc
@@ -164,7 +164,7 @@ then it's finally possible to compile Linda from Mingw32 Msys shell :
 NOTE : instructions for compiling 64bit windows wallet are the same except that :
 - Mingw64.exe will be launched as MSYS2 shell.
 - packages name that were beginning with "mingw-w64-i686-" for 32bit env, must be replaced by "mingw-w64-x86_64-" when using pacman to install 64bit libs
-- c:\msys64\win32\config64.bat must be executed before using c:\msys64\win32env.bat DOS prompt.
+-You MUST set your path variable for the CMD prompt sections to work. Ensure you follow those steps properly.
 - following path will be used before compiling Linda QT :
 
       export PATH=/mingw64/qt5-static/bin/:$PATH
