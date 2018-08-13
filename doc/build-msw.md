@@ -16,13 +16,11 @@ WINDOWS BUILD NOTES
 Compilers Supported
 -------------------
 Since we need to compile with QT5 statically, we will use recent mingw-w64 compiler.
-Download Msys2 here : http://mamedev.org/tools/
-Choose the dual 32bit/64bit msys64_32-*.exe file to download
+Download Msys2 from their site here: https://www.msys2.org/ OR use Chocolatey Package Manager to install Msys2.
 
 Prepare environment
 -------------------
-Extract msys64_32-*.exe on c:\
-then in install directory c:\msys64, execute mingw32.exe for msys shell with path to 32bit mingw compiler or mingw64.exe for msys shell with path to 64bit compiler. We will use 32bit compiler in this guide.
+In your install directory c:\msys64, execute mingw32.exe for msys shell with path to 32bit mingw compiler or mingw64.exe for msys shell with path to 64bit compiler. We will use 32bit compiler in this guide.
 
 In MSYS launched from Mingw32.exe for the first time, we need to download up to date packages :
 
