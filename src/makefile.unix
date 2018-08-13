@@ -2,6 +2,19 @@
 # Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+# Uncomment below to build statically
+# DEPS_PATH = $(HOME)/deps
+# SECP256K1_LIB_PATH = src/secp256k1/.libs
+# SECP256K1_INCLUDE_PATH = src/secp256k1/include
+# MINIUPNPC_LIB_PATH = $(DEPS_PATH)/miniupnpc
+# MINIUPNPC_INCLUDE_PATH = $(DEPS_PATH)
+# BOOST_LIB_PATH = $(DEPS_PATH)/boost_1_58_0/stage/lib
+# BOOST_INCLUDE_PATH = $(DEPS_PATH)/boost_1_58_0
+# BDB_LIB_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
+# BDB_INCLUDE_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
+# OPENSSL_LIB_PATH = $(DEPS_PATH)/openssl-1.0.2g
+# OPENSSL_INCLUDE_PATH = $(DEPS_PATH)/openssl-1.0.2g/include
+
 USE_UPNP:=-
 USE_WALLET:=1
 

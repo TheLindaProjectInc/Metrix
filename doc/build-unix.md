@@ -244,7 +244,7 @@ For example, i created ~/deps/Qt/5.5.0_static and used that directory in configu
 ```
 cd ~/deps/qt-everywhere-opensource-src-5.5.0
 
-./configure -static -opensource -release -confirm-license -no-compile-examples -nomake tests -prefix ~/deps/Qt/5.5.0_static -qt-zlib -qt-libpng -no-libjpeg -qt-xcb -qt-freetype -qt-pcre -qt-harfbuzz -largefile -no-opengl -no-openssl -gtkstyle -skip wayland -skip qtserialport -skip script -skip qtdeclarative -skip qtwebchannel -alsa -c++11 -nomake tools -no-icu
+./configure -static -opensource -release -confirm-license -no-compile-examples -nomake tests -prefix ~/deps/Qt/5.5.0_static -qt-zlib -qt-libpng -no-libjpeg -qt-xcb -qt-freetype -qt-pcre -qt-harfbuzz -largefile -no-opengl -no-openssl -skip wayland -skip qtserialport -skip script -skip qtdeclarative -skip qtwebchannel -alsa -c++11 -nomake tools -no-icu
 
 make -j 4
 ```
@@ -303,8 +303,12 @@ linux {
 After saving the .pro file :
 ```
 export PATH=$HOME/deps/Qt/5.4.2_static/bin:$PATH
-qmake
+qmake RELEASE=1
 make
+```
+If using the file on another machine change the permissions to allow execution
+```
+chmod 775 ./Linda-qt
 ```
 
 ### Compiling Lindad
@@ -324,6 +328,6 @@ OPENSSL_INCLUDE_PATH = $(DEPS_PATH)/openssl-1.0.2g/include
 ```
 After that in ~/Linda/src
 ```
-make -f makefile.unix
+make -f makefile.unix STATIC=1
 strip Lindad
 ```

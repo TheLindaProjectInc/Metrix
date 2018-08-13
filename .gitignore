@@ -8,3 +8,5 @@ debug/
 *.o
 src/Lindad
 .vscode/
+Linda-qt
+qrc_bitcoin.cpp

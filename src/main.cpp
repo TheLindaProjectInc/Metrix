@@ -2803,6 +2803,10 @@ bool CBlock::AcceptBlock()
     if (GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(GetBlockTime(), nHeight) < pindexPrev->GetBlockTime())
         return error("AcceptBlock() : block's timestamp is too early");
 
+    // Check 2 consecutive blocks aren't mined by POW
+    if (nHeight > POW_CONSECUTIVE_START_BLOCK && IsProofOfWork() && pindexPrev->IsProofOfWork())
+        return error("AcceptBlock() : consecutive blocks aren't allowed by POW");
+
     // Check that all transactions are finalized
     BOOST_FOREACH(const CTransaction& tx, vtx)
         if (!IsFinalTx(tx, nHeight, GetBlockTime()))
@@ -3700,6 +3704,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         CAddress addrFrom;
         uint64_t nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
+        // REMOVE IN NEXT UPDATE
+        // this is a temporary patch to remove V2.0.0.X wallets
+        // after enough time has passed for every to update
+        int min_peer_proto_version = MIN_PEER_PROTO_VERSION;
+        if (nBestHeight > 585200) {
+            min_peer_proto_version = PROTOCOL_VERSION;
+        }
         if (pfrom->nVersion < MIN_PEER_PROTO_VERSION)
         {
             // disconnect from peers older than this proto version

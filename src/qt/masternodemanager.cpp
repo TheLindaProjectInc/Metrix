@@ -15,6 +15,9 @@
 #include <QScroller>
 #include <QDateTime>
 
+#include <string>
+#include <sstream>
+
 MasternodeManager::MasternodeManager(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MasternodeManager),
@@ -51,14 +54,16 @@ void MasternodeManager::updateNodeList()
 
         while (mapMasternodes.contains(display))
         {
-            display = QString::fromStdString(addr + " (" + std::to_string(suffixNum) + ")").normalized(QString::NormalizationForm_D);
+            std::ostringstream stm;
+            stm << suffixNum;
+            display = QString::fromStdString(addr + " (" + stm.str() + ")").normalized(QString::NormalizationForm_D);
             suffixNum++;
         }
 
         mapMasternodes[display] = &mn;
     }
 
-    std::vector<pair<unsigned int, CTxIn>> vecMasternodeScores = GetMasternodeScores(pindexBest->nHeight);
+    std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(pindexBest->nHeight);
 
     ui->tableWidget->setSortingEnabled(false);
 
@@ -101,7 +106,7 @@ void MasternodeManager::updateNodeList()
     ui->tableWidget->setSortingEnabled(true);
 }
 
-void MasternodeManager::updateNodeListRow(CMasterNode *mn, std::vector<pair<unsigned int, CTxIn>>& vecMasternodeScores, int mnRow, const QString addr)
+void MasternodeManager::updateNodeListRow(CMasterNode *mn, std::vector<pair<unsigned int, CTxIn> >& vecMasternodeScores, int mnRow, const QString addr)
 {
     // Address, Rank, Active, Active Seconds, Last Seen, Pub Key
     QTableWidgetItem *activeItem = new QTableWidgetItem();
