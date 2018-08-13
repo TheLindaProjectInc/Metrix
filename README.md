@@ -1,3 +1,5 @@
+![Linda](logo.png)
+
 # Linda Coin
 Linda is a decentralized, anonymous, fast and secure cryptocurrency, with features that other coins can't offer.
 
