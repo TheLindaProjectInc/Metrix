@@ -132,7 +132,7 @@ static const int64_t COIN_YEAR_REWARD = 99 * CENT; // 99% per year
 static const int POS_START_BLOCK = 25;
 static const int DIFF_FORK_BLOCK = 100;
 // disallow consecutive blocks to be mined by POW
-static const int POW_CONSECUTIVE_START_BLOCK = 552400; 
+static const int POW_CONSECUTIVE_START_BLOCK = 555000; 
 
 
 inline bool IsProtocolV1RetargetingFixed(int nHeight) { return TestNet() || nHeight >= 0; }
