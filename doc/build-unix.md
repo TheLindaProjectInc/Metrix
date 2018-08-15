@@ -329,5 +329,9 @@ OPENSSL_INCLUDE_PATH = $(DEPS_PATH)/openssl-1.0.2g/include
 After that in ~/Linda/src
 ```
 make -f makefile.unix STATIC=1
-strip Lindad
+strip ./Lindad
+```
+If using the file on another machine change the permissions to allow execution
+```
+chmod 775 ./Lindad
 ```
