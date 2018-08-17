@@ -302,7 +302,7 @@ linux {
 ```
 After saving the .pro file :
 ```
-export PATH=$HOME/deps/Qt/5.4.2_static/bin:$PATH
+export PATH=$HOME/deps/Qt/5.5.0_static/bin:$PATH
 qmake RELEASE=1
 make
 ```
