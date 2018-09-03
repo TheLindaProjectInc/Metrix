@@ -43,7 +43,8 @@ CBigNum bnProofOfStakeLimit(~uint256(0) >> 20);
 CBigNum bnProofOfStakeLimitV2(~uint256(0) >> 48);
 CBigNum bnProofOfStakeLimitV2fork(~uint256(0) >> 32);
 
-unsigned int nStakeMinAge = 24 * 60 * 60; // 8 hours
+unsigned int nStakeMinAge = 24 * 60 * 60; // 24 hours
+unsigned int nStakeMaxAge = 30 * 24 * 60 * 60; // 30 days
 unsigned int nModifierInterval = 10 * 60; // time to elapse before new modifier is computed
 
 int nCoinbaseMaturity = 10;
@@ -1293,10 +1294,10 @@ void static PruneOrphanBlocks()
 static CBigNum GetProofOfStakeLimit(int nHeight)
 {
     if (IsProtocolV2(nHeight))
-        if(nHeight<DIFF_FORK_BLOCK){
-        return bnProofOfStakeLimitV2;
-        }else{
-        return bnProofOfStakeLimitV2fork;
+        if(nHeight < DIFF_FORK_BLOCK) {
+            return bnProofOfStakeLimitV2;
+        } else {
+            return bnProofOfStakeLimitV2fork;
         }
     else
         return bnProofOfStakeLimit;
@@ -1366,54 +1367,20 @@ int64_t GetProofOfWorkRewardV2(int64_t nFees, unsigned int nHeight)
     return nSubsidy + nFees;
 }
 
-// miner's coin stake reward based on coin age spent (coin-days)
 int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees, unsigned int nHeight)
 {
     int64_t nSubsidy = 0;
-
-    nSubsidy = nCoinAge * COIN_YEAR_REWARD * 33 / (365 * 33 + 8);
+    if (nHeight < V2_EMISSION_CAP_START_BLOCK) {
+        
+        int64_t nCoinYearReward = COIN_YEAR_REWARD;
+        
+        if (nHeight >= V3_START_BLOCK)
+            nCoinYearReward = COIN_YEAR_REWARD_V3;
+    
+        nSubsidy = nCoinAge * nCoinYearReward * 33 / (365 * 33 + 8);    
+    }
 
     LogPrint("creation", "GetProofOfStakeReward(): create=%s nCoinAge=%d\n", FormatMoney(nSubsidy), nCoinAge);
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("creation -> GetProofOfStakeReward(): create=%s nCoinAge=%d\n", FormatMoney(nSubsidy), nCoinAge);
-
-    return nSubsidy + nFees;
-}
-
-// miner's coin stake reward based on coin age spent (coin-days)
-// MBK: Update PoS reward structure to reflect reduction to help combat inflation 
-int64_t GetProofOfStakeRewardV2(int64_t nCoinAge, int64_t nFees, unsigned int nHeight)
-{
-    int64_t nSubsidy = 0;
-    int64_t nBlockReward = 0;
-
-    nBlockReward = nCoinAge * COIN_YEAR_REWARD_V2 * 33 / (365 * 33 + 8);
-    // MBK: Burn % of the stake reward to help curb inflation if V2 wallet
-    if(nHeight >= POS_REWARD_V2_START_BLOCK /*|| CURRENT_WALLET_VERSION == 2*/)
-    {
-        if(nHeight >= V2_EMISSION_CAP_START_BLOCK)
-        {
-            // MBK: Have reached the blockheight when rewards are finished
-            nSubsidy = 0;
-        }
-        else
-        {
-            // MBK: Have reached the blockheight to start the % burn on PoS rewards to help curb inflation 
-            nSubsidy = nBlockReward - (nBlockReward * POS_REWARD_V2_BURN_RATE);
-        }
-    }
-    else
-    {
-        // MBK: Have not reached the blockheight to start the PoS reward burn
-        nSubsidy = nBlockReward;
-    }
-
-    LogPrint("creation", "GetProofOfStakeRewardV2(): create=%s nCoinAge=%d\n", FormatMoney(nSubsidy), nCoinAge);
-    // MBK: Added some additional debugging information
-    double percent = ((double)nSubsidy / (double)nBlockReward) * (double)100.0f;
-    //if (MBK_EXTRA_DEBUG) LogPrintf("creation -> GetProofOfStakeRewardV2(): nSubsidy=%d preburn=%d(%f)\n", nSubsidy, nBlockReward, percent);
-    if (MBK_EXTRA_DEBUG) LogPrintf("creation -> GetProofOfStakeRewardV2(): create=%d(%s)[%d] nCoinAge=%d preburn=%d(%s)\n",nSubsidy, FormatMoney(nSubsidy), percent, nCoinAge, nBlockReward, FormatMoney(nBlockReward));
-
     return nSubsidy + nFees;
 }
 
@@ -2009,7 +1976,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
     BOOST_FOREACH(CTransaction& tx, vtx)
     {
         uint256 hashTx = tx.GetHash();
-	nInputs += tx.vin.size();
+	    nInputs += tx.vin.size();
 
         // Do not allow blocks that contain transactions which 'overwrite' older transactions,
         // unless those are already completely spent.
@@ -2063,42 +2030,26 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
             if (tx.IsCoinStake())
                 nStakeReward = nTxValueOut - nTxValueIn;
 
-	    //if(setValidatedTx.find(hashTx) == setValidatedTx.end())
-	    //{
-                if (!tx.ConnectInputs(txdb, mapInputs, mapQueuedChanges, posThisTx, pindex, true, false, flags))
-                    return false;
-		//else
-		//    setValidatedTx.insert(hashTx);
-	    //}
-	    //else
-	    //{
-	//	++nTxCacheHits;
-	  //  }
+            if (!tx.ConnectInputs(txdb, mapInputs, mapQueuedChanges, posThisTx, pindex, true, false, flags))
+                return false;
         }
 
         mapQueuedChanges[hashTx] = CTxIndex(posThisTx, tx.vout.size());
     }
 
     int64_t nTime1 = GetTimeMicros(); nTimeConnect += nTime1 - nTimeStart;
-    if(fDebug)
-    {
-	LogPrintf("bench      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)vtx.size(), 0.001 * (nTime1 - nTimeStart), 0.001 * (nTime1 - nTimeStart) / vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime1 - nTimeStart) / (nInputs-1), nTimeConnect * 0.000001);
-	LogPrintf("bench      - %u transaction validations cached\n", nTxCacheHits);
-    }
+    
+	LogPrint("connectBlock", "bench      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)vtx.size(), 0.001 * (nTime1 - nTimeStart), 0.001 * (nTime1 - nTimeStart) / vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime1 - nTimeStart) / (nInputs-1), nTimeConnect * 0.000001);
+	LogPrint("connectBlock", "bench      - %u transaction validations cached\n", nTxCacheHits);
 
-    if (IsProofOfWork())
-    {
+    if (IsProofOfWork()) {
         // MBK: Calculate the reward based on the wallet version
         // DS: Should adjust based on block before or after V2 release
         int64_t nReward = 0;
         if(pindex->nHeight >= POS_REWARD_V2_START_BLOCK)
-        {
-            nReward = GetProofOfWorkRewardV2(nFees,pindex->nHeight);
-        }
+            nReward = GetProofOfWorkRewardV2(nFees, pindex->nHeight);
         else
-        {
-            nReward = GetProofOfWorkReward(nFees,pindex->nHeight);
-        }
+            nReward = GetProofOfWorkReward(nFees, pindex->nHeight);
         
         // Check coinbase reward
         if (vtx[0].GetValueOut() > nReward)
@@ -2107,34 +2058,20 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
                    nReward));
     }
 
-    // MBK: Calculate the stake reward burn
-    if(CURRENT_WALLET_VERSION == 2)
-    {
-    // MBK: Start the PoS reward burn to help offset future inflation to cap
-        if(pindex->nHeight >= POS_REWARD_V2_START_BLOCK /*|| CURRENT_WALLET_VERSION == 2*/)
-        {
-            nStakeReward = nStakeReward - (nStakeReward * POS_REWARD_V2_BURN_RATE);
-        }
-
-    }
-
-    if (IsProofOfStake())
-    {
+    if (IsProofOfStake()) {
         // ppcoin: coin stake tx earns reward instead of paying fee
         uint64_t nCoinAge;
-        if (!vtx[1].GetCoinAge(txdb, nCoinAge))
+        if (!vtx[1].GetCoinAge(txdb, nCoinAge, pindex->nHeight))
             return error("ConnectBlock() : %s unable to get coin age for coinstake", vtx[1].GetHash().ToString());
 
-        // MBK: Calculate the stake reward based on current wallet version
-        // DS: Should adjust based on block before or after V2 release
-        int64_t nCalculatedStakeReward = 0;
-        if(pindex->nHeight >= POS_REWARD_V2_START_BLOCK)
-        {
-            nCalculatedStakeReward = GetProofOfStakeRewardV2(nCoinAge, nFees, pindex->nHeight);
-        }
-        else
-        {
-            nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindex->nHeight);
+        int64_t nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindex->nHeight);
+
+        if (pindex->nHeight >= V3_START_BLOCK) {
+            // if we are paying a masternode we need to adjust the calculated stake reward
+            if (HasMasternodePayment()) {
+                LogPrintf("ConnectBlock(): HasMasternodePayment=%i\n",pindex->nHeight);
+                nCalculatedStakeReward += GetMasternodePayment(pindex->nHeight, 0);
+            }
         }
 
         if (nStakeReward > nCalculatedStakeReward)
@@ -2476,7 +2413,7 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
 // guaranteed to be in main chain by sync-checkpoint. This rule is
 // introduced to help nodes establish a consistent view of the coin
 // age (trust score) of competing branches.
-bool CTransaction::GetCoinAge(CTxDB& txdb, uint64_t& nCoinAge) const
+bool CTransaction::GetCoinAge(CTxDB& txdb, uint64_t& nCoinAge, unsigned int nHeight) const
 {
     CBigNum bnCentSecond = 0;  // coin age in the unit of cent-seconds
     nCoinAge = 0;
@@ -2501,15 +2438,28 @@ bool CTransaction::GetCoinAge(CTxDB& txdb, uint64_t& nCoinAge) const
         if (block.GetBlockTime() + nStakeMinAge > nTime)
             continue; // only count coins meeting min age requirement
 
-        int64_t nValueIn = txPrev.vout[txin.prevout.n].nValue;
-        bnCentSecond += CBigNum(nValueIn) * (nTime-txPrev.nTime) / CENT;
+        int64_t nValueIn = 0; 
+        int64_t nTimeWeight = 0;
 
-        LogPrint("coinage", "coin age nValueIn=%d nTimeDiff=%d bnCentSecond=%s\n", nValueIn, nTime - txPrev.nTime, bnCentSecond.ToString());
-        LogPrintf("CTransaction::GetCoinAge() -> coin age nValueIn=%d(%s) nTimeDiff=%d bnCentSecond=%s\n", nValueIn, FormatMoney(nValueIn), nTime - txPrev.nTime, bnCentSecond.ToString());
+        if (nHeight < V3_START_BLOCK) {
+             nValueIn = txPrev.vout[txin.prevout.n].nValue;
+             nTimeWeight = nTime - txPrev.nTime;
+        } else {
+            nValueIn = min(txPrev.vout[txin.prevout.n].nValue, MAX_STAKE_VALUE);
+            nTimeWeight = min(nTime - txPrev.nTime, nStakeMaxAge);
+            if (nTime - txPrev.nTime>nStakeMaxAge) 
+                LogPrintf("CTransaction::GetCoinAge nStakeMaxAge\n");
+            if (txPrev.vout[txin.prevout.n].nValue>MAX_STAKE_VALUE) 
+                LogPrintf("CTransaction::GetCoinAge MAX_STAKE_VALUE\n");
+        }
+
+        bnCentSecond += CBigNum(nValueIn) * nTimeWeight / CENT;
+        LogPrintf("CTransaction::GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, nTime - txPrev.nTime);
+        LogPrintf("CTransaction::GetCoinAge::CALC nValueIn=%d nTimeDiff=%d\n", nValueIn, nTimeWeight);
+        LogPrintf("CTransaction::GetCoinAge bnCentSecond=%s\n", bnCentSecond.ToString());
     }
 
     CBigNum bnCoinDay = bnCentSecond * CENT / COIN / (24 * 60 * 60);
-    LogPrint("coinage", "coin age bnCoinDay=%s\n", bnCoinDay.ToString());
     LogPrintf("CTransaction::GetCoinAge() -> coin age bnCoinDay=%s\n", bnCoinDay.ToString());
     nCoinAge = bnCoinDay.getuint64();
     return true;
@@ -2781,11 +2731,12 @@ bool CBlock::AcceptBlock()
     else if (!IsProtocolV2(nHeight) && nVersion > 6)
         return DoS(100, error("AcceptBlock() : reject too new nVersion = %d", nVersion));
 
+    LogPrintf("AcceptBlock() : reject proof-of-work at height %d", Params().LastPOWBlock());
     if (IsProofOfWork() && nHeight > Params().LastPOWBlock())
         return DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", nHeight));
 
     if (IsProofOfStake() && nHeight < POS_START_BLOCK)
-                return DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK));
+        return DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK));
 
     // Check coinbase timestamp
     if (GetBlockTime() > FutureDrift((int64_t)vtx[0].nTime, nHeight) && !IsProofOfWork())
@@ -3064,7 +3015,7 @@ bool CBlock::SignBlock(CWallet& wallet, int64_t nFees)
         return true;
 
     static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // startup timestamp
-
+    LogPrintf("SignBlock: F1\n");
     CKey key;
     CTransaction txCoinStake;
     if (IsProtocolV2(nBestHeight+1))
@@ -3072,11 +3023,13 @@ bool CBlock::SignBlock(CWallet& wallet, int64_t nFees)
 
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
 
-    if (nSearchTime > nLastCoinStakeSearchTime)
-    {
+    //if (nSearchTime > nLastCoinStakeSearchTime)
+    //{
+        LogPrintf("SignBlock: F2\n");
         int64_t nSearchInterval = IsProtocolV2(nBestHeight+1) ? 1 : nSearchTime - nLastCoinStakeSearchTime;
         if (wallet.CreateCoinStake(wallet, nBits, nSearchInterval, nFees, txCoinStake, key))
         {
+            LogPrintf("SignBlock: F3\n");
             if (txCoinStake.nTime >= pindexBest->GetPastTimeLimit()+1)
             {
                 // make sure coinstake would meet timestamp protocol
@@ -3097,7 +3050,7 @@ bool CBlock::SignBlock(CWallet& wallet, int64_t nFees)
         }
         nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
         nLastCoinStakeSearchTime = nSearchTime;
-    }
+    //}
 
     return false;
 }
@@ -3705,13 +3658,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         uint64_t nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
         // REMOVE IN NEXT UPDATE
-        // this is a temporary patch to remove V2.0.0.X wallets
-        // after enough time has passed for every to update
+        // this is a temporary patch to remove < V3.1.0.0 wallets
         int min_peer_proto_version = MIN_PEER_PROTO_VERSION;
-        if (nBestHeight > 585200) {
+        if (nBestHeight >= V3_START_BLOCK) {
             min_peer_proto_version = PROTOCOL_VERSION;
         }
-        if (pfrom->nVersion < MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < min_peer_proto_version)
         {
             // disconnect from peers older than this proto version
             LogPrintf("partner %s using obsolete version %i; disconnecting\n", pfrom->addr.ToString(), pfrom->nVersion);
@@ -4644,14 +4596,16 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
     return true;
 }
 
-
-
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
 {
-    // MBK: Set masternode reward phase
-    //      NOTE: Fixed the reward, now it actually is applied to blockValue
-    int64_t ret = static_cast<int64_t>(blockValue * 0.677777777777777777); // ~2/3 masternode stake reward
-    return ret;
+    if (nHeight < V3_START_BLOCK){
+        // MBK: Set masternode reward phase
+        // NOTE: Fixed the reward, now it actually is applied to blockValue
+        return static_cast<int64_t>(blockValue * 0.677777777777777777); // ~2/3 masternode stake reward
+    } else {
+        // starting V3 masternodes will earn a constant block reward ~60% over the year
+        return MASTERNODE_REWARD_V3;
+    }
 }
 
 

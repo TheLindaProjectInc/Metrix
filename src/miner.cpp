@@ -201,7 +201,7 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFe
                     {
                         LogPrintf("ERROR: mempool transaction missing input\n");
                         if (fDebug) assert("mempool transaction missing input" == 0);
-                        fMissingInputs = true;
+                            fMissingInputs = true;
                         if (porphan)
                             vOrphan.pop_back();
                         break;
@@ -360,17 +360,7 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFe
 // >Linda<
         if (!fProofOfStake)
         {
-            // MBK: Determine which PoW reward function to call basd on wallet version
-            int64_t nReward = 0;
-            if(CURRENT_WALLET_VERSION == 2)
-            {
-                nReward = GetProofOfWorkRewardV2(nFees, nHeight);
-            }
-            else
-            {
-                nReward = GetProofOfWorkReward(nFees, nHeight);
-            }
-
+            int64_t nReward = GetProofOfWorkRewardV2(nFees, nHeight);
             pblock->vtx[0].vout[0].nValue = nReward;
         }
 

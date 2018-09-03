@@ -42,7 +42,7 @@ static const int64_t DARKSEND_COLLATERAL_V2   = (2000000*COIN);
 static const int64_t DARKSEND_FEE_V2          = (0.01*COIN);
 static const int64_t DARKSEND_POOL_MAX_V2     = (1111.99*COIN);
 // MBK: Following are block heights to begin V2 swap
-static const int POS_REWARD_V2_START_BLOCK    = 359930;//371180;  // ~03312018 (March 31, 2018)
+static const int POS_REWARD_V2_START_BLOCK    = 359930;  // ~03312018 (March 31, 2018)
 static const int POW_REWARD_V2_START_BLOCK    = 378230;  // ~04052018 (April 5, 2018)
 static const int TX_FEE_V2_INCREASE_BLOCK     = 378230;  // ~04052018 (April 5, 2018)
 static const int MASTERNODE_V2_START_BLOCK    = 378230;  // ~04052018 (April 5, 2018)
@@ -54,7 +54,11 @@ static const int POW_REWARD_V1_FULL         = 14150;
 static const int POW_REWARD_V2_FULL         = 13726; // ~3% reduction from V1 block reward
 static const int POW_REWARD_V1_HALF         = POW_REWARD_V1_FULL/2;
 static const int POW_REWARD_V2_HALF         = POW_REWARD_V2_FULL/2;
-static const double POS_REWARD_V2_BURN_RATE = 0.02f; // ~2% reduction from V1 stake reward
+// V3 block rewards
+static const int V3_START_BLOCK             = 580000; // (April 7, 2018)
+static const int64_t COIN_YEAR_REWARD_V3    = (50*CENT);
+static const int64_t MASTERNODE_REWARD_V3   = (3200*COIN); // ~60% ROI over 12 months
+static const int64_t MAX_STAKE_VALUE        = (100*1000000*COIN); // POS rewards will be capped to 100 million Linda
 
 static const int MBK_EXTRA_DEBUG = 0;
 
@@ -153,6 +157,7 @@ extern std::map<uint256, CBlockIndex*> mapBlockIndex;
 extern std::set<std::pair<COutPoint, unsigned int> > setStakeSeen;
 extern CBlockIndex* pindexGenesisBlock;
 extern unsigned int nStakeMinAge;
+extern unsigned int nStakeMaxAge;
 extern unsigned int nNodeLifespan;
 extern int nCoinbaseMaturity;
 extern int nBestHeight;
@@ -220,7 +225,6 @@ int64_t GetProofOfWorkReward(int64_t nFees, unsigned int nHeight);
 int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees, unsigned int nHeight);
 // MBK: V2 Wallet
 int64_t GetProofOfWorkRewardV2(int64_t nFees, unsigned int nHeight);
-int64_t GetProofOfStakeRewardV2(int64_t nCoinAge, int64_t nFees, unsigned int nHeight);
 
 unsigned int ComputeMinWork(unsigned int nBase, int64_t nTime);
 unsigned int ComputeMinStake(unsigned int nBase, int64_t nTime, unsigned int nBlockTime);
@@ -498,7 +502,7 @@ public:
                        std::map<uint256, CTxIndex>& mapTestPool, const CDiskTxPos& posThisTx,
                        const CBlockIndex* pindexBlock, bool fBlock, bool fMiner, unsigned int flags = STANDARD_SCRIPT_VERIFY_FLAGS, bool fValidateSig = true);
     bool CheckTransaction() const;
-    bool GetCoinAge(CTxDB& txdb, uint64_t& nCoinAge) const;  // ppcoin: get transaction coin age
+    bool GetCoinAge(CTxDB& txdb, uint64_t& nCoinAge, unsigned int nHeight) const;  // ppcoin: get transaction coin age
 
     const CTxOut& GetOutputFor(const CTxIn& input, const MapPrevTx& inputs) const;
 };
@@ -784,6 +788,14 @@ public:
     bool IsProofOfStake() const
     {
         return (vtx.size() > 1 && vtx[1].IsCoinStake());
+    }
+
+    bool HasMasternodePayment() const
+    {
+        return (
+            IsProofOfStake() && 
+            (vtx[1].vout.size() == 4 || (vtx[1].vout.size() == 3 && vtx[1].vout[1].scriptPubKey != vtx[1].vout[2].scriptPubKey))
+        );
     }
 
     bool IsProofOfWork() const

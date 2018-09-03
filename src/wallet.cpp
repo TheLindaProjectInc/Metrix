@@ -3350,8 +3350,12 @@ uint64_t CWallet::GetStakeWeight() const
 bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64_t nSearchInterval, int64_t nFees, CTransaction& txNew, CKey& key)
 {
     CBlockIndex* pindexPrev = pindexBest;
-    if(pindexBest->nHeight<POS_START_BLOCK)
+    if(pindexBest->nHeight < POS_START_BLOCK)
         return false;
+
+    // height of block being minted
+    int nHeight = pindexBest->nHeight+1;
+
     CBigNum bnTargetPerCoinDay;
     bnTargetPerCoinDay.SetCompact(nBits);
 
@@ -3463,8 +3467,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     if (nCredit == 0 || nCredit > nBalance - nReserveBalance)
         return false;
     
-    // MBK: Added some additional debug information
-    if (MBK_EXTRA_DEBUG) LogPrintf("CWallet::CreateCoinStake() -> [PreInputCollection] nCredit=%d\n", nCredit);
+    LogPrint("coinstake", "CWallet::CreateCoinStake() -> [PreInputCollection] nCredit=%d\n", nCredit);
 
     BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)
     {
@@ -3505,20 +3508,11 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     {
         uint64_t nCoinAge;
         CTxDB txdb("r");
-        if (!txNew.GetCoinAge(txdb, nCoinAge))
+        if (!txNew.GetCoinAge(txdb, nCoinAge, nHeight))
             return error("CreateCoinStake : failed to calculate coin age");
 
-        // MBK: Calculate the reward based on current wallet version
-        nReward = 0;
-        if(CURRENT_WALLET_VERSION == 2)
-        {
-            nReward = GetProofOfStakeReward(nCoinAge, nFees, pindexBest->nHeight);
-        }
-        else
-        {
-            nReward = GetProofOfStakeReward(nCoinAge, nFees, pindexBest->nHeight);
-        }
-        
+        nReward = GetProofOfStakeReward(nCoinAge, nFees, nHeight);
+            
         if (nReward <= 0)
             return false;
 
@@ -3526,31 +3520,29 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     }
 
     // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("CWallet::CreateCoinStake() -> nReward=%d, nCredit=%d\n", nReward, nCredit);
+    LogPrint("coinstake", "CWallet::CreateCoinStake() -> nReward=%d, nCredit=%d\n", nReward, nCredit);
 
     // Masternode Payments
     int payments = 1;
     // start masternode payments
     bool bMasterNodePayment = true; // note was false, set true to test
 
-    if ( Params().NetworkID() == CChainParams::TESTNET ){
-        if (GetTime() > START_MASTERNODE_PAYMENTS_TESTNET ){
+    if (Params().NetworkID() == CChainParams::TESTNET){
+        if (GetTime() > START_MASTERNODE_PAYMENTS_TESTNET)
             bMasterNodePayment = true;
-        }
-    }else{
-        if (GetTime() > START_MASTERNODE_PAYMENTS){
+    } else {
+        if (GetTime() > START_MASTERNODE_PAYMENTS)
             bMasterNodePayment = true;
-        }
     }
 
     CScript payee;
     bool hasPayment = true;
     if(bMasterNodePayment) {
         //spork
-        if(!masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, payee)){
+        if(!masternodePayments.GetBlockPayee(nHeight, payee)){
             int winningNode = GetCurrentMasterNode(1);
                 if(winningNode >= 0){
-                    payee =GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
+                    payee = GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
                 } else {
                     LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
                     hasPayment = false;
@@ -3558,7 +3550,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         }
     }
 
-    if(hasPayment){
+    if(hasPayment) {
         payments = txNew.vout.size() + 1;
         txNew.vout.resize(payments);
 
@@ -3573,10 +3565,9 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     }
 
     int64_t blockValue = nCredit;
-    int64_t masternodePayment = GetMasternodePayment(pindexPrev->nHeight+1, nReward);
+    int64_t masternodePayment = GetMasternodePayment(nHeight, nReward);
 
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("CWallet::CreateCoinStake() -> blockValue=%d(%s), masternodePayment=%d(%s)\n", blockValue, FormatMoney(blockValue), masternodePayment, FormatMoney(masternodePayment));
+    LogPrint("coinstake", "CWallet::CreateCoinStake() -> blockValue=%d(%s), masternodePayment=%d(%s)\n", blockValue, FormatMoney(blockValue), masternodePayment, FormatMoney(masternodePayment));
 
     // Set output amount
     if (!hasPayment && txNew.vout.size() == 3) // 2 stake outputs, stake was split, no masternode payment
@@ -3587,7 +3578,8 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     else if(hasPayment && txNew.vout.size() == 4) // 2 stake outputs, stake was split, plus a masternode payment
     {
         txNew.vout[payments-1].nValue = masternodePayment;
-        blockValue -= masternodePayment;
+        if (nHeight < V3_START_BLOCK) 
+            blockValue -= masternodePayment;
         txNew.vout[1].nValue = (blockValue / 2 / CENT) * CENT;
         txNew.vout[2].nValue = blockValue - txNew.vout[1].nValue;
     }
@@ -3596,11 +3588,12 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     else if(hasPayment && txNew.vout.size() == 3) // only 1 stake output, was not split, plus a masternode payment
     {
         txNew.vout[payments-1].nValue = masternodePayment;
-        blockValue -= masternodePayment;
+        if (nHeight < V3_START_BLOCK) 
+            blockValue -= masternodePayment;
         txNew.vout[1].nValue = blockValue;
     }
 
-//    Sign
+    // Sign
     int nIn = 0;
     BOOST_FOREACH(const CWalletTx* pcoin, vwtxPrev)
     {
