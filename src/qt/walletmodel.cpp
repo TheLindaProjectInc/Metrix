@@ -571,11 +571,10 @@ WalletModel::UnlockContext WalletModel::requestUnlock()
 {
     bool was_locked = getEncryptionStatus() == Locked || getEncryptionStatus() == LockedForStaking;
     
-    if ((!was_locked) && fWalletUnlockStakingOnly && isAnonymizeOnlyUnlocked())
+    if (getEncryptionStatus() != Locked && fWalletUnlockStakingOnly)
     {
        setWalletLocked(true);
        was_locked = getEncryptionStatus() == Locked;
-
     }
     if(was_locked)
     {
