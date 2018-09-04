@@ -2447,16 +2447,12 @@ bool CTransaction::GetCoinAge(CTxDB& txdb, uint64_t& nCoinAge, unsigned int nHei
         } else {
             nValueIn = min(txPrev.vout[txin.prevout.n].nValue, MAX_STAKE_VALUE);
             nTimeWeight = min(nTime - txPrev.nTime, nStakeMaxAge);
-            if (nTime - txPrev.nTime>nStakeMaxAge) 
-                LogPrintf("CTransaction::GetCoinAge nStakeMaxAge\n");
-            if (txPrev.vout[txin.prevout.n].nValue>MAX_STAKE_VALUE) 
-                LogPrintf("CTransaction::GetCoinAge MAX_STAKE_VALUE\n");
         }
 
         bnCentSecond += CBigNum(nValueIn) * nTimeWeight / CENT;
-        LogPrintf("CTransaction::GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, nTime - txPrev.nTime);
-        LogPrintf("CTransaction::GetCoinAge::CALC nValueIn=%d nTimeDiff=%d\n", nValueIn, nTimeWeight);
-        LogPrintf("CTransaction::GetCoinAge bnCentSecond=%s\n", bnCentSecond.ToString());
+        LogPrint("getcoinage","CTransaction::GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, nTime - txPrev.nTime);
+        LogPrint("getcoinage","CTransaction::GetCoinAge::CALC nValueIn=%d nTimeDiff=%d\n", nValueIn, nTimeWeight);
+        LogPrint("getcoinage","CTransaction::GetCoinAge bnCentSecond=%s\n", bnCentSecond.ToString());
     }
 
     CBigNum bnCoinDay = bnCentSecond * CENT / COIN / (24 * 60 * 60);
@@ -2731,7 +2727,6 @@ bool CBlock::AcceptBlock()
     else if (!IsProtocolV2(nHeight) && nVersion > 6)
         return DoS(100, error("AcceptBlock() : reject too new nVersion = %d", nVersion));
 
-    LogPrintf("AcceptBlock() : reject proof-of-work at height %d", Params().LastPOWBlock());
     if (IsProofOfWork() && nHeight > Params().LastPOWBlock())
         return DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", nHeight));
 
@@ -3015,7 +3010,6 @@ bool CBlock::SignBlock(CWallet& wallet, int64_t nFees)
         return true;
 
     static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // startup timestamp
-    LogPrintf("SignBlock: F1\n");
     CKey key;
     CTransaction txCoinStake;
     if (IsProtocolV2(nBestHeight+1))
@@ -3023,13 +3017,11 @@ bool CBlock::SignBlock(CWallet& wallet, int64_t nFees)
 
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
 
-    //if (nSearchTime > nLastCoinStakeSearchTime)
-    //{
-        LogPrintf("SignBlock: F2\n");
+    if (nSearchTime > nLastCoinStakeSearchTime)
+    {
         int64_t nSearchInterval = IsProtocolV2(nBestHeight+1) ? 1 : nSearchTime - nLastCoinStakeSearchTime;
         if (wallet.CreateCoinStake(wallet, nBits, nSearchInterval, nFees, txCoinStake, key))
         {
-            LogPrintf("SignBlock: F3\n");
             if (txCoinStake.nTime >= pindexBest->GetPastTimeLimit()+1)
             {
                 // make sure coinstake would meet timestamp protocol
@@ -3050,7 +3042,7 @@ bool CBlock::SignBlock(CWallet& wallet, int64_t nFees)
         }
         nLastCoinStakeSearchInterval = nSearchTime - nLastCoinStakeSearchTime;
         nLastCoinStakeSearchTime = nSearchTime;
-    //}
+    }
 
     return false;
 }
