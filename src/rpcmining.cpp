@@ -84,19 +84,10 @@ Value getstakesubsidy(const Array& params, bool fHelp)
 
     uint64_t nCoinAge;
     CTxDB txdb("r");
-    if (!tx.GetCoinAge(txdb, nCoinAge))
+    if (!tx.GetCoinAge(txdb, nCoinAge, pindexBest->nHeight))
         throw JSONRPCError(RPC_MISC_ERROR, "GetCoinAge failed");
 
-    // MBK: Calculate the PoS reward based on the current wallet version
-    uint64_t nStakeReward = 0;
-    if(CURRENT_WALLET_VERSION == 2) 
-    {
-        nStakeReward = GetProofOfStakeRewardV2(nCoinAge, 0, pindexBest->nHeight);
-    }
-    else
-    {
-        nStakeReward = GetProofOfStakeReward(nCoinAge, 0, pindexBest->nHeight);
-    }
+    uint64_t nStakeReward = GetProofOfStakeReward(nCoinAge, 0, pindexBest->nHeight);
 
     // MBK: Added some additional debugging information
     if (MBK_EXTRA_DEBUG) LogPrintf("getstakesubsidy() -> [%s] nStakeSubsidy=%d",(CURRENT_WALLET_VERSION==2?"V2":""), nStakeReward);
