@@ -107,3 +107,8 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 [Android App](https://play.google.com/store/apps/details?id=com.mystakingwallet.app)
 
 [iOS App](https://itunes.apple.com/us/app/linda-my-staking-wallet/id1404883927)
+
+### MyNodePool - Official Staking Pool
+[Website](https://www.mynodepool.com)
+
+[Discord](https://discord.gg/2sMJnjk)
