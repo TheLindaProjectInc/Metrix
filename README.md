@@ -14,7 +14,10 @@ Lindacoin is a peer to peer hybrid digital currency. It creates utility products
 <tr><td>Block Time</td><td>60 Seconds</td></tr>
 <tr><td>Maximum Block Size</td><td>4MB</td></tr>
 <tr><td>Minimum Stake Age</td><td>24 Hours</td></tr>
-<tr><td>Maximum Stake Age</td><td>Unlimited</td></tr>
+<tr><td>Maximum Stake Age</td><td>30 Days</td></tr>
+<tr><td>Maximum Stake Amount</td><td>100,000,000</td></tr>
+<tr><td>Masternode Emissions</td><td>~60% Annually</td></tr>
+<tr><td>Staking Emissions</td><td>~50% Annually</td></tr>
 <tr><td>Port</td><td>33820</td></tr>
 <tr><td>RPC Port</td><td>33821</td></tr>
 </table>
@@ -32,7 +35,7 @@ Lindacoin’s use of masternodes enables Linda to have unique features that are 
 
 Masternodes have huge value in supporting the Linda network. They are part of what defines Lindacoin from all of the other cryptocurrencies. Making Linda more efficient, and more prepared for the future.
 
-*A masternode requires 2 million Linda Coins emissions rate set to 96%.
+*A masternode requires 2 million Linda Coins.
 
 ## One Click Masternodes
 Linda’s new mobile wallet and mobile app offers a turnkey solution, changing the dynamic of which masternodes are implemented to the user.  It is now easier than ever for the Linda community to get involved in operating a masternode. Currently, masternodes are extremely difficult to set up unless you’re technically experienced and leads to users potentially missing out. TurnKey options are masternodes that are already set up for the user. 
@@ -42,8 +45,6 @@ Linda’s new mobile wallet and mobile app offers a turnkey solution, changing t
 ## Staking
 Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It ensures all wallets have a consensus on all transactions. It also weighs the economic stake of each wallet, so the more LINDA a wallet has, the more it will have a say in the public blockchain. Unlike Bitcoin, where the algorithm rewards participants who solve cryptographic puzzles (Proof of Work), Linda uses the PoS system. Each wallet votes on the next block and the voting weight of each validator depends on the amount of LINDA they hold. One of the significant benefits of a PoS system is the energy efficiency. Instead of wasting huge amounts of energy to mine coins, Linda is a more eco-friendly coin, which means it is more likely to be adopted in the future. Also, a PoS algorithm reduces the chance of centralization. Other coins are likely to be centralized as all their miners are controlled by a few people, but this is not possible with Linda. Finally, a PoS algorithm increases security. Linda allows all wallets to get involved in staking. By simply holding your coins in a wallet, Linda will automatically stake your coins for you. Staking helps Linda stabilize the blockchain and will help Linda verify transactions.
 
-*Linda stake emissions rate set to 68%.
- 
 
 ## Core Team
 #### Administrators
