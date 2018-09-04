@@ -2069,7 +2069,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
         if (pindex->nHeight >= V3_START_BLOCK) {
             // if we are paying a masternode we need to adjust the calculated stake reward
             if (HasMasternodePayment()) {
-                LogPrintf("ConnectBlock(): HasMasternodePayment=%i\n",pindex->nHeight);
+                LogPrint("connectblock", "ConnectBlock(): HasMasternodePayment=%i\n",pindex->nHeight);
                 nCalculatedStakeReward += GetMasternodePayment(pindex->nHeight, 0);
             }
         }
