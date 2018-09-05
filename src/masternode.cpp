@@ -595,6 +595,7 @@ uint256 CMasterNode::CalculateScore(int mod, int64_t nBlockHeight)
     uint256 blockControlHash = Hash(BEGIN(blockHash), END(blockHash));
     uint256 mnCollateralHash = Hash(BEGIN(mnCollateral), END(mnCollateral));
 
+    uint256 score;
     if (mnCollateralHash > blockControlHash)
     {
         score = mnCollateralHash - blockControlHash;
