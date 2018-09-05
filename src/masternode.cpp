@@ -587,17 +587,24 @@ uint256 CMasterNode::CalculateScore(int mod, int64_t nBlockHeight)
 {
     if(pindexBest == NULL) return 0;
 
-    uint256 hash = 0;
-    uint256 aux = vin.prevout.hash + vin.prevout.n;
+    uint256 blockHash = 0;
+    uint256 mnCollateral = vin.prevout.hash + vin.prevout.n;
 
-    if(!GetBlockHash(hash, nBlockHeight)) return 0;
+    if(!GetBlockHash(blockHash, nBlockHeight)) return 0;
 
-    uint256 hash2 = Hash(BEGIN(hash), END(hash));
-    uint256 hash3 = Hash(BEGIN(aux), END(aux));
+    uint256 blockControlHash = Hash(BEGIN(blockHash), END(blockHash));
+    uint256 mnCollateralHash = Hash(BEGIN(mnCollateral), END(mnCollateral));
 
-    uint256 r = (hash3 > hash2 ? hash3 - hash2 : hash2 - hash3);
+    if (mnCollateralHash > blockControlHash)
+    {
+        score = mnCollateralHash - blockControlHash;
+    }
+    else
+    {
+        score = blockControlHash - mnCollateralHash;
+    }
 
-    return r;
+    return score;
 }
 
 void CMasterNode::Check()
