@@ -20,9 +20,6 @@ class CValidationState;
 #define START_MASTERNODE_PAYMENTS_TESTNET 1429738064
 #define START_MASTERNODE_PAYMENTS 1429738064
 
-// MBK: Global wallet version. (Switch to V2 changes where appropriate)
-static const int CURRENT_WALLET_VERSION = 2;
-
 static const int64_t DARKSEND_COLLATERAL_V1 = (30000000*COIN);
 static const int64_t DARKSEND_FEE_V1        = (0.0001*COIN);
 static const int64_t DARKSEND_POOL_MAX_V1   = (1111.99*COIN);
