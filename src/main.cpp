@@ -433,7 +433,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         return false;
     }
     // nTime has different purpose from nLockTime but can be used in similar attacks
-    if (tx.nTime > FutureDrift(GetAdjustedTime(), nBestHeight + 1)) {
+    if (tx.nTime > FutureDrift(GetAdjustedTime())) {
         reason = "time-too-new";
         return false;
     }
@@ -1293,14 +1293,11 @@ void static PruneOrphanBlocks()
 
 static CBigNum GetProofOfStakeLimit(int nHeight)
 {
-    if (IsProtocolV2(nHeight))
-        if(nHeight < DIFF_FORK_BLOCK) {
-            return bnProofOfStakeLimitV2;
-        } else {
-            return bnProofOfStakeLimitV2fork;
-        }
-    else
-        return bnProofOfStakeLimit;
+    if(nHeight < DIFF_FORK_BLOCK) {
+       return bnProofOfStakeLimitV2;
+    } else {
+        return bnProofOfStakeLimitV2fork;
+    }
 }
 
 // miner's coin base reward
@@ -1451,7 +1448,7 @@ unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfS
     if (pindexPrevPrev->pprev == NULL)
         return bnTargetLimit.GetCompact(); // second block
 
-    int64_t nTargetSpacing = GetTargetSpacing(pindexLast->nHeight);
+    int64_t nTargetSpacing = GetTargetSpacing();
     int64_t nActualSpacing = pindexPrev->GetBlockTime() - pindexPrevPrev->GetBlockTime();
     if (IsProtocolV1RetargetingFixed(pindexLast->nHeight)) {
         if (nActualSpacing < 0)
@@ -2546,7 +2543,7 @@ bool CBlock::CheckBlock(bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckSig) c
         return DoS(50, error("CheckBlock() : proof of work failed"));
 
     // Check timestamp
-    if (GetBlockTime() > FutureDriftV2(GetAdjustedTime()) && !IsProofOfWork())
+    if (GetBlockTime() > FutureDrift(GetAdjustedTime()) && !IsProofOfWork())
         return error("CheckBlock() : block timestamp too far in the future");
 
     // First transaction must be coinbase, the rest must not be
@@ -2722,10 +2719,8 @@ bool CBlock::AcceptBlock()
     CBlockIndex* pindexPrev = (*mi).second;
     int nHeight = pindexPrev->nHeight+1;
 
-    if (IsProtocolV2(nHeight) && nVersion < 7)
+    if (nVersion < 7)
         return DoS(100, error("AcceptBlock() : reject too old nVersion = %d", nVersion));
-    else if (!IsProtocolV2(nHeight) && nVersion > 6)
-        return DoS(100, error("AcceptBlock() : reject too new nVersion = %d", nVersion));
 
     if (IsProofOfWork() && nHeight > Params().LastPOWBlock())
         return DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", nHeight));
@@ -2734,7 +2729,7 @@ bool CBlock::AcceptBlock()
         return DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK));
 
     // Check coinbase timestamp
-    if (GetBlockTime() > FutureDrift((int64_t)vtx[0].nTime, nHeight) && !IsProofOfWork())
+    if (GetBlockTime() > FutureDrift((int64_t)vtx[0].nTime) && !IsProofOfWork())
         return DoS(50, error("AcceptBlock() : coinbase timestamp is too early"));
 
     // Check coinstake timestamp
@@ -2746,7 +2741,7 @@ bool CBlock::AcceptBlock()
         return DoS(100, error("AcceptBlock() : incorrect %s", IsProofOfWork() ? "proof-of-work" : "proof-of-stake"));
 
     // Check timestamp against prev
-    if (GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(GetBlockTime(), nHeight) < pindexPrev->GetBlockTime())
+    if (GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(GetBlockTime()) < pindexPrev->GetBlockTime())
         return error("AcceptBlock() : block's timestamp is too early");
 
     // Check 2 consecutive blocks aren't mined by POW
@@ -3012,14 +3007,13 @@ bool CBlock::SignBlock(CWallet& wallet, int64_t nFees)
     static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // startup timestamp
     CKey key;
     CTransaction txCoinStake;
-    if (IsProtocolV2(nBestHeight+1))
-        txCoinStake.nTime &= ~STAKE_TIMESTAMP_MASK;
+    txCoinStake.nTime &= ~STAKE_TIMESTAMP_MASK;
 
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
 
     if (nSearchTime > nLastCoinStakeSearchTime)
     {
-        int64_t nSearchInterval = IsProtocolV2(nBestHeight+1) ? 1 : nSearchTime - nLastCoinStakeSearchTime;
+        int64_t nSearchInterval = 1;
         if (wallet.CreateCoinStake(wallet, nBits, nSearchInterval, nFees, txCoinStake, key))
         {
             if (txCoinStake.nTime >= pindexBest->GetPastTimeLimit()+1)

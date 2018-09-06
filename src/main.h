@@ -140,13 +140,10 @@ static const int POW_CONSECUTIVE_START_BLOCK = 555000;
 
 
 inline bool IsProtocolV1RetargetingFixed(int nHeight) { return TestNet() || nHeight >= 0; }
-inline bool IsProtocolV2(int nHeight) { return TestNet() || nHeight >= 0; }
 
-inline int64_t FutureDriftV1(int64_t nTime) { return nTime + 10 * 60; }
-inline int64_t FutureDriftV2(int64_t nTime) { return nTime + 15; }
-inline int64_t FutureDrift(int64_t nTime, int nHeight) { return IsProtocolV2(nHeight) ? FutureDriftV2(nTime) : FutureDriftV1(nTime); }
+inline int64_t FutureDrift(int64_t nTime) { return nTime + 15; }
 
-inline unsigned int GetTargetSpacing(int nHeight) { return IsProtocolV2(nHeight) ? 90 : 90; }
+inline unsigned int GetTargetSpacing() { return 90; }
 
 static const int64_t STAKE_TIMESPAN_SWITCH_TIME = 1428537599;
 
@@ -1103,10 +1100,7 @@ public:
 
     int64_t GetPastTimeLimit() const
     {
-        if (IsProtocolV2(nHeight))
-            return GetBlockTime() - 120;
-        else
-            return GetMedianTimePast();
+        return GetBlockTime() - 120;
     }
 
     enum { nMedianTimeSpan=11 };
