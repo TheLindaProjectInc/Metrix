@@ -1450,10 +1450,8 @@ unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfS
 
     int64_t nTargetSpacing = GetTargetSpacing();
     int64_t nActualSpacing = pindexPrev->GetBlockTime() - pindexPrevPrev->GetBlockTime();
-    if (IsProtocolV1RetargetingFixed(pindexLast->nHeight)) {
-        if (nActualSpacing < 0)
-            nActualSpacing = nTargetSpacing;
-    }
+    if (nActualSpacing < 0)
+        nActualSpacing = nTargetSpacing;
 
     // ppcoin: target change every block
     // ppcoin: retarget with exponential moving toward target spacing

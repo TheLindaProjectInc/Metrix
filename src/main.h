@@ -135,9 +135,6 @@ static const int DIFF_FORK_BLOCK = 100;
 // disallow consecutive blocks to be mined by POW
 static const int POW_CONSECUTIVE_START_BLOCK = 555000; 
 
-
-inline bool IsProtocolV1RetargetingFixed(int nHeight) { return TestNet() || nHeight >= 0; }
-
 inline int64_t FutureDrift(int64_t nTime) { return nTime + 15; }
 
 inline unsigned int GetTargetSpacing() { return 90; }
