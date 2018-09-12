@@ -31,6 +31,10 @@ namespace Checkpoints
         (10,   uint256("0xe653e137fcf430648f4e02172be2926fa60cf2d2b408c5c127fb0d3c8a384051") )
         (20,   uint256("0x22f69c926e860df361f25857beef751b90b8cb8811757ca804467d449b67c313") )
         (35425,   uint256("0xe417f9c423b3f37171e3f5597bbe8b05183d22b62d302b660c934e701e2380b7") )
+        (100000,   uint256("ec01251eb75137f60bbbb31098faa7a208467da4afea6215a3b8069bcb18d4b3") )
+        (300000,   uint256("f198ba2d83322c83467793ad28af562c3922f6e1a6fa6dadb9333a70546a0dad") )
+        (500000,   uint256("c616f76869304509d413d30a0d84c64c78e1434b137125fb615c91b6c14298f4") )
+        (583000,   uint256("ab145fc6de8e42430ced723d12b8a8043f63a027a97bd45637b320627a451ad4") )
     ;
 
     // TestNet has no checkpoints
@@ -189,7 +193,7 @@ namespace Checkpoints
         return false;
     }
 
-    // Automatically select a suitable sync-checkpoint 
+    // Automatically select a suitable sync-checkpoint
     uint256 AutoSelectSyncCheckpoint()
     {
         const CBlockIndex *pindex = pindexBest;
@@ -234,7 +238,7 @@ namespace Checkpoints
             return false;
         if (hashBlock == hashPendingCheckpoint)
             return true;
-        if (mapOrphanBlocks.count(hashPendingCheckpoint) 
+        if (mapOrphanBlocks.count(hashPendingCheckpoint)
             && hashBlock == WantedByOrphan(mapOrphanBlocks[hashPendingCheckpoint]))
             return true;
         return false;
