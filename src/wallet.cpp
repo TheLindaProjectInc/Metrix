@@ -3525,28 +3525,15 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     // Masternode Payments
     int payments = 1;
     // start masternode payments
-    bool bMasterNodePayment = true; // note was false, set true to test
-
-    if (Params().NetworkID() == CChainParams::TESTNET){
-        if (GetTime() > START_MASTERNODE_PAYMENTS_TESTNET)
-            bMasterNodePayment = true;
-    } else {
-        if (GetTime() > START_MASTERNODE_PAYMENTS)
-            bMasterNodePayment = true;
-    }
-
     CScript payee;
     bool hasPayment = true;
-    if(bMasterNodePayment) {
-        //spork
-        if(!masternodePayments.GetBlockPayee(nHeight, payee)){
-            int winningNode = GetCurrentMasterNode(1);
-                if(winningNode >= 0){
-                    payee = GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
-                } else {
-                    LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
-                    hasPayment = false;
-                }
+    if(!masternodePayments.GetBlockPayee(nHeight, payee)) {
+        int winningNode = GetCurrentMasterNode(1);
+        if(winningNode >= 0){
+            payee = GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
+        } else {
+            LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
+            hasPayment = false;
         }
     }
 
