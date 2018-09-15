@@ -20,9 +20,6 @@ class CValidationState;
 #define START_MASTERNODE_PAYMENTS_TESTNET 1429738064
 #define START_MASTERNODE_PAYMENTS 1429738064
 
-// MBK: Global wallet version. (Switch to V2 changes where appropriate)
-static const int CURRENT_WALLET_VERSION = 2;
-
 static const int64_t DARKSEND_COLLATERAL_V1 = (30000000*COIN);
 static const int64_t DARKSEND_FEE_V1        = (0.0001*COIN);
 static const int64_t DARKSEND_POOL_MAX_V1   = (1111.99*COIN);
@@ -138,15 +135,9 @@ static const int DIFF_FORK_BLOCK = 100;
 // disallow consecutive blocks to be mined by POW
 static const int POW_CONSECUTIVE_START_BLOCK = 555000; 
 
+inline int64_t FutureDrift(int64_t nTime) { return nTime + 15; }
 
-inline bool IsProtocolV1RetargetingFixed(int nHeight) { return TestNet() || nHeight >= 0; }
-inline bool IsProtocolV2(int nHeight) { return TestNet() || nHeight >= 0; }
-
-inline int64_t FutureDriftV1(int64_t nTime) { return nTime + 10 * 60; }
-inline int64_t FutureDriftV2(int64_t nTime) { return nTime + 15; }
-inline int64_t FutureDrift(int64_t nTime, int nHeight) { return IsProtocolV2(nHeight) ? FutureDriftV2(nTime) : FutureDriftV1(nTime); }
-
-inline unsigned int GetTargetSpacing(int nHeight) { return IsProtocolV2(nHeight) ? 90 : 90; }
+inline unsigned int GetTargetSpacing() { return 90; }
 
 static const int64_t STAKE_TIMESPAN_SWITCH_TIME = 1428537599;
 
@@ -1103,10 +1094,7 @@ public:
 
     int64_t GetPastTimeLimit() const
     {
-        if (IsProtocolV2(nHeight))
-            return GetBlockTime() - 120;
-        else
-            return GetMedianTimePast();
+        return GetBlockTime() - 120;
     }
 
     enum { nMedianTimeSpan=11 };
