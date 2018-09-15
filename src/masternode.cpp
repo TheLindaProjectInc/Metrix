@@ -431,28 +431,54 @@ int GetCurrentMasterNode(int mod, int64_t nBlockHeight, int minProtocol)
     unsigned int score = 0;
     int winner = -1;
 
-    // scan for winner
-    BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
-        mn.Check();
-        if(mn.protocolVersion < minProtocol) continue;
-        if(!mn.IsEnabled()) {
-            i++;
-            continue;
+    int count = vecMasternodes.size();
+    count = std::max(count, 1440);
+    std::vector<CScript> vecPaidMasternodes;
+    CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
+    for (int64_t n = 0; n < count; n++) {
+        CBlock block;
+        if (block.ReadFromDisk(pblockindex)) {
+            if (block.HasMasternodePayment()) {
+                CScript payee;
+                if (block.vtx[1].vout.size() == 3) {
+                    payee = block.vtx[1].vout[2].scriptPubKey;
+                } else if (block.vtx[1].vout.size() == 4) {
+                    payee = block.vtx[1].vout[3].scriptPubKey;
+                }
+                if(std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), payee) == vecPaidMasternodes.end()) 
+    	        {
+    	            vecPaidMasternodes.push_back(payee);
+	            }
+            }
         }
-
-        // calculate the score for each masternode
-        uint256 n = mn.CalculateScore(mod, nBlockHeight);
-        unsigned int n2 = 0;
-        memcpy(&n2, &n, sizeof(n2));
-
-        // determine the winner
-        if(n2 > score){
-            score = n2;
-            winner = i;
-        }
-        i++;
+        pblockindex = pblockindex->pprev;  
     }
 
+    // scan for winner
+    BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
+        CScript mnScript = GetScriptForDestination(mn.pubkey.GetID());
+        if(std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), mnScript) != vecPaidMasternodes.end()) {
+            mn.Check();
+            if(mn.protocolVersion < minProtocol) continue;
+            if(!mn.IsEnabled()) {
+                i++;
+                continue;
+            }
+
+            // calculate the score for each masternode
+            uint256 n = mn.CalculateScore(mod, nBlockHeight);
+            unsigned int n2 = 0;
+            memcpy(&n2, &n, sizeof(n2));
+
+            // determine the winner
+            if(n2 > score) {
+                score = n2;
+                winner = i;
+            }
+            i++;
+        }
+    }
+    
     return winner;
 }
 
