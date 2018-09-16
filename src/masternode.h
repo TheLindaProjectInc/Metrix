@@ -104,7 +104,7 @@ public:
         protocolVersion = protocolVersionIn;
     }
 
-    uint256 CalculateScore(int mod=1, int64_t nBlockHeight=0);
+    uint256 CalculateScore(int64_t nBlockHeight=0);
 
     void UpdateLastSeen(int64_t override=0)
     {
@@ -156,7 +156,7 @@ public:
 
 
 // Get the current winner for this block
-int GetCurrentMasterNode(int mod=1, int64_t nBlockHeight=0, int minProtocol=CMasterNode::minProtoVersion);
+int GetCurrentMasterNode(int64_t nBlockHeight=0, int minProtocol=CMasterNode::minProtoVersion);
 
 int GetMasternodeByVin(CTxIn& vin);
 int GetMasternodeRank(CTxIn& vin, int64_t nBlockHeight=0, int minProtocol=CMasterNode::minProtoVersion);

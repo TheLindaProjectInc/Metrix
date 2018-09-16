@@ -3528,7 +3528,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     CScript payee;
     bool hasPayment = true;
     if(!masternodePayments.GetBlockPayee(nHeight, payee)) {
-        int winningNode = GetCurrentMasterNode(1);
+        int winningNode = GetCurrentMasterNode();
         if(winningNode >= 0){
             payee = GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
         } else {

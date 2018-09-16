@@ -425,12 +425,17 @@ int GetMasternodeByVin(CTxIn& vin)
     return -1;
 }
 
-int GetCurrentMasterNode(int mod, int64_t nBlockHeight, int minProtocol)
+int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
 {
     int i = 0;
     unsigned int score = 0;
     int winner = -1;
 
+    // masternodes show be payed at most once per day 
+    // and rewards should be shared evenly amongst all contributors
+    // this can be accomplished by checking the last cycle of blocks
+    // and removing all already paid masternodes from the 
+    // winner selection for the next block
     int count = vecMasternodes.size();
     count = std::max(count, 1440);
     std::vector<CScript> vecPaidMasternodes;
@@ -466,7 +471,7 @@ int GetCurrentMasterNode(int mod, int64_t nBlockHeight, int minProtocol)
             }
 
             // calculate the score for each masternode
-            uint256 n = mn.CalculateScore(mod, nBlockHeight);
+            uint256 n = mn.CalculateScore(nBlockHeight);
             unsigned int n2 = 0;
             memcpy(&n2, &n, sizeof(n2));
 
@@ -497,7 +502,7 @@ int GetMasternodeByRank(int findRank, int64_t nBlockHeight, int minProtocol)
             continue;
         }
 
-        uint256 n = mn.CalculateScore(1, nBlockHeight);
+        uint256 n = mn.CalculateScore(nBlockHeight);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 
@@ -554,7 +559,7 @@ std::vector<pair<unsigned int, CTxIn> > GetMasternodeScores(int64_t nBlockHeight
             continue;
         }
 
-        uint256 n = mn.CalculateScore(1, nBlockHeight);
+        uint256 n = mn.CalculateScore(nBlockHeight);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 
@@ -609,7 +614,7 @@ bool GetBlockHash(uint256& hash, int nBlockHeight)
 // the proof of work for that block. The further away they are the better, the furthest will win the election
 // and get paid this block
 //
-uint256 CMasterNode::CalculateScore(int mod, int64_t nBlockHeight)
+uint256 CMasterNode::CalculateScore(int64_t nBlockHeight)
 {
     
     if(pindexBest == NULL) return 0;
