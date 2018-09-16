@@ -7,9 +7,7 @@ Lindacoin is a peer to peer hybrid digital currency. It creates utility products
 <table>
 <tr><td>Coin Name</td><td>Linda Coin</td></tr>
 <tr><td>Abbreviation</td><td>LINDA</td></tr>
-<tr><td>Coin Type</td><td>PoW/PoS</td></tr>
-<tr><td>PoS Hashing Algorithm</td><td>Scrypt</td></tr>
-<tr><td>Difficulty Retargeting Algorithm</td><td>DGW v3</td></tr>
+<tr><td>Coin Type</td><td>PoS (Proof of Stake)</td></tr>
 <tr><td>Max Supply</td><td>30,000,000,000</td></tr>
 <tr><td>Block Time</td><td>60 Seconds</td></tr>
 <tr><td>Maximum Block Size</td><td>4MB</td></tr>
@@ -18,7 +16,7 @@ Lindacoin is a peer to peer hybrid digital currency. It creates utility products
 <tr><td>Maximum Stake Amount</td><td>100,000,000</td></tr>
 <tr><td>Masternode Emissions</td><td>~60% Annually</td></tr>
 <tr><td>Staking Emissions</td><td>~50% Annually</td></tr>
-<tr><td>Port</td><td>33820</td></tr>
+<tr><td>Masternode Port</td><td>33820</td></tr>
 <tr><td>RPC Port</td><td>33821</td></tr>
 </table>
 
