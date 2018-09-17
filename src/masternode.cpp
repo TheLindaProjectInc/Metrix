@@ -113,7 +113,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         
 
         //search existing masternode list, this is where we update existing masternodes with new dsee broadcasts
-
         BOOST_FOREACH(CMasterNode& mn, vecMasternodes) {
             if(mn.vin.prevout == vin.prevout) {
                 // count == -1 when it's a new entry
@@ -135,6 +134,15 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                     }
                 }
 
+                return;
+            } else if (mn.addr == addr) {
+                // don't add masternodes with the same service address as they
+                // are attempting to earn payments without contributing
+                // we won't mark the sending node as misbehaving unless\
+                // they are the culprit 
+                LogPrintf("dsee - Already have mn with same service address:%s\n", addr.ToString());
+                if (pfrom->addr == addr)
+                    Misbehaving(pfrom->GetId(), 20);
                 return;
             }
         }
