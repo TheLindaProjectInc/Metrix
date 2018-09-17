@@ -1515,6 +1515,36 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
     }
 }
 
+// check to see if the coins earned masternode rewards
+// this will prevent unfair payments on masternode owners
+// attempting to also earn POS rewards
+static bool HasMasternodePayment(CTxOut vout, int nDepth) {
+    // only check a maximum of 10 000 blocks so we don't get stuck here for too long
+    nDepth = min(nDepth, 10000);
+    if (vout.nValue == MASTERNODE_COLLATERAL_V2) {
+        CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
+        for (int n = 0; n < nDepth; n++) {
+            CBlock block;
+            if (block.ReadFromDisk(pblockindex)) {
+                if (block.HasMasternodePayment()) {
+                    CScript payee;
+                    if (block.vtx[1].vout.size() == 3) {
+                        payee = block.vtx[1].vout[2].scriptPubKey;
+                    } else if (block.vtx[1].vout.size() == 4) {
+                        payee = block.vtx[1].vout[3].scriptPubKey;
+                    }
+                    if (vout.scriptPubKey == payee) {
+                        return true;
+                    }
+                }
+            }
+            pblockindex = pblockindex->pprev;  
+        }
+    }
+
+    return false;
+}
+
 void CWallet::AvailableCoinsForStaking(vector<COutput>& vCoins, unsigned int nSpendTime) const
 {
     vCoins.clear();
@@ -1537,7 +1567,7 @@ void CWallet::AvailableCoinsForStaking(vector<COutput>& vCoins, unsigned int nSp
                 continue;
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++)
-                if (!IsLockedCoin((*it).first,i) && !(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) && pcoin->vout[i].nValue >= nMinimumInputValue)
+                if (!IsLockedCoin((*it).first,i) && !(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) && pcoin->vout[i].nValue >= nMinimumInputValue && !HasMasternodePayment(pcoin->vout[i], nDepth))
                     vCoins.push_back(COutput(pcoin, i, nDepth, true));
         }
     }
