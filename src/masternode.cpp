@@ -135,13 +135,13 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                 }
 
                 return;
-            } else if (mn.addr == addr) {
+            } else if ((CNetAddr)mn.addr == (CNetAddr)addr) {
                 // don't add masternodes with the same service address as they
                 // are attempting to earn payments without contributing
-                // we won't mark the sending node as misbehaving unless\
+                // we won't mark the sending node as misbehaving unless
                 // they are the culprit 
                 LogPrintf("dsee - Already have mn with same service address:%s\n", addr.ToString());
-                if (pfrom->addr == addr)
+                if ((CNetAddr)pfrom->addr == (CNetAddr)addr)
                     Misbehaving(pfrom->GetId(), 20);
                 return;
             }
