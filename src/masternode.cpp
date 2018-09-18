@@ -113,7 +113,6 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         
 
         //search existing masternode list, this is where we update existing masternodes with new dsee broadcasts
-
         BOOST_FOREACH(CMasterNode& mn, vecMasternodes) {
             if(mn.vin.prevout == vin.prevout) {
                 // count == -1 when it's a new entry
@@ -135,6 +134,15 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
                     }
                 }
 
+                return;
+            } else if ((CNetAddr)mn.addr == (CNetAddr)addr) {
+                // don't add masternodes with the same service address as they
+                // are attempting to earn payments without contributing
+                // we won't mark the sending node as misbehaving unless
+                // they are the culprit 
+                LogPrintf("dsee - Already have mn with same service address:%s\n", addr.ToString());
+                if ((CNetAddr)pfrom->addr == (CNetAddr)addr)
+                    Misbehaving(pfrom->GetId(), 20);
                 return;
             }
         }
@@ -425,34 +433,65 @@ int GetMasternodeByVin(CTxIn& vin)
     return -1;
 }
 
-int GetCurrentMasterNode(int mod, int64_t nBlockHeight, int minProtocol)
+int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
 {
     int i = 0;
     unsigned int score = 0;
     int winner = -1;
 
-    // scan for winner
-    BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
-        mn.Check();
-        if(mn.protocolVersion < minProtocol) continue;
-        if(!mn.IsEnabled()) {
-            i++;
-            continue;
+    // masternodes show be payed at most once per day 
+    // and rewards should be shared evenly amongst all contributors
+    // this can be accomplished by checking the last cycle of blocks
+    // and removing all already paid masternodes from the 
+    // winner selection for the next block
+    int count = vecMasternodes.size();
+    count = std::max(count, 1440);
+    std::vector<CScript> vecPaidMasternodes;
+    CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
+    for (int64_t n = 0; n < count; n++) {
+        CBlock block;
+        if (block.ReadFromDisk(pblockindex)) {
+            if (block.HasMasternodePayment()) {
+                CScript payee;
+                if (block.vtx[1].vout.size() == 3) {
+                    payee = block.vtx[1].vout[2].scriptPubKey;
+                } else if (block.vtx[1].vout.size() == 4) {
+                    payee = block.vtx[1].vout[3].scriptPubKey;
+                }
+                if(std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), payee) == vecPaidMasternodes.end()) 
+    	        {
+    	            vecPaidMasternodes.push_back(payee);
+	            }
+            }
         }
-
-        // calculate the score for each masternode
-        uint256 n = mn.CalculateScore(mod, nBlockHeight);
-        unsigned int n2 = 0;
-        memcpy(&n2, &n, sizeof(n2));
-
-        // determine the winner
-        if(n2 > score){
-            score = n2;
-            winner = i;
-        }
-        i++;
+        pblockindex = pblockindex->pprev;  
     }
 
+    // scan for winner
+    BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
+        CScript mnScript = GetScriptForDestination(mn.pubkey.GetID());
+        if(std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), mnScript) != vecPaidMasternodes.end()) {
+            mn.Check();
+            if(mn.protocolVersion < minProtocol) continue;
+            if(!mn.IsEnabled()) {
+                i++;
+                continue;
+            }
+
+            // calculate the score for each masternode
+            uint256 n = mn.CalculateScore(nBlockHeight);
+            unsigned int n2 = 0;
+            memcpy(&n2, &n, sizeof(n2));
+
+            // determine the winner
+            if(n2 > score) {
+                score = n2;
+                winner = i;
+            }
+            i++;
+        }
+    }
+    
     return winner;
 }
 
@@ -471,7 +510,7 @@ int GetMasternodeByRank(int findRank, int64_t nBlockHeight, int minProtocol)
             continue;
         }
 
-        uint256 n = mn.CalculateScore(1, nBlockHeight);
+        uint256 n = mn.CalculateScore(nBlockHeight);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 
@@ -528,7 +567,7 @@ std::vector<pair<unsigned int, CTxIn> > GetMasternodeScores(int64_t nBlockHeight
             continue;
         }
 
-        uint256 n = mn.CalculateScore(1, nBlockHeight);
+        uint256 n = mn.CalculateScore(nBlockHeight);
         unsigned int n2 = 0;
         memcpy(&n2, &n, sizeof(n2));
 
@@ -583,8 +622,9 @@ bool GetBlockHash(uint256& hash, int nBlockHeight)
 // the proof of work for that block. The further away they are the better, the furthest will win the election
 // and get paid this block
 //
-uint256 CMasterNode::CalculateScore(int mod, int64_t nBlockHeight)
+uint256 CMasterNode::CalculateScore(int64_t nBlockHeight)
 {
+    
     if(pindexBest == NULL) return 0;
 
     uint256 hash = 0;
@@ -592,8 +632,14 @@ uint256 CMasterNode::CalculateScore(int mod, int64_t nBlockHeight)
 
     if(!GetBlockHash(hash, nBlockHeight)) return 0;
 
-    uint256 hash2 = Hash(BEGIN(hash), END(hash));
-    uint256 hash3 = Hash(BEGIN(hash), END(aux));
+    CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+    ss << hash;
+    uint256 hash2 = ss.GetHash();
+
+    CHashWriter ss2(SER_GETHASH, PROTOCOL_VERSION);
+    ss2 << hash;
+    ss2 << aux;
+    uint256 hash3 = ss2.GetHash();
 
     uint256 r = (hash3 > hash2 ? hash3 - hash2 : hash2 - hash3);
 

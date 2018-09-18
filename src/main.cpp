@@ -3641,13 +3641,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         CAddress addrFrom;
         uint64_t nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
-        // REMOVE IN NEXT UPDATE
-        // this is a temporary patch to remove < V3.1.0.0 wallets
-        int min_peer_proto_version = MIN_PEER_PROTO_VERSION;
-        if (nBestHeight >= V3_START_BLOCK) {
-            min_peer_proto_version = PROTOCOL_VERSION;
-        }
-        if (pfrom->nVersion < min_peer_proto_version)
+        if (pfrom->nVersion < MIN_PEER_PROTO_VERSION)
         {
             // disconnect from peers older than this proto version
             LogPrintf("partner %s using obsolete version %i; disconnecting\n", pfrom->addr.ToString(), pfrom->nVersion);

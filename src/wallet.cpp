@@ -34,6 +34,7 @@ int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
 
 static unsigned int GetStakeSplitAge() { return 9 * 24 * 60 * 60; }
+static int64_t GetStakeSplitAmount() { return 100000 * COIN; }
 static int64_t GetStakeCombineThreshold() { return 10000 * COIN; }
 
 int64_t gcd(int64_t n,int64_t m) { return m == 0 ? n : gcd(m, n % m); }
@@ -1515,6 +1516,36 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
     }
 }
 
+// check to see if the coins earned masternode rewards
+// this will prevent unfair payments on masternode owners
+// attempting to also earn POS rewards
+static bool HasMasternodePayment(CTxOut vout, int nDepth) {
+    // only check a maximum of 10 000 blocks so we don't get stuck here for too long
+    nDepth = min(nDepth, 10000);
+    if (vout.nValue == MASTERNODE_COLLATERAL_V2) {
+        CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
+        for (int n = 0; n < nDepth; n++) {
+            CBlock block;
+            if (block.ReadFromDisk(pblockindex)) {
+                if (block.HasMasternodePayment()) {
+                    CScript payee;
+                    if (block.vtx[1].vout.size() == 3) {
+                        payee = block.vtx[1].vout[2].scriptPubKey;
+                    } else if (block.vtx[1].vout.size() == 4) {
+                        payee = block.vtx[1].vout[3].scriptPubKey;
+                    }
+                    if (vout.scriptPubKey == payee) {
+                        return true;
+                    }
+                }
+            }
+            pblockindex = pblockindex->pprev;  
+        }
+    }
+
+    return false;
+}
+
 void CWallet::AvailableCoinsForStaking(vector<COutput>& vCoins, unsigned int nSpendTime) const
 {
     vCoins.clear();
@@ -1537,7 +1568,7 @@ void CWallet::AvailableCoinsForStaking(vector<COutput>& vCoins, unsigned int nSp
                 continue;
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++)
-                if (!IsLockedCoin((*it).first,i) && !(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) && pcoin->vout[i].nValue >= nMinimumInputValue)
+                if (!IsLockedCoin((*it).first,i) && !(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) && pcoin->vout[i].nValue >= nMinimumInputValue && !HasMasternodePayment(pcoin->vout[i], nDepth))
                     vCoins.push_back(COutput(pcoin, i, nDepth, true));
         }
     }
@@ -3452,7 +3483,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                 vwtxPrev.push_back(pcoin.first);
                 txNew.vout.push_back(CTxOut(0, scriptPubKeyOut));
 
-                if (GetWeight(nBlockTime, (int64_t)txNew.nTime) < GetStakeSplitAge())
+                if (GetWeight(nBlockTime, (int64_t)txNew.nTime) < GetStakeSplitAge() || nCredit > GetStakeSplitAmount())
                     txNew.vout.push_back(CTxOut(0, scriptPubKeyOut)); //split stake
                 LogPrint("coinstake", "CreateCoinStake : added kernel type=%d\n", whichType);
                 fKernelFound = true;
@@ -3525,28 +3556,15 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     // Masternode Payments
     int payments = 1;
     // start masternode payments
-    bool bMasterNodePayment = true; // note was false, set true to test
-
-    if (Params().NetworkID() == CChainParams::TESTNET){
-        if (GetTime() > START_MASTERNODE_PAYMENTS_TESTNET)
-            bMasterNodePayment = true;
-    } else {
-        if (GetTime() > START_MASTERNODE_PAYMENTS)
-            bMasterNodePayment = true;
-    }
-
     CScript payee;
     bool hasPayment = true;
-    if(bMasterNodePayment) {
-        //spork
-        if(!masternodePayments.GetBlockPayee(nHeight, payee)){
-            int winningNode = GetCurrentMasterNode(1);
-                if(winningNode >= 0){
-                    payee = GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
-                } else {
-                    LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
-                    hasPayment = false;
-                }
+    if(!masternodePayments.GetBlockPayee(nHeight, payee)) {
+        int winningNode = GetCurrentMasterNode();
+        if(winningNode >= 0){
+            payee = GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
+        } else {
+            LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
+            hasPayment = false;
         }
     }
 

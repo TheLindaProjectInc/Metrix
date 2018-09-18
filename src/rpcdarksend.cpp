@@ -518,7 +518,7 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "current")
     {
-        int winner = GetCurrentMasterNode(1);
+        int winner = GetCurrentMasterNode();
         if(winner >= 0) {
             return vecMasternodes[winner].addr.ToString().c_str();
         }
