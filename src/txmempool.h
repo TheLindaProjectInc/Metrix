@@ -7,6 +7,8 @@
 
 #include "core.h"
 
+class CCoins;
+
 /*
  * CTxMemPool stores valid-according-to-the-current-best-chain
  * transactions that may be included in the next block.
@@ -34,6 +36,7 @@ public:
     bool removeConflicts(const CTransaction &tx);
     void clear();
     void queryHashes(std::vector<uint256>& vtxid);
+    void pruneSpent(const uint256& hash, CCoins &coins);
     unsigned int GetTransactionsUpdated() const;
     void AddTransactionsUpdated(unsigned int n);
 
@@ -49,7 +52,7 @@ public:
         return (mapTx.count(hash) != 0);
     }
 
-    bool lookup(uint256 hash, CTransaction& result) const;
+    CTransaction lookup(uint256 hash) const;
 };
 
 #endif /* BITCOIN_TXMEMPOOL_H */

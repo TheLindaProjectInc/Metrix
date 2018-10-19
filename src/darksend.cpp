@@ -274,8 +274,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
 
                 CTransaction tx2;
                 uint256 hash;
-                //if(GetTransaction(i.prevout.hash, tx2, hash, true)){
-		if(GetTransaction(i.prevout.hash, tx2, hash)){
+                if(GetTransaction(i.prevout.hash, tx2, hash, true)) {
                     if(tx2.vout.size() > i.prevout.n) {
                         nValueIn += tx2.vout[i.prevout.n].nValue;
                     }
@@ -306,9 +305,8 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
                 return;
             }
 
-            //if(!AcceptableInputs(mempool, state, tx)){
             bool pfMissingInputs = false;
-	    if(!AcceptableInputs(mempool, tx, false, &pfMissingInputs)){
+	        if(!AcceptableInputs(mempool, state, tx, false, &pfMissingInputs)) {
                 LogPrintf("dsi -- transaction not valid! \n");
                 error = _("Transaction not valid.");
                 pfrom->PushMessage("dssu", darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_REJECTED, error);
@@ -951,8 +949,7 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     BOOST_FOREACH(const CTxIn i, txCollateral.vin){
         CTransaction tx2;
         uint256 hash;
-        //if(GetTransaction(i.prevout.hash, tx2, hash, true)){
-	if(GetTransaction(i.prevout.hash, tx2, hash)){
+        if(GetTransaction(i.prevout.hash, tx2, hash, true)) {
             if(tx2.vout.size() > i.prevout.n) {
                 nValueIn += tx2.vout[i.prevout.n].nValue;
             }
@@ -976,9 +973,8 @@ bool CDarkSendPool::IsCollateralValid(const CTransaction& txCollateral){
     if(fDebug) LogPrintf("CDarkSendPool::IsCollateralValid %s\n", txCollateral.ToString().c_str());
 
     CValidationState state;
-    //if(!AcceptableInputs(mempool, state, txCollateral)){
     bool pfMissingInputs = false;
-    if(!AcceptableInputs(mempool, txCollateral, false, &pfMissingInputs)){
+    if(!AcceptableInputs(mempool, state, txCollateral, false, &pfMissingInputs)){
         if(fDebug) LogPrintf ("CDarkSendPool::IsCollateralValid - didn't pass IsAcceptable\n");
         return false;
     }
@@ -1157,9 +1153,8 @@ void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<
             if(fDebug) LogPrintf("dsi -- tx in %s\n", i.ToString().c_str());
         }
 
-        //if(!AcceptableInputs(mempool, state, tx)){
-	bool pfMissingInputs = false;
-	if(!AcceptableInputs(mempool, tx, false, &pfMissingInputs)){
+	    bool pfMissingInputs = false;
+	    if(!AcceptableInputs(mempool, state, tx, false, &pfMissingInputs)){
             LogPrintf("dsi -- transaction not valid! %s \n", tx.ToString().c_str());
             return;
         }
@@ -2020,8 +2015,7 @@ bool CDarkSendSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey){
         nDarkSendCollateral = DARKSEND_COLLATERAL_V2;
     }
 
-    //if(GetTransaction(vin.prevout.hash, txVin, hash, true)){
-    if(GetTransaction(vin.prevout.hash, txVin, hash))
+    if(GetTransaction(vin.prevout.hash, txVin, hash, true))
     {
         BOOST_FOREACH(CTxOut out, txVin.vout)
         {

@@ -22,6 +22,7 @@
 #include "addrman.h"
 #include "hash.h"
 #include "core.h"
+#include "bloom.h"
 
 class CNode;
 class CBlockIndex;
@@ -50,6 +51,8 @@ void StartNode(boost::thread_group& threadGroup);
 bool StopNode();
 void SocketSendData(CNode *pnode);
 
+typedef int NodeId;
+
 struct QueuedBlock {
     uint256 hash;
     int64_t nTime;  // Time of "getdata" request in microseconds.
@@ -63,6 +66,7 @@ struct CNodeSignals
 {
     boost::signals2::signal<bool (CNode*)> ProcessMessages;
     boost::signals2::signal<bool (CNode*, bool)> SendMessages;
+    boost::signals2::signal<void (NodeId, const CNode*)> InitializeNode;
     boost::signals2::signal<void (NodeId)> FinalizeNode;
 };
 
@@ -231,7 +235,6 @@ public:
     bool fNetworkNode;
     bool fSuccessfullyConnected;
     bool fDisconnect;
-    bool fShouldBan;
     // We use fRelayTxes for two purposes -
     // a) it allows us to not relay tx invs before receiving the peer's version message
     // b) the peer may tell us in their version message that we should not relay tx invs
@@ -241,6 +244,8 @@ public:
     CSemaphoreGrant grantOutbound;
     int nRefCount;
     NodeId id;
+    CCriticalSection cs_filter;
+    CBloomFilter* pfilter;
 protected:
 
     // Denial-of-service detection/prevention
@@ -250,7 +255,7 @@ protected:
 
 
     std::vector<std::string> vecRequestsFulfilled; //keep track of what client has asked for
-
+    
 public:
     int nMisbehavior;
     uint256 hashContinue;
@@ -264,7 +269,6 @@ public:
     mruset<CAddress> setAddrKnown;
     bool fGetAddr;
     std::set<uint256> setKnown;
-    uint256 hashCheckpointKnown; // ppcoin: known sent sync-checkpoint
 
     // inventory based relay
     mruset<CInv> setInventoryKnown;
@@ -310,7 +314,6 @@ public:
         fNetworkNode = false;
         fSuccessfullyConnected = false;
         fDisconnect = false;
-        fShouldBan = false;
         nRefCount = 0;
         nSendSize = 0;
         nSendOffset = 0;
@@ -321,7 +324,6 @@ public:
         fStartSync = false;
         fGetAddr = false;
         nMisbehavior = 0;
-        hashCheckpointKnown = 0;
         setInventoryKnown.max_size(SendBufferSize() / 1000);
         nPingNonceSent = 0;
         nPingUsecStart = 0;
@@ -331,6 +333,7 @@ public:
         nBlocksInFlight = 0;
         nLastBlockReceive = 0;
         nLastBlockProcess = 0;
+        pfilter = NULL;
 
         {
             LOCK(cs_nLastNodeId);
@@ -340,6 +343,8 @@ public:
         // Be shy and don't send version until we hear
         if (hSocket != INVALID_SOCKET && !fInbound)
             PushVersion();
+
+        GetNodeSignals().InitializeNode(GetId(), this);
     }
 
     ~CNode()
@@ -350,6 +355,8 @@ public:
             hSocket = INVALID_SOCKET;
         }
         GetNodeSignals().FinalizeNode(GetId());
+        if (pfilter)
+            delete pfilter;
     }
 
 private:
@@ -738,16 +745,6 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
     static uint64_t GetTotalBytesRecv();
     static uint64_t GetTotalBytesSent();
 };
-
-inline void RelayInventory(const CInv& inv)
-{
-    // Put on lists to offer to the other nodes
-    {
-        LOCK(cs_vNodes);
-        BOOST_FOREACH(CNode* pnode, vNodes)
-            pnode->PushInventory(inv);
-    }
-}
 
 class CTransaction;
 void RelayTransaction(const CTransaction& tx);

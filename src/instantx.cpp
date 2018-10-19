@@ -57,7 +57,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
 
         BOOST_FOREACH(const CTxOut o, tx.vout){
             if(!o.scriptPubKey.IsNormalPaymentScript()){
-                printf ("ProcessMessageInstantX::txlreq - Invalid Script %s\n", tx.ToString().c_str());
+                LogPrintf("ProcessMessageInstantX::txlreq - Invalid Script %s\n", tx.ToString().c_str());
                 return;
             }
         }
@@ -66,10 +66,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
 
         bool fMissingInputs = false;
         CValidationState state;
-
-
-        //if (AcceptToMemoryPool(mempool, state, tx, true, &fMissingInputs))
-        if (AcceptToMemoryPool(mempool, tx, true, &fMissingInputs))
+        if (AcceptToMemoryPool(mempool, state, tx, true, &fMissingInputs))
         {
             vector<CInv> vInv;
             vInv.push_back(inv);
@@ -185,8 +182,7 @@ bool IsIXTXValid(const CTransaction& txCollateral){
     BOOST_FOREACH(const CTxIn i, txCollateral.vin){
         CTransaction tx2;
         uint256 hash;
-        //if(GetTransaction(i.prevout.hash, tx2, hash, true)){
-	if(GetTransaction(i.prevout.hash, tx2, hash)){
+        if(GetTransaction(i.prevout.hash, tx2, hash, true)) {
             if(tx2.vout.size() > i.prevout.n) {
                 nValueIn += tx2.vout[i.prevout.n].nValue;
             }

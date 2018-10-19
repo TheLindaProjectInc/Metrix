@@ -498,8 +498,7 @@ bool CNode::Misbehaving(int howmuch)
 {
     if (addr.IsLocal())
     {
-        // MBK: Added some additional debugging information
-        LogPrintf("CNode::Misbehaving() -> Warning: Local node %s misbehaving (delta: %d)!\n", addrName, howmuch);
+        LogPrintf("Warning: Local node %s misbehaving (delta: %d)!\n", addrName.c_str(), howmuch);
         return false;
     }
 
@@ -507,7 +506,7 @@ bool CNode::Misbehaving(int howmuch)
     if (nMisbehavior >= GetArg("-banscore", 100))
     {
         int64_t banTime = GetTime()+GetArg("-bantime", 60*60*24);  // Default 24-hour ban
-        LogPrintf("CNode::Misbehaving() -> Misbehaving: %s howmuch=%d (%d -> %d) DISCONNECTING\n", addr.ToString(), howmuch, nMisbehavior-howmuch, nMisbehavior);
+        LogPrintf("Misbehaving: %s (%d -> %d) DISCONNECTING\n", addr.ToString().c_str(), nMisbehavior-howmuch, nMisbehavior);
         {
             LOCK(cs_setBanned);
             if (setBanned[addr] < banTime)
@@ -516,7 +515,7 @@ bool CNode::Misbehaving(int howmuch)
         CloseSocketDisconnect();
         return true;
     } else
-        LogPrintf("CNode::Misbehaving() -> Misbehaving: %s howmuch=%d (%d -> %d)\n", addr.ToString(), howmuch, nMisbehavior-howmuch, nMisbehavior);
+        LogPrintf("Misbehaving: %s (%d -> %d)\n", addr.ToString().c_str(), nMisbehavior-howmuch, nMisbehavior);
     return false;
 }
 
@@ -1772,8 +1771,14 @@ void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
         mapRelay.insert(std::make_pair(inv, ss));
         vRelayExpiration.push_back(std::make_pair(GetTime() + 15 * 60, inv));
     }
-
-    RelayInventory(inv);
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
+    if (pnode->pfilter)
+    {
+        if (pnode->pfilter->IsRelevantAndUpdate(tx, tx.GetHash()))
+            pnode->PushInventory(inv);
+    } else
+        pnode->PushInventory(inv);
 }
 
 void RelayTransactionLockReq(const CTransaction& tx, bool relayToAll)
