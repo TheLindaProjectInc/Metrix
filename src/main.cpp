@@ -1935,6 +1935,9 @@ bool CBlock::DisconnectBlock(CValidationState& state, CBlockIndex* pindex, CCoin
         }
     }
 
+    if (IsProofOfStake())
+        setStakeSeen.erase(GetProofOfStake());
+
     // move best block pointer to prevout block
     view.SetBestBlock(pindex->pprev);
 
@@ -2952,13 +2955,13 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                 // Duplicate stake allowed only when there is orphan child block
                 if (setStakeSeenOrphan.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash))
                     return error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock->GetProofOfStake().first.ToString(), pblock->GetProofOfStake().second, hash.ToString());
+                else
+                    setStakeSeenOrphan.insert(pblock->GetProofOfStake());
             }
             PruneOrphanBlocks();
             CBlock* pblock2 = new CBlock(*pblock);
             mapOrphanBlocks.insert(make_pair(hash, pblock2));
             mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
-            if (pblock->IsProofOfStake())
-                setStakeSeenOrphan.insert(pblock->GetProofOfStake());
 
             // Ask this guy to fill in what we're missing
             PushGetBlocks(pfrom, pindexBest, GetOrphanRoot(pblock2));
