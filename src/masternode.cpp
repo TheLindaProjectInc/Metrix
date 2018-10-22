@@ -162,14 +162,9 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         CValidationState state;
         CTransaction tx = CTransaction();
-        // MBK: Support collateral change based on block height
-        int64_t nTempTxOut = (MASTERNODE_COLLATERAL_V1 / COIN) - 1;
-        if(nBestHeight >= MASTERNODE_V2_START_BLOCK)
-        {
-            nTempTxOut = (MASTERNODE_COLLATERAL_V2 / COIN) - 1;
-        }
+        int64_t nTempTxOut = (MASTERNODE_COLLATERAL / COIN) - 1;
 
-        CTxOut vout = CTxOut(nTempTxOut/*29999999*/*COIN, darkSendPool.collateralPubKey);
+        CTxOut vout = CTxOut(nTempTxOut*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
         bool pfMissingInputs = false;
@@ -664,13 +659,8 @@ void CMasterNode::Check()
     if(!unitTest){
         CValidationState state;
         CTransaction tx = CTransaction();
-        // MBK: Support collateral change based on block height
-        int64_t nTempTxOut = (MASTERNODE_COLLATERAL_V1/COIN) - 1;
-        if(nBestHeight >= MASTERNODE_V2_START_BLOCK)
-        {
-            nTempTxOut = (MASTERNODE_COLLATERAL_V2/COIN) - 1;
-        }
-        CTxOut vout = CTxOut(nTempTxOut/*29999999*/*COIN, darkSendPool.collateralPubKey);
+        int64_t nTempTxOut = (MASTERNODE_COLLATERAL/COIN) - 1;
+        CTxOut vout = CTxOut(nTempTxOut*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
 

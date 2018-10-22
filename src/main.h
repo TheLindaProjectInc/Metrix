@@ -19,34 +19,25 @@
 #define START_MASTERNODE_PAYMENTS_TESTNET 1429738064
 #define START_MASTERNODE_PAYMENTS 1429738064
 
-static const int64_t DARKSEND_COLLATERAL_V1 = (30000000*COIN);
-static const int64_t DARKSEND_FEE_V1        = (0.0001*COIN);
-static const int64_t DARKSEND_POOL_MAX_V1   = (1111.99*COIN);
-
 static const int REWARD_START      = 51;
 static const int REWARD_HALVE      = 790115;
 static const int PREMINE_BLOCK     = 10;
 static const int FAIR_LAUNCH_BLOCK = 50;
 
 // MBK: Added globals to simplify future potential changes
-static const int64_t MASTERNODE_COLLATERAL_V1 = (30000000*COIN);
-static const int64_t MASTERNODE_COLLATERAL_V2 = (2000000*COIN);
+static const int64_t MASTERNODE_COLLATERAL    = (2000000*COIN);
 static const int64_t COIN_YEAR_REWARD_V2      = (99*CENT);
-static const int64_t DARKSEND_COLLATERAL_V2   = (2000000*COIN);
-static const int64_t DARKSEND_FEE_V2          = (0.01*COIN);
-static const int64_t DARKSEND_POOL_MAX_V2     = (1111.99*COIN);
+static const int64_t DARKSEND_FEE             = (0.01*COIN);
+static const int64_t DARKSEND_POOL_MAX        = (1111.99*COIN);
 // MBK: Following are block heights to begin V2 swap
 static const int POS_REWARD_V2_START_BLOCK    = 359930;  // ~03312018 (March 31, 2018)
 static const int POW_REWARD_V2_START_BLOCK    = 378230;  // ~04052018 (April 5, 2018)
 static const int TX_FEE_V2_INCREASE_BLOCK     = 378230;  // ~04052018 (April 5, 2018)
 static const int MASTERNODE_V2_START_BLOCK    = 378230;  // ~04052018 (April 5, 2018)
-static const int MASTERNODE_V2_STOP_BLOCK     = 1575000; // ~07012020 (July 1, 2020)
 static const int DARKSEND_V2_START_BLOCK      = 378230;  // ~04052018 (April 5, 2018)
 // MBK: Following define PoW/PoS reward parameters
 static const int POW_REWARD_V1_FULL         = 14150;
 static const int POW_REWARD_V2_FULL         = 13726; // ~3% reduction from V1 block reward
-static const int POW_REWARD_V1_HALF         = POW_REWARD_V1_FULL/2;
-static const int POW_REWARD_V2_HALF         = POW_REWARD_V2_FULL/2;
 // V3 block rewards
 static const int V3_START_BLOCK             = 580000; // (April 7, 2018)
 static const int64_t COIN_YEAR_REWARD_V3    = (50*CENT);

@@ -1502,7 +1502,7 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
 static bool HasMasternodePayment(CTxOut vout, int nDepth) {
     // only check a maximum of 10 000 blocks so we don't get stuck here for too long
     nDepth = min(nDepth, 10000);
-    if (vout.nValue == MASTERNODE_COLLATERAL_V2) {
+    if (vout.nValue == MASTERNODE_COLLATERAL) {
         CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
         for (int n = 0; n < nDepth; n++) {
             CBlock block;
@@ -2313,20 +2313,11 @@ bool CWallet::HasCollateralInputs() const
 
 bool CWallet::IsCollateralAmount(int64_t nInputAmount) const
 {
-    // MBK: Added support for block height darksend fee and collateral change
-    int64_t nDarkSendFee        = DARKSEND_FEE_V1;
-    int64_t nDarkSendCollateral = DARKSEND_COLLATERAL_V1;
-    if(nBestHeight >= DARKSEND_V2_START_BLOCK)
-    {
-        nDarkSendFee        = DARKSEND_FEE_V2;
-        nDarkSendCollateral = DARKSEND_COLLATERAL_V2;
-    }
-
-    return  nInputAmount == (nDarkSendCollateral/*DARKSEND_COLLATERAL*/ * 5)+nDarkSendFee/*DARKSEND_FEE*/ ||
-            nInputAmount == (nDarkSendCollateral/*DARKSEND_COLLATERAL*/ * 4)+nDarkSendFee/*DARKSEND_FEE*/ ||
-            nInputAmount == (nDarkSendCollateral/*DARKSEND_COLLATERAL*/ * 3)+nDarkSendFee/*DARKSEND_FEE*/ ||
-            nInputAmount == (nDarkSendCollateral/*DARKSEND_COLLATERAL*/ * 2)+nDarkSendFee/*DARKSEND_FEE*/ ||
-            nInputAmount == (nDarkSendCollateral/*DARKSEND_COLLATERAL*/ * 1)+nDarkSendFee/*DARKSEND_FEE*/;
+    return  nInputAmount == (MASTERNODE_COLLATERAL * 5)+DARKSEND_FEE ||
+            nInputAmount == (MASTERNODE_COLLATERAL * 4)+DARKSEND_FEE ||
+            nInputAmount == (MASTERNODE_COLLATERAL * 3)+DARKSEND_FEE ||
+            nInputAmount == (MASTERNODE_COLLATERAL * 2)+DARKSEND_FEE ||
+            nInputAmount == (MASTERNODE_COLLATERAL * 1)+DARKSEND_FEE;
 }
 
 bool CWallet::SelectCoinsWithoutDenomination(int64_t nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64_t& nValueRet) const
@@ -2374,17 +2365,10 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
 
     BOOST_FOREACH(CTxIn v, vCoinsCollateral)
         txCollateral.vin.push_back(v);
-    
-    // MBK: Added support for block height darksend fee change  
-    int64_t nDarkSendCollateral = DARKSEND_COLLATERAL_V1;
-    if(nBestHeight >= DARKSEND_V2_START_BLOCK) 
-    {
-        nDarkSendCollateral = DARKSEND_COLLATERAL_V2;
-    }
 
-    if(nValueIn2 - nDarkSendCollateral/*DARKSEND_COLLATERAL*/ - nFeeRet > 0) {
+    if(nValueIn2 - MASTERNODE_COLLATERAL - nFeeRet > 0) {
         //pay collateral charge in fees
-        CTxOut vout3 = CTxOut(nValueIn2 - nDarkSendCollateral/*DARKSEND_COLLATERAL*/, scriptChange);
+        CTxOut vout3 = CTxOut(nValueIn2 - MASTERNODE_COLLATERAL, scriptChange);
         txCollateral.vout.push_back(vout3);
     }
 
@@ -3756,7 +3740,7 @@ string CWallet::PrepareDarksendDenominate(int minRounds, int maxRounds)
     */
     // MBK: Added support for block height darksend fee change 
     if(minRounds >= 0){
-        if (!SelectCoinsByDenominations(darkSendPool.sessionDenom, 0.1*COIN,(nBestHeight >= DARKSEND_V2_START_BLOCK ? DARKSEND_POOL_MAX_V2 : DARKSEND_POOL_MAX_V1)/*DARKSEND_POOL_MAX*/, vCoins, vCoins2, nValueIn, minRounds, maxRounds))
+        if (!SelectCoinsByDenominations(darkSendPool.sessionDenom, 0.1*COIN,DARKSEND_POOL_MAX, vCoins, vCoins2, nValueIn, minRounds, maxRounds))
             return _("Insufficient funds");
     }
 

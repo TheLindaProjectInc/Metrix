@@ -388,31 +388,9 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode()
     // Filter
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        if(nBestHeight < MASTERNODE_V2_START_BLOCK)
-        {
-            // MBK: Have note reached blockheight to swap 2m/30m masternode activation (this may change in the future)
-            if(out.tx->vout[out.i].nValue == MASTERNODE_COLLATERAL_V1)
-            { 
-                filteredCoins.push_back(out);
-            }
-
-        }
-        else if(nBestHeight >= MASTERNODE_V2_STOP_BLOCK)
-        {
-            // MBK: Have reached the blockheight when masternodes no longer activate (this may change in the future)
-            LogPrintf("CActiveMasternode::SelectCoinsMasternode() -> Cannot select coins, Masternode activation has ended.");
-            return filteredCoins;
-        }
-        else
-        {
-            // MBK: Have reached the blockheight when swap to 2m masternode activation starts
-            if(out.tx->vout[out.i].nValue == MASTERNODE_COLLATERAL_V2)
-            { 
-                filteredCoins.push_back(out);
-            }
-
-        }
-
+        // MBK: Have reached the blockheight when swap to 2m masternode activation starts
+        if(out.tx->vout[out.i].nValue == MASTERNODE_COLLATERAL)
+            filteredCoins.push_back(out);
     }
 
     return filteredCoins;

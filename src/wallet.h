@@ -849,7 +849,7 @@ public:
     int Priority() const
     {
         // MBK: Added support for block height darksend fee change
-        if(tx->vout[i].nValue == (nBestHeight >= DARKSEND_V2_START_BLOCK ? DARKSEND_FEE_V2 : DARKSEND_FEE_V1)) return -20000;
+        if(tx->vout[i].nValue == DARKSEND_FEE) return -20000;
         BOOST_FOREACH(int64_t d, darkSendDenominations)
             if(tx->vout[i].nValue == d) return 10000;
         if(tx->vout[i].nValue < 1*COIN) return 20000;
