@@ -847,9 +847,15 @@ bool CTransaction::CheckTransaction(CValidationState &state) const
 
 int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize, enum GetMinFee_mode mode, unsigned int nBytes)
 {
+    int64_t nMinTxFee = CTransaction::nMinTxFee;
+    int64_t nMinRelayTxFee = CTransaction::nMinRelayTxFee;
+    if(nBestHeight < TX_FEE_V2_INCREASE_BLOCK) {
+        nMinTxFee = MIN_TX_FEE_V1;
+        nMinRelayTxFee = MIN_RELAY_TX_FEE_V1;
+    }
 
     // Base fee is either nMinTxFee or nMinRelayTxFee
-    int64_t nBaseFee = (mode == GMF_RELAY) ? CTransaction::nMinRelayTxFee : CTransaction::nMinTxFee;
+    int64_t nBaseFee = (mode == GMF_RELAY) ? nMinRelayTxFee : nMinTxFee;
 
     unsigned int nNewBlockSize = nBlockSize + nBytes;
     int64_t nMinFee = (1 + (int64_t)nBytes / 1000) * nBaseFee;
@@ -1424,7 +1430,7 @@ int64_t GetProofOfWorkReward(int64_t nFees, unsigned int nHeight)
     {
         nSubsidy = 500000000 * COIN; //  PREMINE 10 BLOCKS
     }
-        else if(pindexBest->nHeight < FAIR_LAUNCH_BLOCK)
+    else if(pindexBest->nHeight < FAIR_LAUNCH_BLOCK)
     {
         nSubsidy = 0 * COIN; // No reward block to prevent an instamine
     }
@@ -4867,7 +4873,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         if (!pto->fDisconnect && pto->nBlocksInFlight && 
             pto->nLastBlockReceive < pto->nLastBlockProcess - BLOCK_DOWNLOAD_TIMEOUT*1000000 && 
             pto->vBlocksInFlight.front().nTime < pto->nLastBlockProcess - 2*BLOCK_DOWNLOAD_TIMEOUT*1000000) {
-            LogPrintf("Peer %s is stalling block download, disconnecting\n", pto->addr.ToString().c_str());
+            LogPrint("sync", "Peer %s is stalling block download, disconnecting\n", pto->addr.ToString().c_str());
             pto->fDisconnect = true;
         }
 
@@ -4880,7 +4886,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             CInv bCInv(MSG_BLOCK, hash);
             vGetData.push_back(CInv(MSG_BLOCK, hash));
             MarkBlockAsInFlight(pto->GetId(), hash);
-            LogPrintf("Requesting block %s from %s\n", hash.ToString().c_str(), pto->addr.ToString().c_str());
+            LogPrint("sync", "Requesting block %s from %s\n", hash.ToString().c_str(), pto->addr.ToString().c_str());
             if (vGetData.size() >= 1000)
             {
                 pto->PushMessage("getdata", vGetData);
