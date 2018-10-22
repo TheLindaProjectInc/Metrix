@@ -1422,7 +1422,7 @@ static CBigNum GetProofOfStakeLimit(int nHeight)
 }
 
 // miner's coin base reward
-int64_t GetProofOfWorkReward(int64_t nFees, unsigned int nHeight)
+int64_t GetProofOfWorkReward(int64_t nFees)
 {
     int64_t nSubsidy = 0;
         
@@ -1432,50 +1432,22 @@ int64_t GetProofOfWorkReward(int64_t nFees, unsigned int nHeight)
     }
     else if(pindexBest->nHeight < FAIR_LAUNCH_BLOCK)
     {
-        nSubsidy = 0 * COIN; // No reward block to prevent an instamine
+        nSubsidy = 0; // No reward block to prevent an instamine
     }
-    else if(pindexBest->nHeight >= REWARD_START)
+    else if(pindexBest->nHeight >= REWARD_START && pindexBest->nHeight < POW_REWARD_V2_START_BLOCK)
     {
-        nSubsidy = 14150 * COIN;
-    }
-    else if(pindexBest->nHeight >= REWARD_HALVE)
-    {
-        nSubsidy = 7075 * COIN;
-    }
-
-    LogPrint("creation", "GetProofOfWorkReward() : create=%s nSubsidy=%d\n", FormatMoney(nSubsidy), nSubsidy);
-
-    return nSubsidy + nFees;
-}
-
-// miner's coin base reward
-// MBK: Update PoW reward structure to reflect reduction to help combat inflation
-int64_t GetProofOfWorkRewardV2(int64_t nFees, unsigned int nHeight)
-{
-    int64_t nSubsidy = 0;
-
-    if(pindexBest->nHeight < POW_REWARD_V2_START_BLOCK)
-    {
-        // MBK: PoW reward change starts after wallet release so until then return current V1 reward
         nSubsidy = POW_REWARD_V1_FULL * COIN;
     }
-    else if(pindexBest->nHeight >= POW_REWARD_V2_START_BLOCK)
+    else if(pindexBest->nHeight >= POW_REWARD_V2_START_BLOCK && pindexBest->nHeight <= Params().LastPOWBlock())
     {
-        // MBK: Have reached blockheight to begin reward PoW reward burn
         nSubsidy = POW_REWARD_V2_FULL * COIN;
     }
-    else if(pindexBest->nHeight >= REWARD_HALVE)
+    else
     {
-        // MBK: Have reached the blockheight to half PoW reward on blocks
-        nSubsidy = POW_REWARD_V2_HALF * COIN;
-    }
-    else if(pindexBest->nHeight > V2_EMISSION_CAP_START_BLOCK)
-    {
-        // MBK: Have reached the blockheight where rewards are finished
         nSubsidy = 0;
     }
 
-    LogPrint("creation", "GetProofOfWorkRewardV2() : create=%d(%s)\n", nSubsidy, FormatMoney(nSubsidy));
+    LogPrint("creation", "GetProofOfWorkReward() : create=%d(%s)\n", nSubsidy, FormatMoney(nSubsidy));
     
     return nSubsidy + nFees;
 }
@@ -2051,11 +2023,7 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
     }
 
     if (IsProofOfWork()) {
-        int64_t nReward = 0;
-        if(pindex->nHeight >= POS_REWARD_V2_START_BLOCK)
-            nReward = GetProofOfWorkRewardV2(nFees, pindex->nHeight);
-        else
-            nReward = GetProofOfWorkReward(nFees, pindex->nHeight);
+        int64_t nReward = GetProofOfWorkReward(nFees);
         
         // Check coinbase reward
         if (vtx[0].GetValueOut() > nReward)

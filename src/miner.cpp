@@ -351,7 +351,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
 // >Linda<
         if (!fProofOfStake)
         {
-            int64_t nReward = GetProofOfWorkRewardV2(nFees, nHeight);
+            int64_t nReward = GetProofOfWorkReward(nFees);
             pblock->vtx[0].vout[0].nValue = nReward;
         }
 
