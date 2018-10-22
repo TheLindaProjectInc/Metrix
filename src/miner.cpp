@@ -157,16 +157,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
     unsigned int nBlockMinSize = GetArg("-blockminsize", 0);
     nBlockMinSize = std::min(nBlockMaxSize, nBlockMinSize);
 
-    // Fee-per-kilobyte amount considered the same as "free"
-    // Be careful setting this: if you set it to zero then
-    // a transaction spammer can cheaply fill blocks using
-    // 1-satoshi-fee transactions. It should be set above the real
-    // cost to you of processing a transaction.
-    // MBK: Support the tx fee increase at blockheight
-    int64_t nMinTxFee = (nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_TX_FEE_V2 : MIN_TX_FEE_V1);
-    if (mapArgs.count("-mintxfee"))
-        ParseMoney(mapArgs["-mintxfee"], nMinTxFee);
-
     pblock->nBits = GetNextTargetRequired(pindexPrev, fProofOfStake);
 
 
@@ -197,8 +187,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
             BOOST_FOREACH(const CTxIn& txin, tx.vin)
             {
                 // Read prev transaction
-                CCoins coins;
-                if (!view.GetCoins(txin.prevout.hash, coins))
+                if (!view.HaveCoins(txin.prevout.hash))
                 {
                     // This should never happen; all transactions in the memory
                     // pool should connect to either transactions in the chain
@@ -225,6 +214,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
                     nTotalIn += mempool.mapTx[txin.prevout.hash].vout[txin.prevout.n].nValue;
                     continue;
                 }
+                const CCoins &coins = view.GetCoins(txin.prevout.hash);
                 int64_t nValueIn = coins.vout[txin.prevout.n].nValue;
                 nTotalIn += nValueIn;
 
@@ -270,9 +260,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
             std::pop_heap(vecPriority.begin(), vecPriority.end(), comparer);
             vecPriority.pop_back();
 
-            // second layer cached modifications just for this transaction
-            CCoinsViewCache viewTemp(view, true);
-
             // Size limits
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
             if (nBlockSize + nTxSize >= nBlockMaxSize)
@@ -291,7 +278,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
             int64_t nMinFee = GetMinFee(tx, nBlockSize, GMF_BLOCK);
 
             // Skip free transactions if we're past the minimum block size:
-            if (fSortedByFee && (dFeePerKb < nMinTxFee) && (nBlockSize + nTxSize >= nBlockMinSize))
+            if (fSortedByFee && (dFeePerKb < CTransaction::nMinTxFee) && (nBlockSize + nTxSize >= nBlockMinSize))
                 continue;
 
             // Prioritize by fee once past the priority size or we run out of high-priority
@@ -304,28 +291,24 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
                 std::make_heap(vecPriority.begin(), vecPriority.end(), comparer);
             }
 
-            if (!tx.HaveInputs(viewTemp))
+            if (!tx.HaveInputs(view))
                 continue;
 
-            int64_t nTxFees = tx.GetValueIn(viewTemp)-tx.GetValueOut();
+            int64_t nTxFees = tx.GetValueIn(view)-tx.GetValueOut();
             if (nTxFees < nMinFee)
                 continue;
 
-            nTxSigOps += GetP2SHSigOpCount(tx, viewTemp);
+            nTxSigOps += GetP2SHSigOpCount(tx, view);
             if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
                 continue;
 
             CValidationState state;
 
-            if (!tx.CheckInputs(state, viewTemp, true, SCRIPT_VERIFY_P2SH))
+            if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH))
                 continue;
             CTxUndo txundo;
             uint256 hash = tx.GetHash();
-            if (!tx.UpdateCoins(state, viewTemp, txundo, pindexPrev->nHeight+1, hash))
-                continue;
-
-            // push changes from the second layer cache to the first one
-            viewTemp.Flush();
+            tx.UpdateCoins(state, view, txundo, pindexPrev->nHeight+1, hash);
 
             // Added
             pblock->vtx.push_back(tx);

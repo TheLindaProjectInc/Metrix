@@ -32,8 +32,6 @@ static const int FAIR_LAUNCH_BLOCK = 50;
 static const int64_t MASTERNODE_COLLATERAL_V1 = (30000000*COIN);
 static const int64_t MASTERNODE_COLLATERAL_V2 = (2000000*COIN);
 static const int64_t COIN_YEAR_REWARD_V2      = (99*CENT);
-static const int64_t MIN_TX_FEE_V2            = 100000; 
-static const int64_t MIN_RELAY_TX_FEE_V2      = MIN_TX_FEE_V2;
 static const int64_t DARKSEND_COLLATERAL_V2   = (2000000*COIN);
 static const int64_t DARKSEND_FEE_V2          = (0.01*COIN);
 static const int64_t DARKSEND_POOL_MAX_V2     = (1111.99*COIN);
@@ -120,10 +118,6 @@ static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; // 16 MiB
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 /** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
 static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
-/** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-static const int64_t MIN_TX_FEE_V1 = 10000; 
-/** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-static const int64_t MIN_RELAY_TX_FEE_V1 = MIN_TX_FEE_V1;
 /** No amount larger than this (in satoshi) is valid */
 static const int64_t MAX_MONEY = 50000000000 * COIN; // 50B coins
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
@@ -136,9 +130,6 @@ static const int MAX_SCRIPTCHECK_THREADS = 16;
 static const int MAX_BLOCKS_IN_TRANSIT_PER_PEER = 128;
 /** Timeout in seconds before considering a block download peer unresponsive. */
 static const unsigned int BLOCK_DOWNLOAD_TIMEOUT = 60;
-
-/** default for -maxconnections, maximum number of connected peers */
-static const unsigned int DEFAULT_MAX_CONNECTIONS = 256;
 
 static const int64_t COIN_YEAR_REWARD = 99 * CENT; // 99% per year
 static const int POS_START_BLOCK = 25;
@@ -373,6 +364,8 @@ int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize = 1, enum GetM
 class CTransaction
 {
 public:
+    static int64_t nMinTxFee;
+    static int64_t nMinRelayTxFee;
     static const int CURRENT_VERSION=1;
     int nVersion;
     unsigned int nTime;
@@ -495,7 +488,7 @@ public:
                      std::vector<CScriptCheck> *pvChecks = NULL) const;
 
     // Apply the effects of this transaction on the UTXO set represented by view
-    bool UpdateCoins(CValidationState &state, CCoinsViewCache &view, CTxUndo &txundo, int nHeight, const uint256 &txhash) const;
+    void UpdateCoins(CValidationState &state, CCoinsViewCache &view, CTxUndo &txundo, int nHeight, const uint256 &txhash) const;
 
     // Context-independent validity checks
     bool CheckTransaction(CValidationState &state) const;
@@ -2140,22 +2133,26 @@ protected:
 struct CCoinsStats
 {
     int nHeight;
+    uint256 hashBlock;
     uint64_t nTransactions;
     uint64_t nTransactionOutputs;
     uint64_t nSerializedSize;
-     CCoinsStats() : nHeight(0), nTransactions(0), nTransactionOutputs(0), nSerializedSize(0) {}
+    uint256 hashSerialized;
+    uint64_t nTotalAmount;
+
+    CCoinsStats() : nHeight(0), hashBlock(0), nTransactions(0), nTransactionOutputs(0), nSerializedSize(0), hashSerialized(0), nTotalAmount(0) {}
 };
  /** Abstract view on the open txout dataset. */
 class CCoinsView
 {
 public:
     // Retrieve the CCoins (unspent transaction outputs) for a given txid
-    virtual bool GetCoins(uint256 txid, CCoins &coins);
+    virtual bool GetCoins(const uint256 &txid, CCoins &coins);
      // Modify the CCoins for a given txid
-    virtual bool SetCoins(uint256 txid, const CCoins &coins);
+    virtual bool SetCoins(const uint256 &txid, const CCoins &coins);
      // Just check whether we have data for a given txid.
     // This may (but cannot always) return true for fully spent transactions
-    virtual bool HaveCoins(uint256 txid);
+    virtual bool HaveCoins(const uint256 &txid);
      // Retrieve the block index whose state this CCoinsView currently represents
     virtual CBlockIndex *GetBestBlock();
      // Modify the currently active block index
@@ -2174,9 +2171,9 @@ protected:
     CCoinsView *base;
  public:
     CCoinsViewBacked(CCoinsView &viewIn);
-    bool GetCoins(uint256 txid, CCoins &coins);
-    bool SetCoins(uint256 txid, const CCoins &coins);
-    bool HaveCoins(uint256 txid);
+    bool GetCoins(const uint256 &txid, CCoins &coins);
+    bool SetCoins(const uint256 &txid, const CCoins &coins);
+    bool HaveCoins(const uint256 &txid);
     CBlockIndex *GetBestBlock();
     bool SetBestBlock(CBlockIndex *pindex);
     void SetBackend(CCoinsView &viewIn);
@@ -2192,23 +2189,23 @@ protected:
  public:
     CCoinsViewCache(CCoinsView &baseIn, bool fDummy = false);
      // Standard CCoinsView methods
-    bool GetCoins(uint256 txid, CCoins &coins);
-    bool SetCoins(uint256 txid, const CCoins &coins);
-    bool HaveCoins(uint256 txid);
+    bool GetCoins(const uint256 &txid, CCoins &coins);
+    bool SetCoins(const uint256 &txid, const CCoins &coins);
+    bool HaveCoins(const uint256 &txid);
     CBlockIndex *GetBestBlock();
     bool SetBestBlock(CBlockIndex *pindex);
     bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
      // Return a modifiable reference to a CCoins. Check HaveCoins first.
     // Many methods explicitly require a CCoinsViewCache because of this method, to reduce
     // copying.
-    CCoins &GetCoins(uint256 txid);
+    CCoins &GetCoins(const uint256 &txid);
      // Push the modifications applied to this cache to its base.
     // Failure to call this method before destruction will cause the changes to be forgotten.
     bool Flush();
      // Calculate the size of the cache (in number of transactions)
     unsigned int GetCacheSize();
  private:
-    std::map<uint256,CCoins>::iterator FetchCoins(uint256 txid);
+    std::map<uint256,CCoins>::iterator FetchCoins(const uint256 &txid);
 };
  /** CCoinsView that brings transactions from a memorypool into view.
     It does not check for spendings by memory pool transactions. */
@@ -2218,8 +2215,8 @@ protected:
     CTxMemPool &mempool;
  public:
     CCoinsViewMemPool(CCoinsView &baseIn, CTxMemPool &mempoolIn);
-    bool GetCoins(uint256 txid, CCoins &coins);
-    bool HaveCoins(uint256 txid);
+    bool GetCoins(const uint256 &txid, CCoins &coins);
+    bool HaveCoins(const uint256 &txid);
 };
  /** Global variable that points to the active CCoinsView (protected by cs_main) */
 extern CCoinsViewCache *pcoinsTip;

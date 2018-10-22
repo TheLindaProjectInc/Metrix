@@ -40,6 +40,14 @@ using namespace boost;
 CWallet* pwalletMain = NULL;
 #endif
 CClientUIInterface uiInterface;
+#ifdef WIN32
+// Win32 LevelDB doesn't use filedescriptors, and the ones used for
+// accessing block files, don't count towards to fd_set size limit
+// anyway.
+#define MIN_CORE_FILEDESCRIPTORS 0
+#else
+#define MIN_CORE_FILEDESCRIPTORS 150
+#endif
 bool fConfChange;
 bool fMinimizeCoinAge;
 unsigned int nNodeLifespan;
@@ -194,7 +202,7 @@ std::string HelpMessage()
     strUsage += "  -tor=<ip:port>         " + _("Use proxy to reach tor hidden services (default: same as -proxy)") + "\n";
     strUsage += "  -dns                   " + _("Allow DNS lookups for -addnode, -seednode and -connect") + "\n";
     strUsage += "  -port=<port>           " + _("Listen for connections on <port> (default: 15714 or testnet: 25714)") + "\n";
-    strUsage += "  -maxconnections=<n>    " + _("Maintain at most <n> connections to peers (default: 125)") + "\n";
+    strUsage += "  -maxconnections=<n>    " + _("Maintain at most <n> connections to peers (default: 256)") + "\n";
     strUsage += "  -maxorphantx=<n>       " + strprintf(_("Keep at most <n> unconnectable transactions in memory (default: %u)"), DEFAULT_MAX_ORPHAN_TRANSACTIONS) + "\n";
     strUsage += "  -addnode=<ip>          " + _("Add a node to connect to and attempt to keep the connection open") + "\n";
     strUsage += "  -connect=<ip>          " + _("Connect only to the specified node(s)") + "\n";
@@ -339,7 +347,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
     if (fReindex) {
         CImportingNow imp;
         int nFile = 0;
-        while (!fRequestShutdown) {
+        while (true) {
             CDiskBlockPos pos(nFile, 0);
             FILE *file = OpenBlockFile(pos, true);
             if (!file)
@@ -348,17 +356,15 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
             LoadExternalBlockFile(file, &pos);
             nFile++;
         }
-        if (!fRequestShutdown) {
-            pblocktree->WriteReindexing(false);
-            fReindex = false;
-            LogPrintf("Reindexing finished\n");
-            // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
-            InitBlockIndex();
-        }
+        pblocktree->WriteReindexing(false);
+        fReindex = false;
+        LogPrintf("Reindexing finished\n");
+        // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
+        InitBlockIndex();
     }
      // hardcoded $DATADIR/bootstrap.dat
     filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
-    if (filesystem::exists(pathBootstrap) && !fRequestShutdown) {
+    if (filesystem::exists(pathBootstrap)) {
         FILE *file = fopen(pathBootstrap.string().c_str(), "rb");
         if (file) {
             CImportingNow imp;
@@ -370,8 +376,6 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
     }
      // -loadblock=
     BOOST_FOREACH(boost::filesystem::path &path, vImportFiles) {
-        if (fRequestShutdown)
-            break;
         FILE *file = fopen(path.string().c_str(), "rb");
         if (file) {
             CImportingNow imp;
@@ -489,6 +493,15 @@ bool AppInit2(boost::thread_group& threadGroup)
             LogPrintf("AppInit2 : parameter interaction: -salvagewallet=1 -> setting -rescan=1\n");
     }
 
+    // Make sure enough file descriptors are available
+    int nBind = std::max((int)mapArgs.count("-bind"), 1);
+    nMaxConnections = GetArg("-maxconnections", 256);
+    nMaxConnections = max(min(nMaxConnections, FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS), 0);
+    int nFD = RaiseFileDescriptorLimit(nMaxConnections + MIN_CORE_FILEDESCRIPTORS);
+    if (nFD < MIN_CORE_FILEDESCRIPTORS)
+        return InitError(_("Not enough file descriptors available."));
+    if (nFD - MIN_CORE_FILEDESCRIPTORS < nMaxConnections)
+        nMaxConnections = nFD - MIN_CORE_FILEDESCRIPTORS;
     // ********************************************************* Step 3: parameter-to-internal-flags
 
     fDebug = !mapMultiArgs["-debug"].empty();
@@ -532,6 +545,29 @@ bool AppInit2(boost::thread_group& threadGroup)
         int nNewTimeout = GetArg("-timeout", 5000);
         if (nNewTimeout > 0 && nNewTimeout < 600000)
             nConnectTimeout = nNewTimeout;
+    }
+
+    // Fee-per-kilobyte amount considered the same as "free"
+    // If you are mining, be careful setting this:
+    // if you set it to zero then
+    // a transaction spammer can cheaply fill blocks using
+    // 1-satoshi-fee transactions. It should be set above the real
+    // cost to you of processing a transaction.
+    if (mapArgs.count("-mintxfee"))
+    {
+        int64_t n = 0;
+        if (ParseMoney(mapArgs["-mintxfee"], n) && n > 0)
+            CTransaction::nMinTxFee = n;
+        else
+            return InitError(strprintf(_("Invalid amount for -mintxfee=<amount>: '%s'"), mapArgs["-mintxfee"].c_str()));
+    }
+    if (mapArgs.count("-minrelaytxfee"))
+    {
+        int64_t n = 0;
+        if (ParseMoney(mapArgs["-minrelaytxfee"], n) && n > 0)
+            CTransaction::nMinRelayTxFee = n;
+        else
+            return InitError(strprintf(_("Invalid amount for -minrelaytxfee=<amount>: '%s'"), mapArgs["-minrelaytxfee"].c_str()));
     }
 
 #ifdef ENABLE_WALLET
@@ -613,7 +649,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     // ********************************************************* Step 5: verify wallet database integrity
 #ifdef ENABLE_WALLET
     if (!fDisableWallet) {
-        uiInterface.InitMessage(_("Verifying wallet integrity..."));
+        uiInterface.InitMessage(_("Verifying wallet..."));
 
         if (!bitdb.Open(GetDataDir()))
         {
@@ -838,7 +874,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
-                uiInterface.InitMessage(_("Verifying block database integrity..."));
+                uiInterface.InitMessage(_("Verifying block database..."));
                 if (!VerifyDB()) {
                     strLoadError = _("Corrupted block database detected");
                     break;

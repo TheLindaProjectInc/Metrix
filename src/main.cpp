@@ -65,6 +65,11 @@ bool fReindex = false;
 bool fHaveGUI = false;
 unsigned int nCoinCacheSize = 5000;
 
+/** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
+int64_t CTransaction::nMinTxFee = 100000;  // Override with -mintxfee
+/** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
+int64_t CTransaction::nMinRelayTxFee = 100000;
+
 CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
 map<uint256, CBlock*> mapOrphanBlocks;
@@ -312,9 +317,9 @@ void UnregisterNodeSignals(CNodeSignals& nodeSignals)
 // CCoinsView implementations
 //
 
-bool CCoinsView::GetCoins(uint256 txid, CCoins &coins) { return false; }
-bool CCoinsView::SetCoins(uint256 txid, const CCoins &coins) { return false; }
-bool CCoinsView::HaveCoins(uint256 txid) { return false; }
+bool CCoinsView::GetCoins(const uint256 &txid, CCoins &coins) { return false; }
+bool CCoinsView::SetCoins(const uint256 &txid, const CCoins &coins) { return false; }
+bool CCoinsView::HaveCoins(const uint256 &txid) { return false; }
 CBlockIndex *CCoinsView::GetBestBlock() { return NULL; }
 bool CCoinsView::SetBestBlock(CBlockIndex *pindex) { return false; }
 bool CCoinsView::BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex) { return false; }
@@ -322,9 +327,9 @@ bool CCoinsView::GetStats(CCoinsStats &stats) { return false; }
 
 
 CCoinsViewBacked::CCoinsViewBacked(CCoinsView &viewIn) : base(&viewIn) { }
-bool CCoinsViewBacked::GetCoins(uint256 txid, CCoins &coins) { return base->GetCoins(txid, coins); }
-bool CCoinsViewBacked::SetCoins(uint256 txid, const CCoins &coins) { return base->SetCoins(txid, coins); }
-bool CCoinsViewBacked::HaveCoins(uint256 txid) { return base->HaveCoins(txid); }
+bool CCoinsViewBacked::GetCoins(const uint256 &txid, CCoins &coins) { return base->GetCoins(txid, coins); }
+bool CCoinsViewBacked::SetCoins(const uint256 &txid, const CCoins &coins) { return base->SetCoins(txid, coins); }
+bool CCoinsViewBacked::HaveCoins(const uint256 &txid) { return base->HaveCoins(txid); }
 CBlockIndex *CCoinsViewBacked::GetBestBlock() { return base->GetBestBlock(); }
 bool CCoinsViewBacked::SetBestBlock(CBlockIndex *pindex) { return base->SetBestBlock(pindex); }
 void CCoinsViewBacked::SetBackend(CCoinsView &viewIn) { base = &viewIn; }
@@ -333,7 +338,7 @@ bool CCoinsViewBacked::GetStats(CCoinsStats &stats) { return base->GetStats(stat
 
 CCoinsViewCache::CCoinsViewCache(CCoinsView &baseIn, bool fDummy) : CCoinsViewBacked(baseIn), pindexTip(NULL) { }
 
-bool CCoinsViewCache::GetCoins(uint256 txid, CCoins &coins) {
+bool CCoinsViewCache::GetCoins(const uint256 &txid, CCoins &coins) {
     if (cacheCoins.count(txid)) {
         coins = cacheCoins[txid];
         return true;
@@ -345,29 +350,30 @@ bool CCoinsViewCache::GetCoins(uint256 txid, CCoins &coins) {
     return false;
 }
 
-std::map<uint256,CCoins>::iterator CCoinsViewCache::FetchCoins(uint256 txid) {
-    std::map<uint256,CCoins>::iterator it = cacheCoins.find(txid);
-    if (it != cacheCoins.end())
+std::map<uint256,CCoins>::iterator CCoinsViewCache::FetchCoins(const uint256 &txid) {
+    std::map<uint256,CCoins>::iterator it = cacheCoins.lower_bound(txid);
+    if (it != cacheCoins.end() && it->first == txid)
         return it;
     CCoins tmp;
     if (!base->GetCoins(txid,tmp))
-        return it;
-    std::pair<std::map<uint256,CCoins>::iterator,bool> ret = cacheCoins.insert(std::make_pair(txid, tmp));
-    return ret.first;
+        return cacheCoins.end();
+    std::map<uint256,CCoins>::iterator ret = cacheCoins.insert(it, std::make_pair(txid, CCoins()));
+    tmp.swap(ret->second);
+    return ret;
 }
 
-CCoins &CCoinsViewCache::GetCoins(uint256 txid) {
+CCoins &CCoinsViewCache::GetCoins(const uint256 &txid) {
     std::map<uint256,CCoins>::iterator it = FetchCoins(txid);
     assert(it != cacheCoins.end());
     return it->second;
 }
 
-bool CCoinsViewCache::SetCoins(uint256 txid, const CCoins &coins) {
+bool CCoinsViewCache::SetCoins(const uint256 &txid, const CCoins &coins) {
     cacheCoins[txid] = coins;
     return true;
 }
 
-bool CCoinsViewCache::HaveCoins(uint256 txid) {
+bool CCoinsViewCache::HaveCoins(const uint256 &txid) {
     return FetchCoins(txid) != cacheCoins.end();
 }
 
@@ -404,7 +410,7 @@ unsigned int CCoinsViewCache::GetCacheSize() {
     It does not check for spendings by memory pool transactions. */
 CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView &baseIn, CTxMemPool &mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) { }
 
-bool CCoinsViewMemPool::GetCoins(uint256 txid, CCoins &coins) {
+bool CCoinsViewMemPool::GetCoins(const uint256 &txid, CCoins &coins) {
     if (base->GetCoins(txid, coins))
         return true;
     if (mempool.exists(txid)) {
@@ -415,7 +421,7 @@ bool CCoinsViewMemPool::GetCoins(uint256 txid, CCoins &coins) {
     return false;
 }
 
-bool CCoinsViewMemPool::HaveCoins(uint256 txid) {
+bool CCoinsViewMemPool::HaveCoins(const uint256 &txid) {
     return mempool.exists(txid) || base->HaveCoins(txid);
 }
 
@@ -599,7 +605,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         }
         if (whichType == TX_NULL_DATA)
             nDataOut++;
-        if (txout.nValue == 0) {
+        if (txout.IsDust(CTransaction::nMinRelayTxFee)) {
             reason = "dust";
             return false;
         }
@@ -842,20 +848,8 @@ bool CTransaction::CheckTransaction(CValidationState &state) const
 int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize, enum GetMinFee_mode mode, unsigned int nBytes)
 {
 
-    // MBK: Determine the minimum tx fee based on current blockheight
-    int txMinimumFee = MIN_TX_FEE_V1;
-    int txMinimumRelayFee = MIN_RELAY_TX_FEE_V1;
-    // MBK: Support the tx fee increase at blockheight
-    if(nBestHeight >= TX_FEE_V2_INCREASE_BLOCK)
-    {
-        txMinimumFee = MIN_TX_FEE_V2;
-        txMinimumRelayFee = MIN_RELAY_TX_FEE_V2;
-    }
-
-    // Base fee is either MIN_TX_FEE or MIN_RELAY_TX_FEE
-    // MBK: Support the tx fee increase at blockheight
-    //int64_t nBaseFee = (mode == GMF_RELAY) ? MIN_RELAY_TX_FEE : MIN_TX_FEE;
-    int64_t nBaseFee = (mode == GMF_RELAY) ? txMinimumRelayFee : txMinimumFee;
+    // Base fee is either nMinTxFee or nMinRelayTxFee
+    int64_t nBaseFee = (mode == GMF_RELAY) ? CTransaction::nMinRelayTxFee : CTransaction::nMinTxFee;
 
     unsigned int nNewBlockSize = nBlockSize + nBytes;
     int64_t nMinFee = (1 + (int64_t)nBytes / 1000) * nBaseFee;
@@ -1001,9 +995,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
         unsigned int nSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
 
         // Don't accept it if it can't get into a block
-        // MBK: Support the tx fee increase at blockheight
         int64_t txMinFee = GetMinFee(tx, 1000, GMF_RELAY, nSize);
-        if ((fLimitFree && nFees < txMinFee) || (!fLimitFree && nFees < (nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_TX_FEE_V2 : MIN_TX_FEE_V1))) {
+        if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",
                          hash.ToString(),
@@ -1014,7 +1007,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
         // MBK: Support the tx fee increase at blockheight
-        if (fLimitFree && nFees < (nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_RELAY_TX_FEE_V2 : MIN_RELAY_TX_FEE_V1))
+        if (fLimitFree && nFees < CTransaction::nMinRelayTxFee)
         {
             static CCriticalSection csFreeLimiter;
             static double dFreeCount;
@@ -1141,7 +1134,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         // Don't accept it if it can't get into a block
         // MBK: Support the tx fee increase at blockheight
         int64_t txMinFee = GetMinFee(tx, 1000, GMF_RELAY, nSize);
-        if ((fLimitFree && nFees < txMinFee) || (!fLimitFree && nFees < (nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_TX_FEE_V2 : MIN_TX_FEE_V1)))
+        if (fLimitFree && nFees < txMinFee)
             return error("AcceptableInputs : not enough fees %s, %d < %d",
                          hash.ToString(),
                          nFees, txMinFee);
@@ -1150,7 +1143,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
         // MBK: Support the tx fee increase at blockheight
-        if (fLimitFree && nFees < (nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_RELAY_TX_FEE_V2 : MIN_RELAY_TX_FEE_V1))
+        if (fLimitFree && nFees < CTransaction::nMinRelayTxFee)
         {
             static CCriticalSection csFreeLimiter;
             static double dFreeCount;
@@ -1614,7 +1607,7 @@ int GetNumBlocksOfPeers()
 bool IsInitialBlockDownload()
 {
     LOCK(cs_main);
-    if (pindexBest == NULL || nBestHeight < Checkpoints::GetTotalBlocksEstimate() || fReindex || fImporting)
+    if (pindexBest == NULL || fReindex || fImporting || nBestHeight < Checkpoints::GetTotalBlocksEstimate())
         return true;
     static int64_t nLastUpdate;
     static CBlockIndex* pindexLastBest;
@@ -1730,7 +1723,7 @@ int64_t CTransaction::GetValueIn(CCoinsViewCache& inputs) const
     return nResult;
 }
 
-bool CTransaction::UpdateCoins(CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash) const
+void CTransaction::UpdateCoins(CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash) const
 {
     // mark inputs spent
     if (!IsCoinBase()) {
@@ -1744,8 +1737,6 @@ bool CTransaction::UpdateCoins(CValidationState &state, CCoinsViewCache &inputs,
 
     // add outputs
     assert(inputs.SetCoins(txhash, CCoins(*this, nHeight)));
-
-    return true;
 }
 
 bool CTransaction::HaveInputs(CCoinsViewCache &inputs) const
@@ -1855,8 +1846,16 @@ bool CTransaction::CheckInputs(CValidationState &state, CCoinsViewCache &inputs,
                 if (pvChecks) {
                     pvChecks->push_back(CScriptCheck());
                     check.swap(pvChecks->back());
-                } else if (!check())
+                } else if (!check()) {
+                    if (flags & SCRIPT_VERIFY_STRICTENC) {
+                        // For now, check whether the failure was caused by non-canonical
+                        // encodings or not; if so, don't trigger DoS protection.
+                        CScriptCheck check(coins, *this, i, flags & (~SCRIPT_VERIFY_STRICTENC), 0);
+                        if (check())
+                            return state.Invalid();
+                    }
                     return state.DoS(100,false);
+                }
             }
         }
     }
@@ -1962,10 +1961,6 @@ void ThreadScriptCheck() {
     scriptcheckqueue.Thread();
 }
 
-void ThreadScriptCheckQuit() {
-    scriptcheckqueue.Quit();
-}
-
 bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsViewCache &view, bool fJustCheck)
 {
     // Check it again in case a previous version let a bad block in, but skip BlockSig checking
@@ -2041,8 +2036,8 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
             control.Add(vChecks);
         }
         CTxUndo txundo;
-        if (!tx.UpdateCoins(state, view, txundo, pindex->nHeight, GetTxHash(i)))
-            return error("ConnectBlock() : UpdateInputs failed");
+        tx.UpdateCoins(state, view, txundo, pindex->nHeight, GetTxHash(i));
+
         if (!tx.IsCoinBase())
             blockundo.vtxundo.push_back(txundo);
         vPos.push_back(std::make_pair(GetTxHash(i), pos));
@@ -2132,12 +2127,16 @@ void static FlushBlockFile(bool fFinalize = false)
 
     FILE *fileOld = OpenBlockFile(posOld);
     if (fileOld) {
+        if (fFinalize)
+            TruncateFile(fileOld, infoLastBlockFile.nSize);
         FileCommit(fileOld);
         fclose(fileOld);
     }
 
     fileOld = OpenUndoFile(posOld);
     if (fileOld) {
+        if (fFinalize)
+            TruncateFile(fileOld, infoLastBlockFile.nSize);
         FileCommit(fileOld);
         fclose(fileOld);
     }
@@ -3161,7 +3160,7 @@ bool AbortNode(const std::string &strMessage) {
     fRequestShutdown = true;
     strMiscWarning = strMessage;
     LogPrintf("*** %s\n", strMessage.c_str());
-    uiInterface.ThreadSafeMessageBox(strMessage, "", CClientUIInterface::MSG_ERROR | CClientUIInterface::MODAL);
+    uiInterface.ThreadSafeMessageBox(strMessage, "", CClientUIInterface::MSG_ERROR);
     StartShutdown();
     return false;
 }
@@ -3284,7 +3283,7 @@ FILE* OpenBlockFile(const CDiskBlockPos &pos, bool fReadOnly) {
     return OpenDiskFile(pos, "blk", fReadOnly);
 }
 
-FILE *OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly) {
+FILE* OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly) {
     return OpenDiskFile(pos, "rev", fReadOnly);
 }
 
@@ -3313,8 +3312,7 @@ bool static LoadBlockIndexDB()
     if (!pblocktree->LoadBlockIndexGuts())
         return false;
 
-    if (fRequestShutdown)
-        return true;
+    boost::this_thread::interruption_point();
 
     // Calculate nChainTrust
     vector<pair<int, CBlockIndex*> > vSortedByHeight;
@@ -3392,7 +3390,9 @@ bool VerifyDB() {
     CValidationState state;
     for (CBlockIndex* pindex = pindexBest; pindex && pindex->pprev; pindex = pindex->pprev)
     {
-        if (fRequestShutdown || pindex->nHeight < nBestHeight-nCheckDepth)
+        boost::this_thread::interruption_point();
+
+        if (pindex->nHeight < nBestHeight-nCheckDepth)
             break;
         CBlock block;
         // check level 0: read from disk
@@ -3429,13 +3429,14 @@ bool VerifyDB() {
     // check level 4: try reconnecting blocks
     if (nCheckLevel >= 4) {
         CBlockIndex *pindex = pindexState;
-        while (pindex != pindexBest && !fRequestShutdown) {
-             pindex = pindex->pnext;
-             CBlock block;
-             if (!block.ReadFromDisk(pindex))
-                 return error("VerifyDB() : *** block.ReadFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
-             if (!block.ConnectBlock(state, pindex, coins))
-                 return error("VerifyDB() : *** found unconnectable block at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
+        while (pindex != pindexBest) {
+            boost::this_thread::interruption_point();
+            pindex = pindex->pnext;
+            CBlock block;
+            if (!block.ReadFromDisk(pindex))
+                return error("VerifyDB() : *** block.ReadFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
+            if (!block.ConnectBlock(state, pindex, coins))
+                return error("VerifyDB() : *** found unconnectable block at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
         }
     }
 
@@ -3596,7 +3597,9 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
             }
         }
         uint64_t nRewind = blkdat.GetPos();
-        while (blkdat.good() && !blkdat.eof() && !fRequestShutdown) {
+        while (blkdat.good() && !blkdat.eof()) {
+            boost::this_thread::interruption_point();
+
             blkdat.SetPos(nRewind);
             nRewind++; // start one byte further next time, in case of failure
             blkdat.SetLimit(); // remove former limit
@@ -4586,10 +4589,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 // requires LOCK(cs_vRecvMsg)
 bool ProcessMessages(CNode* pfrom)
 {
-    //if (fDebug)
-    //    LogPrintf("ProcessMessages(%zu messages)\n", pfrom->vRecvMsg.size());
-
-    //
     // Message format
     //  (4) message start
     //  (12) command
@@ -4613,11 +4612,6 @@ bool ProcessMessages(CNode* pfrom)
 
         // get next message
         CNetMessage& msg = *it;
-
-        //if (fDebug)
-        //    LogPrintf("ProcessMessages(message %u msgsz, %zu bytes, complete:%s)\n",
-        //            msg.hdr.nMessageSize, msg.vRecv.size(),
-        //            msg.complete() ? "Y" : "N");
 
         // end, if an incomplete message is found
         if (!msg.complete())
@@ -4901,7 +4895,6 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
                     pto->PushMessage("getdata", vGetData);
                     vGetData.clear();
                 }
-                mapAlreadyAskedFor[inv] = nNow;
             }
             pto->mapAskFor.erase(pto->mapAskFor.begin());
         }
@@ -4930,9 +4923,21 @@ class CMainCleanup
 public:
     CMainCleanup() {}
     ~CMainCleanup() {
+        // block headers
+        map<uint256, CBlockIndex*>::iterator it1 = mapBlockIndex.begin();
+        for (; it1 != mapBlockIndex.end(); it1++)
+            delete (*it1).second;
+        mapBlockIndex.clear();
+        // orphan blocks
+        map<uint256, CBlock*>::iterator it2 = mapOrphanBlocks.begin();
+        for (; it2 != mapOrphanBlocks.end(); it2++)
+            delete (*it2).second;
+        mapOrphanBlocks.clear();
         // orphan transactions
+        map<uint256, COrphanTx>::iterator it3 = mapOrphanTransactions.begin();
+        for (; it3 != mapOrphanTransactions.end(); it3++)
+            delete &(it3)->second;
         mapOrphanTransactions.clear();
-        mapOrphanTransactionsByPrev.clear();
     }
 } instance_of_cmaincleanup;
 

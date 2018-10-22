@@ -2428,8 +2428,6 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
     {
         LOCK2(cs_main, cs_wallet);
         {
-            // MBK: Support the tx fee increase at blockheight 
-            //      NOTE: (Removed MIN_TX_FEE check, was forcing all tx fees to MIN_TX, small overthought)
             nFeeRet = nTransactionFee;
             while (true)
             {
@@ -2441,8 +2439,15 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                 double dPriority = 0;
                 // vouts to the payees
                 BOOST_FOREACH (const PAIRTYPE(CScript, int64_t)& s, vecSend)
-                    wtxNew.vout.push_back(CTxOut(s.second, s.first));
-
+                {
+                    CTxOut txout(s.second, s.first);
+                    if (txout.IsDust(CTransaction::nMinRelayTxFee))
+                    {
+                        strFailReason = _("Transaction amount too small");
+                        return false;
+                    }
+                    wtxNew.vout.push_back(txout);
+                }
                 // Choose coins to use
                 set<pair<const CWalletTx*,unsigned int> > setCoins;
                 int64_t nValueIn = 0;
@@ -2500,22 +2505,33 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                         scriptChange.SetDestination(vchPubKey.GetID());
                     }
 
-                    // Insert change txn at random position:
-                    vector<CTxOut>::iterator position = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size());
-
-		    // -- don't put change output between value and narration outputs
-                    if (position > wtxNew.vout.begin() && position < wtxNew.vout.end())
+                    CTxOut newTxOut(nChange, scriptChange);
+                    // Never create dust outputs; if we would, just
+                    // add the dust to the fee.
+                    if (newTxOut.IsDust(CTransaction::nMinRelayTxFee))
                     {
-                        while (position > wtxNew.vout.begin())
-                        {
-                            if (position->nValue != 0)
-                                break;
-                            position--;
-                        };
-                    };
+                        nFeeRet += nChange;
+                        reservekey.ReturnKey();
+                    }
+                    else
+                    {
+                        // Insert change txn at random position:
+                        vector<CTxOut>::iterator position = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size());
 
-                    wtxNew.vout.insert(position, CTxOut(nChange, scriptChange));
-		            nChangePos = std::distance(wtxNew.vout.begin(), position);
+                        // -- don't put change output between value and narration outputs
+                        if (position > wtxNew.vout.begin() && position < wtxNew.vout.end())
+                        {
+                            while (position > wtxNew.vout.begin())
+                            {
+                                if (position->nValue != 0)
+                                    break;
+                                position--;
+                            };
+                        };
+
+                        wtxNew.vout.insert(position, CTxOut(nChange, scriptChange));
+                        nChangePos = std::distance(wtxNew.vout.begin(), position);
+                    }
                 }
                 else
                     reservekey.ReturnKey();
@@ -2537,9 +2553,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                 dPriority /= nBytes;
 
                 // Check that enough fee is included
-                // MBK: Support the tx fee increase at blockheight
-                //      NOTE: (Removed MIN_TX_FEE check, was forcing all tx fees to MIN_TX, small overthought)
-                int64_t nPayFee = /*(nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_TX_FEE_V2 : MIN_TX_FEE_V1)*/ nTransactionFee * (1 + (int64_t)nBytes / 1000);
+                int64_t nPayFee = nTransactionFee * (1 + (int64_t)nBytes / 1000);
                 int64_t nMinFee = GetMinFee(wtxNew, 1, GMF_SEND, nBytes);
 
                 LogPrintf("CWallet::CreateTransaction() -> nPayFee=%d  nMinFee=%d", nPayFee, nMinFee);
@@ -2996,9 +3010,7 @@ bool CWallet::SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t 
         return false;
     };
 
-    // MBK: Support the tx fee increase at blockheight
-    //      NOTE: (Removed MIN_TX_FEE check, was forcing all tx fees to MIN_TX, small overthought)
-    if (nValue + /*(nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_TX_FEE_V2 : MIN_TX_FEE_V1)*/ nTransactionFee + (1) > GetBalance())
+    if (nValue + nTransactionFee + (1) > GetBalance())
     {
         sError = "Insufficient funds";
         return false;
@@ -3702,9 +3714,7 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64_t nV
     // Check amount
     if (nValue <= 0)
         return _("Invalid amount");
-    // MBK: Support the tx fee increase at blockheight
-    //      NOTE: (Removed MIN_TX_FEE check, was forcing all tx fees to MIN_TX, small overthought)
-    if (nValue + /*(nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_TX_FEE_V2 : MIN_TX_FEE_V1)*/ nTransactionFee > GetBalance())
+    if (nValue + nTransactionFee > GetBalance())
         return _("Insufficient funds");
 
     if (sNarr.length() > 24)
