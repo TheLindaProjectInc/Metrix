@@ -31,7 +31,7 @@ public:
 
     CTxMemPool();
 
-    bool addUnchecked(const uint256& hash, CTransaction &tx);
+    bool addUnchecked(const uint256& hash, const CTransaction &tx);
     bool remove(const CTransaction &tx, bool fRecursive = false);
     bool removeConflicts(const CTransaction &tx);
     void clear();

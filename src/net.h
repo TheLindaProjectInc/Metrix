@@ -336,7 +336,7 @@ public:
         nBlocksInFlight = 0;
         nLastBlockReceive = 0;
         nLastBlockProcess = 0;
-        pfilter = NULL;
+        pfilter = new CBloomFilter();
 
         {
             LOCK(cs_nLastNodeId);

@@ -2258,7 +2258,8 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
         // ignore validation errors in resurrected transactions
         CValidationState stateDummy;
         bool fMissingInputs = false;
-        AcceptToMemoryPool(mempool, stateDummy, tx, true, &fMissingInputs);
+        if (!AcceptToMemoryPool(mempool, stateDummy, tx, true, &fMissingInputs))
+            mempool.remove(tx, true);
     }
 
     // Delete redundant memory transactions that are in the connected branch
@@ -4531,6 +4532,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             LOCK(pfrom->cs_filter);
             delete pfrom->pfilter;
             pfrom->pfilter = new CBloomFilter(filter);
+            pfrom->pfilter->UpdateEmptyFull();
         }
         pfrom->fRelayTxes = true;
     }
@@ -4560,7 +4562,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     {
         LOCK(pfrom->cs_filter);
         delete pfrom->pfilter;
-        pfrom->pfilter = NULL;
+        pfrom->pfilter = new CBloomFilter();
         pfrom->fRelayTxes = true;
     }
 
@@ -4934,9 +4936,6 @@ public:
             delete (*it2).second;
         mapOrphanBlocks.clear();
         // orphan transactions
-        map<uint256, COrphanTx>::iterator it3 = mapOrphanTransactions.begin();
-        for (; it3 != mapOrphanTransactions.end(); it3++)
-            delete &(it3)->second;
         mapOrphanTransactions.clear();
     }
 } instance_of_cmaincleanup;
