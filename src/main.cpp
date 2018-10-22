@@ -1455,8 +1455,7 @@ int64_t GetProofOfWorkReward(int64_t nFees)
 int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees, unsigned int nHeight)
 {
     int64_t nSubsidy = 0;
-    if (nHeight < V2_EMISSION_CAP_START_BLOCK) {
-        
+    if (pindexBest->nMoneySupply < MAX_MONEY) {
         int64_t nCoinYearReward = COIN_YEAR_REWARD;
         
         if (nHeight >= V3_START_BLOCK)
@@ -4885,14 +4884,16 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
 
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
 {
-    if (nHeight < V3_START_BLOCK){
-        // MBK: Set masternode reward phase
-        // NOTE: Fixed the reward, now it actually is applied to blockValue
-        return static_cast<int64_t>(blockValue * 0.677777777777777777); // ~2/3 masternode stake reward
-    } else {
-        // starting V3 masternodes will earn a constant block reward ~60% over the year
-        return MASTERNODE_REWARD_V3;
+    if (pindexBest->nMoneySupply < MAX_MONEY) {
+        if (nHeight < V3_START_BLOCK){
+            // MBK: Set masternode reward phase
+            return static_cast<int64_t>(blockValue * 0.677777777777777777); // ~2/3 masternode stake reward
+        } else {
+            // starting V3 masternodes will earn a constant block reward ~60% over the year
+            return MASTERNODE_REWARD_V3;
+        }
     }
+    return 0;
 }
 
 
