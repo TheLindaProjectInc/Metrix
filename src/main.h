@@ -54,8 +54,6 @@ static const int64_t COIN_YEAR_REWARD_V3    = (50*CENT);
 static const int64_t MASTERNODE_REWARD_V3   = (3200*COIN); // ~60% ROI over 12 months
 static const int64_t MAX_STAKE_VALUE        = (100*1000000*COIN); // POS rewards will be capped to 100 million Linda
 
-static const int MBK_EXTRA_DEBUG = 0;
-
 /*
     At 15 signatures, 1/2 of the masternode network can be owned by
     one party without comprimising the security of InstantX

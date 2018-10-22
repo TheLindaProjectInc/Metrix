@@ -1444,8 +1444,6 @@ int64_t GetProofOfWorkReward(int64_t nFees, unsigned int nHeight)
     }
 
     LogPrint("creation", "GetProofOfWorkReward() : create=%s nSubsidy=%d\n", FormatMoney(nSubsidy), nSubsidy);
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("creation -> GetProofOfWorkReward() : create=%s nSubsidy=%d\n", FormatMoney(nSubsidy), nSubsidy);
 
     return nSubsidy + nFees;
 }
@@ -1478,10 +1476,7 @@ int64_t GetProofOfWorkRewardV2(int64_t nFees, unsigned int nHeight)
     }
 
     LogPrint("creation", "GetProofOfWorkRewardV2() : create=%d(%s)\n", nSubsidy, FormatMoney(nSubsidy));
-    // MBK: Added some additional debugging information
-    double percent = ((double)nSubsidy / (double)(POW_REWARD_V1_FULL*COIN)) * (double)100.0f;
-    if (MBK_EXTRA_DEBUG) LogPrintf("creation -> GetProofOfWorkRewardV2() : create=%d(%s)[%d] nSubsidy=%d\n", nSubsidy, FormatMoney(nSubsidy), percent, nSubsidy);
-
+    
     return nSubsidy + nFees;
 }
 

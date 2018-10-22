@@ -353,24 +353,10 @@ CNode* FindNode(const CService& addr)
 
 CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool darkSendMaster)
 {
-    // MBK: Added additional debug information
-    if(MBK_EXTRA_DEBUG)
-    {
-        LogPrintf("ConnectNode() [PreNullCheck] -> pszDest=%s darkSendMaster=%s\n", (pszDest == NULL ? "NULL" : pszDest), (darkSendMaster == true ? "True" : "False"));
-    }
-
     if (pszDest == NULL) 
     {
         if (IsLocal(addrConnect))
-        {
-            // MBK: Added additional debug information
-            if(MBK_EXTRA_DEBUG)
-            {
-                LogPrintf("ConnectNode() [PostNullCheck] -> IsLocal() = True\n");
-            }
-
             return NULL;
-        }
 
         // Look for an existing connection
         CNode* pnode = FindNode((CService)addrConnect);
@@ -927,12 +913,7 @@ void ThreadSocketHandler()
                             if (nErr != WSAEWOULDBLOCK && nErr != WSAEMSGSIZE && nErr != WSAEINTR && nErr != WSAEINPROGRESS)
                             {
                                 if (!pnode->fDisconnect)
-                                {
-                                    // MBK: Added some additional debugging information
-                                    if (MBK_EXTRA_DEBUG) LogPrintf("ThreadSocketHandler() -> Socket recv error %d from %s\n", nErr, pnode->addr.ToString());
-                
                                     LogPrint("net", "socket recv error %d\n", nErr);
-                                }
 
                                 pnode->CloseSocketDisconnect();
                             }

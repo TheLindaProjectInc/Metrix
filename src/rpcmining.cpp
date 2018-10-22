@@ -48,9 +48,7 @@ Value getsubsidy(const Array& params, bool fHelp)
             "Returns proof-of-work subsidy value for the specified value of target.");
 
     uint64_t nReward = GetProofOfWorkRewardV2(0,pindexBest->nHeight); 
-    
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("getsubsidy() -> nPoWSubsidy=%d", nReward);
+
     return (uint64_t)nReward;
 }
 
@@ -81,8 +79,6 @@ Value getstakesubsidy(const Array& params, bool fHelp)
 
     uint64_t nStakeReward = GetProofOfStakeReward(nCoinAge, 0, pindexBest->nHeight);
 
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("getstakesubsidy() -> nStakeSubsidy=%d", nStakeReward);
     return (uint64_t)nStakeReward;
 }
 

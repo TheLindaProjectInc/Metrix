@@ -3520,9 +3520,6 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         }
     }
 
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("CWallet::CreateCoinStake() -> [AfterInputCollection] nCredit=%d\n", nCredit);
-
     // Calculate coin age reward
     int64_t nReward;
     {
