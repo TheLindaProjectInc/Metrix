@@ -855,11 +855,11 @@ int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize, enum GetMinFe
     int64_t nMinFee = (1 + (int64_t)nBytes / 1000) * nBaseFee;
 
     // Raise the price as the block approaches full
-    if (nBlockSize != 1 && nNewBlockSize >= MAX_BLOCK_SIZE_GEN/2)
+    if (nBlockSize != 1 && nNewBlockSize >= DEFAULT_BLOCK_MAX_SIZE/2)
     {
-        if (nNewBlockSize >= MAX_BLOCK_SIZE_GEN)
+        if (nNewBlockSize >= DEFAULT_BLOCK_MAX_SIZE)
             return MAX_MONEY;
-        nMinFee *= MAX_BLOCK_SIZE_GEN / (MAX_BLOCK_SIZE_GEN - nNewBlockSize);
+        nMinFee *= DEFAULT_BLOCK_MAX_SIZE / (DEFAULT_BLOCK_MAX_SIZE - nNewBlockSize);
     }
 
     if (!MoneyRange(nMinFee))
@@ -3930,7 +3930,7 @@ void static ProcessGetData(CNode* pfrom)
             // Track requests for our stuff.
             g_signals.Inventory(inv.hash);
 
-            if (inv.type == MSG_BLOCK /* || inv.type == MSG_FILTERED_BLOCK */)
+            if (inv.type == MSG_BLOCK || inv.type == MSG_FILTERED_BLOCK)
                 break;
         }
     }
@@ -4353,9 +4353,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             if (nEvicted > 0)
                 LogPrint("mempool", "mapOrphan overflow, removed %u tx\n", nEvicted);
         }
-        int nDoS;
+        int nDoS = 0;
         if (state.IsInvalid(nDoS))
-            pfrom->Misbehaving(nDoS);
+            if (nDoS > 0)
+                pfrom->Misbehaving(nDoS);
     }
 
 
@@ -4375,11 +4376,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         MarkBlockAsReceived(inv.hash, pfrom->GetId());
 
         CValidationState state;
-        if (ProcessBlock(state, pfrom, &block))            
+        if (ProcessBlock(state, pfrom, &block) || state.CorruptionPossible())           
             mapAlreadyAskedFor.erase(inv);   
-        int nDoS;
-        if (state.IsInvalid(nDoS))     
-            pfrom->Misbehaving(nDoS);
+        int nDoS = 0;
+        if (state.IsInvalid(nDoS))
+            if (nDoS > 0)
+                pfrom->Misbehaving(nDoS);
     }
 
 
