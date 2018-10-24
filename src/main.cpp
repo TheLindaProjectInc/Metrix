@@ -73,6 +73,7 @@ int64_t CTransaction::nMinRelayTxFee = 100000;
 CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
 map<uint256, CBlock*> mapOrphanBlocks;
+map<uint256, CBlock*> mapDuplicateStakeBlocks;
 multimap<uint256, CBlock*> mapOrphanBlocksByPrev;
 set<pair<COutPoint, unsigned int> > setStakeSeenOrphan;
 
@@ -2875,6 +2876,23 @@ bool static IsCanonicalBlockSignature(CBlock* pblock)
     return IsDERSignature(pblock->vchBlockSig, false);
 }
 
+void CleanUpOldDuplicateStakeBlocks()
+{
+    int64_t maxAge = 24 * 60 * 60;
+    int64_t minTime = GetAdjustedTime() - maxAge;
+
+    BOOST_FOREACH(PAIRTYPE(const uint256, CBlock*)& item, mapDuplicateStakeBlocks)
+    {
+        const uint256& hash = item.first;
+        CBlock* block = item.second;
+        if (block->GetBlockTime() < minTime)
+        {
+            mapDuplicateStakeBlocks.erase(hash);
+            delete block;
+        }
+    }
+}
+
 bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBlockPos *dbp)
 {
     AssertLockHeld(cs_main);
@@ -2887,21 +2905,28 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         return state.Invalid(error("ProcessBlock() : already have block (orphan) %s", hash.ToString()));
 
     // ppcoin: check proof-of-stake
-    // Limited duplicity on stake: prevents block flood attack
-    // Duplicate stake allowed only when there is orphan child block
-    if (pblock->IsProofOfStake() && setStakeSeen.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash))
-        return state.Invalid(error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for block %s", pblock->GetProofOfStake().first.ToString(), pblock->GetProofOfStake().second, hash.ToString()));
-
-    CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
-    if (pcheckpoint && pblock->hashPrevBlock != hashBestChain)
+    bool fDuplicateStakeOfBestBlock = false;
+    if (pblock->IsProofOfStake())
     {
-        // Extra checks to prevent "fill up memory by spamming with bogus blocks"
-        int64_t deltaTime = pblock->GetBlockTime() - pcheckpoint->nTime;
-        if (deltaTime < 0)
+        std::pair<COutPoint, unsigned int> proofOfStake = pblock->GetProofOfStake();
+
+        if (pindexBest->IsProofOfStake() && proofOfStake.first == pindexBest->prevoutStake)
         {
-            return state.DoS(100, error("ProcessBlock() : block with timestamp before last checkpoint"));
+            // If the best block's stake is reused, we cancel the best block after the block checks
+            fDuplicateStakeOfBestBlock = true;
+        }
+        else
+        {
+            // Limited duplicity on stake: prevents block flood attack
+            // Duplicate stake allowed only when there is orphan child block
+            if (pblock->IsProofOfStake() && setStakeSeen.count(proofOfStake) && !mapOrphanBlocksByPrev.count(hash) && !WantedByOrphan(mapOrphanBlocks[hash]))
+                return state.Invalid(error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for block %s", proofOfStake.first.ToString().c_str(), proofOfStake.second, hash.ToString().c_str()));
         }
     }
+
+    // Preliminary checks
+    if (!pblock->CheckBlock(state))
+        return error("ProcessBlock() : CheckBlock FAILED");
 
     // Block signature can be malleated in such a way that it increases block size up to maximum allowed by protocol
     // For now we just strip garbage from newly received blocks
@@ -2910,9 +2935,40 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             LogPrintf("WARNING: ProcessBlock() : ReserealizeBlockSignature FAILED\n");
     }
 
-    // Preliminary checks
-    if (!pblock->CheckBlock(state))
-        return error("ProcessBlock() : CheckBlock FAILED");
+    if (fDuplicateStakeOfBestBlock)
+    {
+        LogPrintf("ProcessBlock() : block uses the same stake as the best block. Canceling the best block\n");
+
+        // Save the block to be able to accept it if a new chain is built from it despite the rejection
+        mapDuplicateStakeBlocks[pblock->GetHash()] = new CBlock(*pblock);
+
+        // Relay the duplicate block so that other nodes are aware of the duplication
+        if (!IsInitialBlockDownload())
+            RelayBlock(*pblock, hash);
+
+        // Cancel the best block
+        setBlockIndexValid.erase(pindexBest); // Remove from the list of immediate candidates for the best chain
+        InvalidChainFound(pindexBest);
+        CValidationState stateDummy;
+        if (!SetBestChain(stateDummy, pindexBest->pprev))
+            return error("ProcessBlock(): SetBestChain on previous best block failed");
+
+        return false;
+    }
+
+    if (!mapBlockIndex.count(pblock->hashPrevBlock) && mapDuplicateStakeBlocks.count(pblock->hashPrevBlock))
+    {
+        printf("ProcessBlock() : parent block was previously rejected because of stake duplication. Reaccepting parent\n");
+        CBlock* pprevBlock = mapDuplicateStakeBlocks[pblock->hashPrevBlock];
+        // Block was already checked when it was first received, so we can just accept it here
+        if (!pprevBlock->AcceptBlock(state, dbp))
+            return error("ProcessBlock() : AcceptBlock of previously duplicate block FAILED");
+        mapDuplicateStakeBlocks.erase(pblock->hashPrevBlock);
+        delete pprevBlock;
+    }
+
+    if (mapDuplicateStakeBlocks.size())
+        CleanUpOldDuplicateStakeBlocks();
 
     // If we don't already have its previous block, shunt it off to holding area until we get it
     if (pblock->hashPrevBlock != 0 && !mapBlockIndex.count(pblock->hashPrevBlock))
@@ -2921,18 +2977,23 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
         // Accept orphans as long as there is a node to request its parents from
         if (pfrom) {
+            PruneOrphanBlocks();
+            CBlock* pblock2 = new CBlock(*pblock);
             // ppcoin: check proof-of-stake
-            if (pblock->IsProofOfStake())
+            if (pblock2->IsProofOfStake())
             {
                 // Limited duplicity on stake: prevents block flood attack
                 // Duplicate stake allowed only when there is orphan child block
-                if (setStakeSeenOrphan.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash))
-                    return error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock->GetProofOfStake().first.ToString(), pblock->GetProofOfStake().second, hash.ToString());
+                if (setStakeSeenOrphan.count(pblock2->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash) && !WantedByOrphan(mapOrphanBlocks[hash]))
+                {
+                    error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock2->GetProofOfStake().first.ToString().c_str(), pblock2->GetProofOfStake().second, hash.ToString().c_str());
+                    //pblock2 will not be needed, free it
+                    delete pblock2;
+                    return false;
+                }
                 else
-                    setStakeSeenOrphan.insert(pblock->GetProofOfStake());
+                    setStakeSeenOrphan.insert(pblock2->GetProofOfStake());
             }
-            PruneOrphanBlocks();
-            CBlock* pblock2 = new CBlock(*pblock);
             mapOrphanBlocks.insert(make_pair(hash, pblock2));
             mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
 
@@ -3350,7 +3411,7 @@ bool VerifyDB() {
 
     // Verify blocks in the best chain
     int nCheckLevel = GetArg("-checklevel", 3);
-    int nCheckDepth = GetArg( "-checkblocks", 288);
+    int nCheckDepth = GetArg("-checkblocks", 288);
     if (nCheckDepth == 0)
         nCheckDepth = 1000000000; // suffices until the year 19000
     if (nCheckDepth > nBestHeight)

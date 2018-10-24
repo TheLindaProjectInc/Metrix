@@ -1725,17 +1725,8 @@ public:
 }
 instance_of_cnetcleanup;
 
-void RelayTransaction(const CTransaction& tx)
+static void AddRelay(const CInv& inv, const CDataStream& ss)
 {
-    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-    ss.reserve(10000);
-    ss << tx;
-    RelayTransaction(tx, ss);
-}
-
-void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
-{
-    CInv inv(MSG_TX, tx.GetHash());
     {
         LOCK(cs_mapRelay);
         // Expire old relay messages
@@ -1749,6 +1740,20 @@ void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
         mapRelay.insert(std::make_pair(inv, ss));
         vRelayExpiration.push_back(std::make_pair(GetTime() + 15 * 60, inv));
     }
+}
+
+void RelayTransaction(const CTransaction& tx)
+{
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss.reserve(10000);
+    ss << tx;
+    RelayTransaction(tx, ss);
+}
+
+void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
+{
+    CInv inv(MSG_TX, tx.GetHash());
+    AddRelay(inv, ss);
     LOCK(cs_vNodes);
     BOOST_FOREACH(CNode* pnode, vNodes)
     if (pnode->pfilter)
@@ -1756,6 +1761,18 @@ void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
         if (pnode->pfilter->IsRelevantAndUpdate(tx, tx.GetHash()))
             pnode->PushInventory(inv);
     } else
+        pnode->PushInventory(inv);
+}
+
+void RelayBlock(const CBlock& block, const uint256& hash)
+{
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss.reserve(10000);
+    ss << block;
+    CInv inv(MSG_BLOCK, hash);
+    AddRelay(inv, ss);
+    LOCK(cs_vNodes);
+    BOOST_FOREACH(CNode* pnode, vNodes)
         pnode->PushInventory(inv);
 }
 

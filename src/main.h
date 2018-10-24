@@ -747,8 +747,7 @@ public:
                 a.nHeight == b.nHeight &&
                 a.nVersion == b.nVersion &&
                 a.vout == b.vout &&
-                a.fCoinStake == b.fCoinStake &&
-                a.nTime == b.nTime;
+                a.fCoinStake == b.fCoinStake;
     }
     friend bool operator!=(const CCoins &a, const CCoins &b) {
         return !(a == b);

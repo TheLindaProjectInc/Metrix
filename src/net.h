@@ -771,6 +771,9 @@ void SendDarkSendElectionEntryPing(const CTxIn vin, const std::vector<unsigned c
 void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, const std::string errorMessage);
 void RelayDarkSendMasterNodeContestant();
 
+class CBlock;
+void RelayBlock(const CBlock& tx, const uint256& hash);
+
 /** Access to the (IP) address database (peers.dat) */
 class CAddrDB
 {
