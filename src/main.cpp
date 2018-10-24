@@ -2698,7 +2698,7 @@ bool CBlock::CheckBlock(CValidationState &state,bool fCheckPOW, bool fCheckMerkl
         uniqueTx.insert(GetTxHash(i));
     }
     if (uniqueTx.size() != vtx.size())
-        return state.DoS(100, error("CheckBlock() : duplicate transaction"));
+        return state.DoS(100, error("CheckBlock() : duplicate transaction"), true);
 
     unsigned int nSigOps = 0;
     BOOST_FOREACH(const CTransaction& tx, vtx)
