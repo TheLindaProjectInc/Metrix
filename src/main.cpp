@@ -2541,6 +2541,14 @@ bool CBlock::CheckBlock(CValidationState &state,bool fCheckPOW, bool fCheckMerkl
 {
     // These are checks that are independent of context
     // that can be verified before saving an orphan block.
+    if (nVersion > CURRENT_VERSION)
+        return state.DoS(100, error("AcceptBlock() : reject unknown block version %d", nVersion));
+
+    if (GetHash() != Params().HashGenesisBlock() && nVersion < 7)
+        return state.DoS(100, error("AcceptBlock() : reject too old nVersion = %d", nVersion));
+
+    if (IsProofOfWork() && nBestHeight >= Params().LastPOWBlock())
+        return state.DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", nBestHeight));
 
     // Size limits
     if (vtx.empty() || vtx.size() > MAX_BLOCK_SIZE || ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
@@ -2717,9 +2725,6 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
 {
     AssertLockHeld(cs_main);
 
-    if (nVersion > CURRENT_VERSION)
-        return state.DoS(100, error("AcceptBlock() : reject unknown block version %d", nVersion));
-
     // Check for duplicate
     uint256 hash = GetHash();
     if (mapBlockIndex.count(hash))
@@ -2735,12 +2740,6 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
             return state.DoS(10, error("AcceptBlock() : prev block not found"));
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
-
-        if (nVersion < 7)
-            return state.DoS(100, error("AcceptBlock() : reject too old nVersion = %d", nVersion));
-
-        if (IsProofOfWork() && nHeight > Params().LastPOWBlock())
-            return state.DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", nHeight));
 
         if (IsProofOfStake() && nHeight < POS_START_BLOCK)
             return state.DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK));
@@ -2760,10 +2759,6 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         // Check timestamp against prev
         if (GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(GetBlockTime()) < pindexPrev->GetBlockTime())
             return state.Invalid(error("AcceptBlock() : block's timestamp is too early"));
-
-        // Check 2 consecutive blocks aren't mined by POW
-        if (nHeight > POW_CONSECUTIVE_START_BLOCK && IsProofOfWork() && pindexPrev->IsProofOfWork())
-            return state.Invalid(error("AcceptBlock() : consecutive blocks aren't allowed by POW"));
 
         // Check that all transactions are finalized
         BOOST_FOREACH(const CTransaction& tx, vtx)
@@ -2958,7 +2953,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
     if (!mapBlockIndex.count(pblock->hashPrevBlock) && mapDuplicateStakeBlocks.count(pblock->hashPrevBlock))
     {
-        printf("ProcessBlock() : parent block was previously rejected because of stake duplication. Reaccepting parent\n");
+        LogPrintf("ProcessBlock() : parent block was previously rejected because of stake duplication. Reaccepting parent\n");
         CBlock* pprevBlock = mapDuplicateStakeBlocks[pblock->hashPrevBlock];
         // Block was already checked when it was first received, so we can just accept it here
         if (!pprevBlock->AcceptBlock(state, dbp))
