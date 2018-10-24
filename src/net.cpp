@@ -1764,18 +1764,6 @@ void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
         pnode->PushInventory(inv);
 }
 
-void RelayBlock(const CBlock& block, const uint256& hash)
-{
-    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-    ss.reserve(10000);
-    ss << block;
-    CInv inv(MSG_BLOCK, hash);
-    AddRelay(inv, ss);
-    LOCK(cs_vNodes);
-    BOOST_FOREACH(CNode* pnode, vNodes)
-        pnode->PushInventory(inv);
-}
-
 void RelayTransactionLockReq(const CTransaction& tx, bool relayToAll)
 {
     CInv inv(MSG_TXLOCK_REQUEST, tx.GetHash());
