@@ -11,5 +11,6 @@ src/Lindad
 Linda-qt
 qrc_bitcoin.cpp
 src/obj/build.h
-object_script.Linda-qt.Debug
-object_script.Linda-qt.Release
+object_script.Linda-qt.*
+Makefile.*
+Makefile
