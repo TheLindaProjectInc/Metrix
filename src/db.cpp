@@ -79,7 +79,6 @@ bool CDBEnv::Open(boost::filesystem::path pathEnv_)
     if (GetBoolArg("-privdb", true))
         nEnvFlags |= DB_PRIVATE;
 
-    int nDbCache = GetArg("-dbcache", 25);
     dbenv.set_lg_dir(pathLogDir.string().c_str());
     dbenv.set_cachesize(0, 0x100000, 1); // 1 MiB should be enough for just the wallet
     dbenv.set_lg_bsize(0x10000);
