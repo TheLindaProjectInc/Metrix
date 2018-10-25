@@ -76,6 +76,9 @@ OBJS= \
     obj/util.o \
     obj/hash.o \
     obj/noui.o \
+    obj/leveldb.o \
+    obj/bloom.o \
+    obj/txdb.o \
     obj/kernel.o \
     obj/pbkdf2.o \
     obj/scrypt.o \
@@ -100,10 +103,9 @@ all: Lindad.exe
 LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
-OBJS += obj/txdb-leveldb.o
 leveldb/libleveldb.a:
 	cd leveldb; make; cd ..
-obj/txdb-leveldb.o: leveldb/libleveldb.a
+obj/leveldb.o: leveldb/libleveldb.a
 
 obj/%.o: %.cpp $(HEADERS)
 	g++ -c $(CFLAGS) -o $@ $<

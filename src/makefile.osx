@@ -76,6 +76,9 @@ OBJS= \
     obj/core.o \
     obj/main.o \
     obj/net.o \
+    obj/leveldb.o \
+    obj/bloom.o \
+    obj/txdb.o \
     obj/protocol.o \
     obj/rpcclient.o \
     obj/rpcprotocol.o \
@@ -127,13 +130,9 @@ all: Lindad
 LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
-OBJS += obj/txdb-leveldb.o
 leveldb/libleveldb.a:
 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..
-obj/txdb-leveldb.o: leveldb/libleveldb.a
-
-# auto-generated dependencies:
--include obj/*.P
+obj/leveldb.o: leveldb/libleveldb.a
 
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h

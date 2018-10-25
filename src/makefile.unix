@@ -4,16 +4,17 @@
 
 # Uncomment below to build statically
 # DEPS_PATH = $(HOME)/deps
-# SECP256K1_LIB_PATH = src/secp256k1/.libs
-# SECP256K1_INCLUDE_PATH = src/secp256k1/include
-# MINIUPNPC_LIB_PATH = $(DEPS_PATH)/miniupnpc
-# MINIUPNPC_INCLUDE_PATH = $(DEPS_PATH)
-# BOOST_LIB_PATH = $(DEPS_PATH)/boost_1_58_0/stage/lib
-# BOOST_INCLUDE_PATH = $(DEPS_PATH)/boost_1_58_0
-# BDB_LIB_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
-# BDB_INCLUDE_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
-# OPENSSL_LIB_PATH = $(DEPS_PATH)/openssl-1.0.2g
-# OPENSSL_INCLUDE_PATH = $(DEPS_PATH)/openssl-1.0.2g/include
+ DEPS_PATH = /build/deps
+ SECP256K1_LIB_PATH = src/secp256k1/.libs
+ SECP256K1_INCLUDE_PATH = src/secp256k1/include
+ MINIUPNPC_LIB_PATH = $(DEPS_PATH)/miniupnpc
+ MINIUPNPC_INCLUDE_PATH = $(DEPS_PATH)
+ BOOST_LIB_PATH = $(DEPS_PATH)/boost_1_58_0/stage/lib
+ BOOST_INCLUDE_PATH = $(DEPS_PATH)/boost_1_58_0
+ BDB_LIB_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
+ BDB_INCLUDE_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
+ OPENSSL_LIB_PATH = $(DEPS_PATH)/openssl-1.0.2g
+ OPENSSL_INCLUDE_PATH = $(DEPS_PATH)/openssl-1.0.2g/include
 
 USE_UPNP:=-
 USE_WALLET:=1
@@ -145,6 +146,9 @@ OBJS= \
     obj/util.o \
     obj/hash.o \
     obj/noui.o \
+    obj/leveldb.o \
+    obj/bloom.o \
+    obj/txdb.o \
     obj/kernel.o \
     obj/pbkdf2.o \
     obj/scrypt.o \
@@ -187,13 +191,9 @@ all: Lindad
 LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
-OBJS += obj/txdb-leveldb.o
 leveldb/libleveldb.a:
 	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
-obj/txdb-leveldb.o: leveldb/libleveldb.a
-
-# auto-generated dependencies:
--include obj/*.P
+obj/leveldb.o: leveldb/libleveldb.a
 
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
