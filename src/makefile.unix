@@ -15,13 +15,22 @@
 # OPENSSL_LIB_PATH = $(DEPS_PATH)/openssl-1.0.2g
 # OPENSSL_INCLUDE_PATH = $(DEPS_PATH)/openssl-1.0.2g/include
 
+# :=0 --> UPnP support turned off by default at runtime
+# :=1 --> UPnP support turned on by default at runtime
+# :=- --> No UPnP support - miniupnp not required
 USE_UPNP:=-
+
+# :=1 --> Enable IPv6 support
+# :=0 --> Disable IPv6 support
+USE_IPV6:=1
+
+# :=1 --> Enable wallet support
+# :=0 --> Disable wallet support
 USE_WALLET:=1
 
 LINK:=$(CXX)
-ARCH:=$(system lscpu | head -n 1 | awk '{print $2}')
 
-DEFS=-DBOOST_SPIRIT_THREADSAFE
+DEFS=-DBOOST_SPIRIT_THREADSAFE -D_FILE_OFFSET_BITS=64
 #DEFS += -DUSE_SECP256K1
 DEFS += $(addprefix -I,$(CURDIR) $(CURDIR)/obj $(BOOST_INCLUDE_PATH) $(BDB_INCLUDE_PATH) $(OPENSSL_INCLUDE_PATH))
 DEFS += $(addprefix -I,$(CURDIR)/secp256k1/include)
@@ -56,6 +65,10 @@ endif
 ifneq (${USE_UPNP}, -)
 	LIBS += -l miniupnpc
 	DEFS += -DUSE_UPNP=$(USE_UPNP)
+endif
+
+ifneq (${USE_IPV6}, -)
+	DEFS += -DUSE_IPV6=$(USE_IPV6)
 endif
 
 LIBS+= \
@@ -101,15 +114,9 @@ LIBS+= \
 
 DEBUGFLAGS=-g
 
-
-ifeq (${ARCH}, i686)
-    EXT_OPTIONS=-msse2
-endif
-
-
 # CXXFLAGS can be specified on the make command line, so we use xCXXFLAGS that only
 # adds some defaults in front. Unfortunately, CXXFLAGS=... $(CXXFLAGS) does not work.
-xCXXFLAGS=-O2 $(EXT_OPTIONS) -pthread -Wall -Wextra -Wconversion-null -Wmaybe-uninitialized -Wno-ignored-qualifiers -Wformat -Wunused-variable -Wformat-security -Wno-unused-parameter \
+xCXXFLAGS=-O2 -pthread -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter \
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
 
 # LDFLAGS can be specified on the make command line, so we use xLDFLAGS that only
@@ -117,6 +124,7 @@ xCXXFLAGS=-O2 $(EXT_OPTIONS) -pthread -Wall -Wextra -Wconversion-null -Wmaybe-un
 xLDFLAGS=$(LDHARDENING) $(LDFLAGS)
 
 OBJS= \
+    leveldb/libleveldb.a \
     obj/alert.o \
     obj/version.o \
     obj/checkpoints.o \
@@ -144,7 +152,10 @@ OBJS= \
     obj/txmempool.o \
     obj/util.o \
     obj/hash.o \
+    obj/bloom.o \
     obj/noui.o \
+    obj/leveldb.o \
+    obj/txdb.o \
     obj/kernel.o \
     obj/pbkdf2.o \
     obj/scrypt.o \
@@ -184,13 +195,15 @@ endif
 
 all: Lindad
 
+#
+# LevelDB support
+#
+MAKEOVERRIDES =
 LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
-OBJS += obj/txdb-leveldb.o
 leveldb/libleveldb.a:
-	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..;
-obj/txdb-leveldb.o: leveldb/libleveldb.a
+	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(xCXXFLAGS)" libleveldb.a libmemenv.a && cd ..
 
 # auto-generated dependencies:
 -include obj/*.P
@@ -224,7 +237,7 @@ clean:
 	-rm -f obj/*.o
 	-rm -f obj/*.P
 	-rm -f obj/build.h
-
+	-cd leveldb && $(MAKE) clean || true
 ibs:
 	-sudo apt-get install libssl-dev openssl git miniupnpc libdb-dev libdb++-dev build-essential libgmp-dev autoconf libtool libboost-all-dev libcurl4-openssl-dev git libboost-chrono-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-test-dev libboost-thread-dev libprotobuf-dev protobuf-compiler libqrencode-dev -y
 
