@@ -6,8 +6,8 @@ SetCompressor /SOLID lzma
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
 !define VERSION 3.2.0.0
-!define COMPANY "Linda Coin Project"
-!define URL http://www.Lindacoin.com/
+!define COMPANY "The Linda Project INC"
+!define URL https://www.Lindacoin.com/
 
 # MUI Symbol Definitions
 !define MUI_ICON "../share/pixmaps/Linda.ico"
