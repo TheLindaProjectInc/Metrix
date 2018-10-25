@@ -246,9 +246,20 @@ Value dumpprivkey(const Array& params, bool fHelp)
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "dumpprivkey <Lindaaddress>\n"
-            "Reveals the private key corresponding to <Lindaaddress>.");
+            "Reveals the private key corresponding to <Lindaaddress>.\n"
+            "\nDo not recklessly execute this command in front of others, \n"
+            "hackers/scammers are known to use this method to steal your coins!");
 
     EnsureWalletIsUnlocked();
+
+    static int count = 0;   /*  Display a warning the first time a user executes this command */
+    if(count == 0) {
+        ++count;
+        return "Warning: This command will print your private key! If someone\n"
+                "gains access to this key you will lose all your coins! Hackers/Scammers\n"
+                "are known to use this method. Be careful!"
+                "\nPerform the same command to dump your private key.";
+    }
 
     string strAddress = params[0].get_str();
     CBitcoinAddress address;
@@ -273,6 +284,15 @@ Value dumpwallet(const Array& params, bool fHelp)
             "Dumps all wallet keys in a human-readable format.");
 
     EnsureWalletIsUnlocked();
+
+    static int count = 0;   /*  Display a warning the first time a user executes this command */
+    if(count == 0) {
+        ++count;
+        return "Warning: This command will dump your private keys! If someone\n"
+                "gains access to these keys you will lose all your coins! Hackers/Scammers\n"
+                "are known to use this method. Be careful!\n"
+                "\nPerform the same command to dump all your private keys.";
+    }
 
     ofstream file;
     file.open(params[0].get_str().c_str());
