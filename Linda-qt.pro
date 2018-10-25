@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = Linda-qt
-VERSION = 3.2.0.0
+VERSION = 3.3.0.0
 INCLUDEPATH += src src/json src/qt
 QT += network
 DEFINES += ENABLE_WALLET
