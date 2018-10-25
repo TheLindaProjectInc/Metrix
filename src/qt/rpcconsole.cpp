@@ -324,7 +324,9 @@ void RPCConsole::clear()
 
     message(CMD_REPLY, (tr("Welcome to the Linda RPC console.") + "<br>" +
                         tr("Use up and down arrows to navigate history, and <b>Ctrl-L</b> to clear screen.") + "<br>" +
-                        tr("Type <b>help</b> for an overview of available commands.")), true);
+                        tr("Type <b>help</b> for an overview of available commands.") + "<br>" + "<br>" +
+                        tr("WARNING: Scammers are telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.") + "<br>" + "<br>" +
+                        tr("Join us on Discord: <b>https://discord.gg/Xpjdm6Q</b>")), true);
 }
 
 void RPCConsole::message(int category, const QString &message, bool html)
