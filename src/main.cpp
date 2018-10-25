@@ -2047,6 +2047,10 @@ bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsVi
             }
         }
 
+        // account for a rounding discrepancy in an old version
+        if (pindex->nHeight == 476205)
+            nCalculatedStakeReward += 100000;
+
         if (nStakeReward > nCalculatedStakeReward)
             return state.DoS(100, error("ConnectBlock() : coinstake pays too much(actual=%d vs calculated=%d)", nStakeReward, nCalculatedStakeReward));
     }
