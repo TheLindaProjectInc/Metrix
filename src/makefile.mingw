@@ -2,32 +2,55 @@
 # Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+# Makefile for the MinGW g++ compiler/toolchain
+#
+# Assumes Berkeley DB, Boost, and OpenSSL have all been compiled and installed
+# into /usr/local (/usr/local/include, /usr/local/lib).
+#
+# If dependencies are somewhere else, run 'make DEPSDIR=/path/'
+#
+# Boost libraries are given wacky names that include the particular version of
+# boost you're using; set BOOST_SUFFIX appropriately.
+#
+# 'make clean' assumes it is running inside a MSYS shell, and uses 'rm'
+# to remove files.
+
+CXX ?= g++
+
 USE_UPNP:=0
 USE_WALLET:=1
 
+DEPSDIR?=C:\deps
+BOOST_SUFFIX?=-mgw53-mt-1_58
+
 INCLUDEPATHS= \
- -I"C:\boost-1.50.0-mgw" \
- -I"C:\db-4.8.30.NC-mgw\build_unix" \
- -I"C:\openssl-1.0.1c-mgw\include"
+ -I"$(CURDIR)" \
+ -I"$(DEPSDIR)\boost_1_58_0" \
+ -I"$(DEPSDIR)\db-5.0.32.NC\build_unix" \
+ -I"$(DEPSDIR)\openssl-1.0.2g\include"
 
 LIBPATHS= \
- -L"C:\boost-1.50.0-mgw\stage\lib" \
- -L"C:\db-4.8.30.NC-mgw\build_unix" \
- -L"C:\openssl-1.0.1c-mgw"
+ -L"$(CURDIR)\leveldb" \
+ -L"$(DEPSDIR)\boost_1_58_0\stage\lib" \
+ -L"$(DEPSDIR)\db-5.0.32.NC\build_unix" \
+ -L"$(DEPSDIR)\openssl-1.0.2g"
 
 LIBS= \
- -l boost_system-mgw44-mt-1_53 \
- -l boost_filesystem-mgw44-mt-1_53 \
- -l boost_program_options-mgw44-mt-1_53 \
- -l boost_thread-mgw44-mt-1_53 \
- -l boost_chrono-mgw44-mt-1_53 \
+ -l leveldb \
+ -l memenv \
+ -l boost_system$(BOOST_SUFFIX) \
+ -l boost_filesystem$(BOOST_SUFFIX) \
+ -l boost_program_options$(BOOST_SUFFIX) \
+ -l boost_thread$(BOOST_SUFFIX) \
+ -l boost_chrono$(BOOST_SUFFIX) \
  -l db_cxx \
  -l ssl \
  -l crypto
 
-DEFS=-DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
+DEFS=-D_MT -DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
 DEBUGFLAGS=-g
-CFLAGS=-mthreads -O2 -msse2 -w -Wall -Wextra -Wno-ignored-qualifiers -Wformat -Wformat-security -Wno-unused-parameter $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
+CFLAGS=-mthreads -O2 -w -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
+# enable: ASLR, DEP
 LDFLAGS=-Wl,--dynamicbase -Wl,--nxcompat
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
@@ -36,18 +59,19 @@ ifndef USE_UPNP
 	override USE_UPNP = -
 endif
 ifneq (${USE_UPNP}, -)
- INCLUDEPATHS += -I"C:\miniupnpc-1.6-mgw"
- LIBPATHS += -L"C:\miniupnpc-1.6-mgw"
+ INCLUDEPATHS += -I"$(DEPSDIR)"
+ LIBPATHS += -L"$(DEPSDIR)\miniupnpc"
  LIBS += -l miniupnpc -l iphlpapi
  DEFS += -DSTATICLIB -DUSE_UPNP=$(USE_UPNP)
 endif
 
-LIBS += -l kernel32 -l user32 -l gdi32 -l comdlg32 -l winspool -l winmm -l shell32 -l comctl32 -l ole32 -l oleaut32 -l uuid -l rpcrt4 -l advapi32 -l ws2_32 -l mswsock -l shlwapi
+LIBS += -l mingwthrd -l kernel32 -l user32 -l gdi32 -l comdlg32 -l winspool -l winmm -l shell32 -l comctl32 -l ole32 -l oleaut32 -l uuid -l rpcrt4 -l advapi32 -l ws2_32 -l mswsock -l shlwapi
 
 # TODO: make the mingw builds smarter about dependencies, like the linux/osx builds are
 HEADERS = $(wildcard *.h)
 
 OBJS= \
+    leveldb/libleveldb.a \
     obj/alert.o \
     obj/version.o \
     obj/checkpoints.o \
@@ -75,13 +99,33 @@ OBJS= \
     obj/txmempool.o \
     obj/util.o \
     obj/hash.o \
+    obj/bloom.o \
     obj/noui.o \
+    obj/leveldb.o \
     obj/kernel.o \
     obj/pbkdf2.o \
     obj/scrypt.o \
     obj/scrypt-x86.o \
     obj/scrypt-x86_64.o \
-    obj/chainparams.o
+    obj/chainparams.o \
+    obj/txdb.o \
+    obj/stealth.o \
+    obj/activemasternode.o \
+    obj/darksend.o \
+    obj/eccryptoverify.o \
+    obj/instantx.o \
+    obj/keepass.o \
+    obj/masternodeconfig.o \
+    obj/masternode.o \
+    obj/rpcdarksend.o \
+    obj/spork.o \
+    obj/crypto/hmac_sha256.o \
+    obj/crypto/hmac_sha512.o \
+    obj/crypto/rfc6979_hmac_sha256.o \
+    obj/crypto/ripemd160.o \
+    obj/crypto/sha1.o \
+    obj/crypto/sha256.o \
+    obj/crypto/sha512.o
 
 ifeq (${USE_WALLET}, 1)
     DEFS += -DENABLE_WALLET
@@ -97,16 +141,17 @@ endif
 
 all: Lindad.exe
 
-LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
+#
+# LevelDB support
+#
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
-OBJS += obj/txdb-leveldb.o
+
 leveldb/libleveldb.a:
-	cd leveldb; make; cd ..
-obj/txdb-leveldb.o: leveldb/libleveldb.a
+	cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(CFLAGS)" TARGET_OS=NATIVE_WINDOWS libleveldb.a libmemenv.a && cd ..
 
 obj/%.o: %.cpp $(HEADERS)
-	g++ -c $(CFLAGS) -o $@ $<
+	$(CXX) -c $(CFLAGS) -o $@ $<
 
 obj/scrypt-x86.o: scrypt-x86.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
@@ -115,10 +160,13 @@ obj/scrypt-x86_64.o: scrypt-x86_64.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
 
 Lindad.exe: $(OBJS:obj/%=obj/%)
-	g++ $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 clean:
 	-del /Q Lindad
-	-del /Q obj\*
+	-del /Q obj/*.o
+	-del /Q obj/*.P
+	-del /Q obj/build.h
+	cd leveldb && $(MAKE) TARGET_OS=NATIVE_WINDOWS clean && cd ..
 
 FORCE:

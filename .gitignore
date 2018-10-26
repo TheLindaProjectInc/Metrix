@@ -6,6 +6,7 @@ release/
 debug/
 *.P
 *.o
+*.d
 src/Lindad
 .vscode/
 Linda-qt

@@ -2727,7 +2727,7 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
 
     CBlockIndex* pindexPrev = NULL;
     int nHeight = 0;
-     uint256 hashProof;
+    uint256 hashProof;
     if (hash != Params().HashGenesisBlock()) {
         // Get prev block index
         map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashPrevBlock);
@@ -2997,7 +2997,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             mapOrphanBlocks.insert(make_pair(hash, pblock2));
             mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
 
-            // Ask this guy to fill in what we're missing
+            // Ask this peer to fill in what we're missing
             PushGetBlocks(pfrom, pindexBest, GetOrphanRoot(pblock2));
             // ppcoin: getblocks may not obtain the ancestor block rejected
             // earlier by duplicate-stake check so we ask for it again directly
