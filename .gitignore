@@ -9,6 +9,7 @@ debug/
 .*
 src/Lindad
 .vscode/
+.vs/
 Linda-qt
 qrc_bitcoin.cpp
 src/obj/build.h
