@@ -10,7 +10,7 @@
 #include "serialize.h"
 #include "sync.h"
 #include "wallet.h"
-
+#include <boost/version.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
