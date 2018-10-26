@@ -2118,7 +2118,7 @@ bool static WriteChainState(CValidationState &state) {
         // an overestimation, as most will delete an existing entry or
         // overwrite one. Still, use a conservative safety factor of 2.
         if (!CheckDiskSpace(100 * 2 * 2 * pcoinsTip->GetCacheSize()))
-            return state.Error();
+        return state.Error("out of disk space");;
         FlushBlockFile();
         pblocktree->Sync();
         if (!pcoinsTip->Flush())
@@ -2360,7 +2360,7 @@ bool CBlock::AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos, 
     // Check for duplicate
     uint256 hash = GetHash();
     if (mapBlockIndex.count(hash))
-        return state.Invalid(error("AddToBlockIndex() : %s already exists", hash.ToString()));
+      return state.Invalidf(error("AddToBlockIndex() : %s already exists", hash.ToString()), 0, "duplicate");
 
     // Construct new block index object
     CBlockIndex* pindexNew = new CBlockIndex(*this);
@@ -2465,7 +2465,7 @@ bool FindBlockPos(CValidationState &state, CDiskBlockPos &pos, unsigned int nAdd
                 }
             }
             else
-                return state.Error();
+            return state.Error("out of disk space");
         }
     }
 
@@ -2710,7 +2710,8 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
     // Check for duplicate
     uint256 hash = GetHash();
     if (mapBlockIndex.count(hash))
-        state.Invalid(error("AcceptBlock() : block already in mapBlockIndex"));
+        return state.Invalid(error("AcceptBlock() : block already in mapBlockIndex"), 0, "duplicate");
+
 
     CBlockIndex* pindexPrev = NULL;
     int nHeight = 0;
@@ -2719,8 +2720,8 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         // Get prev block index
         map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashPrevBlock);
         if (mi == mapBlockIndex.end())
-            return state.DoS(10, error("AcceptBlock() : prev block not found"));
-        pindexPrev = (*mi).second;
+            return state.DoS(10, error("AcceptBlock() : prev block not found"), 0, "bad-prevblk");
+	pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
 
         if (IsProofOfStake() && nHeight < POS_START_BLOCK)
@@ -2860,9 +2861,9 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     // Check for duplicate
     uint256 hash = pblock->GetHash();
     if (mapBlockIndex.count(hash))
-        return state.Invalid(error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString()));
+        return state.Invalid(error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString()), 0, "duplicate");
     if (mapOrphanBlocks.count(hash))
-        return state.Invalid(error("ProcessBlock() : already have block (orphan) %s", hash.ToString()));
+        return state.Invalid(error("ProcessBlock() : already have block (orphan) %s", hash.ToString()), 0, "duplicate");
 
     // ppcoin: check proof-of-stake
     if (pblock->IsProofOfStake())
