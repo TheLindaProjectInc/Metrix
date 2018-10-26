@@ -31,6 +31,9 @@ const std::locale formats[] = {
     std::locale(std::locale::classic(),new bt::time_input_facet("%Y-%m-%d"))
 };
 
+int warningPrivKey = 0;
+int warningDumpWallet = 0;
+
 const size_t formats_n = sizeof(formats)/sizeof(formats[0]);
 
 std::time_t pt_to_time_t(const bt::ptime& pt)
@@ -252,9 +255,8 @@ Value dumpprivkey(const Array& params, bool fHelp)
 
     EnsureWalletIsUnlocked();
 
-    static int count = 0;   /*  Display a warning the first time a user executes this command */
-    if(count == 0) {
-        ++count;
+    if(warningPrivKey == 0) {
+        ++warningPrivKey;
         return "Warning: This command will print your private key! If someone\n"
                 "gains access to this key you will lose all your coins! Hackers/Scammers\n"
                 "are known to use this method. Be careful!"
@@ -285,9 +287,8 @@ Value dumpwallet(const Array& params, bool fHelp)
 
     EnsureWalletIsUnlocked();
 
-    static int count = 0;   /*  Display a warning the first time a user executes this command */
-    if(count == 0) {
-        ++count;
+    if(warningDumpWallet == 0) {
+        ++warningDumpWallet;
         return "Warning: This command will dump your private keys! If someone\n"
                 "gains access to these keys you will lose all your coins! Hackers/Scammers\n"
                 "are known to use this method. Be careful!\n"
