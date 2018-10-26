@@ -1,12 +1,12 @@
 build/
 src/qt/locale/*.qm
 /bin/
-
 release/
 debug/
 *.P
 *.o
 *.d
+.*
 src/Lindad
 .vscode/
 Linda-qt
@@ -15,3 +15,4 @@ src/obj/build.h
 object_script.Linda-qt.*
 Makefile.*
 Makefile
+*plugin_import.cpp
