@@ -33,6 +33,7 @@ using namespace std;
 int64_t nTransactionFee = 0;
 int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
+bool bSpendZeroConfChange = true;
 
 static unsigned int GetStakeSplitAge() { return 9 * 24 * 60 * 60; }
 static int64_t GetStakeSplitAmount() { return 100000 * COIN; }
@@ -2057,7 +2058,7 @@ bool CWallet::SelectCoins(int64_t nTargetValue, unsigned int nSpendTime, set<pai
 
     return (f(this, nTargetValue, nSpendTime, 1, 10, vCoins, setCoinsRet, nValueRet) ||
             f(this, nTargetValue, nSpendTime, 1, 1, vCoins, setCoinsRet, nValueRet) ||
-            f(this, nTargetValue, nSpendTime, 0, 1, vCoins, setCoinsRet, nValueRet));
+           (bSpendZeroConfChange && f(this, nTargetValue, nSpendTime, 0, 1, vCoins, setCoinsRet, nValueRet)));
 }
 
 // Select some coins without random shuffle or best subset approximation
