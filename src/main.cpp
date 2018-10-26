@@ -4271,7 +4271,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             vWorkQueue.push_back(inv.hash);
             vEraseQueue.push_back(inv.hash);
 		
-LogPrintf("AcceptToMemoryPool: %s %s : accepted %s (poolsz %"PRIszu")\n",
+            LogPrintf("AcceptToMemoryPool: %s %s : accepted %s (poolsz %"PRIszu")\n",
                 pfrom->addr.ToString().c_str(), pfrom->strSubVer.c_str(),
                 tx.GetHash().ToString().c_str(),
                 mempool.mapTx.size());
@@ -4324,13 +4324,12 @@ LogPrintf("AcceptToMemoryPool: %s %s : accepted %s (poolsz %"PRIszu")\n",
         }
         int nDoS = 0;
         if (state.IsInvalid(nDoS))
-	{
 		{
             LogPrintf("%s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
                 pfrom->addr.ToString().c_str(), pfrom->strSubVer.c_str());
             if (nDoS > 0)
                 pfrom->Misbehaving(nDoS);
-	}
+	    }
     }
 
 
