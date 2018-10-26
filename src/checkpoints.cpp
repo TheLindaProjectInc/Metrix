@@ -35,16 +35,17 @@ namespace Checkpoints
     //
     static MapCheckpoints mapCheckpoints =
         boost::assign::map_list_of
-        ( 0,    Params().HashGenesisBlock())
-        ( 10,   uint256("0xe653e137fcf430648f4e02172be2926fa60cf2d2b408c5c127fb0d3c8a384051"))
-        ( 20,   uint256("0x22f69c926e860df361f25857beef751b90b8cb8811757ca804467d449b67c313"))
-        (35425, uint256("0xe417f9c423b3f37171e3f5597bbe8b05183d22b62d302b660c934e701e2380b7"))
+        ( 0,     Params().HashGenesisBlock())
+        ( 10,    uint256("0xe653e137fcf430648f4e02172be2926fa60cf2d2b408c5c127fb0d3c8a384051"))
+        ( 20,    uint256("0x22f69c926e860df361f25857beef751b90b8cb8811757ca804467d449b67c313"))
+        (35425,  uint256("0xe417f9c423b3f37171e3f5597bbe8b05183d22b62d302b660c934e701e2380b7"))
+        (580000, uint256("0xaf1e55ba27f4e595ff9a5faf6bf1e91899966676e817cd32c5f66d793467bc71"))
         ;
 
     static const CCheckpointData data = {
         &mapCheckpoints,
-        1501252400, // * UNIX timestamp of last checkpoint block
-        66551,      // * total number of transactions between genesis and last checkpoint
+        1536312976, // * UNIX timestamp of last checkpoint block
+        1194687,      // * total number of transactions between genesis and last checkpoint
                     //   (the tx=... number in the SetBestChain debug.log lines)
         960.0       // * estimated number of transactions per day after checkpoint
     };

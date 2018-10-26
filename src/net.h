@@ -772,7 +772,6 @@ void RelayDarkSendCompletedTransaction(const int sessionID, const bool error, co
 void RelayDarkSendMasterNodeContestant();
 
 class CBlock;
-void RelayBlock(const CBlock& tx, const uint256& hash);
 
 /** Access to the (IP) address database (peers.dat) */
 class CAddrDB

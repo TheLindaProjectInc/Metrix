@@ -20,7 +20,6 @@
 #define START_MASTERNODE_PAYMENTS 1429738064
 
 static const int REWARD_START      = 51;
-static const int REWARD_HALVE      = 790115;
 static const int PREMINE_BLOCK     = 10;
 static const int FAIR_LAUNCH_BLOCK = 50;
 
@@ -128,8 +127,6 @@ static const unsigned int BLOCK_DOWNLOAD_TIMEOUT = 60;
 static const int64_t COIN_YEAR_REWARD = 99 * CENT; // 99% per year
 static const int POS_START_BLOCK = 25;
 static const int DIFF_FORK_BLOCK = 100;
-// disallow consecutive blocks to be mined by POW
-static const int POW_CONSECUTIVE_START_BLOCK = 555000; 
 
 inline int64_t FutureDrift(int64_t nTime) { return nTime + 15; }
 
