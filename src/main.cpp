@@ -1167,7 +1167,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!tx.CheckInputs(state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS))
+        if (!tx.CheckInputs(state, view, false, STANDARD_SCRIPT_VERIFY_FLAGS))
         {
             return error("AcceptableInputs : ConnectInputs failed %s", hash.ToString());
         }
