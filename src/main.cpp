@@ -2546,7 +2546,7 @@ bool CBlock::CheckBlock(CValidationState &state,bool fCheckPOW, bool fCheckMerkl
     if (GetHash() != Params().HashGenesisBlock() && nVersion < 7)
         return state.DoS(100, error("AcceptBlock() : reject too old nVersion = %d", nVersion));
 
-    if (IsProofOfWork() && nBestHeight >= Params().LastPOWBlock())
+    if (fCheckPOW && IsProofOfWork() && nBestHeight >= Params().LastPOWBlock())
         return state.DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", nBestHeight));
 
     // Size limits
