@@ -6,6 +6,7 @@
 #include "rpcserver.h"
 #include "rpcclient.h"
 #include "init.h"
+#include "scheduler.h"
 #include <boost/algorithm/string/predicate.hpp>
 
 void WaitForShutdown(boost::thread_group* threadGroup)
@@ -31,7 +32,8 @@ void WaitForShutdown(boost::thread_group* threadGroup)
 bool AppInit(int argc, char* argv[])
 {
     boost::thread_group threadGroup;
-
+    CScheduler scheduler;
+    
     bool fRet = false;
     try
     {
@@ -101,7 +103,7 @@ bool AppInit(int argc, char* argv[])
         }
 #endif
 
-        fRet = AppInit2(threadGroup);
+        fRet = AppInit2(threadGroup, scheduler);
     }
     catch (std::exception& e) {
         PrintException(&e, "AppInit()");
