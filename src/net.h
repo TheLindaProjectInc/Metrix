@@ -26,6 +26,7 @@
 #include "bloom.h"
 
 class CNode;
+class CScheduler;
 class CBlockIndex;
 extern int nBestHeight;
 
@@ -48,7 +49,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *strDest = NULL, bool darkSe
 void MapPort(bool fUseUPnP);
 unsigned short GetListenPort();
 bool BindListenPort(const CService &bindAddr, std::string& strError=REF(std::string()));
-void StartNode(boost::thread_group& threadGroup);
+void StartNode(boost::thread_group& threadGroup, CScheduler& scheduler);
 bool StopNode();
 void SocketSendData(CNode *pnode);
 
