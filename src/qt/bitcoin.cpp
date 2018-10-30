@@ -14,6 +14,7 @@
 #include "util.h"
 #include "wallet.h"
 #include "ui_interface.h"
+#include "scheduler.h"
 #include "paymentserver.h"
 #ifdef Q_OS_MAC
 #include "macdockiconhandler.h"
@@ -251,6 +252,7 @@ int main(int argc, char *argv[])
             GUIUtil::SetStartOnSystemStartup(true);
 
         boost::thread_group threadGroup;
+         CScheduler scheduler;
 
         BitcoinGUI window;
         guiref = &window;
