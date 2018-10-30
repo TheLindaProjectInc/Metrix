@@ -393,7 +393,6 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
 bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 {
     // ********************************************************* Step 1: setup
-#ifdef _MSC_VER
     // Turn off Microsoft heap dump noise
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN, CreateFileA("NUL", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0));
