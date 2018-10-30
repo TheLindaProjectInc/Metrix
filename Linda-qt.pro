@@ -242,6 +242,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/walletmodel.h \
     src/rpcclient.h \
     src/rpcprotocol.h \
+    src/scheduler.h \
     src/rpcserver.h \
     src/timedata.h \
     src/qt/overviewpage.h \
@@ -349,6 +350,7 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/qt/qvaluecombobox.cpp \
     src/qt/askpassphrasedialog.cpp \
     src/protocol.cpp \
+    src/scheduler.cpp \
     src/qt/notificator.cpp \
     src/qt/paymentserver.cpp \
     src/qt/rpcconsole.cpp \
