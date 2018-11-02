@@ -67,8 +67,6 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 •	Chris Bowe - Director of Web-wallet & Pool
 
-•	Matthew Randall - Director of Development
-
 •	David Grunge - Lead Developer 
 
 
