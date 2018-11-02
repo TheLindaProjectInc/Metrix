@@ -100,4 +100,4 @@ workflows:
       - build:
           filters:
             branches:
-              only: V3.2.0.0-dev
+              ignore: master
