@@ -103,6 +103,6 @@ workflows:
             branches:
               only:
                 - master
-                - /v\d.\d.\d.\d.*/
+                - /(v|V)\d.\d.\d.\d.*/
     jobs:
       - build
