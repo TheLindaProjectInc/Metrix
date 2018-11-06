@@ -95,6 +95,9 @@ jobs:
 
 workflows:
   version: 2
+  commits:
+    jobs:
+      - build
   nightly:
     triggers:
       - schedule:
