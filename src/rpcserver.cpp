@@ -218,44 +218,53 @@ Value stop(const Array& params, bool fHelp)
 static const CRPCCommand vRPCCommands[] =
 { //  name                      actor (function)         okSafeMode threadSafe reqWallet
   //  ------------------------  -----------------------  ---------- ---------- ---------
+  /* Overall control/query calls */
+    { "getinfo",                &getinfo,                true,      false,      false }, /* uses wallet if enabled */
     { "help",                   &help,                   true,      true,      false },
     { "stop",                   &stop,                   true,      true,      false },
-    { "getbestblockhash",       &getbestblockhash,       true,      false,     false },
-    { "getblockcount",          &getblockcount,          true,      false,     false },
-    { "getconnectioncount",     &getconnectioncount,     true,      false,     false },
-    { "getpeerinfo",            &getpeerinfo,            true,      false,     false },
+
+  /* P2P networking */
     { "addnode",                &addnode,                true,      true,      false },
     { "getaddednodeinfo",       &getaddednodeinfo,       true,      true,      false },
-    { "ping",                   &ping,                   true,      false,     false },
+    { "getconnectioncount",     &getconnectioncount,     true,      false,      false },
     { "getnettotals",           &getnettotals,           true,      true,      false },
-    { "getdifficulty",          &getdifficulty,          true,      false,     false },
-    { "getinfo",                &getinfo,                true,      false,     false },
-    { "getrawmempool",          &getrawmempool,          true,      false,     false },
+    { "getpeerinfo",            &getpeerinfo,            true,      false,      false },
+    { "ping",                   &ping,                   true,      false,      false },
+  
+     /* Block chain */
+    { "getbestblockhash",       &getbestblockhash,       true,      false,      false },
+    { "getblockcount",          &getblockcount,          true,      false,      false },
     { "getblock",               &getblock,               false,     false,     false },
     { "getblockbynumber",       &getblockbynumber,       false,     false,     false },
     { "getblockhash",           &getblockhash,           false,     false,     false },
-    { "getrawtransaction",      &getrawtransaction,      false,     false,     false },
-    { "createrawtransaction",   &createrawtransaction,   false,     false,     false },
-    { "decoderawtransaction",   &decoderawtransaction,   false,     false,     false },
-    { "decodescript",           &decodescript,           false,     false,     false },
-    { "signrawtransaction",     &signrawtransaction,     false,     false,     false },
-    { "sendrawtransaction",     &sendrawtransaction,     false,     false,     false },
-    { "gettxoutsetinfo",        &gettxoutsetinfo,        true,      false,     false },
+    { "getdifficulty",          &getdifficulty,          true,      false,      false },
+    { "getrawmempool",          &getrawmempool,          true,      false,      false },
     { "gettxout",               &gettxout,               true,      false,     false },
+    { "gettxoutsetinfo",        &gettxoutsetinfo,        true,      false,      false },
+  
+    /* Raw transactions */
+    { "createrawtransaction",   &createrawtransaction,   false,     false,      false },
+    { "decoderawtransaction",   &decoderawtransaction,   false,     false,      false },
+    { "decodescript",           &decodescript,           false,     false,      false },
+    { "getrawtransaction",      &getrawtransaction,      false,     false,      false },
+    { "sendrawtransaction",     &sendrawtransaction,     false,     false,      false },
+    { "searchrawtransactions",  &searchrawtransactions,  false,     false, false },
+    { "signrawtransaction",     &signrawtransaction,     false,     false,      false }, /* uses wallet if enabled */
+   
+    /* Utility functions */
     { "sendalert",              &sendalert,              false,     false,     false },
-    { "validateaddress",        &validateaddress,        true,      false,     false },
+    { "validateaddress",        &validateaddress,        true,      false,     false }, /* uses wallet if enabled */
     { "validatepubkey",         &validatepubkey,         true,      false,     false },
     { "verifymessage",          &verifymessage,          false,     false,     false },
-    { "searchrawtransactions",  &searchrawtransactions,  false,     false, false },
-
-/* Dark features */
+      
+    /* Dark features */
     { "darksend",               &darksend,               false,     false,      true },
     { "spork",                  &spork,                  true,      false,      false },
     { "masternode",             &masternode,             true,      false,      true },
     { "keepass",                &keepass,                false,     false,      true },
 
 #ifdef ENABLE_WALLET
-    { "getmininginfo",          &getmininginfo,          true,      false,     false },
+      /* Wallet */
     { "getstakinginfo",         &getstakinginfo,         true,      false,     false },
     { "getnewaddress",          &getnewaddress,          true,      false,     true },
     { "getnewpubkey",           &getnewpubkey,           true,      false,     true },
