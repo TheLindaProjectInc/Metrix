@@ -45,9 +45,6 @@ static void convertSeed6(std::vector<CAddress> &vSeedsOut, const SeedSpec6 *data
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
-        // The message start string is designed to be unlikely to occur in normal data.
-        // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
-        // a large 4-byte int at any alignment.
         //add 1 to the start message for Linda 1.0.1 so we dont talk to old wallets, and change the default port's
         pchMessageStart[0] = 0x9c;
         pchMessageStart[1] = 0xd3;
