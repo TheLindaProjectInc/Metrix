@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/TheLindaProjectInc/Linda/tree/master.svg?style=svg)](https://circleci.com/gh/TheLindaProjectInc/Linda/tree/master)
+
 ![Linda](logo.png)
 
 # Linda Coin
