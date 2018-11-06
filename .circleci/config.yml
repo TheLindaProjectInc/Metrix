@@ -1,6 +1,48 @@
 version: 2
 jobs:
-  build:
+  build-dynamic:
+    docker:
+      - image: circleci/buildpack-deps:xenial
+    working_directory: ~/Linda
+    steps:
+      - checkout
+      - run:
+          shell: /bin/bash
+          name: Get build environment ready
+          command: |
+            sudo apt install -y build-essential libtool automake autotools-dev autoconf pkg-config libssl-dev libgmp3-dev libevent-dev bsdmainutils software-properties-common
+            sudo apt install -y libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+            sudo add-apt-repository -y ppa:bitcoin/bitcoin
+            sudo apt update
+            sudo apt install -y libdb4.8-dev libdb4.8++-dev
+            sudo apt install -y libminiupnpc-dev
+      - run:
+          shell: /bin/bash
+          name: Build leveldb
+          command: |
+            echo "Build leveldb"
+            cd ~/Linda/src/leveldb
+            chmod +x build_detect_platform
+            chmod 775 *
+            make libleveldb.a libmemenv.a
+      - run:
+          shell: /bin/bash
+          name: Build libsecp256k1
+          command: |
+            echo "Build libsecp256k1"
+            cd ~/Linda/src/secp256k1
+            ./autogen.sh
+            ./configure --enable-static --disable-shared
+            make
+      - run:
+          shell: /bin/bash
+          name: Build Lindad
+          command: |
+            echo "Build Lindad"
+            cd ~/Linda/src
+            make -f makefile.unix
+            strip ./Lindad
+  build-static:
     docker:
       - image: circleci/buildpack-deps:xenial
     working_directory: ~/Linda
@@ -97,7 +139,7 @@ workflows:
   version: 2
   commits:
     jobs:
-      - build
+      - build-dynamic
   nightly:
     triggers:
       - schedule:
@@ -108,4 +150,4 @@ workflows:
                 - master
                 - /(v|V)\d.\d.\d.\d.*/
     jobs:
-      - build
+      - build-static
