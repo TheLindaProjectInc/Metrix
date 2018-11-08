@@ -43,9 +43,11 @@ Build requirements:
 To cross compile for 32bit and 64bit systems both these below will be required. If you only want to compile for one architecture, just install the one you want.
 
 x86:
+
     sudo apt install g++-mingw-w64-i686
 
 64:
+
     sudo apt install g++-mingw-w64-x86-64
 
 	
@@ -89,10 +91,11 @@ tar xvzf openssl-1.0.2g.tar.gz
 cd openssl-1.0.2g
 ```
 x86:
+
     ./Configure --cross-compile-prefix=i686-w64-mingw32- no-shared no-dso mingw
 x64:
-    ./Configure --cross-compile-prefix=x86_64-w64-mingw32- no-shared no-dso mingw64
 
+    ./Configure --cross-compile-prefix=x86_64-w64-mingw32- no-shared no-dso mingw64
     make depend
     make
 
@@ -109,9 +112,11 @@ tar xvfz db-5.0.32.NC.tar.gz
 cd db-5.0.32.NC/build_unix
 ```
 x86:
+
     sh ../dist/configure --host=i686-w64-mingw32 --enable-mingw --enable-cxx --disable-replication
 
 x64:
+
     sh ../dist/configure --host=x86_64-w64-mingw32 --enable-mingw --enable-cxx --disable-replication
 
     make
@@ -127,9 +132,11 @@ tar xvfz boost_1_58_0.tar.gz
 cd boost_1_58_0
 ```
 x86:
+
     echo "using gcc : : i686-w64-mingw32-g++ ;" > user-config.jam
 
 x64:
+
     echo "using gcc : : x86_64-w64-mingw32-g++ ;" > user-config.jam
 
 ```
@@ -160,9 +167,11 @@ sed -i '71r fixfile' Makefile.mingw
 ```
 
 x86:
+
     make -f Makefile.mingw DLLWRAP=i686-w64-mingw32-dllwrap CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-ar init upnpc-static
 
 x64:
+
     make -f Makefile.mingw DLLWRAP=x86_64-w64-mingw32-dllwrap CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-ar init upnpc-static
 
 
@@ -177,6 +186,7 @@ cd zlib-1.2.11
 ```
 
 x86:
+
 ```
 sed -e s/"PREFIX ="/"PREFIX = i686-w64-mingw32-"/ -i win32/Makefile.gcc
 make -f win32/Makefile.gcc
@@ -184,6 +194,7 @@ sudo BINARY_PATH=/usr/i686-w64-mingw32/bin INCLUDE_PATH=/usr/i686-w64-mingw32/in
 ```
 
 x64:
+
 ```
 sed -e s/"PREFIX ="/"PREFIX = x86_64-w64-mingw32-"/ -i win32/Makefile.gcc
 make -f win32/Makefile.gcc
@@ -198,20 +209,24 @@ Build leveldb
     cd ~/Linda/src/leveldb
     make clean
 x86:
+
     CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-g++ TARGET_OS=OS_WINDOWS_CROSSCOMPILE make libleveldb.a libmemenv.a
 x64:
+
     CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ TARGET_OS=OS_WINDOWS_CROSSCOMPILE make libleveldb.a libmemenv.a
 
 
 Build Secp256k1
 
-x86
+x86:
+
     cd ~/Linda/src/secp256k1
     ./autogen
     ./configure --host=i686-w64-mingw32
     make
 
 x64:
+
     cd ~/Linda/src/secp256k1
     ./autogen
     ./configure --host=x86_64-w64-mingw32
@@ -219,7 +234,6 @@ x64:
 
 Build Lindad
 -------
-
 
     cd ~/Linda/src
     make -f makefile.linux-mingw
