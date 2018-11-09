@@ -187,6 +187,7 @@ HEADERS += src/qt/bitcoingui.h \
     src/qt/aboutdialog.h \
     src/qt/editaddressdialog.h \
     src/qt/bitcoinaddressvalidator.h \
+    src/addrman.h \
     src/alert.h \
     src/base58.h \
     src/bignum.h \
@@ -311,6 +312,7 @@ SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
     src/init.cpp \
     src/net.cpp \
     src/checkpoints.cpp \
+    src/addrman.cpp \
     src/db.cpp \
     src/walletdb.cpp \
     src/qt/clientmodel.cpp \
