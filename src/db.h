@@ -266,6 +266,8 @@ protected:
     }
 
 public:
+    bool WriteAddrman(const CAddrMan& addr);
+    bool LoadAddresses(bool &fUpdate);
     bool TxnBegin()
     {
         if (!pdb || activeTxn)
