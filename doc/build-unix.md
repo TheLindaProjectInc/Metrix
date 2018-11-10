@@ -256,7 +256,7 @@ make install
 
 Clone the Lindacoin repository
 ```
-git clone https://github.com/Lindacoin/Linda.git
+git clone https://github.com/TheLindaProjectInc/linda.git
 ```
 if required, fix the leveldb files permissions
 ```
