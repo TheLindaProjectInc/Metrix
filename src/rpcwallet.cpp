@@ -846,6 +846,7 @@ struct tallyitem
 {
     int64_t nAmount;
     int nConf;
+    vector<uint256> txids;
     tallyitem()
     {
         nAmount = 0;
@@ -887,6 +888,7 @@ Value ListReceived(const Array& params, bool fByAccounts)
             tallyitem& item = mapTally[address];
             item.nAmount += txout.nValue;
             item.nConf = min(item.nConf, nDepth);
+            item.txids.push_back(wtx.GetHash());
         }
     }
 
@@ -922,6 +924,12 @@ Value ListReceived(const Array& params, bool fByAccounts)
             obj.push_back(Pair("account",       strAccount));
             obj.push_back(Pair("amount",        ValueFromAmount(nAmount)));
             obj.push_back(Pair("confirmations", (nConf == std::numeric_limits<int>::max() ? 0 : nConf)));
+            Array transactions;
+            if (it != mapTally.end())
+            {
+                transactions.push_back(item.GetHex());
+            }
+            obj.push_back(Pair("txids", transactions));
             ret.push_back(obj);
         }
     }
@@ -992,7 +1000,8 @@ Value listreceivedbyaddress(const Array& params, bool fHelp)
             "  \"address\" : receiving address\n"
             "  \"account\" : the account of the receiving address\n"
             "  \"amount\" : total amount received by the address\n"
-            "  \"confirmations\" : number of confirmations of the most recent transaction included");
+            "  \"confirmations\" : number of confirmations of the most recent transaction included\n"
+            "  \"txids\" : list of transactions with outputs to the address\n");
 
     return ListReceived(params, false);
 }
