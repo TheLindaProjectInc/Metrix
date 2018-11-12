@@ -927,8 +927,11 @@ Value ListReceived(const Array& params, bool fByAccounts)
             Array transactions;
             if (it != mapTally.end())
             {
-                transactions.push_back(item.GetHex());
-            }
+                BOOST_FOREACH(const uint256& item, (*it).second.txids)
+                {
+                    transactions.push_back(item.GetHex());
+                }
+            }           
             obj.push_back(Pair("txids", transactions));
             ret.push_back(obj);
         }
