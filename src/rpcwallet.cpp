@@ -2000,7 +2000,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
             pwalletMain->AddToWalletIfInvolvingMe(tx.GetHash(), tx, &block, fUpdate);
         };
         
-        pindex = pindex->pnext;
+        pindex = pindex->GetNextInMainChain();
     };
     
     LogPrintf("Scanned %u blocks, %u transactions\n", nBlocks, nTransactions);
