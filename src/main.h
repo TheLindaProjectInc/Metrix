@@ -1999,7 +1999,7 @@ public:
         Set(pindex);
     }
 
-    explicit CBlockLocator(uint256 hashBlock)
+    explicit CBlockLocator(uint256 hashBlock);
 
     CBlockLocator(const std::vector<uint256>& vHaveIn)
     {
