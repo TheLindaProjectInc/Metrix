@@ -371,7 +371,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
         indexDummy.nHeight = pindexPrev->nHeight + 1;
         CCoinsViewCache viewNew(*pcoinsTip, true);
         CValidationState state;
-        if (!ConnectBlock(pblock, state, &indexDummy, viewNew, true))
+        if (!ConnectBlock(*pblock, state, &indexDummy, viewNew, true))
         {
             error("CreateNewBlock() : ConnectBlock failed");
             return NULL;
@@ -573,7 +573,7 @@ void ThreadStakeMiner(CWallet *pwallet)
 
         CBlock *pblock = &pblocktemplate->block;
         // Trying to sign a block
-        if (SignBlock(pblock, *pwallet, nFees))
+        if (SignBlock(*pblock, *pwallet, nFees))
         {
             SetThreadPriority(THREAD_PRIORITY_NORMAL);
             CheckStake(pblock, *pwallet);
