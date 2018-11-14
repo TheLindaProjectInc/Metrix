@@ -1398,10 +1398,10 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
 bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool fJustCheck = false);
 
 // Add this block to the block index, and if necessary, switch the active block chain to this
-bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos);
+bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos, const uint256& hashProof);
 
 // Context-independent validity checks
-bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
+bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true, bool fCheckSig=true);
 
 // Store block on disk
 // if dbp is provided, the file is known to already reside on disk
