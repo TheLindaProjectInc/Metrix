@@ -449,7 +449,7 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
     CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
     for (int n = 0; n < count; n++) {
         CBlock block;
-        if (block.ReadFromDisk(pblockindex)) {
+        if (ReadBlockFromDisk(block, pblockindex)) {
             if (block.HasMasternodePayment()) {
                 if (block.vtx[1].vout.size() == 3) {
                     CScript mnScript = block.vtx[1].vout[2].scriptPubKey;
