@@ -2009,7 +2009,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
     {
         nBlocks++;
         CBlock block;
-        block.ReadFromDisk(pindex);
+        ReadBlockFromDisk(block, pindex);
         
         BOOST_FOREACH(CTransaction& tx, block.vtx)
         {
