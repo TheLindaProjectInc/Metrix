@@ -829,7 +829,7 @@ int CMerkleTx::SetMerkleBranch(const CBlock* pblock)
         if (pcoinsTip->GetCoins(GetHash(), coins)) {
             CBlockIndex *pindex = FindBlockByHeight(coins.nHeight);
             if (pindex) {
-                if (!blockTmp.ReadFromDisk(pindex))
+                if (!ReadBlockFromDisk(blockTmp, pindex))
                     return 0;
                 pblock = &blockTmp;
             }
@@ -2024,14 +2024,14 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
     }
 
     if (IsProofOfStake())
-        setStakeSeen.erase(GetProofOfStake());
+        setStakeSeen.erase(block.GetProofOfStake());
 
     // move best block pointer to prevout block
     view.SetBestBlock(pindex->pprev);
 
     // ppcoin: clean up wallet after disconnecting coinstake
-    BOOST_FOREACH(CTransaction& tx, vtx)
-        SyncWithWallets(tx.GetHash(), tx, this, false);
+    BOOST_FOREACH(CTransaction& tx, block.vtx)
+        SyncWithWallets(tx.GetHash(), tx, block, false);
 
     if (pfClean) {
         *pfClean = fClean;
@@ -2133,7 +2133,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
 
-    if (IsProofOfWork()) {
+    if (block.IsProofOfWork()) {
         int64_t nReward = GetProofOfWorkReward(nFees);
         
         // Check coinbase reward
@@ -2143,7 +2143,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                    nReward));
     }
 
-    if (IsProofOfStake()) {
+    if (block.IsProofOfStake()) {
         // ppcoin: coin stake tx earns reward instead of paying fee
         uint64_t nCoinAge;
         if (!block.vtx[1].GetCoinAge(state, view, nCoinAge, pindex->nHeight))
@@ -2153,7 +2153,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
         if (pindex->nHeight >= V3_START_BLOCK) {
             // if we are paying a masternode we need to adjust the calculated stake reward
-            if (HasMasternodePayment()) {
+            if (block.HasMasternodePayment()) {
                 LogPrint("connectblock", "ConnectBlock(): HasMasternodePayment=%i\n",pindex->nHeight);
                 nCalculatedStakeReward += GetMasternodePayment(pindex->nHeight, 0);
             }
@@ -2481,7 +2481,7 @@ bool CTransaction::GetCoinAge(CValidationState &state, CCoinsViewCache &view, ui
     return true;
 }
 
-bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos)
+bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos, const uint256& hashProof)
 {
     AssertLockHeld(cs_main);
 
@@ -2510,7 +2510,7 @@ bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos
     pindexNew->nStatus = BLOCK_VALID_TRANSACTIONS | BLOCK_HAVE_DATA;
 
     // ppcoin: compute stake entropy bit for stake modifier
-    if (!pindexNew->SetStakeEntropyBit(GetStakeEntropyBit()))
+    if (!pindexNew->SetStakeEntropyBit(block.GetStakeEntropyBit()))
         return error("AddToBlockIndex() : SetStakeEntropyBit() failed");
 
     // Record proof hash value
@@ -2647,17 +2647,17 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 }
 
 
-bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot)
+bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckSig)
 {
     // These are checks that are independent of context
     // that can be verified before saving an orphan block.
-    if (block.nVersion > CURRENT_VERSION)
+    if (block.nVersion > block.CURRENT_VERSION)
         return state.DoS(100, error("AcceptBlock() : reject unknown block version %d", block.nVersion));
 
-    if (GetHash() != Params().HashGenesisBlock() && block.nVersion < 7)
+    if (block.GetHash() != Params().HashGenesisBlock() && block.nVersion < 7)
         return state.DoS(100, error("AcceptBlock() : reject too old nVersion = %d", block.nVersion));
 
-    if (fCheckPOW && IsProofOfWork() && nBestHeight >= Params().LastPOWBlock())
+    if (fCheckPOW && block.IsProofOfWork() && nBestHeight >= Params().LastPOWBlock())
         return state.DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", nBestHeight));
 
     // Size limits
@@ -2669,7 +2669,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.DoS(50, error("CheckBlock() : proof of work failed"));
 
     // Check timestamp
-    if (block.GetBlockTime() > FutureDrift(GetAdjustedTime()) && !IsProofOfWork())
+    if (block.GetBlockTime() > FutureDrift(GetAdjustedTime()) && !block.IsProofOfWork())
         return state.Invalid(error("CheckBlock() : block timestamp too far in the future"));
 
     // First transaction must be coinbase, the rest must not be
@@ -2679,7 +2679,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         if (block.vtx[i].IsCoinBase())
             return state.DoS(100, error("CheckBlock() : more than one coinbase"));
 
-    if (IsProofOfStake())
+    if (block.IsProofOfStake())
     {
         // Coinbase output should be empty if proof-of-stake block
         if (block.vtx[0].vout.size() != 1 || !block.vtx[0].vout[0].IsEmpty())
@@ -2694,7 +2694,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     }
 
     // Check proof-of-stake block signature
-    if (fCheckSig && !CheckBlockSignature())
+    if (fCheckSig && !CheckBlockSignature(block))
         return state.DoS(100, error("CheckBlock() : bad proof-of-stake block signature"));
 
 
@@ -2723,7 +2723,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
     bool MasternodePayments = false;
 
-    if(nTime > START_MASTERNODE_PAYMENTS) MasternodePayments = true;
+    if(block.nTime > START_MASTERNODE_PAYMENTS) MasternodePayments = true;
 
     if(!IsSporkActive(SPORK_1_MASTERNODE_PAYMENTS_ENFORCEMENT)){
         MasternodePayments = false;
@@ -2736,7 +2736,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
         CBlockIndex *pindex = pindexBest;
         if(pindex != NULL){
-            if(pindex->GetBlockHash() == hashPrevBlock){                
+            if(pindex->GetBlockHash() == block.hashPrevBlock){                
                 bool fIsInitialDownload = IsInitialBlockDownload();
 
                 // If we don't already have its previous block, skip masternode payment step
@@ -2851,20 +2851,20 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
 
-        if (IsProofOfStake() && nHeight < POS_START_BLOCK)
+        if (block.IsProofOfStake() && nHeight < POS_START_BLOCK)
             return state.DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK));
 
         // Check coinbase timestamp
-        if (block.GetBlockTime() > FutureDrift((int64_t)block.vtx[0].nTime) && !IsProofOfWork())
+        if (block.GetBlockTime() > FutureDrift((int64_t)block.vtx[0].nTime) && !block.IsProofOfWork())
             return state.DoS(50, error("AcceptBlock() : coinbase timestamp is too early"));
 
         // Check coinstake timestamp
-        if (IsProofOfStake() && !CheckCoinStakeTimestamp(nHeight, block.GetBlockTime(), (int64_t)block.vtx[1].nTime))
+        if (block.IsProofOfStake() && !CheckCoinStakeTimestamp(nHeight, block.GetBlockTime(), (int64_t)block.vtx[1].nTime))
             return state.DoS(50, error("AcceptBlock() : coinstake timestamp violation nTimeBlock=%d nTimeTx=%u", block.GetBlockTime(), block.vtx[1].nTime));
 
         // Check proof-of-work or proof-of-stake
-        if (block.nBits != GetNextTargetRequired(pindexPrev, IsProofOfStake()))
-            return state.DoS(100, error("AcceptBlock() : incorrect %s", IsProofOfWork() ? "proof-of-work" : "proof-of-stake"));
+        if (block.nBits != GetNextTargetRequired(pindexPrev, block.IsProofOfStake()))
+            return state.DoS(100, error("AcceptBlock() : incorrect %s", block.IsProofOfWork() ? "proof-of-work" : "proof-of-stake"));
 
         // Check timestamp against prev
         if (block.GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(block.GetBlockTime()) < pindexPrev->GetBlockTime())
@@ -2880,7 +2880,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             return state.DoS(100, error("AcceptBlock() : rejected by hardened checkpoint lock-in at %d", nHeight));
        
         // Verify hash target and signature of coinstake tx
-        if (IsProofOfStake())
+        if (block.IsProofOfStake())
         {
             uint256 targetProofOfStake;
             if (!CheckProofOfStake(state, pindexPrev, block.vtx[1], block.nBits, hashProof, targetProofOfStake))
@@ -2888,12 +2888,12 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         }
         // PoW is checked in CheckBlock()
         // Linda adds POW block hashes to hash proof when confirming POS blocks
-        if (IsProofOfWork())
-            hashProof = GetPoWHash();
+        if (block.IsProofOfWork())
+            hashProof = block.GetPoWHash();
 
         // Enforce rule that the coinbase starts with serialized block height
         CScript expect = CScript() << nHeight;
-        if (vtx[0].vin[0].scriptSig.size() < expect.size() ||
+        if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin()))
             return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"));
 
@@ -3006,7 +3006,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     }
 
     // Preliminary checks
-    if (!pblock->CheckBlock(*pblock, state))
+    if (!CheckBlock(*pblock, state))
         return error("ProcessBlock() : CheckBlock FAILED");
 
     // Block signature can be malleated in such a way that it increases block size up to maximum allowed by protocol
@@ -3257,7 +3257,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 
     // if we are trying to sign
     //    a complete proof-of-stake block
-    if (IsProofOfStake())
+    if (block.IsProofOfStake())
         return true;
 
     static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // startup timestamp
@@ -3283,8 +3283,8 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
                 for (vector<CTransaction>::iterator it = block.vtx.begin(); it != block.vtx.end();)
                     if (it->nTime > block.nTime) { it = block.vtx.erase(it); } else { ++it; }
 
-                vtx.insert(block.vtx.begin() + 1, txCoinStake);
-                hashMerkleRoot = BuildMerkleTree();
+                block.vtx.insert(block.vtx.begin() + 1, txCoinStake);
+                block.hashMerkleRoot = block.BuildMerkleTree();
 
                 // append a signature to our block
                 return key.Sign(block.GetHash(), block.vchBlockSig);
@@ -3300,7 +3300,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 
 bool CBlock::CheckBlockSignature(const CBlock& block)
 {
-    if (IsProofOfWork())
+    if (block.IsProofOfWork())
         return block.vchBlockSig.empty();
 
     if (block.vchBlockSig.empty())
@@ -3576,7 +3576,7 @@ bool InitBlockIndex()
             CValidationState state;
             if (!FindBlockPos(state, blockPos, nBlockSize+8, 0, block.nTime))
                 return error("AcceptBlock() : FindBlockPos failed");
-            if (!WriteBlockToDisk(*this, blockPos))
+            if (!WriteBlockToDisk(block, blockPos))
                 return error("LoadBlockIndex() : writing genesis block to disk failed");
             if (!AddToBlockIndex(block, state, blockPos, Params().HashGenesisBlock()))
                 return error("LoadBlockIndex() : genesis block not accepted");
