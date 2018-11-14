@@ -1064,7 +1064,7 @@ int CWallet::ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate)
             }
 
             CBlock block;
-            block.ReadBlockFromDisk(block, pindex);
+            ReadBlockFromDisk(block, pindex);
             BOOST_FOREACH(CTransaction& tx, block.vtx)
             {
                 if (AddToWalletIfInvolvingMe(tx.GetHash(), tx, &block, fUpdate))
@@ -1492,7 +1492,7 @@ static bool HasMasternodePayment(CTxOut vout, int nDepth) {
         CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
         for (int n = 0; n < nDepth; n++) {
             CBlock block;
-            if (block.ReadBlockFromDisk(block, pblockindex)) {
+            if (ReadBlockFromDisk(block, pblockindex)) {
                 if (block.HasMasternodePayment()) {
                     CScript payee;
                     if (block.vtx[1].vout.size() == 3) {
