@@ -2030,7 +2030,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         }
     }
 
-    if (IsProofOfStake())
+    if (block.IsProofOfStake())
         setStakeSeen.erase(block.GetProofOfStake());
 
     // move best block pointer to prevout block
@@ -2038,7 +2038,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
 
     // ppcoin: clean up wallet after disconnecting coinstake
     BOOST_FOREACH(CTransaction& tx, block.vtx)
-        SyncWithWallets(tx.GetHash(), tx, block, false);
+        SyncWithWallets(tx.GetHash(), tx, NULL);
 
     if (pfClean) {
         *pfClean = fClean;
@@ -2672,7 +2672,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.DoS(100, error("CheckBlock() : size limits failed"));
 
     // Check proof of work matches claimed amount
-    if (fCheckPOW && IsProofOfWork() && !CheckProofOfWork(block.GetPoWHash(), block.nBits))
+    if (fCheckPOW && block.IsProofOfWork() && !CheckProofOfWork(block.GetPoWHash(), block.nBits))
         return state.DoS(50, error("CheckBlock() : proof of work failed"));
 
     // Check timestamp
@@ -3305,7 +3305,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 }
 #endif
 
-bool CBlock::CheckBlockSignature(const CBlock& block)
+bool CheckBlockSignature(const CBlock& block)
 {
     if (block.IsProofOfWork())
         return block.vchBlockSig.empty();
