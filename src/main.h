@@ -1370,60 +1370,7 @@ public:
         }
         return hash;
     }
-
-
-    bool WriteToDisk(CDiskBlockPos &pos)
-    {
-        // Open history file to append
-        CAutoFile fileout = CAutoFile(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
-        if (!fileout)
-            return error("CBlock::WriteToDisk() : OpenBlockFile failed");
-
-        // Write index header
-        unsigned int nSize = fileout.GetSerializeSize(*this);
-        fileout << FLATDATA(Params().MessageStart()) << nSize;
-
-        // Write block
-        long fileOutPos = ftell(fileout);
-        if (fileOutPos < 0)
-            return error("CBlock::WriteToDisk() : ftell failed");
-        pos.nPos = (unsigned int)fileOutPos;
-        fileout << *this;
-
-        // Flush stdio buffers and commit to disk before returning
-        fflush(fileout);
-        if (!IsInitialBlockDownload())
-            FileCommit(fileout);
-
-        return true;
-    }
-
-    bool ReadFromDisk(const CDiskBlockPos &pos)
-    {
-        SetNull();
-
-        // Open history file to read
-        CAutoFile filein = CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
-        if (!filein)
-            return error("CBlock::ReadFromDisk() : OpenBlockFile failed");
-
-        // Read block
-        try {
-            filein >> *this;
-        }
-        catch (std::exception &e) {
-            return error("%s() : deserialize or I/O error", __PRETTY_FUNCTION__);
-        }
-
-        // Check the header
-        if (IsProofOfWork() && !CheckProofOfWork(GetPoWHash(), nBits))
-            return error("CBlock::ReadFromDisk() : errors in block header");
-
-        return true;
-    }
-
-
-
+        
     std::string ToString() const
     {
         std::stringstream s;
@@ -1446,34 +1393,37 @@ public:
         return s.str();
     }
 
-
-    /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
-     *  In case pfClean is provided, operation will try to be tolerant about errors, and *pfClean
-     *  will be true if no problems were found. Otherwise, the return value will be false in case
-     *  of problems. Note that in any case, coins may be modified. */
-    bool DisconnectBlock(CValidationState &state, CBlockIndex *pindex, CCoinsViewCache &coins, bool *pfClean = NULL);
-
-    // Apply the effects of this block (with given index) on the UTXO set represented by coins
-    bool ConnectBlock(CValidationState &state, CBlockIndex *pindex, CCoinsViewCache &coins, bool fJustCheck=false);
-
-    // Read a block from disk
-    bool ReadFromDisk(const CBlockIndex* pindex);
-
-    // Add this block to the block index, and if necessary, switch the active block chain to this
-    bool AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos, const uint256& hashProof);
-
-    // Context-independent validity checks
-    bool CheckBlock(CValidationState &state, bool fCheckPOW=true, bool fCheckMerkleRoot=true, bool fCheckSig=true) const;
-
-    // Store block on disk
-    // if dbp is provided, the file is known to already reside on disk
-    bool AcceptBlock(CValidationState &state, CDiskBlockPos *dbp = NULL);
-
-    bool SignBlock(CWallet& keystore, int64_t nFees);
-    bool CheckBlockSignature() const;
 };
 
+/** Functions for disk access for blocks */
+bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos);
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos);
 
+/** Functions for validating blocks and updating the block tree */
+ /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
+ *  In case pfClean is provided, operation will try to be tolerant about errors, and *pfClean
+ *  will be true if no problems were found. Otherwise, the return value will be false in case
+ *  of problems. Note that in any case, coins may be modified. */
+bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool* pfClean = NULL);
+
+// Apply the effects of this block (with given index) on the UTXO set represented by coins
+bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool fJustCheck = false);
+
+// Add this block to the block index, and if necessary, switch the active block chain to this
+bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos);
+
+// Context-independent validity checks
+bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
+
+// Store block on disk
+// if dbp is provided, the file is known to already reside on disk
+bool AcceptBlock(CBlock& block, CValidationState &state, CDiskBlockPos *dbp = NULL);
+
+// Linda: attempt to generate suitable proof-of-stake
+bool SignBlock(CBlock& block, CWallet& keystore, int64_t nFees);
+
+//UTXO: The public key that signs must match the public key associated with the first utxo of the coinstake tx.
+bool CheckBlockSignature(const CBlock& block);
 
 class CBlockFileInfo
 {
