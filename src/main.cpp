@@ -1487,7 +1487,7 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos &pos)
 }
 
 
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos &pos, const uint256 &hashBlock)
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const uint256& hashBlock)
 {
     // Open history file to read
     CAutoFile filein = CAutoFile(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
