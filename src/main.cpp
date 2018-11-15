@@ -1428,47 +1428,66 @@ CBlockIndex* FindBlockByHeight(int nHeight)
     return vBlockIndexByHeight[nHeight];
 }
 
-bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
+bool WriteBlockToDisk(CBlock& block, CDiskBlockPos &pos, const uint256 &hashBlock)
 {
     // Open history file to append
-    CAutoFile fileout = CAutoFile(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
+    CAutoFile fileout = CAutoFile(OpenUndoFile(pos), SER_DISK, CLIENT_VERSION);
     if (!fileout)
-        return error("WriteBlockToDisk() : OpenBlockFile failed");
+        return error("CBlockUndo::WriteToDisk() : OpenUndoFile failed");
+
     // Write index header
     unsigned int nSize = fileout.GetSerializeSize(block);
     fileout << FLATDATA(Params().MessageStart()) << nSize;
-    // Write block
+
+    // Write undo data
     long fileOutPos = ftell(fileout);
     if (fileOutPos < 0)
-        return error("WriteBlockToDisk() : ftell failed");
+        return error("CBlockUndo::WriteToDisk() : ftell failed");
     pos.nPos = (unsigned int)fileOutPos;
     fileout << block;
+
+    // calculate & write checksum
+    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
+    hasher << hashBlock;
+    hasher << block;
+    fileout << hasher.GetHash();
+
     // Flush stdio buffers and commit to disk before returning
     fflush(fileout);
     if (!IsInitialBlockDownload())
         FileCommit(fileout);
+
     return true;
 }
 
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
+
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos &pos, const uint256 &hashBlock)
 {
-    block.SetNull();
     // Open history file to read
-    CAutoFile filein = CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
+    CAutoFile filein = CAutoFile(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
     if (!filein)
-        return error("ReadBlockFromDisk(CBlock&, CDiskBlockPos&) : OpenBlockFile failed");
+        return error("CBlockUndo::ReadBlockFromDisk() : OpenBlockFile failed");
+
     // Read block
+    uint256 hashChecksum;
     try {
         filein >> block;
+        filein >> hashChecksum;
     }
     catch (std::exception &e) {
         return error("%s() : deserialize or I/O error", __PRETTY_FUNCTION__);
     }
-    // Check the header
-    if (!CheckProofOfWork(block.GetHash(), block.nBits))
-        return error("ReadBlockFromDisk(CBlock&, CDiskBlockPos&) : errors in block header");
+
+    // Verify checksum
+    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
+    hasher << hashBlock;
+    hasher << block;
+    if (hashChecksum != hasher.GetHash())
+        return error("CBlockUndo::ReadBlockFromDisk() : checksum mismatch");
+
     return true;
 }
+
 
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
 {
