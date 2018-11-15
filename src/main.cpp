@@ -1468,7 +1468,7 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos &pos)
 
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos &pos)
 {
-    SetNull();
+    block.SetNull();
 
     // Open history file to read
     CAutoFile filein = CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
