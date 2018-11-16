@@ -49,8 +49,6 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 ## Core Team
 #### Administrators
 
-•	Jonah Glasgow - Chief Executive Officer
-
 •	Stephen Newton - Director of Finances & Legal
 
 •	Justin Tether - Director of Support & Solutions
@@ -59,19 +57,11 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 •	David Grear - Director of Community Relations & Project Development
 
-•	Chris Wallace - Technical Writer 
-
-•	David Gokhshtein - Advisor
-
-
+•	Chris Bowe - Director of Web-wallet & Pool
 
 #### Developers
 
-•	Chris Bowe - Director of Web-wallet & Pool
-
 •	David Grunge - Lead Developer 
-
-
 
 ## Social
 [Website](https://www.lindacoin.com)
