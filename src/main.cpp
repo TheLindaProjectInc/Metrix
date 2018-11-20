@@ -1729,7 +1729,7 @@ void CheckForkWarningConditions()
     // of our head, drop it
     if (pindexBestForkTip && nBestHeight - pindexBestForkTip->nHeight >= 72)
         pindexBestForkTip = NULL;
-    if (pindexBestForkTip || bnBestInvalidTrust > nBestChainTrust + (pindexBest->GetBlockTrust() * 6).getuint256())
+    if (pindexBestForkTip || nBestInvalidTrust > nBestChainTrust + (CBigNum(pindexBest->GetBlockTrust()) * 6).getuint256())
     {
         if (!fLargeWorkForkFound)
         {
@@ -1783,7 +1783,7 @@ void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)
    // We define it this way because it allows us to only store the highest fork tip (+ base) which meets
    // the 7-block condition and from this always have the most-likely-to-cause-warning fork
     if (pfork && (!pindexBestForkTip || (pindexBestForkTip && pindexNewForkTip->nHeight > pindexBestForkTip->nHeight)) &&
-        pindexNewForkTip->nChainTrust - pfork->nChainTrust > (pfork->GetBlockTrust() * 7).getuint256() &&
+        pindexNewForkTip->nChainTrust - pfork->nChainTrust > (CBigNum(pfork->GetBlockTrust()) * 7).getuint256() &&
         nBestHeight - pindexNewForkTip->nHeight < 72)
     {
         pindexBestForkTip = pindexNewForkTip;
@@ -3877,7 +3877,6 @@ string GetWarnings(string strFor)
     }
 
     // Longer invalid proof-of-work/proof-of-stake chain
-    // if (pindexBest && CBigNum(nBestInvalidTrust) > CBigNum(nBestChainTrust) + CBigNum(pindexBest->GetBlockTrust()) * 6)
     if (fLargeWorkForkFound)
     {
         nPriority = 2000;
@@ -3887,7 +3886,7 @@ string GetWarnings(string strFor)
     {
         nPriority = 2000;
         strStatusBar = strRPC = _("Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.");
-
+    }
     // Alerts
     {
         LOCK(cs_mapAlerts);
