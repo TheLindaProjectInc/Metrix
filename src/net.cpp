@@ -20,6 +20,7 @@
 #include <math.h>
 
 #ifdef WIN32
+#include <fcntl.h>
 #include <string.h>
 #endif
 
