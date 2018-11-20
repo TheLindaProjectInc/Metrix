@@ -1719,6 +1719,54 @@ bool IsInitialBlockDownload()
             pindexBest->GetBlockTime() < GetTime() - 8 * 60 * 60);
 }
 
+bool fLargeWorkForkFound = false;
+CBlockIndex *pindexBestForkTip = NULL, *pindexBestForkBase = NULL;
+
+void CheckForkWarningConditions()
+{
+    // If our best fork is no longer within 72 blocks (+/- 12 hours if no one mines it)
+    // of our head, drop it
+    if (pindexBestForkTip && nBestHeight - pindexBestForkTip->nHeight >= 72)
+        pindexBestForkTip = NULL;
+    if (pindexBestForkTip || nBestInvalidWork > nBestChainWork + (pindexBest->GetBlockWork() * 6).getuint256())
+    {
+        fLargeWorkForkFound = true;
+        printf("CheckForkWarningConditions: Warning: Displayed transactions may not be correct! You may need to upgrade, or other nodes may need to upgrade.\n");
+    }
+    else
+        fLargeWorkForkFound = false;
+}
+
+void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)
+{
+    // If we are on a fork that is sufficiently large, set a warning flag
+    CBlockIndex* pfork = pindexNewForkTip;
+    CBlockIndex* plonger = pindexBest;
+    while (pfork && pfork != plonger)
+    {
+        while (plonger && plonger->nHeight > pfork->nHeight)
+            plonger = plonger->pprev;
+        if (pfork == plonger)
+            break;
+        pfork = pfork->pprev;
+    }
+    // We define a condition which we should warn the user about as a fork of at least 7 blocks
+   // who's tip is within 72 blocks (+/- 12 hours if no one mines it) of ours
+   // We use 7 blocks rather arbitrarily as it represents just under 10% of sustained network
+   // hash rate operating on the fork.
+   // or a chain that is entirely longer than ours and invalid (note that this should be detected by both)
+   // We define it this way because it allows us to only store the highest fork tip (+ base) which meets
+   // the 7-block condition and from this always have the most-likely-to-cause-warning fork
+    if (pfork && (!pindexBestForkTip || (pindexBestForkTip && pindexNewForkTip->nHeight > pindexBestForkTip->nHeight)) &&
+        pindexNewForkTip->nChainWork - pfork->nChainWork > (pfork->GetBlockWork() * 7).getuint256() &&
+        nBestHeight - pindexNewForkTip->nHeight < 72)
+    {
+        pindexBestForkTip = pindexNewForkTip;
+        pindexBestForkBase = pfork;
+    }
+    CheckForkWarningConditions();
+}
+
 void static InvalidChainFound(CBlockIndex* pindexNew)
 {
     if (pindexNew->nChainTrust > nBestInvalidTrust)
@@ -1739,6 +1787,7 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
       CBigNum(pindexBest->nChainTrust).ToString(),
       nBestBlockTrust.Get64(),
       DateTimeStrFormat("%x %H:%M:%S", pindexBest->GetBlockTime()));
+    CheckForkWarningConditions();
 }
 
 void static InvalidBlockFound(CBlockIndex *pindex) {
@@ -2554,11 +2603,15 @@ bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos
         return false;
     if (pindexNew == pindexBest)
     {
+        // Clear fork warning if its no longer applicable
+        CheckForkWarningConditions();
         // Notify UI to display prev block's coinbase if it was ours
         static uint256 hashPrevBestCoinBase;
         g_signals.UpdatedTransaction(hashPrevBestCoinBase);
         hashPrevBestCoinBase = block.GetTxHash(0);
     }
+    else
+        CheckForkWarningConditionsOnNewFork(pindexNew);
 
     if (!pblocktree->Flush())
         return state.Abort(_("Failed to sync block index"));
@@ -3799,7 +3852,8 @@ string GetWarnings(string strFor)
     }
 
     // Longer invalid proof-of-work/proof-of-stake chain
-    if (pindexBest && CBigNum(nBestInvalidTrust) > CBigNum(nBestChainTrust) + CBigNum(pindexBest->GetBlockTrust()) * 6)
+    // if (pindexBest && CBigNum(nBestInvalidTrust) > CBigNum(nBestChainTrust) + CBigNum(pindexBest->GetBlockTrust()) * 6)
+    if (fLargeWorkForkFound)
     {
         nPriority = 2000;
         strStatusBar = strRPC = _("Warning: Displayed transactions may not be correct! You may need to upgrade, or other nodes may need to upgrade.");
