@@ -111,6 +111,9 @@ private:
     // the maximum wallet format version: memory-only variable that specifies to what version this wallet may be upgraded
     int nWalletMaxVersion;
 
+    int64_t nNextResend;
+    int64_t nLastResend;
+
 public:
     /// Main wallet lock.
     /// This lock protects all the fields added by CWallet
