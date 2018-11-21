@@ -173,6 +173,8 @@ public:
         nTimeFirstKey = 0;
         nLastFilteredHeight = 0;
         fWalletUnlockAnonymizeOnly = false;
+        nNextResend = 0;
+        nLastResend = 0;
     }
 
     std::map<uint256, CWalletTx> mapWallet;
