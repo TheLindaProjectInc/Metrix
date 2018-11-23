@@ -180,7 +180,7 @@ static void registerSignalHandler(int signal, void(*handler)(int))
     sa.sa_handler = handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
-    sigaction(signal, &sa, nullptr);
+    sigaction(signal, &sa, NULL);
 }
 #endif
 
