@@ -52,6 +52,7 @@ DEBUGFLAGS=-g
 CFLAGS=-mthreads -O2 -w -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
 # enable: ASLR, DEP
 LDFLAGS=-Wl,--dynamicbase -Wl,--nxcompat -static
+LDFLAGS+=-static-libgcc -static-libstdc++
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
@@ -166,7 +167,7 @@ clean:
 	-del /Q Lindad
 	-del /Q obj/*.o
 	-del /Q obj/*.P
-    -del /Q obj/crypto/*.o
+	-del /Q obj/crypto/*.o
 	-del /Q obj/build.h
 	cd leveldb && $(MAKE) TARGET_OS=NATIVE_WINDOWS clean && cd ..
 
