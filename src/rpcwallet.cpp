@@ -1072,7 +1072,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                 {
                     entry.push_back(Pair("category", "receive"));
                 }
-                if (!wtx.IsCoinStake())
+                if (wtx.IsCoinBase() || wtx.IsCoinStake())
                     entry.push_back(Pair("amount", ValueFromAmount(r.second)));
                 else
                 {
