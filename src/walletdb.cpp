@@ -713,7 +713,6 @@ DBErrors CWalletDB::FindWalletTx(CWallet* pwallet, vector<uint256>& vTxHash)
     
     pwallet->vchDefaultKey = CPubKey();
     CWalletScanState wss;
-    bool fNoncriticalErrors = false;
     DBErrors result = DB_LOAD_OK;
     
      try {
@@ -766,9 +765,7 @@ DBErrors CWalletDB::FindWalletTx(CWallet* pwallet, vector<uint256>& vTxHash)
         result = DB_CORRUPT;
     }
     
-     if (fNoncriticalErrors && result == DB_LOAD_OK)
-         result = DB_NONCRITICAL_ERROR;
-    
+
     return result;
 }
 
