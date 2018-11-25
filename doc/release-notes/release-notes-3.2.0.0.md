@@ -27,6 +27,9 @@ The first time you run after the upgrade a re-indexing process will be started t
 - par : controls how many threads to use to validate transactions. Defaults to the number of CPUs on your machine, use -par=1 to limit to a single CPU.
 - reindex : rebuild block and transaction indices from the downloaded block data.
 
+#### New startup commands
+- zapwallettxes: to rebuild the wallet’s transaction information
+
 ### Bug Fixes
 - Fix nodes forwarding transactions with empty vins and getting banned
 - Fix a sync error due to a rounding discrepancy
