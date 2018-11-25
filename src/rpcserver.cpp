@@ -788,11 +788,19 @@ void ServiceConnection(AcceptedConnection *conn)
             if (!read_string(strRequest, valRequest))
                 throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
 
-            // Return immediately if in warmup
+            // Return immediately if in warmup unless sent shutdown request
             {
                 LOCK(cs_rpcWarmup);
-                if (fRPCInWarmup)
-                    throw JSONRPCError(RPC_IN_WARMUP, rpcWarmupStatus);
+                if (fRPCInWarmup) {
+                    bool bReturnWarmup = true;
+                    if (valRequest.type() == obj_type) {
+                        jreq.parse(valRequest);
+                        if (jreq.strMethod == "stop")
+                            bReturnWarmup = false;
+                    }
+                    if (bReturnWarmup)
+                        throw JSONRPCError(RPC_IN_WARMUP, rpcWarmupStatus);
+                }                    
             }
 
             string strReply;
