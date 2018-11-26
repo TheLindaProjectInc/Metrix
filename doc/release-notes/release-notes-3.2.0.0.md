@@ -33,3 +33,4 @@ The first time you run after the upgrade a re-indexing process will be started t
 ### Bug Fixes
 - Fix nodes forwarding transactions with empty vins and getting banned
 - Fix a sync error due to a rounding discrepancy
+- listtransactions now returns masternode payment amounts
