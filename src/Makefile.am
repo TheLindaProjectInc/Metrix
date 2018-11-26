@@ -1,24 +1,12 @@
 include Makefile.include
+AM_CPPFLAGS =  $(INCLUDES) -I$(top_builddir)/src/obj \
+  -I$(top_srcdir)/src/leveldb/include -I$(top_srcdir)/src/leveldb/helpers \
+  -I$(builddir) $(BOOST_INCLUDES) $(BDB_CPPFLAGS)
+AM_LDFLAGS = $(PTHREAD_CFLAGS)
 
-AM_CPPFLAGS += -I$(builddir)
+noinst_LIBRARIES = libbitcoin.a
 
-noinst_LIBRARIES = \
-  libLinda_server.a \
-  libLinda_common.a \
-  libLinda_cli.a
-if ENABLE_WALLET
-noinst_LIBRARIES += libLinda_wallet.a
-endif
-
-bin_PROGRAMS =
-
-if BUILD_LINDAD
-  bin_PROGRAMS += Lindad
-endif
-
-if BUILD_LINDAD_CLI
-  bin_PROGRAMS += Linda-cli
-endif
+bin_PROGRAMS = Lindad Linda-cli
 
 SUBDIRS = . $(BUILD_QT) $(BUILD_TEST)
 DIST_SUBDIRS = . qt test
@@ -47,9 +35,9 @@ BITCOIN_CORE_H = \
   hash.h \
   init.h \
   instantx.h \
-  key.h \
   keepass.h \
   kernel.h \
+  key.h \
   keystore.h \
   leveldbwrapper.h \
   limitedmap.h \
@@ -58,8 +46,9 @@ BITCOIN_CORE_H = \
   masternodeconfig.h \
   miner.h \
   mruset.h \
-  netbase.h \
   net.h \
+  netbase.h \
+  pbkdf2.h \
   protocol.h \
   rpcclient.h \
   rpcprotocol.h \
@@ -76,13 +65,21 @@ BITCOIN_CORE_H = \
   tinyformat.h \
   txdb.h \
   txmempool.h \
-  ui_interface.h \
   uint256.h \
+  ui_interface.h \
   util.h \
   utilstrencodings.h \
   version.h \
+  wallet.h \
   walletdb.h \
-  wallet.h
+  crypto/sha1.h \
+  crypto/sha256.h \
+  crypto/sha512.h \
+  crypto/hmac_sha256.h \
+  crypto/rfc6979_hmac_sha256.h \
+  crypto/hmac_sha512.h \
+  crypto/sha1.h \
+  crypto/ripemd160.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -101,87 +98,85 @@ obj/build.h: FORCE
 	  $(abs_top_srcdir)
 version.o: obj/build.h
 
-libLinda_server_a_SOURCES = \
+libbitcoin_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
   alert.cpp \
+  bitcoin-cli.cpp \
+  bitcoind.cpp \
   bloom.cpp \
+  chainparams.cpp \
   checkpoints.cpp \
+  core.cpp \
+  crypter.cpp \
+  darksend.cpp \
+  db.cpp \
+  eccryptoverify.cpp \
+  hash.cpp \
   init.cpp \
+  instantx.cpp \
+  keepass.cpp \
+  kernel.cpp \
+  key.cpp \
   keystore.cpp \
   leveldbwrapper.cpp \
   main.cpp \
+  masternode.cpp \
+  masternodeconfig.cpp \
   miner.cpp \
   net.cpp \
+  netbase.cpp \
   noui.cpp \
+  pbkdf2.cpp \
+  protocol.cpp \
   rpcblockchain.cpp \
+  rpcclient.cpp \
   rpcdarksend.cpp \
+  rpcdump.cpp \
   rpcmining.cpp \
   rpcmisc.cpp \
   rpcnet.cpp \
+  rpcprotocol.cpp \
   rpcrawtransaction.cpp \
   rpcserver.cpp \
+  rpcwallet.cpp \
+  script.cpp \
+  scrypt.cpp \
+  spork.cpp \
+  stealth.cpp \
+  sync.cpp \
+  timedata.cpp \
   txdb.cpp \
   txmempool.cpp \
+  util.cpp \
+  utilstrencodings.cpp \
+  version.cpp \
+  wallet.cpp \
+  walletdb.cpp \
+  crypto/sha1.cpp \
+  crypto/sha256.cpp \
+  crypto/sha512.cpp \
+  crypto/hmac_sha256.cpp \
+  crypto/rfc6979_hmac_sha256.cpp \
+  crypto/hmac_sha512.cpp \
+  crypto/ripemd160.cpp \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
 
-libLinda_wallet_a_SOURCES = \
-  activemasternode.cpp \
-  db.cpp \
-  crypter.cpp \
-  rpcdump.cpp \
-  rpcwallet.cpp \
-  wallet.cpp \
-  walletdb.cpp \
-  keepass.cpp \
-  $(BITCOIN_CORE_H)
-
-libLinda_common_a_SOURCES = \
-  activemasternode.cpp \
-  base58.cpp \
-  allocators.cpp \
-  chainparams.cpp \
-  core.cpp \
-  darksend.cpp \
-  masternode.cpp \
-  masternodeconfig.cpp \
-  instantx.cpp \
-  hash.cpp \
-  key.cpp \
-  netbase.cpp \
-  protocol.cpp \
-  rpcprotocol.cpp \
-  script.cpp \
-  scrypt.cpp \
-  sync.cpp \
-  util.cpp \
-  version.cpp \
-  spork.cpp \
-  $(BITCOIN_CORE_H)
 
 if GLIBC_BACK_COMPAT
-libLinda_common_a_SOURCES += compat/glibc_compat.cpp
-libLinda_common_a_SOURCES += compat/glibcxx_compat.cpp
+libbitcoin_a_SOURCES += compat/glibc_compat.cpp
+libbitcoin_a_SOURCES += compat/glibcxx_compat.cpp
 endif
 
-libLinda_cli_a_SOURCES = \
-  rpcclient.cpp \
-  $(BITCOIN_CORE_H)
-
-nodist_libLinda_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
+nodist_libbitcoin_a_SOURCES = $(top_srcdir)/src/obj/build.h
 #
 
 # Lindad binary #
 Lindad_LDADD = \
-  libLinda_server.a \
-  libLinda_cli.a \
-  libLinda_common.a \
+  libbitcoin.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
-if ENABLE_WALLET
-Lindad_LDADD += libLinda_wallet.a
-endif
 Lindad_SOURCES = bitcoind.cpp
 #
 
@@ -194,8 +189,7 @@ Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
 
 # Linda-cli binary #
 Linda_cli_LDADD = \
-  libLinda_cli.a \
-  libLinda_common.a \
+  libbitcoin.a leveldb/libleveldb.a leveldb/libmemenv.a \
   $(BOOST_LIBS)
 Linda_cli_SOURCES = bitcoin-cli.cpp
 #
@@ -212,7 +206,7 @@ leveldb/%.a:
 	  CC="$(CC)" PLATFORM=$(TARGET_OS) AR="$(AR)" $(LEVELDB_TARGET_FLAGS) \
 	  OPT="$(CXXFLAGS) $(CPPFLAGS)"
 
-qt/bitcoinstrings.cpp: $(libLinda_server_a_SOURCES) $(libLinda_common_a_SOURCES) $(libLinda_cli_a_SOURCES)
+qt/bitcoinstrings.cpp: $(libbitcoin_a_SOURCES)
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
 	@cd $(top_srcdir); XGETTEXT=$(XGETTEXT) share/qt/extract_strings_qt.py
 

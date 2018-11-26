@@ -41,6 +41,13 @@ AM_MAINTAINER_MODE([enable])
 dnl make the compilation flags quiet unless V=1 is used
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+# Enable wallet
+AC_ARG_ENABLE([wallet],
+  [AS_HELP_STRING([--enable-wallet],
+  [enable wallet (default is yes)])],
+  [enable_wallet=$enableval],
+  [enable_wallet=yes])
+
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
   [enable UPNP (default is yes if libminiupnpc is found)])],
@@ -337,6 +344,11 @@ dnl Check for libdb_cxx
 AC_CHECK_HEADER([db_cxx.h],,AC_MSG_ERROR(libdb_cxx headers missing))
 AC_CHECK_LIB([db_cxx], [main],, AC_MSG_ERROR(libdb_cxx missing))
 
+if test x$enable_wallet != xno; then
+    dnl Check for libdb_cxx only if wallet enabled
+    BITCOIN_FIND_BDB48
+fi
+
 dnl Check for libminiupnpc (optional)
 if test x$use_upnp != xno; then
   AC_CHECK_LIB([miniupnpc], [main],, [have_miniupnpc=no])
@@ -566,6 +578,16 @@ else
   fi
 fi
 
+dnl enable wallet
+AC_MSG_CHECKING([if wallet should be enabled])
+if test x$enable_wallet != xno; then
+  AC_MSG_RESULT(yes)
+  AC_DEFINE_UNQUOTED([ENABLE_WALLET],[1],[Define to 1 to enable wallet functions])
+
+else
+  AC_MSG_RESULT(no)
+fi
+
 dnl enable upnp support
 AC_MSG_CHECKING([if upnp should be enabled])
 if test x$have_miniupnpc = xno; then
@@ -671,18 +693,9 @@ if test x$use_tests = xyes; then
   BUILD_TEST="test"
 fi
 
-AC_MSG_CHECKING([whether to build Lindad])
-AM_CONDITIONAL([BUILD_LINDAD], [test x$build_bitcoind = xyes])
-AC_MSG_RESULT($build_bitcoind)
-
-AC_MSG_CHECKING([whether to build Linda-cli])
-AM_CONDITIONAL([BUILD_LINDAD_CLI], [test x$build_bitcoin_cli = xno])
-AC_MSG_RESULT($build_bitcoin_cli)
-
-
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
-AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
+AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet == xyes])
 AM_CONDITIONAL([USE_QRCODE], [test x$use_qr = xyes])
 AM_CONDITIONAL([USE_LCOV],[test x$use_lcov == xyes])
 AM_CONDITIONAL([USE_COMPARISON_TOOL],[test x$use_comparison_tool != xno])
