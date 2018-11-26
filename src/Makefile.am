@@ -51,7 +51,7 @@ BITCOIN_CORE_H = \
   keepass.h \
   kernel.h \
   keystore.h \
-  leveldb.h \
+  leveldbwrapper.h \
   limitedmap.h \
   main.h \
   masternode.h \
@@ -109,7 +109,7 @@ libLinda_server_a_SOURCES = \
   checkpoints.cpp \
   init.cpp \
   keystore.cpp \
-  leveldb.cpp \
+  leveldbwrapper.cpp \
   main.cpp \
   miner.cpp \
   net.cpp \
@@ -220,7 +220,7 @@ CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
 
 DISTCLEANFILES = obj/build.h
 
-EXTRA_DIST = leveldb/* Makefile.include
+EXTRA_DIST = leveldb Makefile.include 
 
 clean-local:
 	-$(MAKE) -C leveldb clean
