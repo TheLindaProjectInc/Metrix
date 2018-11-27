@@ -1048,6 +1048,18 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
     // Received
     if (listReceived.size() > 0 && wtx.GetDepthInMainChain() >= nMinDepth)
     {
+        // check for masternode payment
+        bool bHasMasternodePayment = false;
+        CTxDestination masternodeAddress;
+        if (wtx.vout.size() == 4) {
+            ExtractDestination(wtx.vout[3].scriptPubKey, masternodeAddress);
+            bHasMasternodePayment = true;
+            nFee += wtx.vout[3].nValue;
+        } else if (wtx.vout.size() == 3 && wtx.vout[1].scriptPubKey != wtx.vout[2].scriptPubKey){
+            ExtractDestination(wtx.vout[2].scriptPubKey, masternodeAddress);
+            bHasMasternodePayment = true;
+            nFee += wtx.vout[2].nValue;
+        } 
         bool stop = false;
         BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& r, listReceived)
         {
@@ -1072,12 +1084,12 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                 {
                     entry.push_back(Pair("category", "receive"));
                 }
-                if (wtx.IsCoinBase() || wtx.IsCoinStake())
+                if (!wtx.IsCoinStake() || (bHasMasternodePayment && masternodeAddress == r.first))
                     entry.push_back(Pair("amount", ValueFromAmount(r.second)));
                 else
                 {
-                    entry.push_back(Pair("amount", ValueFromAmount(-nFee)));
-                    stop = true; // only one coinstake output
+                    entry.push_back(Pair("amount", ValueFromAmount(-nFee)));                    
+                    stop = true; // only one coinstake output                 
                 }
                 if (fLong)
                     WalletTxToJSON(wtx, entry);
