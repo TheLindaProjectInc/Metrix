@@ -22,6 +22,10 @@ jobs:
           command: |
             echo "Build Lindad"
             cd ~/Linda
+            chmod +x autogen.sh
+            chmod +x share/genbuild.sh
+            chmod +x src/leveldb/build_detect_platform
+            chmod -R 775 src/leveldb
             ./autogen.sh
             ./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
             make
