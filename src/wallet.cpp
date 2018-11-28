@@ -1122,7 +1122,7 @@ void CWallet::ReacceptWalletTransactions()
                     wtx.AcceptWalletTransaction();
             }
         }
-        if (!fMissing)
+        if (fMissing)
         {
             // TODO: optimize this to scan just part of the block chain?
             if (ScanForWalletTransactions(pindexGenesisBlock))
