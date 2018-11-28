@@ -1,10 +1,9 @@
-packages:=boost openssl
-native_packages := native_ccache native_comparisontool
+packages:=boost openssl libevent
+native_packages := native_ccache
 
 qt_native_packages = native_protobuf
-qt_packages = qrencode protobuf
+qt_packages = qrencode protobuf zlib
 
-qt46_linux_packages = qt46 expat dbus libxcb xcb_proto libXau xproto freetype libX11 xextproto libXext xtrans libICE libSM
 qt5_linux_packages= qt expat dbus libxcb xcb_proto libXau xproto freetype fontconfig libX11 xextproto libXext xtrans
 
 qt_darwin_packages=qt
@@ -18,6 +17,8 @@ wallet_packages=bdb
 
 upnp_packages=miniupnpc
 
+darwin_native_packages = native_biplist native_ds_store native_mac_alias
+
 ifneq ($(build_os),darwin)
-darwin_native_packages=native_libuuid native_openssl native_cctools native_cdrkit native_libdmg-hfsplus
+darwin_native_packages += native_cctools native_cdrkit native_libdmg-hfsplus
 endif

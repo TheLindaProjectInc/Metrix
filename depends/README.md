@@ -35,6 +35,20 @@ For macOS cross compilation:
 
     sudo apt-get install curl librsvg2-bin libtiff-tools bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python-setuptools
 
+MacOS releases will also need the SDK downloading and making available to the depends system.
+
+SDK's can be found at the below locaation:
+https://github.com/phracker/MacOSX-SDKs/releases/tag/MacOSX10.11.sdk
+
+The unpacked SDK needs to reside in
+
+    `pwd`/depends/SDKs/
+
+E.g. `pwd`/depends/SDKs/MacOSX10.11.sdk
+
+This location is important, as the hosts/darwin.mk file references it. As a result if the SDK version needs changing be sure to update in the darwin.mk too.
+Double check your extract paths, it the SDK location must match as above.
+
 For Win32/Win64 cross compilation:
 
 - see [build-windows.md](../doc/build-windows.md#cross-compilation-for-ubuntu-and-windows-subsystem-for-linux)
