@@ -1099,12 +1099,8 @@ void MapPort(bool)
 
 
 static const char *strDNSSeed[][2] = {
-    {"seed1.linda-wallet.com", "seed1.linda-wallet.com"},
-	{"seed2.linda-wallet.com", "seed2.linda-wallet.com"},
-	{"seed3.linda-wallet.com", "seed3.linda-wallet.com"},
-	{"seed4.linda-wallet.com", "seed4.linda-wallet.com"},
-	{"seed5.linda-wallet.com", "seed5.linda-wallet.com"},
- };
+    {"lindacoin.com", "seed.lindacoin.com"}
+};
 
 
 void ThreadDNSAddressSeed()
