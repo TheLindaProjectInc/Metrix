@@ -192,6 +192,7 @@ Linda_cli_LDADD = \
   libbitcoin.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
+  $(BOOST_LIBS) \
   $(BDB_LIBS)
 Linda_cli_SOURCES = bitcoin-cli.cpp
 #
