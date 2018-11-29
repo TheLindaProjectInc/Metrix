@@ -149,7 +149,7 @@ The same depends system can be used to cross-compile binaries for other operatin
 
 To build dependencies for the current arch+OS:
 
-    cd Linda\depends
+    cd Linda/depends
     make
 
 ### Compiling Lindad

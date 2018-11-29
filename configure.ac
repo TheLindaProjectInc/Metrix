@@ -7,8 +7,8 @@ define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, false)
 define(_COPYRIGHT_YEAR, 2018)
 AC_INIT([Lindacoin],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[support@lindacoin.com],[lindacoin])
-AC_CONFIG_AUX_DIR([src/build-aux])
-AC_CONFIG_MACRO_DIR([src/m4])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([build-aux/m4])
 AC_CANONICAL_HOST
 AH_TOP([#ifndef BITCOIN_CONFIG_H])
 AH_TOP([#define BITCOIN_CONFIG_H])
@@ -358,10 +358,6 @@ AC_TRY_COMPILE([#include <sys/socket.h>],
  [ AC_MSG_RESULT(yes); AC_DEFINE(HAVE_MSG_NOSIGNAL, 1,[Define this symbol if you have MSG_NOSIGNAL]) ],
  [ AC_MSG_RESULT(no)]
 )
-
-dnl Check for libdb_cxx
-AC_CHECK_HEADER([db_cxx.h],,AC_MSG_ERROR(libdb_cxx headers missing))
-AC_CHECK_LIB([db_cxx], [main],, AC_MSG_ERROR(libdb_cxx missing))
 
 if test x$enable_wallet != xno; then
     dnl Check for libdb_cxx only if wallet enabled
