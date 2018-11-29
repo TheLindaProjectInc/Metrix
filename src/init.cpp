@@ -1251,13 +1251,11 @@ bool AppInit2(boost::thread_group& threadGroup)
     else if (pwalletMain)
         threadGroup.create_thread(boost::bind(&ThreadStakeMiner, pwalletMain));
 #endif
-
-    // ********************************************************* Step 12: finished
-    SetRPCWarmupFinished();
-    uiInterface.InitMessage(_("Done loading"));
+    
 
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
+        uiInterface.InitMessage(_("Reaccepting wallet transactions..."));
         // Add wallet transactions that aren't already in a block to mapTransactions
         pwalletMain->ReacceptWalletTransactions();
 
@@ -1265,6 +1263,10 @@ bool AppInit2(boost::thread_group& threadGroup)
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 #endif
+
+    // ********************************************************* Step 12: finished
+    SetRPCWarmupFinished();
+    uiInterface.InitMessage(_("Done loading"));
 
     return !fRequestShutdown;
 }
