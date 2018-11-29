@@ -189,8 +189,10 @@ Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
 
 # Linda-cli binary #
 Linda_cli_LDADD = \
-  libbitcoin.a leveldb/libleveldb.a leveldb/libmemenv.a \
-  $(BOOST_LIBS)
+  libbitcoin.a \
+  $(LIBLEVELDB) \
+  $(LIBMEMENV) \
+  $(BDB_LIBS)
 Linda_cli_SOURCES = bitcoin-cli.cpp
 #
 
