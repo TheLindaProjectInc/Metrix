@@ -22,6 +22,7 @@ The first time you run after the upgrade a re-indexing process will be started t
 - Added checkpoint at POW end block to ignore V2 forks.
 - RPC Server "Warm-Up" Mode. The RPC server is started earlier now and will return immediate error with code -28 to all calls until all initialisations are done.
 - Adjust block limits when selecting masternode to distribute rewards evenly, daily.
+- Infrequently resend failed wallet transactions to avoid stuck transactions.
 
 #### New settings (command-line or Linda.conf file)
 - dbcache : controls LevelDB memory usage
