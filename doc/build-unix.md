@@ -1,10 +1,12 @@
-Copyright (c) 2009-2012 Bitcoin Developers
+Copyright (c) 2009-2012 Bitcoin Developers  
+Copyright (c) 2018 The Linda Project Inc Developers  
 Distributed under the MIT/X11 software license, see the accompanying
 file license.txt or http://www.opensource.org/licenses/mit-license.php.
 This product includes software developed by the OpenSSL Project for use in
 the OpenSSL Toolkit (http://www.openssl.org/).  This product includes
 cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP
 software written by Thomas Bernard.
+
 
 
 UNIX BUILD NOTES
@@ -29,9 +31,6 @@ Optional dependencies:
  Library     | Purpose          | Description
  ------------|------------------|----------------------
  miniupnpc   | UPnP Support     | Firewall-jumping support
- qt          | GUI              | GUI toolkit (only needed when GUI enabled)
- protobuf    | Payments in GUI  | Data interchange format used for payment protocol (only needed when GUI enabled)
- libqrencode | QR codes in GUI  | Optional for generating QR codes (only needed when GUI enabled)
 
 For the versions used in the release, see [release-process.md](release-process.md) under *Fetch and build inputs*.
 
@@ -93,26 +92,6 @@ Optional:
 
     sudo apt-get install libminiupnpc-dev (see --with-miniupnpc and --enable-upnp-default)
 
-Dependencies for the GUI: Ubuntu & Debian
------------------------------------------
-
-If you want to build Linda-Qt, make sure that the required packages for Qt development
-are installed. Qt 5 is necessary to build the GUI.
-If both Qt 4 and Qt 5 are installed, Qt 5 will be used.
-
-To build with Qt 5 (recommended) you need the following:
-
-    sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
-
-libqrencode (optional) can be installed with:
-
-    sudo apt-get install libqrencode-dev
-
-Once these are installed, they will be found by configure and a Linda-qt executable will be
-built by default.
-
-```
-
 Notes
 -----
 1) You only need Berkeley DB if the wallet is enabled (see the section *Disable-Wallet mode* below).
@@ -120,41 +99,18 @@ Notes
 2) The release is built with GCC and then "strip transferd" to strip the debug
 symbols, which reduces the executable size by about 90%.
 
-If you get an error about secp256k1
-cd secp256k1/
+
+Build Lindad
+----
+
+This builds Lindad and Linda-cli using the dynamic dependancies of the current system.
+
+```
 ./autogen.sh
-./configure.sh
+./configure
 make
-cd ..
-make -f makefile.unix
-strip Lindad
-
-To Build Lindad
---------
-
-With UPNP:
-
-    cd src && \
-    make -f makefile.unix && \
-    strip Lindad
-
-(Recommended) Without UPNP:
-
-    cd src && \
-    make -f makefile.unix USE_UPNP= && \
-    strip Lindad
-
-To Build Linda-QT
---------
-
-With UPNP:
-    qmake -qt=qt5 && \
-    make \
-
-(Recommended) Without UPNP:
-
-    qmake -qt=qt5 USE_UPNP=- && \
-    make \
+strip src/Lindad
+strip src/Lindad-cli
 ```
 
 # STATIC BUILD INSTRUCTIONS
@@ -175,163 +131,43 @@ Install Linux development tools
 ```
 sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg-config libgmp3-dev libevent-dev bsdmainutils
 ```
-Additionnal dependencies needed to compile QT
-```
-sudo apt-get install libxcb1-dev libgtk3-dev libgtk2-dev
-```
-## Compile all dependencies manually and use their static libs
-### Download and build BerkeleyDB 5.0.32.NC
-```
-cd ~/
-wget 'http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz'
-tar -xzvf db-5.0.32.NC.tar.gz
-cd db-5.0.32.NC/build_unix/
-../dist/configure --enable-cxx --disable-shared 
-make
-
-```
-
-### Compiling Boost 1.58
-
-Download Boost 1.58 here : 
-https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download<br>
-Put the archive in ~/deps
-
-```
-cd ~/deps
-tar xvfz boost_1_58_0.tar.gz
-cd ~/deps/boost_1_58_0
-./bootstrap.sh
-
-./b2 --build-type=complete --layout=versioned --with-chrono --with-filesystem --with-program_options --with-system --with-thread toolset=gcc variant=release link=static threading=multi runtime-link=static stage
-
-```
-
-### Compiling miniupnpc
-
-Install Miniupnpc. Download it from here http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.9.tar.gz<br>
-and place it in your deps folder, then :
-```
-cd ~/deps
-tar xvfz miniupnpc-1.9.tar.gz
-
-cd miniupnpc-1.9
-make upnpc-static
-```
-==> Important : don't forget to rename "miniupnpc-1.9" directory to "miniupnpc"
-
-### Compiling OpenSSL
-
-download 1.0.2g version here : https://www.openssl.org/source/old/1.0.2/openssl-1.0.2g.tar.gz<br>
-place archive in deps folders then :
-```
-tar xvfz openssl-1.0.2g.tar.gz
-cd openssl-1.0.2g 
-./config no-shared no-dso
-make depend
-make
-```
-
-### Compiling QT 5.5.0 statically
-Download QT 5.5.0 sources
-https://download.qt.io/archive/qt/5.5/5.5.0/single/qt-everywhere-opensource-src-5.5.0.tar.gz<br>
-Extract in deps folder
-```
-tar xvfz qt-everywhere-opensource-src-5.5.0.tar.gz
-```
-after everything is extracted, create another directory where static libs will be installed. 
-For example, i created ~/deps/Qt/5.5.0_static and used that directory in configure command below (it may take a while) :
-```
-cd ~/deps/qt-everywhere-opensource-src-5.5.0
-
-./configure -static -opensource -release -confirm-license -no-compile-examples -nomake tests -prefix ~/deps/Qt/5.5.0_static -qt-zlib -qt-libpng -no-libjpeg -qt-xcb -qt-freetype -qt-pcre -qt-harfbuzz -largefile -no-opengl -no-openssl -skip wayland -skip qtserialport -skip script -skip qtdeclarative -skip qtwebchannel -alsa -c++11 -nomake tools -no-icu
-
-make -j 4
-```
-After it successfuly ends :
-```
-make install
-```
-### Compiling Linda QT wallet
+  
+Get the Linda source code
+----
 
 Clone the Lindacoin repository
-```
-git clone https://github.com/TheLindaProjectInc/linda.git
-```
-if required, fix the leveldb files permissions
-```
-cd ~/Linda/src/leveldb
-chmod +x build_detect_platform
-chmod 775 *
-```
-you may also be required to build leveldb prior to start the wallet build
-```
-make clean
-make libleveldb.a libmemenv.a
-```
-build libsecp256k1
-```
-cd ~/Linda/src/secp256k1
-./autogen.sh
-./configure --enable-static --disable-shared
-make
-```
-Just by precaution, go to secp256k1/.libs dir and delete all non static libs (all except *.a files) if present, to make sure only static libs will be used during linking
 
-go back to Lindacoin dir to modify Linda-qt.pro if needed :
-```
-cd ~/Linda
-nano Linda-qt.pro
-```
-All dependencies dir variables to set according to what have been done above in linux {} section :
-```
-linux {
-	DEPS_PATH = $(HOME)/deps
-	SECP256K1_LIB_PATH = src/secp256k1/.libs
-	SECP256K1_INCLUDE_PATH = src/secp256k1/include
-## comment below dependencies if u don't need to compile a static binary on linux
-	MINIUPNPC_LIB_PATH = $$DEPS_PATH/miniupnpc
-	MINIUPNPC_INCLUDE_PATH = $$DEPS_PATH
-	BOOST_LIB_PATH = $$DEPS_PATH/boost_1_58_0/stage/lib
-	BOOST_INCLUDE_PATH = $$DEPS_PATH/boost_1_58_0
-	BDB_LIB_PATH = $$DEPS_PATH/db-5.0.32.NC/build_unix
-	BDB_INCLUDE_PATH = $$DEPS_PATH/db-5.0.32.NC/build_unix
-	OPENSSL_LIB_PATH = $$DEPS_PATH/openssl-1.0.2g
-	OPENSSL_INCLUDE_PATH = $$DEPS_PATH/openssl-1.0.2g/include
-}
-```
-After saving the .pro file :
-```
-export PATH=$HOME/deps/Qt/5.5.0_static/bin:$PATH
-qmake RELEASE=1
-make
-```
-If using the file on another machine change the permissions to allow execution
-```
-chmod 775 ./Linda-qt
-```
+	git clone https://github.com/TheLindaProjectInc/linda.git Linda
+
+
+## The depends build systems
+
+The depends build system will automatically download and compile the static packages needed to complete a build of the Linda executables.
+
+In its simplest form it will download and compile the packages for the system host type its being run from. E.g. Linux x64  
+The same depends system can be used to cross-compile binaries for other operating systems. See the [depends/README.md](../depends/README.md) doc for further instruction on this.
+
+To build dependencies for the current arch+OS:
+
+    cd Linda\depends
+    make
 
 ### Compiling Lindad
-With dependencies (except QT cause not needed here) compliled as above, put these lines in ~/Linda/src/makefile.unix (first lines)
+
+
 ```
-DEPS_PATH = $(HOME)/deps
-SECP256K1_LIB_PATH = src/secp256k1/.libs
-SECP256K1_INCLUDE_PATH = src/secp256k1/include
-MINIUPNPC_LIB_PATH = $(DEPS_PATH)/miniupnpc
-MINIUPNPC_INCLUDE_PATH = $(DEPS_PATH)
-BOOST_LIB_PATH = $(DEPS_PATH)/boost_1_58_0/stage/lib
-BOOST_INCLUDE_PATH = $(DEPS_PATH)/boost_1_58_0
-BDB_LIB_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
-BDB_INCLUDE_PATH = $(DEPS_PATH)/db-5.0.32.NC/build_unix
-OPENSSL_LIB_PATH = $(DEPS_PATH)/openssl-1.0.2g
-OPENSSL_INCLUDE_PATH = $(DEPS_PATH)/openssl-1.0.2g/include
+cd ..
+./autogen.sh
+./configure
+make
+strip src/Lindad
+strip src/Lindad-cli
+
 ```
-After that in ~/Linda/src
+
+If you receive an error on x64 Linux machines about missing boost libraries use the following configure line. Boost libraries may be somewhere else on x64 machines.
+
 ```
-make -f makefile.unix STATIC=1
-strip ./Lindad
-```
-If using the file on another machine change the permissions to allow execution
-```
-chmod 775 ./Lindad
+./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
+
 ```
