@@ -23,7 +23,7 @@ These dependencies are required:
  libgmp      | Secp256k1        | Secp256k1 Dependency
  libboost    | Utility          | Library for threading, data structures, etc
  libevent    | Networking       | OS independent asynchronous networking
- libdb4.8    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
+ libdb5.0    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
  libsecp256k1| Secp256k1        | Elliptic Curve Cryptography
 
 Optional dependencies:
@@ -56,31 +56,27 @@ install necessary parts of boost:
 If that doesn't work, you can install all boost development packages with:
 
     sudo apt-get install libboost-all-dev
+   
+Berkeley DB is required for the wallet function. Ubuntu and Debian have their own libdb-dev and libdb++-dev packages, but these will install
+BerkeleyDB 5.1 or later which break binary wallet compatibility with the distributed executables which
+are based on BerkeleyDB 5.0.32. If you do not care about wallet compatibility and wist to use 5.1,
+pass `--with-incompatible-bdb` to configure.
 
-BerkeleyDB is required for the wallet. db4.8 packages are available [here](https://launchpad.net/~bitcoin/+archive/bitcoin).
-You can add the repository and install using the following commands:
+Use build in Ubuntu + Debian Berkley DB with this.
 
-    sudo add-apt-repository ppa:bitcoin/bitcoin
-    sudo apt-get update
-    sudo apt-get install libdb4.8-dev libdb4.8++-dev
-    
-If that does not work alternatively download and compile: 
-    
+    sudo apt install libdb-dev libdb++-dev
+
+Alternatvely use the following to retain compatibility.
+
     cd ~
     mkdir bitcoin/db4/
     
-    wget 'http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
-    tar -xzvf db-4.8.30.NC.tar.gz
-    cd db-4.8.30.NC/build_unix/
+    wget 'http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz'
+    tar -xzvf db-5.0.32.NC.tar.gz
+    cd db-5.0.32.NC/build_unix/
     ../dist/configure --enable-cxx
     make
     sudo make install
-
- 
-Ubuntu and Debian have their own libdb-dev and libdb++-dev packages, but these will install
-BerkeleyDB 5.1 or later, which break binary wallet compatibility with the distributed executables which
-are based on BerkeleyDB 4.8. If you do not care about wallet compatibility,
-pass `--with-incompatible-bdb` to configure.
 
 To build Secp256k1:
 
@@ -103,11 +99,11 @@ symbols, which reduces the executable size by about 90%.
 Build Lindad
 ----
 
-This builds Lindad and Linda-cli using the dynamic dependancies of the current system.
+This builds Lindad and Linda-cli using the dynamic dependancies of the current system. Change the DB version below to reflect the version you installed.
 
 ```
 ./autogen.sh
-./configure
+./configure --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
 make
 strip src/Lindad
 strip src/Lindad-cli
@@ -145,12 +141,12 @@ Clone the Lindacoin repository
 The depends build system will automatically download and compile the static packages needed to complete a build of the Linda executables.
 
 In its simplest form it will download and compile the packages for the system host type its being run from. E.g. Linux x64  
-The same depends system can be used to cross-compile binaries for other operating systems. See the [depends/README.md](../depends/README.md) doc for further instruction on this.
+The same depends system can be used to cross-compile binaries for other operating systems. See the [build-linux-crosscompile.md](build-linux-crosscompile.md) doc for full instruction on this.
 
 To build dependencies for the current arch+OS:
 
     cd Linda/depends
-    make
+    make NO_QT=1
 
 ### Compiling Lindad
 
@@ -168,6 +164,6 @@ strip src/Lindad-cli
 If you receive an error on x64 Linux machines about missing boost libraries use the following configure line. Boost libraries may be somewhere else on x64 machines.
 
 ```
-./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
+./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
 
 ```

@@ -22,13 +22,13 @@ The first time you run after the upgrade a re-indexing process will be started t
 - Added checkpoint at POW end block to ignore V2 forks.
 - RPC Server "Warm-Up" Mode. The RPC server is started earlier now and will return immediate error with code -28 to all calls until all initialisations are done.
 - Adjust block limits when selecting masternode to distribute rewards evenly, daily.
-- Infrequently resend failed wallet transactions to avoid stuck transactions.
-- Added wallet encryption status to rpc method getinfo
 
 #### New settings (command-line or Linda.conf file)
 - dbcache : controls LevelDB memory usage
 - par : controls how many threads to use to validate transactions. Defaults to the number of CPUs on your machine, use -par=1 to limit to a single CPU
 - reindex : rebuild block and transaction indices from the downloaded block data
+
+#### New startup commands
 - zapwallettxes: to rebuild the wallet’s transaction information
 
 ### Bug Fixes
