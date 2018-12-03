@@ -166,7 +166,7 @@ strip src/Lindad.exe && strip src/Linda-cli.exe
 ```
 cd ..
 ./autogen.sh
-./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --with-miniupnpc --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB" LDFLAGS="-static-libgcc -static-libstdc++"
+./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --with-miniupnpc --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB" LDFLAGS="-static-libgcc -static-libstdc++"
 make
 strip src/Lindad.exe && strip src/Linda-cli.exe
 ```
