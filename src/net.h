@@ -168,6 +168,7 @@ public:
 
     CDataStream vRecv;              // received message data
     unsigned int nDataPos;
+    unsigned int nLastDataPos;
 
     int64_t nTime;                  // time (in microseconds) of message receipt.
 
@@ -176,6 +177,7 @@ public:
         in_data = false;
         nHdrPos = 0;
         nDataPos = 0;
+        nLastDataPos = 0;
         nTime = 0;
     }
 
@@ -220,9 +222,15 @@ public:
     uint64_t nRecvBytes;
     int nRecvVersion;
 
-    int64_t nLastSend;
-    int64_t nLastRecv;
-    int64_t nTimeConnected;
+    int64_t nLastSend;       // Time data last sent to peer.
+    int64_t nLastRecv;       // Time data last received from peer.
+    int64_t nTimeConnected;  // Time connection to peer was established.
+    int64_t tGetblocks;      // When we became a sync node.
+    int64_t tBlockInvs;      // Time new block invs arrived from peer.
+    int64_t tGetdataBlock;   // Time getdata block sent.
+    int64_t tBlockRecvStart; // Time block reception first detected.
+    int64_t tBlockRecving;   // Time block reception last progressed.
+    int64_t tBlockRecved;    // Time last complete block received.
     CAddress addr;
     std::string addrName;
     CService addrLocal;
@@ -307,6 +315,12 @@ public:
         nSendBytes = 0;
         nRecvBytes = 0;
         nTimeConnected = GetTime();
+        tGetblocks = 0;
+        tBlockInvs = 0;
+        tGetdataBlock = 0;
+        tBlockRecvStart = 0;
+        tBlockRecving = 0;
+        tBlockRecved = 0;
         addr = addrIn;
         addrName = addrNameIn == "" ? addr.ToStringIPPort() : addrNameIn;
         nVersion = 0;

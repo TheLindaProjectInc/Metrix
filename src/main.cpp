@@ -219,21 +219,23 @@ bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats) {
 }
 
 // Requires cs_main.
-void MarkBlockAsReceived(const uint256 &hash, NodeId nodeFrom = -1) {
+void MarkBlockAsRequested(const uint256 &hash, NodeId nodeFrom = -1) {
     map<uint256, pair<NodeId, list<uint256>::iterator> >::iterator itToDownload = mapBlocksToDownload.find(hash);
     if (itToDownload != mapBlocksToDownload.end()) {
         BOOST_FOREACH(CNode* pn, vNodes)
         {
-            if(pn->GetId() == itToDownload->second.first)
+            if (pn->GetId() == itToDownload->second.first)
             {
                 pn->vBlocksToDownload.erase(itToDownload->second.second);
                 pn->nBlocksToDownload--;
                 mapBlocksToDownload.erase(itToDownload);
                 break;
             }
-        } 
+        }
     }
+}
 
+void MarkBlockAsReceived(const uint256 &hash, NodeId nodeFrom = -1) {
     map<uint256, pair<NodeId, list<QueuedBlock>::iterator> >::iterator itInFlight = mapBlocksInFlight.find(hash);
     if (itInFlight != mapBlocksInFlight.end()) {
         BOOST_FOREACH(CNode* pn, vNodes)
@@ -281,7 +283,7 @@ void MarkBlockAsInFlight(NodeId nodeid, const uint256 &hash) {
             assert(true);
 
             // Make sure it's not listed somewhere already.
-            MarkBlockAsReceived(hash);
+            MarkBlockAsRequested(hash);
 
             QueuedBlock newentry = {hash, GetTimeMicros(), pn->nBlocksInFlight};
             if (pn->nBlocksInFlight == 0)
@@ -1570,6 +1572,11 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
 int GetNumBlocksOfPeers()
 {
     return std::max(cPeerBlockCounts.median(), Checkpoints::GetTotalBlocksEstimate());
+}
+
+bool CaughtUp()
+{
+    return ((nBestHeight >= Checkpoints::GetTotalBlocksEstimate()) && nTimeBestReceived > GetTime() - 90 * 60);
 }
 
 bool IsInitialBlockDownload()
@@ -3924,7 +3931,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
     // DS: update last valid block from node
-    pfrom->nLastBlockProcess = GetTimeMicros();
+    //pfrom->nLastBlockProcess = GetTimeMicros();
 
     if (strCommand == "version")
     {
@@ -4126,6 +4133,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         }
 
         LOCK(cs_main);
+        int nBlocksGet = 0;
 
         for (unsigned int nInv = 0; nInv < vInv.size(); nInv++)
         {
@@ -4139,18 +4147,24 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
             if (!fAlreadyHave) {
                 if (!fImporting && !fReindex) {
-                    if (inv.type == MSG_BLOCK)
-                        AddBlockToQueue(pfrom->GetId(), inv.hash);
+                    if (inv.type == MSG_BLOCK) {
+                        if (pfrom->tGetblocks > pfrom->tBlockInvs || CaughtUp()) {
+                            AddBlockToQueue(pfrom->GetId(), inv.hash);
+                            nBlocksGet++;
+                        }
+                    }
                     else
                         pfrom->AskFor(inv);
                 }
-            } else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash)) {
+            } else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash))
                 PushGetBlocks(pfrom, pindexBest, GetOrphanRoot(mapOrphanBlocks[inv.hash]));
-            }
 
             // Track requests for our stuff
             g_signals.Inventory(inv.hash);
         }
+
+        if (nBlocksGet)
+            pfrom->tBlockInvs = GetTimeMillis();
     }
 
 
@@ -4335,14 +4349,20 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
     else if (strCommand == "block" && !fImporting && !fReindex) // Ignore blocks received while importing
     {
+        int size = vRecv.size();
         CBlock block;
         vRecv >> block;
         uint256 hashBlock = block.GetHash();
 
-        LogPrint("net", "received block %s\n", hashBlock.ToString());
-
         CInv inv(MSG_BLOCK, hashBlock);
         pfrom->AddInventoryKnown(inv);
+
+        int timetodownload = GetTimeMillis() - pfrom->nLastBlockReceive / 1000;
+        if (timetodownload > 1000)
+            LogPrint("net", "received block %s (%u bytes, %us, %uB/s) peer=%d\n",
+                inv.hash.ToString(), size, timetodownload / 1000, size * 1000 / timetodownload, pfrom->id);
+        else
+            LogPrint("net", "received block %s (%u bytes) peer=%d\n", inv.hash.ToString(), size, pfrom->id);
 
         LOCK(cs_main);
 
@@ -4350,7 +4370,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
         CValidationState state;
         if (ProcessBlock(state, pfrom, &block) || state.CorruptionPossible())           
-            mapAlreadyAskedFor.erase(inv);   
+            pfrom->tBlockRecved = GetTimeMillis();
+            mapAlreadyAskedFor.erase(inv);
         int nDoS = 0;
         if (state.IsInvalid(nDoS))
             if (nDoS > 0)
@@ -4586,6 +4607,15 @@ bool ProcessMessages(CNode* pfrom)
     // this maintains the order of responses
     if (!pfrom->vRecvGetData.empty()) return fOk;
 
+    int nBlocksToDownload = pfrom->nBlocksToDownload;
+    int nBlocksInFlight = pfrom->nBlocksInFlight;
+    // Cause a new syncnode to be reselected since we're about to stop receiving blocks
+    // (and we'll be ignoring the inv the current syncnode sends in favour of selecting
+    // a potentially better syncnode.
+    if (nBlocksInFlight + nBlocksToDownload == 1 && !CaughtUp())
+        pfrom->tGetblocks = 0;
+
+
     std::deque<CNetMessage>::iterator it = pfrom->vRecvMsg.begin();
     while (!pfrom->fDisconnect && it != pfrom->vRecvMsg.end()) {
         // Don't bother if send buffer is too full to respond anyway
@@ -4594,7 +4624,24 @@ bool ProcessMessages(CNode* pfrom)
 
         // get next message
         CNetMessage& msg = *it;
+        CMessageHeader& hdr = msg.hdr;
+        unsigned int nMessageSize = hdr.nMessageSize;
+        string strCommand = hdr.GetCommand();
 
+
+        if (msg.nDataPos != msg.nLastDataPos) {
+            if (strCommand == "block") {
+                if (msg.nLastDataPos == 0) {
+                    pfrom->tBlockRecvStart = GetTimeMillis();
+                    if (pfrom->tBlockRecved)
+                        LogPrint("net", "%ums later, ", pfrom->tBlockRecvStart - pfrom->tBlockRecved);
+                    LogPrint("net", "incoming block (%u bytes) (%d still to get, %d in flight) peer=%d\n",
+                        nMessageSize, nBlocksToDownload, nBlocksInFlight, pfrom->id);
+                }
+                pfrom->tBlockRecving = GetTimeMillis();
+            }
+            msg.nLastDataPos = msg.nDataPos;
+        }
         // end, if an incomplete message is found
         if (!msg.complete())
             break;
@@ -4609,18 +4656,13 @@ bool ProcessMessages(CNode* pfrom)
             break;
         }
 
-        // Read header
-        CMessageHeader& hdr = msg.hdr;
+
         if (!hdr.IsValid())
         {
-            LogPrintf("\n\nPROCESSMESSAGE: ERRORS IN HEADER %s\n\n\n", hdr.GetCommand());
+            LogPrintf("\n\nPROCESSMESSAGE: ERRORS IN HEADER %s\n\n\n", strCommand);
             continue;
         }
-        string strCommand = hdr.GetCommand();
-
-        // Message size
-        unsigned int nMessageSize = hdr.nMessageSize;
-
+        
         // Checksum
         CDataStream& vRecv = msg.vRecv;
         uint256 hash = Hash(vRecv.begin(), vRecv.begin() + nMessageSize);
@@ -4723,8 +4765,9 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
 
         // Start block sync
         if (pto->fStartSync && !fImporting && !fReindex) {
-            pto->fStartSync = false;
             PushGetBlocks(pto, pindexBest, uint256(0));
+            pto->tGetblocks = GetTimeMillis();
+            pto->fStartSync = false;
         }
 
         // Resend wallet transactions that haven't gotten in a block yet
@@ -4832,18 +4875,39 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             pto->PushMessage("inv", vInv);
 
 
-        // Detect stalled peers. Require that blocks are in flight, we haven't
-        // received a (requested) block in one minute, and that all blocks are
-        // in flight for over two minutes, since we first had a chance to
-        // process an incoming block.
-        int64_t nNow = GetTimeMicros();
-        if (!pto->fDisconnect && pto->nBlocksInFlight && 
-            pto->nLastBlockReceive < pto->nLastBlockProcess - BLOCK_DOWNLOAD_TIMEOUT*1000000 && 
-            pto->vBlocksInFlight.front().nTime < pto->nLastBlockProcess - 2*BLOCK_DOWNLOAD_TIMEOUT*1000000) {
-            LogPrint("sync", "Peer %s is stalling block download, disconnecting\n", pto->addr.ToString().c_str());
-            pto->fDisconnect = true;
+        // Detect stalled peers.
+        int64_t tNow = GetTimeMillis();
+        int nSyncTimeout = GetArg("-synctimeout", 60);
+        if (pto->tGetblocks) {
+            if (pto->tBlockRecving > pto->tBlockRecved) {
+                if (tNow - pto->tBlockRecving > nSyncTimeout * 1000) {
+                    LogPrintf("sync peer=%d: Block download stalled for over %d seconds.\n",
+                        pto->id, nSyncTimeout);
+                    pto->fDisconnect = true;
+                }
+            }
+            else if (pto->tGetblocks > pto->tBlockInvs && tNow - pto->tGetblocks > nSyncTimeout * 1000) {
+                LogPrintf("sync peer=%d: No invs of new blocks received within %d seconds.\n",
+                    pto->id, nSyncTimeout);
+                pto->fDisconnect = true;
+            }
+            else if (!CaughtUp() && pto->tBlockRecved && tNow - pto->tBlockRecved > nSyncTimeout * 1000) {
+                LogPrintf("sync peer=%d: No block reception for over %d seconds.\n",
+                    pto->id, nSyncTimeout);
+                if (pto->nBlocksInFlight)
+                {
+                    pto->fDisconnect = true;
+                }
+                else {
+                    pto->tGetblocks = 0; // shouldn't ever get here
+                }
+            }
+            else if (pto->tGetdataBlock > pto->tBlockRecving && tNow - pto->tGetdataBlock > nSyncTimeout * 1000) {
+                LogPrintf("sync peer=%d: No block download started for over %d seconds.\n",
+                    pto->id, nSyncTimeout);
+                pto->fDisconnect = true;
+            }
         }
-
         //
         // Message: getdata (blocks)
         //
@@ -4854,6 +4918,8 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             vGetData.push_back(CInv(MSG_BLOCK, hash));
             MarkBlockAsInFlight(pto->GetId(), hash);
             LogPrint("sync", "Requesting block %s from %s\n", hash.ToString().c_str(), pto->addr.ToString().c_str());
+            if (!pto->tGetdataBlock)
+                pto->tGetdataBlock = GetTimeMillis();
             if (vGetData.size() >= 1000)
             {
                 pto->PushMessage("getdata", vGetData);
@@ -4864,6 +4930,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         //
         // Message: getdata (non-blocks)
         //
+        int64_t nNow = GetTimeMicros();
         while (!pto->fDisconnect && !pto->mapAskFor.empty() && (*pto->mapAskFor.begin()).first <= nNow)
         {
             const CInv& inv = (*pto->mapAskFor.begin()).second;
