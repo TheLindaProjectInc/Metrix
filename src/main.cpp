@@ -4900,7 +4900,9 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
                     pto->fDisconnect = true;
                 }
                 else {
+                    LogPrintf("sync peer=%d: No block reception, No blocks in flight. tGetblocks=%d.\n", pto->id, pto->tGetblocks);
                     pto->tGetblocks = 0; // shouldn't ever get here
+                    pto->fDisconnect = true;
                 }
             }
             else if (pto->tGetdataBlock > pto->tBlockRecving && tNow - pto->tGetdataBlock > nSyncTimeout * 1000) {
