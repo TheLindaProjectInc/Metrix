@@ -3931,7 +3931,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
     // DS: update last valid block from node
-    //pfrom->nLastBlockProcess = GetTimeMicros();
+    pfrom->nLastBlockProcess = GetTimeMicros();
 
     if (strCommand == "version")
     {
