@@ -9,6 +9,8 @@ If you are running an older version, shut it down. Wait until it has completely 
 
 The first time you run after the upgrade a re-indexing process will be started that will take anywhere from 30 minutes to several hours, depending on the speed of your machine.
 
+#### If you your wallet balance is incorrect run Linda with the rescan startup flag
+
 ## About this Release
 
 ### What's New
@@ -24,6 +26,7 @@ The first time you run after the upgrade a re-indexing process will be started t
 - Adjust block limits when selecting masternode to distribute rewards evenly, daily.
 - Infrequently resend failed wallet transactions to avoid stuck transactions.
 - Added wallet encryption status to rpc method getinfo
+- Added `listaddressbook` `addressbookadd` `addressbookremove` RPC commands to manage wallet sending addresses through the RPC
 
 #### New settings (command-line or Linda.conf file)
 - dbcache : controls LevelDB memory usage
