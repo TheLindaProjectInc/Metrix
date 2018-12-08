@@ -1048,6 +1048,18 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
     // Received
     if (listReceived.size() > 0 && wtx.GetDepthInMainChain() >= nMinDepth)
     {
+        // check for masternode payment
+        bool bHasMasternodePayment = false;
+        CTxDestination masternodeAddress;
+        if (wtx.vout.size() == 4) {
+            ExtractDestination(wtx.vout[3].scriptPubKey, masternodeAddress);
+            bHasMasternodePayment = true;
+            nFee += wtx.vout[3].nValue;
+        } else if (wtx.vout.size() == 3 && wtx.vout[1].scriptPubKey != wtx.vout[2].scriptPubKey){
+            ExtractDestination(wtx.vout[2].scriptPubKey, masternodeAddress);
+            bHasMasternodePayment = true;
+            nFee += wtx.vout[2].nValue;
+        } 
         bool stop = false;
         BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& r, listReceived)
         {
@@ -1072,12 +1084,12 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                 {
                     entry.push_back(Pair("category", "receive"));
                 }
-                if (wtx.IsCoinBase() || wtx.IsCoinStake())
+                if (!wtx.IsCoinStake() || (bHasMasternodePayment && masternodeAddress == r.first))
                     entry.push_back(Pair("amount", ValueFromAmount(r.second)));
                 else
                 {
-                    entry.push_back(Pair("amount", ValueFromAmount(-nFee)));
-                    stop = true; // only one coinstake output
+                    entry.push_back(Pair("amount", ValueFromAmount(-nFee)));                    
+                    stop = true; // only one coinstake output                 
                 }
                 if (fLong)
                     WalletTxToJSON(wtx, entry);
@@ -2058,4 +2070,84 @@ Value keepass(const Array& params, bool fHelp) {
 
     return "Invalid command";
 
+}
+
+// Linda
+Value listaddressbook(const Array &params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "listaddressbook\n"
+            "List the sending addresses saved in the wallet address book.");
+    if (fHelp)
+        return true;
+
+    Array ret;
+    BOOST_FOREACH (const PAIRTYPE(CBitcoinAddress, string) & item, pwalletMain->mapAddressBook)
+    {
+        const CBitcoinAddress &address = item.first;
+        const string &strAccount = item.second;
+        if (!IsMine(*pwalletMain, address.Get()))
+        {
+            Object obj;
+            obj.push_back(Pair("address", address.ToString()));
+            obj.push_back(Pair("account", strAccount));
+            ret.push_back(obj);
+        }
+    }
+    return ret;
+}
+
+// Linda
+Value addressbookadd(const Array &params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "addressbookadd <lindaAddress> <label>\n"
+            "Add sending Linda address to the address book with the label.");
+    if (fHelp)
+        return true;
+
+    string strAddress = params[0].get_str();
+    string strLabel = params[1].get_str();
+
+    CBitcoinAddress addr(strAddress);
+    if (!addr.IsValid())
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+
+    // Check for duplicate addresses
+    {
+        LOCK(pwalletMain->cs_wallet);
+        if (pwalletMain->mapAddressBook.count(addr.Get()))
+            throw JSONRPCError(RPC_TYPE_ERROR, "Address already in address book");
+    }
+
+    pwalletMain->SetAddressBookName(addr.Get(), strLabel);
+
+    return true;
+}
+
+// Linda
+Value addressbookremove(const Array &params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "addressbookremove <lindaAddress>\n"
+            "Remove the sending Linda address from the address book.");
+    if (fHelp)
+        return true;
+
+    string strAddress = params[0].get_str();
+
+    CBitcoinAddress addr(strAddress);
+    if (!addr.IsValid())
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+
+    {
+        LOCK(pwalletMain->cs_wallet);
+        if (pwalletMain->mapAddressBook.count(addr.Get()) && !IsMine(*pwalletMain, addr.Get()))
+            pwalletMain->DelAddressBookName(addr.Get());
+    }
+
+    return true;
 }

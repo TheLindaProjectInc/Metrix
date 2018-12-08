@@ -218,6 +218,7 @@ Value listunspent(const Array& params, bool fHelp)
         }
         entry.push_back(Pair("amount",ValueFromAmount(nValue)));
         entry.push_back(Pair("confirmations",out.nDepth));
+        entry.push_back(Pair("time",out.tx->GetTxTime()));
         results.push_back(entry);
     }
 

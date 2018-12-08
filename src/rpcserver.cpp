@@ -309,10 +309,13 @@ static const CRPCCommand vRPCCommands[] =
     { "resendtx",               &resendtx,               false,     true,      true },
     { "makekeypair",            &makekeypair,            false,     true,      false },
     { "checkkernel",            &checkkernel,            true,      false,     true },
-    { "getnewstealthaddress",   &getnewstealthaddress,   false,  false, true},
-    { "liststealthaddresses",   &liststealthaddresses,   false,  false, true},
-    { "importstealthaddress",   &importstealthaddress,   false,  false, true},
-    { "sendtostealthaddress",   &sendtostealthaddress,   false,  false, true},
+    { "getnewstealthaddress",   &getnewstealthaddress,   false,     false,     true },
+    { "liststealthaddresses",   &liststealthaddresses,   false,     false,     true },
+    { "importstealthaddress",   &importstealthaddress,   false,     false,     true },
+    { "sendtostealthaddress",   &sendtostealthaddress,   false,     false,     true },
+    { "listaddressbook",        &listaddressbook,        false,     false,     true },
+    { "addressbookadd",         &addressbookadd,         true,      false,     true },
+    { "addressbookremove",      &addressbookremove,      true,      false,     true },
 #endif
 };
 
@@ -788,11 +791,19 @@ void ServiceConnection(AcceptedConnection *conn)
             if (!read_string(strRequest, valRequest))
                 throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
 
-            // Return immediately if in warmup
+            // Return immediately if in warmup unless sent shutdown request
             {
                 LOCK(cs_rpcWarmup);
-                if (fRPCInWarmup)
-                    throw JSONRPCError(RPC_IN_WARMUP, rpcWarmupStatus);
+                if (fRPCInWarmup) {
+                    bool bReturnWarmup = true;
+                    if (valRequest.type() == obj_type) {
+                        jreq.parse(valRequest);
+                        if (jreq.strMethod == "stop")
+                            bReturnWarmup = false;
+                    }
+                    if (bReturnWarmup)
+                        throw JSONRPCError(RPC_IN_WARMUP, rpcWarmupStatus);
+                }                    
             }
 
             string strReply;

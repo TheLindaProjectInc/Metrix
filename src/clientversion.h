@@ -1,6 +1,9 @@
 #ifndef CLIENTVERSION_H
 #define CLIENTVERSION_H
 
+#if defined(HAVE_CONFIG_H)
+#include "bitcoin-config.h"
+#else
 //
 // client versioning
 //
@@ -13,6 +16,8 @@
 
 // Set to true for release, false for prerelease or test build
 #define CLIENT_VERSION_IS_RELEASE  false
+
+#endif //HAVE_CONFIG_H
 
 // Converts the parameter X to a string after macro replacement on X has been performed.
 // Don't merge these into one macro!

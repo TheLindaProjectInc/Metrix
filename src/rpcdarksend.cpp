@@ -615,7 +615,8 @@ Value masternode(const Array& params, bool fHelp)
     if (strCommand == "status" || strCommand == "status-all")
     {
         // get masternode status
-        std::vector<Value> resultArr;        
+        std::vector<Value> resultArr;      
+        std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(pindexBest->nHeight, MIN_INSTANTX_PROTO_VERSION);
 
         BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
             if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr){
@@ -634,25 +635,21 @@ Value masternode(const Array& params, bool fHelp)
     		mnObj.push_back(Pair("vin", mn.vin.ToString()));
             mnObj.push_back(Pair("lastTimeSeen", mn.lastTimeSeen));            
             mnObj.push_back(Pair("activeseconds",  mn.lastTimeSeen - mn.now));   
-            mnObj.push_back(Pair("rank", GetMasternodeRank(mn.vin, pindexBest->nHeight)));            
+            mnObj.push_back(Pair("rank", GetMasternodeRank(mn.vin, vecMasternodeScores)));
             mnObj.push_back(Pair("lastDseep", mn.lastDseep));
-            mnObj.push_back(Pair("cacheInputAge", mn.cacheInputAge));
-            mnObj.push_back(Pair("cacheInputAgeBlock", mn.cacheInputAgeBlock));
             mnObj.push_back(Pair("enabled", mn.enabled));
-            mnObj.push_back(Pair("unitTest", mn.unitTest));
             mnObj.push_back(Pair("allowFreeTx", mn.allowFreeTx));
             mnObj.push_back(Pair("protocolVersion", mn.protocolVersion));
             mnObj.push_back(Pair("nLastDsq", mn.nLastDsq));
 
             // check if me to include activeMasternode.status
-            if (mn.addr.ToString() == strMasterNodeAddr){
+            if (mn.addr.ToString() == strMasterNodeAddr)
                 mnObj.push_back(Pair("status", activeMasternode.status));                
-            }
 
     		resultArr.push_back(mnObj);
             }
     	}
-
+        
     	return resultArr;
     }
 

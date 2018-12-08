@@ -1392,8 +1392,6 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     int64_t nValueMin = CENT;
     int64_t nValueIn = 0;
 
-    int64_t nDarkSendPoolMax    = DARKSEND_POOL_MAX;
-
     // should not be less than fees in DARKSEND_FEE + few (lets say 5) smallest denoms
     int64_t nLowestDenom = DARKSEND_FEE + darkSendDenominations[darkSendDenominations.size() - 1]*5;
 
