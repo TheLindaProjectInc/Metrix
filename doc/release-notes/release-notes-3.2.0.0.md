@@ -25,6 +25,7 @@ The first time you run after the upgrade a re-indexing process will be started t
 - RPC Server "Warm-Up" Mode. The RPC server is started earlier now and will return immediate error with code -28 to all calls until all initialisations are done.
 - Adjust block limits when selecting masternode to distribute rewards evenly, daily.
 - Infrequently resend failed wallet transactions to avoid stuck transactions.
+- Updated peer stalling to address the many orphans problem and help prevent stuck block downloads
 - Added wallet encryption status to rpc method getinfo
 - Added `listaddressbook` `addressbookadd` `addressbookremove` RPC commands to manage wallet sending addresses through the RPC
 
