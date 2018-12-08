@@ -44,7 +44,7 @@ These dependencies are required:
  libgmp      | Secp256k1        | Secp256k1 Dependency
  libboost    | Utility          | Library for threading, data structures, etc
  libevent    | Networking       | OS independent asynchronous networking
- libdb5.8    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
+ libdb5.0    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
  libsecp256k1| Secp256k1        | Elliptic Curve Cryptography
 
 Optional dependencies:

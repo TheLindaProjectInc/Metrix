@@ -52,8 +52,9 @@ bool AppInit(int argc, char* argv[])
             // First part of help message is specific to bitcoind / RPC client
             std::string strUsage = _("Linda version") + " " + FormatFullVersion() + "\n\n" +
                 _("Usage:") + "\n" +
-                  "  Lindad [options]                     " + "\n" +
-                  "  Lindad [options] <command> [params]  " + _("Send command to -server or Lindad") + "\n" +
+                  "  Lindad [options]                     " + _("Start Lindad server") + "\n" +
+                  _("Usage (deprecated, use Lindad-cli):") + "\n" +
+                  "  Lindad [options] <command> [params]  " + _("Send command to Lindad server") + "\n" +
                   "  Lindad [options] help                " + _("List commands") + "\n" +
                   "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
 

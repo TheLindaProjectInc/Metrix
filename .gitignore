@@ -16,4 +16,7 @@ src/obj/build.h
 object_script.Linda-qt.*
 Makefile.*
 Makefile
+!Makefile.am
+!Makefile.include
+!depends/Makefile
 *plugin_import.cpp

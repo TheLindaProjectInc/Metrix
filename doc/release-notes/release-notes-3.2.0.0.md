@@ -28,11 +28,15 @@ The first time you run after the upgrade a re-indexing process will be started t
 - Updated peer stalling to address the many orphans problem and help prevent stuck block downloads
 - Added wallet encryption status to rpc method getinfo
 - Added `listaddressbook` `addressbookadd` `addressbookremove` RPC commands to manage wallet sending addresses through the RPC
+- Update to autotools build system
+
 
 #### New settings (command-line or Linda.conf file)
 - dbcache : controls LevelDB memory usage
 - par : controls how many threads to use to validate transactions. Defaults to the number of CPUs on your machine, use -par=1 to limit to a single CPU
 - reindex : rebuild block and transaction indices from the downloaded block data
+
+#### New startup commands
 - zapwallettxes: to rebuild the wallet’s transaction information
 
 ### Bug Fixes
