@@ -1166,6 +1166,29 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
+	//get the mode of budget voting for this masternode
+     strBudgetMode = GetArg("-budgetvotemode", "auto");
+ 
+     if(GetBoolArg("-mnconflock", true) && pwalletMain) {
+        LOCK(pwalletMain->cs_wallet);
+        LogPrintf("Locking Masternodes:\n");
+        uint256 mnTxHash;
+        int outputIndex;
+        BOOST_FOREACH(CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {//get the mode of budget voting for this masternode
+     		mnTxHash.SetHex(mne.getTxHash());
+		outputIndex = boost::lexical_cast<unsigned int>(mne.getOutputIndex());
+		
+            // don't lock spent
+            if(pwalletMain->IsSpent(mnTxHash, outputIndex)) {
+                LogPrintf("  %s %s - SPENT, not locked\n", mne.getTxHash(), mne.getOutputIndex());
+                continue;
+            }
+            COutPoint outpoint = COutPoint(mnTxHash, outputIndex);
+	    pwalletMain->LockCoin(outpoint);
+            LogPrintf("  %s %s - locked successfully\n", mne.getTxHash(), mne.getOutputIndex());
+        }
+    }
+	
     fEnableDarksend = GetBoolArg("-enabledarksend", false);
 
     nDarksendRounds = GetArg("-darksendrounds", 2);
