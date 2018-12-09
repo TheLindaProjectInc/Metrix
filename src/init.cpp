@@ -1164,9 +1164,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         } else {
             return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
         }
-    } else {
-        LogPrintf("Using masternode config file %s\n", GetMasternodeConfigFile().string());
-	    
+    }	    
 	if(GetBoolArg("-mnconflock", true) && pwalletMain) {
         LOCK(pwalletMain->cs_wallet);
         LogPrintf("Locking Masternodes:\n");
