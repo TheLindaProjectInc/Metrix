@@ -246,6 +246,8 @@ static const CRPCCommand vRPCCommands[] =
     { "sendrawtransaction",     &sendrawtransaction,     false,     false,     false },
     { "gettxoutsetinfo",        &gettxoutsetinfo,        true,      false,     false },
     { "gettxout",               &gettxout,               true,      false,     false },
+    { "lockunspent",            &lockunspent,            false,  false },
+    { "listlockunspent",        &listlockunspent,        false,  false },
     { "sendalert",              &sendalert,              false,     false,     false },
     { "validateaddress",        &validateaddress,        true,      false,     false },
     { "validatepubkey",         &validatepubkey,         true,      false,     false },
