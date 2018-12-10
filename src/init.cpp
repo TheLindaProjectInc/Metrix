@@ -12,6 +12,7 @@
 #include "util.h"
 #include "ui_interface.h"
 #include "activemasternode.h"
+#include "masternodeman.h"
 #include "masternodeconfig.h"
 #include "spork.h"
 #include "keepass.h"
@@ -121,6 +122,7 @@ void Shutdown()
         bitdb.Flush(false);
 #endif
     StopNode();
+    DumpMasternodes();
     UnregisterNodeSignals(GetNodeSignals());
     {
         LOCK(cs_main);
@@ -1132,7 +1134,21 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     if (!strErrors.str().empty())
         return InitError(strErrors.str());
-
+	
+uiInterface.InitMessage(_("Loading masternode list..."));
+	
+     nStart = GetTimeMillis();
+	
+     {
+        CMasternodeDB mndb;
+        if (!mndb.Read(mnodeman))
+            LogPrintf("Invalid or missing masternodes.dat; recreating\n");
+    }
+	
+     LogPrintf("Loaded %i masternodes from masternodes.dat  %dms\n",
+           mnodeman.size(), GetTimeMillis() - nStart);
+	
+	
     fMasterNode = GetBoolArg("-masternode", false);
     if(fMasterNode) {
         LogPrintf("IS DARKSEND MASTER NODE\n");
