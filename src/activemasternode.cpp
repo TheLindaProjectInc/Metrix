@@ -5,6 +5,7 @@
 #include "protocol.h"
 #include "main.h"
 #include "activemasternode.h"
+#include "masternodeman.h"
 #include <boost/lexical_cast.hpp>
 #include "clientversion.h"
 
@@ -217,16 +218,14 @@ bool CActiveMasternode::Dseep(CTxIn vin, CService service, CKey keyMasternode, C
     }
 
     // Update Last Seen timestamp in masternode list
-    bool found = false;
-    BOOST_FOREACH(CMasterNode& mn, vecMasternodes) {
-        //LogPrintf(" -- %s\n", mn.vin.ToString().c_str());
-        if(mn.vin == vin) {
-            found = true;
-            mn.UpdateLastSeen();
-        }
+     CMasternode* mn = mnodeman.Find(vin);
+    if(mn)
+    {
+        mn->UpdateLastSeen();
     }
-
-    if(!found){
+	{
+     else
+    {
     	// Seems like we are trying to send a ping while the masternode is not registered in the network
     	retErrorMessage = "Darksend Masternode List doesn't include our masternode, Shutting down masternode pinging service! " + vin.ToString();
     	LogPrintf("CActiveMasternode::Dseep() - Error: %s\n", retErrorMessage.c_str());
@@ -286,16 +285,13 @@ bool CActiveMasternode::Register(CTxIn vin, CService service, CKey keyCollateral
 		return false;
 	}
 
-    bool found = false;
-    BOOST_FOREACH(CMasterNode& mn, vecMasternodes)
-        if(mn.vin == vin)
-            found = true;
-
-    if(!found) {
+   CMasternode* mn = mnodeman.Find(vin);
+    if(!mn)
+    {
         LogPrintf("CActiveMasternode::Register() - Adding to masternode list service: %s - vin: %s\n", service.ToString().c_str(), vin.ToString().c_str());
-        CMasterNode mn(service, vin, pubKeyCollateralAddress, vchMasterNodeSignature, masterNodeSignatureTime, pubKeyMasternode, PROTOCOL_VERSION);
+        CMasternode mn(service, vin, pubKeyCollateralAddress, vchMasterNodeSignature, masterNodeSignatureTime, pubKeyMasternode, PROTOCOL_VERSION);
         mn.UpdateLastSeen(masterNodeSignatureTime);
-        vecMasternodes.push_back(mn);
+        mnodeman.Add(mn);
     }
 
     //send to all peers
