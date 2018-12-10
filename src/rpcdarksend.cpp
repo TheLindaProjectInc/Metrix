@@ -583,7 +583,7 @@ Value masternode(const Array& params, bool fHelp)
     	std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
     	mnEntries = masternodeConfig.getEntries();
 
-        Object resultObj;
+        std::vector<Value> resultArr;
 
         BOOST_FOREACH(CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
     		Object mnObj;
@@ -592,10 +592,10 @@ Value masternode(const Array& params, bool fHelp)
     		mnObj.push_back(Pair("privateKey", mne.getPrivKey()));
     		mnObj.push_back(Pair("txHash", mne.getTxHash()));
     		mnObj.push_back(Pair("outputIndex", mne.getOutputIndex()));
-    		resultObj.push_back(Pair("masternode", mnObj));
+    		resultArr.push_back(mnObj);
     	}
 
-    	return resultObj;
+    	return resultArr;
     }
 
     if (strCommand == "outputs")
@@ -619,34 +619,34 @@ Value masternode(const Array& params, bool fHelp)
         std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(pindexBest->nHeight, MIN_INSTANTX_PROTO_VERSION);
 
         BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
-            if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr){
-    		Object mnObj;
+            if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr) { 
+                Object mnObj;
 
-            // get masternode address
-            CScript pubkey;
-            pubkey = GetScriptForDestination(mn.pubkey.GetID());
-            CTxDestination address1;
-            ExtractDestination(pubkey, address1);
-            CBitcoinAddress address2(address1);
+                // get masternode address
+                CScript pubkey;
+                pubkey = GetScriptForDestination(mn.pubkey.GetID());
+                CTxDestination address1;
+                ExtractDestination(pubkey, address1);
+                CBitcoinAddress address2(address1);
 
-    		mnObj.push_back(Pair("minProtoVersion", mn.minProtoVersion));
-            mnObj.push_back(Pair("address", mn.addr.ToString().c_str()));
-    		mnObj.push_back(Pair("pubkey", address2.ToString().c_str()));
-    		mnObj.push_back(Pair("vin", mn.vin.ToString()));
-            mnObj.push_back(Pair("lastTimeSeen", mn.lastTimeSeen));            
-            mnObj.push_back(Pair("activeseconds",  mn.lastTimeSeen - mn.now));   
-            mnObj.push_back(Pair("rank", GetMasternodeRank(mn.vin, vecMasternodeScores)));
-            mnObj.push_back(Pair("lastDseep", mn.lastDseep));
-            mnObj.push_back(Pair("enabled", mn.enabled));
-            mnObj.push_back(Pair("allowFreeTx", mn.allowFreeTx));
-            mnObj.push_back(Pair("protocolVersion", mn.protocolVersion));
-            mnObj.push_back(Pair("nLastDsq", mn.nLastDsq));
+                mnObj.push_back(Pair("minProtoVersion", mn.minProtoVersion));
+                mnObj.push_back(Pair("address", mn.addr.ToString().c_str()));
+                mnObj.push_back(Pair("pubkey", address2.ToString().c_str()));
+                mnObj.push_back(Pair("vin", mn.vin.ToString()));
+                mnObj.push_back(Pair("lastTimeSeen", mn.lastTimeSeen));            
+                mnObj.push_back(Pair("activeseconds",  mn.lastTimeSeen - mn.now));   
+                mnObj.push_back(Pair("rank", GetMasternodeRank(mn.vin, vecMasternodeScores)));
+                mnObj.push_back(Pair("lastDseep", mn.lastDseep));
+                mnObj.push_back(Pair("enabled", mn.enabled));
+                mnObj.push_back(Pair("allowFreeTx", mn.allowFreeTx));
+                mnObj.push_back(Pair("protocolVersion", mn.protocolVersion));
+                mnObj.push_back(Pair("nLastDsq", mn.nLastDsq));
 
-            // check if me to include activeMasternode.status
-            if (mn.addr.ToString() == strMasterNodeAddr)
-                mnObj.push_back(Pair("status", activeMasternode.status));                
+                // check if me to include activeMasternode.status
+                if (mn.addr.ToString() == strMasterNodeAddr)
+                    mnObj.push_back(Pair("status", activeMasternode.status));                
 
-    		resultArr.push_back(mnObj);
+                resultArr.push_back(mnObj);
             }
     	}
         
@@ -660,7 +660,7 @@ Value masternode(const Array& params, bool fHelp)
             strMasterNodeAddr = params[2].get_str().c_str();            
         } else {
             throw runtime_error(
-                "missning args <MasterNodePrivKey> <MasterNodeAddr>\n");
+                "missing args <MasterNodePrivKey> <MasterNodeAddr>\n");
         }
 
         
