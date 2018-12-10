@@ -308,7 +308,7 @@ Value masternode(const Array& params, bool fHelp)
             } else if (strCommand == "activeseconds") {
                 obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)));
             } else if (strCommand == "rank") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(GetMasternodeRank(mn.vin, pindexBest->nHeight))));
+                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(GetMasternodeRank(mn.vin, chainActive.Height()))));
             }
         }
         return obj;
@@ -538,7 +538,7 @@ Value masternode(const Array& params, bool fHelp)
     {
         Object obj;
 
-        for(int nHeight = pindexBest->nHeight-10; nHeight < pindexBest->nHeight+20; nHeight++)
+        for(int nHeight = chainActive.Height() -10; nHeight < chainActive.Height() +20; nHeight++)
         {
             CScript payee;
             if(masternodePayments.GetBlockPayee(nHeight, payee)){
@@ -616,7 +616,7 @@ Value masternode(const Array& params, bool fHelp)
     {
         // get masternode status
         std::vector<Value> resultArr;      
-        std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(pindexBest->nHeight, MIN_INSTANTX_PROTO_VERSION);
+        std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(chainActive.Height(), MIN_INSTANTX_PROTO_VERSION);
 
         BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
             if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr) { 

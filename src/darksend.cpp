@@ -1310,7 +1310,7 @@ void CDarkSendPool::NewBlock()
 
     if(!fMasterNode){
         //denominate all non-denominated inputs every 25 minutes.
-        if(pindexBest->nHeight % 10 == 0) UnlockCoins();
+        if(chainActive.Height() % 10 == 0) UnlockCoins();
         ProcessMasternodeConnections();
     }
 }
@@ -1330,7 +1330,7 @@ void CDarkSendPool::CompletedTransaction(bool error, std::string lastMessageNew)
         myEntries.clear();
 
         // To avoid race conditions, we'll only let DS run once per block
-        cachedLastSuccess = pindexBest->nHeight;
+        cachedLastSuccess = chainActive.Height();
     }
     lastMessage = lastMessageNew;
 
@@ -1358,7 +1358,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
     if(fMasterNode) return false;
     if(state == POOL_STATUS_ERROR || state == POOL_STATUS_SUCCESS) return false;
 
-    if(pindexBest->nHeight - cachedLastSuccess < minBlockSpacing) {
+    if(chainActive.Height() - cachedLastSuccess < minBlockSpacing) {
         LogPrintf("CDarkSendPool::DoAutomaticDenominating - Last successful darksend action was too recent\n");
         strAutoDenomResult = _("Last successful darksend action was too recent.");
         return false;
@@ -1694,7 +1694,7 @@ bool CDarkSendPool::MakeCollateralAmounts()
 
     // use the same cachedLastSuccess as for DS mixinx to prevent race
     if(pwalletMain->CommitTransaction(wtx, reservekey))
-        cachedLastSuccess = pindexBest->nHeight;
+        cachedLastSuccess = chainActive.Height();
 
     LogPrintf("MakeCollateralAmounts Success: tx %s\n", wtx.GetHash().GetHex().c_str());
 
@@ -1764,7 +1764,7 @@ bool CDarkSendPool::CreateDenominated(int64_t nTotalValue)
 
     // use the same cachedLastSuccess as for DS mixinx to prevent race
     if(pwalletMain->CommitTransaction(wtx, reservekey))
-        cachedLastSuccess = pindexBest->nHeight;
+        cachedLastSuccess = chainActive.Height();
 
     LogPrintf("CreateDenominated Success: tx %s\n", wtx.GetHash().GetHex().c_str());
 

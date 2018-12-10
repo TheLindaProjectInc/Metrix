@@ -136,7 +136,7 @@ void Shutdown()
     {
         LOCK(cs_main);
         if (pwalletMain)
-            pwalletMain->SetBestChain(CBlockLocator(pindexBest));
+            pwalletMain->SetBestChain(CBlockLocator(chainActive.Tip()));
     }
     if (pwalletMain)
         bitdb.Flush(true);
@@ -911,7 +911,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
                 // If the loaded chain has a wrong genesis, bail out immediately
                 // (we're likely using a testnet datadir, or the other way around).
-                if (!mapBlockIndex.empty() && pindexGenesisBlock == NULL)
+                if (!mapBlockIndex.empty() && chainActive.Genesis() == NULL)
                     return InitError(_("Incorrect or no genesis block found. Wrong datadir for network?"));
 
                 // Initialize the block index (no-op if non-empty database was already loaded)
@@ -1067,7 +1067,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                     strErrors << _("Cannot write default address") << "\n";
             }
 
-            pwalletMain->SetBestChain(CBlockLocator(pindexBest));
+            pwalletMain->SetBestChain(CBlockLocator(chainActive.Tip()));
         }
 
         LogPrintf("%s", strErrors.str());
@@ -1075,9 +1075,9 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         RegisterWallet(pwalletMain);
 
-        CBlockIndex *pindexRescan = pindexBest;
+        CBlockIndex *pindexRescan = chainActive.Tip();
         if (GetBoolArg("-rescan", false))
-            pindexRescan = pindexGenesisBlock;
+            pindexRescan = chainActive.Genesis();
         else
         {
             CWalletDB walletdb(strWalletFileName);
@@ -1085,16 +1085,16 @@ bool AppInit2(boost::thread_group& threadGroup)
             if (walletdb.ReadBestBlock(locator))
                 pindexRescan = locator.GetBlockIndex();
             else
-                pindexRescan = pindexGenesisBlock;
+                pindexRescan = chainActive.Genesis();
         }
-        if (pindexBest != pindexRescan && pindexBest && pindexRescan && pindexBest->nHeight > pindexRescan->nHeight)
+        if (chainActive.Tip() != pindexRescan && chainActive.Tip() && pindexRescan && chainActive.Height() > pindexRescan->nHeight)
         {
             uiInterface.InitMessage(_("Rescanning..."));
-            LogPrintf("Rescanning last %i blocks (from block %i)...\n", pindexBest->nHeight - pindexRescan->nHeight, pindexRescan->nHeight);
+            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->nHeight, pindexRescan->nHeight);
             nStart = GetTimeMillis();
             pwalletMain->ScanForWalletTransactions(pindexRescan, true);
             LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
-            pwalletMain->SetBestChain(CBlockLocator(pindexBest));
+            pwalletMain->SetBestChain(CBlockLocator(chainActive.Tip()));
             nWalletDBUpdated++;
         }
     } // (!fDisableWallet)
@@ -1258,7 +1258,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     //// debug print
     LogPrintf("mapBlockIndex.size() = %u\n",   mapBlockIndex.size());
-    LogPrintf("nBestHeight = %d\n",                   nBestHeight);
+    LogPrintf("nBestHeight = %d\n",            chainActive.Height());
 #ifdef ENABLE_WALLET
     LogPrintf("setKeyPool.size() = %u\n",      pwalletMain ? pwalletMain->setKeyPool.size() : 0);
     LogPrintf("mapWallet.size() = %u\n",       pwalletMain ? pwalletMain->mapWallet.size() : 0);

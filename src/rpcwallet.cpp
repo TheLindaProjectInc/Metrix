@@ -1273,7 +1273,7 @@ Value listsinceblock(const Array& params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");
     }
 
-    int depth = pindex ? (1 + nBestHeight - pindex->nHeight) : -1;
+    int depth = pindex ? (1 + chainActive.Height() - pindex->nHeight) : -1;
 
     Array transactions;
 
@@ -1285,23 +1285,8 @@ Value listsinceblock(const Array& params, bool fHelp)
             ListTransactions(tx, "*", 0, true, transactions);
     }
 
-    uint256 lastblock;
-
-    if (target_confirms == 1)
-    {
-        lastblock = hashBestChain;
-    }
-    else
-    {
-        int target_height = pindexBest->nHeight + 1 - target_confirms;
-
-        CBlockIndex *block;
-        for (block = pindexBest;
-             block && block->nHeight > target_height;
-             block = block->pprev)  { }
-
-        lastblock = block ? block->GetBlockHash() : 0;
-    }
+    CBlockIndex *pblockLast = chainActive[chainActive.Height() + 1 - target_confirms];
+    uint256 lastblock = pblockLast ? pblockLast->GetBlockHash() : 0;
 
     Object ret;
     ret.push_back(Pair("transactions", transactions));
@@ -1359,8 +1344,8 @@ Value gettransaction(const Array& params, bool fHelp)
                 if (mi != mapBlockIndex.end() && (*mi).second)
                 {
                     CBlockIndex* pindex = (*mi).second;
-                    if (pindex->IsInMainChain())
-                        entry.push_back(Pair("confirmations", 1 + nBestHeight - pindex->nHeight));
+                    if (chainActive.Contains(pindex))
+                        entry.push_back(Pair("confirmations", 1 + chainActive.Height() - pindex->nHeight));
                     else
                         entry.push_back(Pair("confirmations", 0));
                 }
@@ -1936,7 +1921,7 @@ Value scanforalltxns(const Array& params, bool fHelp)
     Object result;
     int32_t nFromHeight = 0;
     
-    CBlockIndex *pindex = pindexGenesisBlock;
+    CBlockIndex *pindex = chainActive.Genesis();
     
     
     if (params.size() > 0)
@@ -1945,7 +1930,7 @@ Value scanforalltxns(const Array& params, bool fHelp)
     
     if (nFromHeight > 0)
     {
-        pindex = mapBlockIndex[hashBestChain];
+        pindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
         while (pindex->nHeight > nFromHeight
             && pindex->pprev)
             pindex = pindex->pprev;
@@ -1980,7 +1965,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
     uint32_t nTransactions = 0;
     int32_t nFromHeight = 0;
     
-    CBlockIndex *pindex = pindexGenesisBlock;
+    CBlockIndex *pindex = chainActive.Genesis();
     
     
     if (params.size() > 0)
@@ -1989,7 +1974,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
     
     if (nFromHeight > 0)
     {
-        pindex = mapBlockIndex[hashBestChain];
+        pindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
         while (pindex->nHeight > nFromHeight
             && pindex->pprev)
             pindex = pindex->pprev;
@@ -2019,7 +2004,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
             pwalletMain->AddToWalletIfInvolvingMe(tx.GetHash(), tx, &block, fUpdate);
         };
         
-        pindex = pindex->GetNextInMainChain();
+        pindex = chainActive.Next(pindex);
     };
     
     LogPrintf("Scanned %u blocks, %u transactions\n", nBlocks, nTransactions);
