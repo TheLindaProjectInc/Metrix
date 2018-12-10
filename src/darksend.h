@@ -289,7 +289,9 @@ public:
 
         SetNull();
     }
-
+	
+    void ProcessMasternodeConnections();
+	
     void InitCollateralAddress(){
         std::string strAddress = "";
             strAddress = "8TSV23mk6whxTHjritUD1RotLxX6KG9yGN";
