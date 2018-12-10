@@ -7,6 +7,7 @@ debug/
 *.o
 *.d
 .*
+*.a
 src/Lindad
 .vscode/
 .vs/
@@ -14,6 +15,26 @@ Linda-qt
 qrc_bitcoin.cpp
 src/obj/build.h
 object_script.Linda-qt.*
+# autotools
 Makefile.*
 Makefile
+!Makefile.am
+!Makefile.include
+!depends/Makefile
 *plugin_import.cpp
+configure
+aclocal.m4
+config.status
+build-aux/compile
+build-aux/config.guess
+build-aux/config.sub
+build-aux/depcomp
+build-aux/install-sh
+build-aux/missing
+depends/x86_64-w64-mingw32/*
+depends/built/*
+depends/sources/*
+share/setup.nsi
+src/bitcoin-config.h
+src/bitcoin-config.h.in
+src/stamp-h1

@@ -218,7 +218,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         bool stop;
         vRecv >> vin >> vchSig >> sigTime >> stop;
 
-        //LogPrintf("dseep - Received: vin: %s sigTime: %lld stop: %s\n", vin.ToString().c_str(), sigTime, stop ? "true" : "false");
+        LogPrintf("dseep - Received: vin: %s sigTime: %lld stop: %s\n", vin.ToString().c_str(), sigTime, stop ? "true" : "false");
 
         if (sigTime > GetAdjustedTime() + 60 * 60) {
             LogPrintf("dseep - Signature rejected, too far into the future %s\n", vin.ToString().c_str());
@@ -261,7 +261,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             }
         }
 
-        if(fDebug) LogPrintf("dseep - Couldn't find masternode entry %s\n", vin.ToString().c_str());
+        LogPrintf("dseep - Couldn't find masternode entry %s\n", vin.ToString().c_str());
 
         std::map<COutPoint, int64_t>::iterator i = askedForMasternodeListEntry.find(vin.prevout);
         if (i != askedForMasternodeListEntry.end()){
@@ -427,6 +427,10 @@ int GetMasternodeByVin(CTxIn& vin)
     return -1;
 }
 
+bool IsMasternodePaidInList(std::vector<CScript> vecPaidMasternodes, CScript sAddress) {   
+    return std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), sAddress) != vecPaidMasternodes.end();
+}
+
 int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
 {
     int i = 0;
@@ -439,23 +443,24 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
     // and removing all already paid masternodes from the 
     // winner selection for the next block
     int count = vecMasternodes.size();
-    count = std::max(count, 1440);
+    count = std::max(count, 960);
+    count = std::min(count, 1500); // limit so we don't cause wallet lockups
+    int iCount = count;
     std::vector<CScript> vecPaidMasternodes;
     CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
-    for (int64_t n = 0; n < count; n++) {
+    for (int n = 0; n < count; n++) {
         CBlock block;
         if (ReadBlockFromDisk(block, pblockindex)) {
             if (block.HasMasternodePayment()) {
-                CScript payee;
                 if (block.vtx[1].vout.size() == 3) {
-                    payee = block.vtx[1].vout[2].scriptPubKey;
+                    CScript mnScript = block.vtx[1].vout[2].scriptPubKey;
+                    if (!IsMasternodePaidInList(vecPaidMasternodes, mnScript))
+                        vecPaidMasternodes.push_back(mnScript);
                 } else if (block.vtx[1].vout.size() == 4) {
-                    payee = block.vtx[1].vout[3].scriptPubKey;
+                    CScript mnScript = block.vtx[1].vout[3].scriptPubKey;
+                    if (!IsMasternodePaidInList(vecPaidMasternodes, mnScript))
+                        vecPaidMasternodes.push_back(mnScript);
                 }
-                if(std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), payee) == vecPaidMasternodes.end()) 
-    	        {
-    	            vecPaidMasternodes.push_back(payee);
-	            }
             }
         }
         pblockindex = pblockindex->pprev;  
@@ -464,26 +469,29 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
     // scan for winner
     BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
         CScript mnScript = GetScriptForDestination(mn.pubkey.GetID());
-        if(std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), mnScript) != vecPaidMasternodes.end()) {
-            mn.Check();
-            if(mn.protocolVersion < minProtocol) continue;
-            if(!mn.IsEnabled()) {
-                i++;
-                continue;
-            }
-
-            // calculate the score for each masternode
-            uint256 n = mn.CalculateScore(nBlockHeight);
-            unsigned int n2 = 0;
-            memcpy(&n2, &n, sizeof(n2));
-
-            // determine the winner
-            if(n2 > score) {
-                score = n2;
-                winner = i;
-            }
+        if (IsMasternodePaidInList(vecPaidMasternodes, mnScript)) {
             i++;
+            continue;
         }
+
+        mn.Check();
+        if(mn.protocolVersion < minProtocol) continue;
+        if(!mn.IsEnabled()) {
+            i++;
+            continue;
+        }
+
+        // calculate the score for each masternode
+        uint256 n = mn.CalculateScore(nBlockHeight);
+        unsigned int n2 = 0;
+        memcpy(&n2, &n, sizeof(n2));
+
+        // determine the winner
+        if(n2 > score) {
+            score = n2;
+            winner = i;
+        }
+        i++;
     }
     
     return winner;

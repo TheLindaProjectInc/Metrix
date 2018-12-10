@@ -7,45 +7,39 @@
 # Originally by Laszlo Hanyecz (solar@heliacal.net)
 
 CXX=llvm-g++
-DEPSDIR=/opt/local
+DEPSDIR=/usr/local/deps
+BOOST_SUFFIX?=
 
 INCLUDEPATHS= \
  -I"$(CURDIR)" \
  -I"$(CURDIR)"/obj \
- -I"$(DEPSDIR)/include" \
- -I"$(DEPSDIR)/include/db48"
+ -I"$(DEPSDIR)/boost_1_58_0" \
+ -I"$(DEPSDIR)/db-5.0.32.NC/build_unix" \
+ -I"$(DEPSDIR)/openssl-1.0.2g/include"
 
 LIBPATHS= \
- -L"$(DEPSDIR)/lib" \
- -L"$(DEPSDIR)/lib/db48"
+ -L"$(CURDIR)/leveldb" \
+ -L"$(DEPSDIR)/boost_1_58_0/stage/lib" \
+ -L"$(DEPSDIR)/db-5.0.32.NC/build_unix" \
+ -L"$(DEPSDIR)/openssl-1.0.2g"
 
-USE_UPNP:=1
+USE_UPNP:=-
 USE_WALLET:=1
+USE_IPV6:=1
 
 LIBS= -dead_strip
 
-ifdef STATIC
-# Build STATIC if you are redistributing the Lindad binary
-LIBS += \
- $(DEPSDIR)/lib/db48/libdb_cxx-4.8.a \
- $(DEPSDIR)/lib/libboost_system-mt.a \
- $(DEPSDIR)/lib/libboost_filesystem-mt.a \
- $(DEPSDIR)/lib/libboost_program_options-mt.a \
- $(DEPSDIR)/lib/libboost_thread-mt.a \
- $(DEPSDIR)/lib/libssl.a \
- $(DEPSDIR)/lib/libcrypto.a \
- -lz
-else
-LIBS += \
- -ldb_cxx-4.8 \
- -lboost_system-mt \
- -lboost_filesystem-mt \
- -lboost_program_options-mt \
- -lboost_thread-mt \
- -lssl \
- -lcrypto \
- -lz
-endif
+LIBS= \
+ -l leveldb \
+ -l memenv \
+ -l boost_system$(BOOST_SUFFIX) \
+ -l boost_filesystem$(BOOST_SUFFIX) \
+ -l boost_program_options$(BOOST_SUFFIX) \
+ -l boost_thread$(BOOST_SUFFIX) \
+ -l boost_chrono$(BOOST_SUFFIX) \
+ -l db_cxx \
+ -l ssl \
+ -l crypto
 
 DEFS=-DMAC_OSX -DMSG_NOSIGNAL=0 -DBOOST_SPIRIT_THREADSAFE
 
@@ -55,7 +49,7 @@ ifdef RELEASE
 # the same way.
 CFLAGS = -mmacosx-version-min=10.5 -arch x86_64 -O2 -msse2
 else
-CFLAGS = -g -msse2
+DEBUGFLAGS = -g
 endif
 
 # ppc doesn't work because we don't support big-endian
@@ -63,6 +57,7 @@ CFLAGS += -Wall -Wextra -Wformat -Wno-ignored-qualifiers -Wformat-security -Wno-
     $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
 
 OBJS= \
+    leveldb/libleveldb.a \
     obj/alert.o \
     obj/version.o \
     obj/checkpoints.o \
@@ -76,9 +71,6 @@ OBJS= \
     obj/core.o \
     obj/main.o \
     obj/net.o \
-    obj/leveldb.o \
-    obj/bloom.o \
-    obj/txdb.o \
     obj/protocol.o \
     obj/rpcclient.o \
     obj/rpcprotocol.o \
@@ -93,13 +85,33 @@ OBJS= \
     obj/txmempool.o \
     obj/util.o \
     obj/hash.o \
+    obj/bloom.o \
     obj/noui.o \
-    obj/pbkdf2.o \
+    obj/leveldb.o \
+    obj/txdb.o \
     obj/kernel.o \
+    obj/pbkdf2.o \
     obj/scrypt.o \
     obj/scrypt-x86.o \
     obj/scrypt-x86_64.o \
-    obj/chainparams.o
+    obj/chainparams.o \
+    obj/stealth.o \
+    obj/activemasternode.o \
+    obj/darksend.o \
+    obj/eccryptoverify.o \
+    obj/instantx.o \
+    obj/keepass.o \
+    obj/masternodeconfig.o \
+    obj/masternode.o \
+    obj/rpcdarksend.o \
+    obj/spork.o \
+    obj/crypto/hmac_sha256.o \
+    obj/crypto/hmac_sha512.o \
+    obj/crypto/rfc6979_hmac_sha256.o \
+    obj/crypto/ripemd160.o \
+    obj/crypto/sha1.o \
+    obj/crypto/sha256.o \
+    obj/crypto/sha512.o
 
 ifeq (${USE_WALLET}, 1)
     DEFS += -DENABLE_WALLET
@@ -119,20 +131,30 @@ endif
 ifneq (${USE_UPNP}, -)
 	DEFS += -DUSE_UPNP=$(USE_UPNP)
 ifdef STATIC
-	LIBS += $(DEPSDIR)/lib/libminiupnpc.a
+	LIBS += $(DEPSDIR)/miniupnpc/libminiupnpc.a
 else
 	LIBS += -lminiupnpc
 endif
 endif
 
+ifneq (${USE_IPV6}, -)
+	DEFS += -DUSE_IPV6=$(USE_IPV6)
+endif
+
 all: Lindad
 
+#
+# LevelDB support
+#
 LIBS += $(CURDIR)/leveldb/libleveldb.a $(CURDIR)/leveldb/libmemenv.a
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/include)
 DEFS += $(addprefix -I,$(CURDIR)/leveldb/helpers)
 leveldb/libleveldb.a:
-	@echo "Building LevelDB ..."; cd leveldb; make libleveldb.a libmemenv.a; cd ..
-obj/leveldb.o: leveldb/libleveldb.a
+	@echo "Building LevelDB ..." && cd leveldb && $(MAKE) CC=$(CC) CXX=$(CXX) OPT="$(CFLAGS)" libleveldb.a libmemenv.a && cd ..
+
+# auto-generated dependencies:
+-include obj/*.P
+-include obj-test/*.P
 
 obj/build.h: FORCE
 	/bin/sh ../share/genbuild.sh obj/build.h
@@ -160,5 +182,6 @@ clean:
 	-rm -f obj/*.o
 	-rm -f obj/*.P
 	-rm -f obj/build.h
+	-cd leveldb && $(MAKE) clean || true
 
 FORCE:
