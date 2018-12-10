@@ -7,9 +7,7 @@
 #include "addrman.h"
 #include <boost/lexical_cast.hpp>
 
-
-int CMasterNode::minProtoVersion = MIN_MN_PROTO_VERSION;
-
+int CMasternode::minProtoVersion = MIN_MN_PROTO_VERSION;
 
 /** Object for who's going to get paid on which blocks */
 CMasternodePayments masternodePayments;
@@ -38,12 +36,12 @@ void ProcessMasternodeConnections(){
 
 void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
-   if (strCommand == "mnget") { //Masternode Payments Request Sync
+     if (strCommand == "mnget") { //Masternode Payments Request Sync
         if(fLiteMode) return; //disable all darksend/masternode related functionality
 
         /*if(pfrom->HasFulfilledRequest("mnget")) {
             LogPrintf("mnget - peer already asked me for the list\n");
-            pfrom->Misbehaving(20);
+            Misbehaving(pfrom->GetId(), 20);
             return;
         }*/
 
@@ -72,7 +70,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         if(winner.vin.nSequence != std::numeric_limits<unsigned int>::max()){
             LogPrintf("mnw - invalid nSequence\n");
-            pfrom->Misbehaving(100);
+            Misbehaving(pfrom->GetId(), 100);
             return;
         }
 
@@ -80,7 +78,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         if(!masternodePayments.CheckSignature(winner)){
             LogPrintf("mnw - invalid signature\n");
-            pfrom->Misbehaving(100);
+            Misbehaving(pfrom->GetId(), 100);
             return;
         }
 
@@ -100,35 +98,6 @@ struct CompareValueOnly
         return t1.first < t2.first;
     }
 };
-
-std::vector<pair<unsigned int, CTxIn> > GetMasternodeScores(int64_t nBlockHeight, int minProtocol)
-{
-    std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores;
-
-    BOOST_FOREACH(CMasterNode& mn, vecMasternodes) 
-    {
-        mn.Check();
-        if(mn.protocolVersion < minProtocol)
-        {
-            continue;
-        }
-
-        if(!mn.IsEnabled()) 
-        {
-            continue;
-        }
-
-        uint256 n = mn.CalculateScore(nBlockHeight);
-        unsigned int n2 = 0;
-        memcpy(&n2, &n, sizeof(n2));
-
-        vecMasternodeScores.push_back(make_pair(n2, mn.vin));
-    }
-
-    sort(vecMasternodeScores.rbegin(), vecMasternodeScores.rend(), CompareValueOnly());
-
-    return vecMasternodeScores;
-}
 
 //Get the last hash that matches the modulus given. Processed in reverse order
 bool GetBlockHash(uint256& hash, int nBlockHeight)
@@ -188,7 +157,7 @@ CMasternode::CMasternode()
     nLastDsq = 0;
 }
 
- CMasternode::CMasternode(const CMasternode& other)
+CMasternode::CMasternode(const CMasternode& other)
 {
     LOCK(cs);
     vin = other.vin;
@@ -207,7 +176,7 @@ CMasternode::CMasternode()
     protocolVersion = other.protocolVersion;
     nLastDsq = other.nLastDsq;
 }
- 
+
 CMasternode::CMasternode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64_t newNow, CPubKey newPubkey2, int protocolVersionIn)
 {
     LOCK(cs);
@@ -260,7 +229,7 @@ uint256 CMasternode::CalculateScore(int64_t nBlockHeight)
 void CMasternode::Check()
 {
     //once spent, stop doing the checks
-     if(activeState == MASTERNODE_VIN_SPENT) return;
+    if(activeState == MASTERNODE_VIN_SPENT) return;
 
 
     if(!UpdatedWithin(MASTERNODE_REMOVAL_SECONDS)){
@@ -276,20 +245,26 @@ void CMasternode::Check()
     if(!unitTest){
         CValidationState state;
         CTransaction tx = CTransaction();
-        int64_t nTempTxOut = (MASTERNODE_COLLATERAL/COIN) - 1;
-        CTxOut vout = CTxOut(nTempTxOut*COIN, darkSendPool.collateralPubKey);
+        // MBK: Support collateral change based on block height
+        int64_t nTempTxOut = (MASTERNODE_COLLATERAL_V1/COIN) - 1;
+        if(nBestHeight >= MASTERNODE_V2_START_BLOCK)
+        {
+            nTempTxOut = (MASTERNODE_COLLATERAL_V2/COIN) - 1;
+        }
+        CTxOut vout = CTxOut(nTempTxOut/*29999999*/*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
 
+        //if(!AcceptableInputs(mempool, state, tx)){
         bool pfMissingInputs = false;
-	    if(!AcceptableInputs(mempool, state, tx, false, &pfMissingInputs))
+	    if(!AcceptableInputs(mempool, tx, false, &pfMissingInputs))
         {
             activeState = MASTERNODE_VIN_SPENT;
             return;
         }
     }
 
-   activeState = MASTERNODE_ENABLED; // OK
+    activeState = MASTERNODE_ENABLED; // OK
 }
 
 bool CMasternodePayments::CheckSignature(CMasternodePaymentWinner& winner)
@@ -341,9 +316,9 @@ uint64_t CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
     uint256 n3 = Hash(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
     uint256 n4 = n3 > n2 ? (n3 - n2) : (n2 - n3);
 
-    //LogPrintf(" -- CMasternodePayments CalculateScore() n2 = %d \n", n2.Get64());
-    //LogPrintf(" -- CMasternodePayments CalculateScore() n3 = %d \n", n3.Get64());
-    //LogPrintf(" -- CMasternodePayments CalculateScore() n4 = %d \n", n4.Get64());
+    //printf(" -- CMasternodePayments CalculateScore() n2 = %d \n", n2.Get64());
+    //printf(" -- CMasternodePayments CalculateScore() n3 = %d \n", n3.Get64());
+    //printf(" -- CMasternodePayments CalculateScore() n4 = %d \n", n4.Get64());
 
     return n4.Get64();
 }
@@ -440,31 +415,34 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
     CMasternode* mn = mnodeman.FindNotInVec(vecLastPayments);
     if(mn) 
     {
-        winner.score = 0;
-        winner.nBlockHeight = nBlockHeight;
-        winner.vin = mn->vin;
-        winner.payee.SetDestination(mn->pubkey.GetID());
+       
+        }
+        newWinner.score = 0;
+        newWinner.nBlockHeight = nBlockHeight;
+	newWinner.vin = mn->vin;
+        newWinner.payee.SetDestination(mn->pubkey.GetID());
     }
 
-    //if we can't find new MN to get paid, pick first active MN counting back from the end of vecLastPayments list
-   if(winner.nBlockHeight == 0 && mnodeman.size() > 0)
-   {
-	BOOST_REVERSE_FOREACH(CTxIn& vinLP, vecLastPayments)
-		 CMasternode* mn = mnodeman.Find(vinLP);
+   //if we can't find new MN to get paid, pick first active MN counting back from the end of vecLastPayments list
+    if(newWinner.nBlockHeight == 0 && mnodeman.size() > 0)
+       {
+        BOOST_REVERSE_FOREACH(CTxIn& vinLP, vecLastPayments)
+		CMasternode* mn = mnodeman.Find(vinLP);
             if(mn)
             {
                 mn->Check();
                 if(!mn->IsEnabled()) continue;
 		    
-                winner.score = 0;
-                winner.nBlockHeight = nBlockHeight;
-                winner.vin = mn->vin;
-                winner.payee.SetDestination(mn->pubkey.GetID());
+                newWinner.score = 0;
+                newWinner.nBlockHeight = nBlockHeight;
+                newWinner.vin = mn->vin;
+                newWinner.payee.SetDestination(mn->pubkey.GetID());
                 break; // we found active MN
             }
-        }
-    }
-    if(newWinner.nBlockHeight == 0) return false;
+       }
+  }
+
+if(newWinner.nBlockHeight == 0) return false;
 
     if(Sign(winner)){
         if(AddWinningMasternode(winner)){
