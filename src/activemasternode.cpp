@@ -98,7 +98,9 @@ void CActiveMasternode::ManageStatus()
 
                 if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS)
                 {
-                    LogPrintf("CActiveMasternode::ManageStatus() - Input must have least %d confirmations - %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS, GetInputAge(vin));
+                    notCapableReason = "Input must have least " + boost::lexical_cast<string>(MASTERNODE_MIN_CONFIRMATIONS) +
+                        " confirmations - " + boost::lexical_cast<string>(GetInputAge(vin)) + " confirmations";
+                LogPrintf("CActiveMasternode::ManageStatus() - %s\n", notCapableReason.c_str());
                     status = MASTERNODE_INPUT_TOO_NEW;
                 } else {
                     LogPrintf("CActiveMasternode::ManageStatus() - Is capable master node!\n");
@@ -119,20 +121,18 @@ void CActiveMasternode::ManageStatus()
                     }
 
                     return;
-                }
-            }
-        }
+		} else }
 
-        LogPrintf("CActiveMasternode::ManageStatus() - Could not find suitable coins!\n");        
-
+            notCapableReason = "Could not find suitable coins!";
+            LogPrintf("CActiveMasternode::ManageStatus() - %s\n", notCapableReason.c_str());      
+	}
     }
 
     //send to all peers
     if(!Dseep(errorMessage)) 
     {
-    	LogPrintf("CActiveMasternode::ManageStatus() - Error on Ping: %s", errorMessage.c_str());
-    }
-    
+    	LogPrintf("CActiveMasternode::ManageStatus() - Error on Ping: %s\n", errorMessage.c_str());
+    }    
 }
 
 // Send stop dseep to network for remote masternode
