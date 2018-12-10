@@ -29,6 +29,8 @@ The first time you run after the upgrade a re-indexing process will be started t
 - Added wallet encryption status to rpc method getinfo
 - Added `listaddressbook` `addressbookadd` `addressbookremove` RPC commands to manage wallet sending addresses through the RPC
 - Update to autotools build system
+- Wallet will lock inputs set in masternode.conf to prevent accidental spending of masternode collateral.
+- Add RPC `lockunspent`, to prevent spending of selected outputs and associated RPC `listlockunspent`.
 
 
 #### New settings (command-line or Linda.conf file)
