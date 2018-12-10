@@ -96,13 +96,14 @@ void CActiveMasternode::ManageStatus()
             // At this point we have a selected output, retrieve the associated info
             if (GetVinFromOutput(*selectedOutput, vin, pubKeyCollateralAddress, keyCollateralAddress)) {
 
-                if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS)
-                {
+                if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
                     notCapableReason = "Input must have least " + boost::lexical_cast<string>(MASTERNODE_MIN_CONFIRMATIONS) +
                         " confirmations - " + boost::lexical_cast<string>(GetInputAge(vin)) + " confirmations";
                 LogPrintf("CActiveMasternode::ManageStatus() - %s\n", notCapableReason.c_str());
-                    status = MASTERNODE_INPUT_TOO_NEW;
-                } else {
+                status = MASTERNODE_INPUT_TOO_NEW;
+                return;
+	}
+		    
                     LogPrintf("CActiveMasternode::ManageStatus() - Is capable master node!\n");
 
                     status = MASTERNODE_IS_CAPABLE;
@@ -116,12 +117,15 @@ void CActiveMasternode::ManageStatus()
 
                     if(!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, keyMasternode, pubKeyMasternode)) {
                         LogPrintf("Register::ManageStatus() - Error upon calling SetKey: %s\n", errorMessage.c_str());
-                    } else if(!Register(vin, service, keyCollateralAddress, pubKeyCollateralAddress, keyMasternode, pubKeyMasternode, errorMessage)) {
+	            return;
+		    } 
+		    
+		    if(!Register(vin, service, keyCollateralAddress, pubKeyCollateralAddress, keyMasternode, pubKeyMasternode, errorMessage)) {
                         LogPrintf("CActiveMasternode::ManageStatus() - Error on Register: %s\n", errorMessage.c_str());
                     }
 
                     return;
-		} else }
+		} else {
 
             notCapableReason = "Could not find suitable coins!";
             LogPrintf("CActiveMasternode::ManageStatus() - %s\n", notCapableReason.c_str());      
