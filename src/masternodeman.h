@@ -19,6 +19,7 @@
 #include "json/json_spirit_value.h"
 
  #define MASTERNODES_DUMP_SECONDS               (15*60)
+ #define MASTERNODE_PING_WAIT_SECONDS           (5*60)
  
  using namespace std;
  
