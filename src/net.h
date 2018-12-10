@@ -27,7 +27,6 @@
 
 class CNode;
 class CBlockIndex;
-extern int nBestHeight;
 
 
 /** Time between pings automatically sent out for latency probing and keepalive (in seconds). */
@@ -65,6 +64,7 @@ typedef int NodeId;
 // Signals for message handling
 struct CNodeSignals
 {
+    boost::signals2::signal<int()> GetHeight;
     boost::signals2::signal<bool (CNode*)> ProcessMessages;
     boost::signals2::signal<bool (CNode*)> SendMessages;
     boost::signals2::signal<void (NodeId, const CNode*)> InitializeNode;
