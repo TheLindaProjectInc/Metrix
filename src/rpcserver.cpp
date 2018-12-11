@@ -258,6 +258,7 @@ static const CRPCCommand vRPCCommands[] =
     { "darksend",               &darksend,               false,     false,      true },
     { "spork",                  &spork,                  true,      false,      false },
     { "masternode",             &masternode,             true,      false,      true },
+    { "masternodelist",         &masternodelist,         true,      false,      false },
     { "keepass",                &keepass,                false,     false,      true },
 
 #ifdef ENABLE_WALLET
