@@ -162,6 +162,7 @@ extern int64_t nTimeBestReceived;
 extern bool fImporting;
 extern bool fReindex;
 extern int nScriptCheckThreads;
+extern int nAskedForBlocks;    // Nodes sent a getblocks 0
 extern unsigned int nCoinCacheSize;
 
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
