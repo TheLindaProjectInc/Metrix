@@ -198,6 +198,7 @@ extern json_spirit::Value keepass(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value darksend(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value spork(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value masternode(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value masternodelist(const json_spirit::Array& params, bool fHelp)
 
 extern json_spirit::Value listaddressbook(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value addressbookadd(const json_spirit::Array& params, bool fHelp);
