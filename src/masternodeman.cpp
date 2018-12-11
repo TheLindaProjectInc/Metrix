@@ -128,6 +128,7 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
      BOOST_FOREACH(CMasternode &mn, vMasternodes)
     {
         mn.Check();
+        UpdateLastTimeChanged();
         if(!mn.IsEnabled()) continue;
          bool found = false;
         BOOST_FOREACH(const CTxIn& vin, vVins)
@@ -150,6 +151,7 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
      if (!pmn)
     {
         vMasternodes.push_back(mn);
+        UpdateLastTimeChanged();
         return true;
     }
      return false;
@@ -157,20 +159,20 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
  void CMasternodeMan::Check()
 {
     LOCK(cs);
+  
+     UpdateLastTimeChanged();
      BOOST_FOREACH(CMasternode& mn, vMasternodes)
         mn.Check();
 }
  void CMasternodeMan::CheckAndRemove()
 {
     LOCK(cs);
-     vector<CMasternode>::iterator it = vMasternodes.begin();
-    //check them separately
-    while(it != vMasternodes.end()){
-        (*it).Check();
-        ++it;
-    }
+  
+    Check();
+    UpdateLastTimeChanged();
+  
      //remove inactive
-    it = vMasternodes.begin();
+    vector<CMasternode>::iterator it = vMasternodes.begin();
     while(it != vMasternodes.end()){
         if((*it).activeState == 4 || (*it).activeState == 3){
             LogPrintf("Removing inactive masternode %s\n", (*it).addr.ToString().c_str());
@@ -184,6 +186,8 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
 {
     int i = 0;
      BOOST_FOREACH(CMasternode& mn, vMasternodes) {
+        mn.Check();
+        UpdateLastTimeChanged();
         if(mn.protocolVersion < protocolVersion || !mn.IsEnabled()) continue;
         i++;
     }
@@ -193,8 +197,9 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
 {
     int i = 0;
      BOOST_FOREACH(CMasternode& mn, vMasternodes) {
-        if(!mn.IsEnabled()) continue;
-        i++;
+     mn.Check();
+     UpdateLastTimeChanged();
+     if(mn.IsEnabled()) i++;
     }
      return i;
 }
@@ -202,10 +207,13 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
 {
     unsigned int score = 0;
     CMasternode* winner = NULL;
-     // scan for winner
-    BOOST_FOREACH(CMasternode& mn, vMasternodes) {
+  
+      // scan for winner
+      BOOST_FOREACH(CMasternode& mn, vMasternodes) {
         mn.Check();
+        UpdateLastTimeChanged();
         if(mn.protocolVersion < minProtocol || !mn.IsEnabled()) continue;
+     
          // calculate the score for each masternode
         uint256 n = mn.CalculateScore(mod, nBlockHeight);
         unsigned int n2 = 0;
@@ -218,12 +226,17 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
     }
      return winner;
 }
+
  int CMasternodeMan::GetMasternodeRank(const CTxIn& vin, int64_t nBlockHeight, int minProtocol)
 {
     std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores;
+  
      // scan for winner
     BOOST_FOREACH(CMasternode& mn, vMasternodes) {
+     
          mn.Check();
+         UpdateLastTimeChanged();
+     
          if(mn.protocolVersion < minProtocol) continue;
         if(!mn.IsEnabled()) {
             continue;
@@ -310,6 +323,7 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
             //   after that they just need to match
             if(count == -1 && mn->pubkey == pubkey && !mn->UpdatedWithin(MASTERNODE_MIN_DSEE_SECONDS)){
                 mn->UpdateLastSeen();
+                UpdateLastTimeChanged();
                  if(mn->now < sigTime){ //take the newest entry
                     LogPrintf("dsee - Got updated entry for %s\n", addr.ToString().c_str());
                     mn->pubkey2 = pubkey2;
@@ -401,9 +415,12 @@ std::map<COutPoint, int64_t> askedForMasternodeListEntry;
                     //Misbehaving(pfrom->GetId(), 100);
                     return;
                 }
+             
                  mn->lastDseep = sigTime;
+             
                  if(!mn->UpdatedWithin(MASTERNODE_MIN_DSEEP_SECONDS))
                 {
+                    UpdateLastTimeChanged();
                     if(stop) mn->Disable();
                     else
                     {
