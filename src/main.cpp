@@ -4772,7 +4772,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             (pto->nVersion < NOBLKS_VERSION_START || pto->nVersion >= NOBLKS_VERSION_END)) {
             nAskedForBlocks++;
             pto->fAskedForBlocks = true;
-            PushGetBlocks(pto, pindexBest, uint256(0)));
+            PushGetBlocks(pto, pindexBest, uint256(0));
             LogPrintf("send initial getblocks peer=%d\n", pto->id);
         }
 
