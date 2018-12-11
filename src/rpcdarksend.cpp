@@ -720,8 +720,7 @@ Value masternodelist(const Array& params, bool fHelp)
     Object obj;
     std::vector<CMasternode> vMasternodes = mnodeman.GetFullMasternodeVector();
     BOOST_FOREACH(CMasternode& mn, vMasternodes) {
-        mn.Check();
-	    
+           
          std::string strAddr = mn.addr.ToString().c_str();
         if(strMode == "active"){
             if(strFilter !="" && stoi(strFilter) != mn.IsEnabled()) continue;
