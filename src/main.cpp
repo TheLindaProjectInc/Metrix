@@ -4772,8 +4772,8 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             (pto->nVersion < NOBLKS_VERSION_START || pto->nVersion >= NOBLKS_VERSION_END)) {
             nAskedForBlocks++;
             pto->fAskedForBlocks = true;
-            if (pto->PushGetBlocks(pindexBest, uint256(0)))
-                LogPrintf("send initial getblocks peer=%d\n", pto->id);
+            PushGetBlocks(pto, pindexBest, uint256(0)));
+            LogPrintf("send initial getblocks peer=%d\n", pto->id);
         }
 
         // Resend wallet transactions that haven't gotten in a block yet
