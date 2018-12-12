@@ -3930,8 +3930,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         return true;
     }
 
-    // DS: update last valid block from node
+    {
+    LOCK(cs_main);
     pfrom->nLastBlockProcess = GetTimeMicros();
+   }
 
     if (strCommand == "version")
     {
