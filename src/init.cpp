@@ -1197,18 +1197,22 @@ bool AppInit2(boost::thread_group& threadGroup)
         LOCK(pwalletMain->cs_wallet);
         LogPrintf("Locking Masternodes:\n");
         uint256 mnTxHash;
-        int outputIndex;
-        BOOST_FOREACH(CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {//get the mode of budget voting for this masternode
+        unsigned int outputIndex;
+        BOOST_FOREACH(CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
      		mnTxHash.SetHex(mne.getTxHash());
-		outputIndex = boost::lexical_cast<unsigned int>(mne.getOutputIndex());
-		
-            COutPoint outpoint = COutPoint(mnTxHash, outputIndex);
-            // don't lock non-spendable outpoint (i.e. it's already spent or it's not from this wallet at all)
-            if(pwalletMain->IsMine(CTxIn(outpoint)) != ISMINE_SPENDABLE) {
+		    outputIndex = boost::lexical_cast<unsigned int>(mne.getOutputIndex());
+            CWalletTx tx;
+            if(!pwalletMain->GetTransaction(mnTxHash,tx)) {
+                LogPrintf("  %s %s - WAS NOT FOUND IN WALLET, was not locked\n", mne.getTxHash(), mne.getOutputIndex());
+                continue;
+            }
+            // don't lock spent
+            if(tx.IsSpent(outputIndex)) {
                 LogPrintf("  %s %s - IS NOT SPENDABLE, was not locked\n", mne.getTxHash(), mne.getOutputIndex());
                 continue;
             }
-	    pwalletMain->LockCoin(outpoint);
+            COutPoint outpoint = COutPoint(mnTxHash, outputIndex);
+	        pwalletMain->LockCoin(outpoint);
             LogPrintf("  %s %s - locked successfully\n", mne.getTxHash(), mne.getOutputIndex());
         }
     }
