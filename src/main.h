@@ -165,7 +165,6 @@ extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
 
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
-extern bool fHaveGUI;
 
 // Settings
 extern bool fUseFastIndex;
