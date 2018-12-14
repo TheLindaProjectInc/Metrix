@@ -175,7 +175,6 @@ struct CNodeState {
     list<uint256> vBlocksToDownload;
     int nBlocksToDownload;
     int64_t nLastBlockReceive;
-    int64_t nLastBlockProcess;
 
     CNodeState() {
         nMisbehavior = 0;
@@ -183,7 +182,6 @@ struct CNodeState {
         nBlocksToDownload = 0;
         nBlocksInFlight = 0;
         nLastBlockReceive = 0;
-        nLastBlockProcess = 0;
     }
 };
 
