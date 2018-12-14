@@ -146,7 +146,6 @@ public:
     std::string strSubVer;
     bool fInbound;
     int nStartingHeight;
-    int nMisbehavior;
     uint64_t nSendBytes;
     uint64_t nRecvBytes;
     bool fSyncNode;
@@ -303,7 +302,6 @@ public:
     list<uint256> vBlocksToDownload;
     int nBlocksToDownload;
     int64_t nLastBlockReceive;
-    int64_t nLastBlockProcess;
 
     CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn = "", bool fInboundIn=false) : ssSend(SER_NETWORK, INIT_PROTO_VERSION), setAddrKnown(5000)
     {
@@ -349,7 +347,6 @@ public:
         nBlocksToDownload = 0;
         nBlocksInFlight = 0;
         nLastBlockReceive = 0;
-        nLastBlockProcess = 0;
         pfilter = new CBloomFilter();
 
         {
@@ -760,7 +757,7 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
     // new code.
     static void ClearBanned(); // needed for unit testing
     static bool IsBanned(CNetAddr ip);
-    bool Misbehaving(int howmuch); // 1 == a little, 100 == a lot
+    static bool Ban(const CNetAddr &ip);
     void copyStats(CNodeStats &stats);
 
     // Network stats

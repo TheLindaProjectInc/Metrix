@@ -277,7 +277,8 @@ int GetInputAge(CTxIn& vin);
 bool AbortNode(const std::string &msg);
 /** Get statistics from node state */
 bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats);
-
+/** Increase a node's misbehavior score. */
+void Misbehaving(NodeId nodeid, int howmuch);
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue);
 
 struct CNodeStateStats {
