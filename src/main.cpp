@@ -168,10 +168,22 @@ namespace {
 // and we're no longer holding the node's locks.
 struct CNodeState {
     int nMisbehavior;
+    bool fShouldBan;
     std::string name;
+    list<QueuedBlock> vBlocksInFlight;
+    int nBlocksInFlight;
+    list<uint256> vBlocksToDownload;
+    int nBlocksToDownload;
+    int64_t nLastBlockReceive;
+    int64_t nLastBlockProcess;
 
     CNodeState() {
         nMisbehavior = 0;
+        fShouldBan = false;
+        nBlocksToDownload = 0;
+        nBlocksInFlight = 0;
+        nLastBlockReceive = 0;
+        nLastBlockProcess = 0;
     }
 };
 
@@ -193,19 +205,16 @@ void InitializeNode(NodeId nodeid, const CNode *pnode) {
 
 void FinalizeNode(NodeId nodeid) {
     LOCK(cs_main);
-    mapNodeState.erase(nodeid);
-    BOOST_FOREACH(CNode* pn, vNodes)
-    {
-        if(pn->GetId() == nodeid)
-        {
-            BOOST_FOREACH(const QueuedBlock& entry, pn->vBlocksInFlight)
-                mapBlocksInFlight.erase(entry.hash);
-            BOOST_FOREACH(const uint256& hash, pn->vBlocksToDownload)
-                mapBlocksToDownload.erase(hash);
-            break;
-        }
-    }
+    CNodeState *state = State(nodeid);
+
+    BOOST_FOREACH(const QueuedBlock& entry, state->vBlocksInFlight)
+        mapBlocksInFlight.erase(entry.hash);
+    BOOST_FOREACH(const uint256& hash, state->vBlocksToDownload)
+        mapBlocksToDownload.erase(hash);
+
     EraseOrphansFor(nodeid);
+
+    mapNodeState.erase(nodeid);
 }
 }
 
@@ -222,36 +231,23 @@ bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats) {
 void MarkBlockAsRequested(const uint256 &hash, NodeId nodeFrom = -1) {
     map<uint256, pair<NodeId, list<uint256>::iterator> >::iterator itToDownload = mapBlocksToDownload.find(hash);
     if (itToDownload != mapBlocksToDownload.end()) {
-        BOOST_FOREACH(CNode* pn, vNodes)
-        {
-            if (pn->GetId() == itToDownload->second.first)
-            {
-                pn->vBlocksToDownload.erase(itToDownload->second.second);
-                pn->nBlocksToDownload--;
-                mapBlocksToDownload.erase(itToDownload);
-                break;
-            }
-        }
+        CNodeState *state = State(itToDownload->second.first);
+        state->vBlocksToDownload.erase(itToDownload->second.second);
+        state->nBlocksToDownload--;
+        mapBlocksToDownload.erase(itToDownload);
     }
 }
 
 void MarkBlockAsReceived(const uint256 &hash, NodeId nodeFrom = -1) {
     map<uint256, pair<NodeId, list<QueuedBlock>::iterator> >::iterator itInFlight = mapBlocksInFlight.find(hash);
     if (itInFlight != mapBlocksInFlight.end()) {
-        BOOST_FOREACH(CNode* pn, vNodes)
-        {
-            if(pn->GetId() == itInFlight->second.first)
-            {
-                pn->vBlocksInFlight.erase(itInFlight->second.second);
-                pn->nBlocksInFlight--;
-                if (itInFlight->second.first == nodeFrom)
-                    pn->nLastBlockReceive = GetTimeMicros();
-                mapBlocksInFlight.erase(itInFlight);
-                break;
-            }
-        }
+        CNodeState *state = State(itInFlight->second.first);
+        state->vBlocksInFlight.erase(itInFlight->second.second);
+        state->nBlocksInFlight--;
+        if (itInFlight->second.first == nodeFrom)
+            state->nLastBlockReceive = GetTimeMicros();
+        mapBlocksInFlight.erase(itInFlight);
     }
-
 }
 
 // Requires cs_main.
@@ -259,40 +255,32 @@ bool AddBlockToQueue(NodeId nodeid, const uint256 &hash) {
     if (mapBlocksToDownload.count(hash) || mapBlocksInFlight.count(hash))
         return false;
 
-    BOOST_FOREACH(CNode* pn, vNodes)
-    {
-        if(pn->GetId() == nodeid)
-        {
-            list<uint256>::iterator it = pn->vBlocksToDownload.insert(pn->vBlocksToDownload.end(), hash);
-            pn->nBlocksToDownload++;
-            if (pn->nBlocksToDownload > 5000)
-                pn->Misbehaving(10);
-            mapBlocksToDownload[hash] = std::make_pair(nodeid, it);
-            return true;
-        }
-    }
-    return false;
+    CNodeState *state = State(nodeid);
+    if (state == NULL)
+        return false;
+    
+    list<uint256>::iterator it = state->vBlocksToDownload.insert(state->vBlocksToDownload.end(), hash);
+    state->nBlocksToDownload++;
+    if (state->nBlocksToDownload > 5000)
+        Misbehaving(nodeid, 10);
+    mapBlocksToDownload[hash] = std::make_pair(nodeid, it);
+    return true;
 }
 
 // Requires cs_main.
 void MarkBlockAsInFlight(NodeId nodeid, const uint256 &hash) {
-    BOOST_FOREACH(CNode* pn, vNodes)
-    {
-        if(pn->GetId() == nodeid)
-        {
-            assert(true);
+    CNodeState *state = State(nodeid);
+    assert(state != NULL);
 
-            // Make sure it's not listed somewhere already.
-            MarkBlockAsRequested(hash);
+    // Make sure it's not listed somewhere already.
+    MarkBlockAsRequested(hash);
 
-            QueuedBlock newentry = {hash, GetTimeMicros(), pn->nBlocksInFlight};
-            if (pn->nBlocksInFlight == 0)
-                pn->nLastBlockReceive = newentry.nTime; // Reset when a first request is sent.
-            list<QueuedBlock>::iterator it = pn->vBlocksInFlight.insert(pn->vBlocksInFlight.end(), newentry);
-            pn->nBlocksInFlight++;
-            mapBlocksInFlight[hash] = std::make_pair(nodeid, it);
-        }
-    }
+    QueuedBlock newentry = {hash, GetTimeMicros(), state->nBlocksInFlight};
+    if (state->nBlocksInFlight == 0)
+        state->nLastBlockReceive = newentry.nTime; // Reset when a first request is sent.
+    list<QueuedBlock>::iterator it = state->vBlocksInFlight.insert(state->vBlocksInFlight.end(), newentry);
+    state->nBlocksInFlight++;
+    mapBlocksInFlight[hash] = std::make_pair(nodeid, it);
 }
 
 void RegisterNodeSignals(CNodeSignals& nodeSignals)
@@ -3756,6 +3744,23 @@ bool static AlreadyHave(const CInv& inv)
 
 
 
+void Misbehaving(NodeId pnode, int howmuch)
+{
+    if (howmuch == 0)
+        return;
+    CNodeState *state = State(pnode);
+    if (state == NULL)
+        return;
+     state->nMisbehavior += howmuch;
+    if (state->nMisbehavior >= GetArg("-banscore", 100))
+    {
+        LogPrintf("Misbehaving: %s (%d -> %d) BAN THRESHOLD EXCEEDED\n", state->name.c_str(), state->nMisbehavior-howmuch, state->nMisbehavior);
+        state->fShouldBan = true;
+    } else
+        LogPrintf("Misbehaving: %s (%d -> %d)\n", state->name.c_str(), state->nMisbehavior-howmuch, state->nMisbehavior);
+}
+
+
 
 void static ProcessGetData(CNode* pfrom)
 {
@@ -3930,15 +3935,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         return true;
     }
 
-    // DS: update last valid block from node
-    pfrom->nLastBlockProcess = GetTimeMicros();
-
     if (strCommand == "version")
     {
         // Each connection can only send one version message
         if (pfrom->nVersion != 0)
         {
-            pfrom->Misbehaving(1);
+            Misbehaving(pfrom->GetId(), 1);
             return false;
         }
 
@@ -3952,7 +3954,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             // disconnect from peers older than this proto version
             LogPrintf("partner %s using obsolete version %i; disconnecting\n", pfrom->addr.ToString(), pfrom->nVersion);
             pfrom->fDisconnect = true;
-            pfrom->Misbehaving(100);
+            Misbehaving(pfrom->GetId(), 100);
             return false;
         }
 
@@ -4046,7 +4048,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     else if (pfrom->nVersion == 0)
     {
         // Must have a version message before anything else
-        pfrom->Misbehaving(1);
+        Misbehaving(pfrom->GetId(), 1);
         return false;
     }
 
@@ -4067,7 +4069,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             return true;
         if (vAddr.size() > 1000)
         {
-            pfrom->Misbehaving(20);
+            Misbehaving(pfrom->GetId(), 20);
             return error("message addr size() = %u", vAddr.size());
         }
 
@@ -4129,7 +4131,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         vRecv >> vInv;
         if (vInv.size() > MAX_INV_SZ)
         {
-            pfrom->Misbehaving(20);
+            Misbehaving(pfrom->GetId(), 20);
             return error("message inv size() = %u", vInv.size());
         }
 
@@ -4175,7 +4177,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         vRecv >> vInv;
         if (vInv.size() > MAX_INV_SZ)
         {
-            pfrom->Misbehaving(20);
+            Misbehaving(pfrom->GetId(), 20);
             return error("message getdata size() = %u", vInv.size());
         }
 
@@ -4343,7 +4345,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             LogPrintf("%s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
                 pfrom->addr.ToString().c_str(), pfrom->strSubVer.c_str());
             if (nDoS > 0)
-                pfrom->Misbehaving(nDoS);
+                Misbehaving(pfrom->GetId(), nDoS);
 	    }
     }
 
@@ -4358,7 +4360,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         CInv inv(MSG_BLOCK, hashBlock);
         pfrom->AddInventoryKnown(inv);
 
-        int timetodownload = GetTimeMillis() - pfrom->nLastBlockReceive / 1000;
+        int timetodownload = GetTimeMillis() - State(pfrom->id)->nLastBlockReceive/1000;
         if (timetodownload > 1000)
             LogPrint("net", "received block %s (%u bytes, %us, %uB/s) peer=%d\n",
                 inv.hash.ToString(), size, timetodownload / 1000, size * 1000 / timetodownload, pfrom->id);
@@ -4370,13 +4372,14 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         MarkBlockAsReceived(inv.hash, pfrom->GetId());
 
         CValidationState state;
-        if (ProcessBlock(state, pfrom, &block) || state.CorruptionPossible())           
+        if (ProcessBlock(state, pfrom, &block) || state.CorruptionPossible()) {
             pfrom->tBlockRecved = GetTimeMillis();
             mapAlreadyAskedFor.erase(inv);
+        }
         int nDoS = 0;
         if (state.IsInvalid(nDoS))
             if (nDoS > 0)
-                pfrom->Misbehaving(nDoS);
+                Misbehaving(pfrom->GetId(), nDoS);
     }
 
 
@@ -4516,7 +4519,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 // This isn't a Misbehaving(100) (immediate ban) because the
                 // peer might be an older or different implementation with
                 // a different signature key, etc.
-                pfrom->Misbehaving(10);
+                Misbehaving(pfrom->GetId(), 10);
             }
         }
     }
@@ -4528,7 +4531,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
         if (!filter.IsWithinSizeConstraints())
             // There is no excuse for sending a too-large filter
-            pfrom->Misbehaving(100);
+            Misbehaving(pfrom->GetId(), 100);
         else
         {
             LOCK(pfrom->cs_filter);
@@ -4549,13 +4552,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         // and thus, the maximum size any matched object can have) in a filteradd message
         if (vData.size() > MAX_SCRIPT_ELEMENT_SIZE)
         {
-            pfrom->Misbehaving(100);
+            Misbehaving(pfrom->GetId(), 100);
         } else {
             LOCK(pfrom->cs_filter);
             if (pfrom->pfilter)
                 pfrom->pfilter->insert(vData);
             else
-                pfrom->Misbehaving(100);
+                Misbehaving(pfrom->GetId(), 100);
         }
     }
 
@@ -4608,8 +4611,8 @@ bool ProcessMessages(CNode* pfrom)
     // this maintains the order of responses
     if (!pfrom->vRecvGetData.empty()) return fOk;
 
-    int nBlocksToDownload = pfrom->nBlocksToDownload;
-    int nBlocksInFlight = pfrom->nBlocksInFlight;
+    int nBlocksToDownload = State(pfrom->id)->nBlocksToDownload;
+    int nBlocksInFlight = State(pfrom->id)->nBlocksInFlight;
     // Cause a new syncnode to be reselected since we're about to stop receiving blocks
     // (and we'll be ignoring the inv the current syncnode sends in favour of selecting
     // a potentially better syncnode.
@@ -4764,6 +4767,17 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         if (!lockMain)
             return true;
 
+        CNodeState &state = *State(pto->GetId());
+        if (state.fShouldBan) {
+            if (pto->addr.IsLocal())
+                LogPrintf("Warning: not banning local node %s!\n", pto->addr.ToString().c_str());
+            else {
+                pto->fDisconnect = true;
+                CNode::Ban(pto->addr);
+            }
+            state.fShouldBan = false;
+        }
+
         // Start block sync
         if (pto->fStartSync && !fImporting && !fReindex) {
             PushGetBlocks(pto, pindexBest, uint256(0));
@@ -4895,7 +4909,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             else if (!CaughtUp() && pto->tBlockRecved && tNow - pto->tBlockRecved > nSyncTimeout * 1000) {
                 LogPrintf("sync peer=%d: No block reception for over %d seconds.\n",
                     pto->id, nSyncTimeout);
-                if (pto->nBlocksInFlight)
+                if (state.nBlocksInFlight)
                 {
                     pto->fDisconnect = true;
                 }
@@ -4915,9 +4929,8 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         // Message: getdata (blocks)
         //
         std::vector<CInv> vGetData;
-        while (!pto->fDisconnect && pto->nBlocksToDownload && pto->nBlocksInFlight < MAX_BLOCKS_IN_TRANSIT_PER_PEER) {
-            uint256 hash = pto->vBlocksToDownload.front();
-            CInv bCInv(MSG_BLOCK, hash);
+        while (!pto->fDisconnect && state.nBlocksToDownload && state.nBlocksInFlight < MAX_BLOCKS_IN_TRANSIT_PER_PEER) {
+            uint256 hash = state.vBlocksToDownload.front();
             vGetData.push_back(CInv(MSG_BLOCK, hash));
             MarkBlockAsInFlight(pto->GetId(), hash);
             LogPrint("sync", "Requesting block %s from %s\n", hash.ToString().c_str(), pto->addr.ToString().c_str());
