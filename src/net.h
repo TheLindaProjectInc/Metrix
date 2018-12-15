@@ -148,7 +148,6 @@ public:
     int nStartingHeight;
     uint64_t nSendBytes;
     uint64_t nRecvBytes;
-    bool fSyncNode;
     double dPingTime;
     double dPingWait;
     std::string addrLocal;
@@ -269,10 +268,8 @@ protected:
 public:
     int nMisbehavior;
     uint256 hashContinue;
-    CBlockIndex* pindexLastGetBlocksBegin;
-    uint256 hashLastGetBlocksEnd;
     int nStartingHeight;
-    bool fStartSync;
+
 
     // flood relay
     std::vector<CAddress> vAddrToSend;

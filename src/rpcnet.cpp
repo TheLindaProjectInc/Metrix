@@ -97,8 +97,6 @@ Value getpeerinfo(const Array& params, bool fHelp)
         if (fStateStats) {
             obj.push_back(Pair("banscore", statestats.nMisbehavior));
         }
-        obj.push_back(Pair("syncnode", stats.fSyncNode));
-
         ret.push_back(obj);
     }
 
