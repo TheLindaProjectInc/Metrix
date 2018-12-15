@@ -266,6 +266,7 @@ std::string HelpMessage()
     strUsage +=                               _("<category> can be:");
     strUsage +=                                 " addrman, alert, db, lock, rand, rpc, selectcoins, mempool, net,"; // Don't translate these and qt below
     strUsage +=                                 " coinage, coinstake, creation, stakemodifier";
+    strUsage += "  -stopafterblockimport  " + _("Stop running after importing blocks from disk (default: 0)") + "\n";
     if (fHaveGUI)
     {
         strUsage += ", qt.\n";
@@ -416,7 +417,12 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
     }
 }
 
-/** Initialize bitcoin.
+    if (GetBoolArg("-stopafterblockimport", false)) {
+        LogPrintf("Stopping after block import\n");
+        StartShutdown();
+    }
+
+/** Initialize Lindacoin.
  *  @pre Parameters should be parsed and config file should be read.
  */
 bool AppInit2(boost::thread_group& threadGroup)
