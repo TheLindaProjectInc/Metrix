@@ -4372,6 +4372,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                         // later (within the same cs_main lock, though).
                         MarkBlockAsInFlight(pfrom->GetId(), inv.hash);
                     }
+                    LogPrint("net", "getheaders (%d) %s to peer=%d\n", pindexBestHeader->nHeight, inv.hash.ToString(), pfrom->id);
+
                 }
             }
             // Track requests for our stuff
@@ -4470,7 +4472,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         // we must use CBlocks, as CBlockHeaders won't include the 0x00 nTx count at the end
         vector<CBlock> vHeaders;
         int nLimit = 2000;
-        LogPrint("net", "getheaders %d to %s\n", (pindex ? pindex->nHeight : -1), hashStop.ToString());
+        LogPrint("net", "getheaders %d to %s from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop.ToString(), pfrom->id);
+
         for (; pindex; pindex = pindex->pnext)
         {
             vHeaders.push_back(pindex->GetBlockHeader());
@@ -4612,6 +4615,7 @@ else if (strCommand == "headers" && !fImporting && !fReindex) // Ignore headers 
          // Headers message had its maximum size; the peer may have more headers.
         // TODO: optimize: if pindexLast is an ancestor of chainActive.Tip or pindexBestHeader, continue
         // from there instead.
+            LogPrint("net", "more getheaders (%d) to end to peer=%d (startheight:%d)\n", pindexLast->nHeight, pfrom->id, pfrom->nStartingHeight);
             pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexLast), uint256(0));
         }
     }
@@ -5051,6 +5055,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
                 state.fSyncStarted = true;
                 nSyncStarted++;
                 CBlockIndex *pindexStart = pindexBestHeader->pprev ? pindexBestHeader->pprev : pindexBestHeader;
+                LogPrint("net", "initial getheaders (%d) to peer=%d (startheight:%d)\n", pindexStart->nHeight, pto->id, pto->nStartingHeight);
                  pto->PushMessage("getheaders", chainActive.GetLocator(pindexStart), uint256(0));
             }
         }
