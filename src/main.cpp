@@ -57,7 +57,7 @@ uint256 nBestInvalidTrust = 0;
 
 uint256 hashBestChain = 0;
 CBlockIndex* pindexBest = NULL;
-set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
+set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexCandidates; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
 CBlockIndex *pindexBestHeader = NULL;
 int64_t nTimeBestReceived = 0;
 int nScriptCheckThreads = 0;
@@ -114,7 +114,7 @@ const string strMessageMagic = "Linda Signed Message:\n";
  
     // The set of all CBlockIndex entries with BLOCK_VALID_TRANSACTIONS or better that are at least
     // as good as our current tip. Entries may be failed, though.
-    set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid;
+    set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexCandidates;
 
     // Number of nodes with fSyncStarted.
     int nSyncStarted = 0;
@@ -1696,7 +1696,7 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
 void static InvalidBlockFound(CBlockIndex *pindex) {
     pindex->nStatus |= BLOCK_FAILED_VALID;
     pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex));
-    setBlockIndexValid.erase(pindex);
+    setBlockIndexCandidates.erase(pindex);
     InvalidChainFound(pindex);
     if (pindex->pnext) {
         CValidationState stateDummy;
@@ -1708,8 +1708,8 @@ bool ConnectBestBlock(CValidationState &state) {
     do {
         CBlockIndex *pindexNewBest;
         {
-            std::set<CBlockIndex*,CBlockIndexWorkComparator>::reverse_iterator it = setBlockIndexValid.rbegin();
-            if (it == setBlockIndexValid.rend())
+            std::set<CBlockIndex*,CBlockIndexWorkComparator>::reverse_iterator it = setBlockIndexCandidates.rbegin();
+            if (it == setBlockIndexCandidates.rend())
                 return true;
             pindexNewBest = *it;
         }
@@ -1726,7 +1726,7 @@ bool ConnectBestBlock(CValidationState &state) {
                 CBlockIndex *pindexFailed = pindexNewBest;
                 while (pindexTest != pindexFailed) {
                     pindexFailed->nStatus |= BLOCK_FAILED_CHILD;
-                    setBlockIndexValid.erase(pindexFailed);
+                    setBlockIndexCandidates.erase(pindexFailed);
                     pblocktree->WriteBlockIndex(CDiskBlockIndex(pindexFailed));
                     pindexFailed = pindexFailed->pprev;
                 }
@@ -2530,7 +2530,7 @@ if (pindexNew->pprev == NULL || pindexNew->pprev->nChainTx) {
             CBlockIndex *pindex = queue.front();
             queue.pop_front();
             pindex->nChainTx = (pindex->pprev ? pindex->pprev->nChainTx : 0) + pindex->nTx;
-            setBlockIndexValid.insert(pindex);
+            setBlockIndexCandidates.insert(pindex);
             std::pair<std::multimap<CBlockIndex*, CBlockIndex*>::iterator, std::multimap<CBlockIndex*, CBlockIndex*>::iterator> range = mapBlocksUnlinked.equal_range(pindex);
             while (range.first != range.second) {
                 std::multimap<CBlockIndex*, CBlockIndex*>::iterator it = range.first;
@@ -3477,7 +3477,7 @@ bool static LoadBlockIndexDB()
             }
         }
         if (pindex->IsValid(BLOCK_VALID_TRANSACTIONS) && (pindex->nChainTx || pindex->pprev == NULL))
-            setBlockIndexValid.insert(pindex);
+            setBlockIndexCandidates.insert(pindex);
         if (pindex->IsValid(BLOCK_VALID_TREE) && (pindexBestHeader == NULL || CBlockIndexWorkComparator()(pindexBestHeader, pindex)))
             pindexBestHeader = pindex;
     }
@@ -3598,7 +3598,7 @@ bool VerifyDB() {
 void UnloadBlockIndex()
 {
     mapBlockIndex.clear();
-    setBlockIndexValid.clear();
+    setBlockIndexCandidates.clear();
     pindexGenesisBlock = NULL;
     nBestHeight = 0;
     nBestChainTrust = 0;
