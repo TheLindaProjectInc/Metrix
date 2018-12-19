@@ -129,10 +129,10 @@ cd ~/Linda/depends
 mkdir -p SDKs
 cd SDKs
 curl https://codeload.github.com/phracker/MacOSX-SDKs/tar.gz/MacOSX10.11.sdk -o MacOSX10.11.sdk.tar.gz
-tar xvzf MacOSX10.13.sdk.tar.gz
+tar xvzf MacOSX10.11.sdk.tar.gz
 mv MacOSX-SDKs-MacOSX10.11.sdk/MacOSX10.11.sdk .
 cd ..
-make HOST=x86_64-apple-darwin11 NO_QT=1 DARWIN_SDK_PATH=`pwd`/SDKs/MacOSX10.11.sdk
+make HOST=x86_64-apple-darwin14 NO_QT=1 DARWIN_SDK_PATH=`pwd`/SDKs/MacOSX10.11.sdk
 ```
 
 Build Lindad
@@ -197,6 +197,6 @@ strip src/Lindad && strip src/Linda-cli
 ```
 cd ..
 ./autogen.sh
-./configure --prefix=`pwd`/depends/x86_64-apple-darwin11 --with-miniupnpc --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB"
+./configure --prefix=`pwd`/depends/x86_64-apple-darwin14 --disable-ccache --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DNDEBUG"
 make
 ```
