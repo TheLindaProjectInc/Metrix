@@ -132,7 +132,7 @@ curl https://codeload.github.com/phracker/MacOSX-SDKs/tar.gz/MacOSX10.11.sdk -o 
 tar xvzf MacOSX10.11.sdk.tar.gz
 mv MacOSX-SDKs-MacOSX10.11.sdk/MacOSX10.11.sdk .
 cd ..
-make HOST=x86_64-apple-darwin11 NO_QT=1 DARWIN_SDK_PATH=`pwd`/SDKs/MacOSX10.11.sdk
+make HOST=x86_64-apple-darwin14 NO_QT=1 DARWIN_SDK_PATH=`pwd`/SDKs/MacOSX10.11.sdk
 ```
 
 Build Lindad
@@ -197,6 +197,6 @@ strip src/Lindad && strip src/Linda-cli
 ```
 cd ..
 ./autogen.sh
-./configure --prefix=`pwd`/depends/x86_64-apple-darwin11 --disable-ccache --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DNDEBUG"
+./configure --prefix=`pwd`/depends/x86_64-apple-darwin14 --disable-ccache --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DNDEBUG"
 make
 ```
