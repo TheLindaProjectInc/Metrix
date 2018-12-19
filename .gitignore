@@ -31,9 +31,10 @@ build-aux/config.sub
 build-aux/depcomp
 build-aux/install-sh
 build-aux/missing
-depends/x86_64-w64-mingw32/*
+depends/x86_64-*/*
 depends/built/*
 depends/sources/*
+depends/SDKs/*
 share/setup.nsi
 src/bitcoin-config.h
 src/bitcoin-config.h.in
