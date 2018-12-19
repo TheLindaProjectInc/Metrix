@@ -197,6 +197,6 @@ strip src/Lindad && strip src/Linda-cli
 ```
 cd ..
 ./autogen.sh
-./configure --prefix=`pwd`/depends/x86_64-apple-darwin11 --with-miniupnpc --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB"
+./configure --prefix=`pwd`/depends/x86_64-apple-darwin11 --disable-ccache --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DNDEBUG"
 make
 ```
