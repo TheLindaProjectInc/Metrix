@@ -255,7 +255,7 @@ bool CActiveMasternode::Register(std::string strService, std::string strKeyMaste
     	return false;
     }
 
-    if(!GetMasterNodeVin(vin, pubKeyCollateralAddress, keyCollateralAddress, txHash, strOutputIndex)) {
+    if(!GetMasterNodeVin(vin, pubKeyCollateralAddress, keyCollateralAddress, txHash, strOutputIndex, true)) {
 		errorMessage = "could not allocate vin";
     	LogPrintf("Register::Register() - Error: %s\n", errorMessage.c_str());
 		return false;
@@ -309,11 +309,11 @@ bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secr
 	return GetMasterNodeVin(vin, pubkey, secretKey, "", "");
 }
 
-bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey, std::string strTxHash, std::string strOutputIndex) {
+bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey, std::string strTxHash, std::string strOutputIndex, bool includeLocked) {
     CScript pubScript;
 
     // Find possible candidates
-    vector<COutput> possibleCoins = SelectCoinsMasternode();
+    vector<COutput> possibleCoins = SelectCoinsMasternode(includeLocked);
     COutput *selectedOutput;
 
     // Find the vin
@@ -377,13 +377,16 @@ bool CActiveMasternode::GetVinFromOutput(COutput out, CTxIn& vin, CPubKey& pubke
 }
 
 // get all possible outputs for running masternode
-vector<COutput> CActiveMasternode::SelectCoinsMasternode()
+vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
 {
     vector<COutput> vCoins;
     vector<COutput> filteredCoins;
 
     // Retrieve all possible outputs
-    pwalletMain->AvailableCoins(vCoins);
+    // Linda - start-many and start-alias should include locked coins as nodes in
+    // the masternode.conf file coins are looked on startup. otherwise it wouldn't
+    // be possible to start the node remotely as it would alywas fail to find vin
+    pwalletMain->AvailableCoins(vCoins, true, NULL, ALL_COINS, false, includeLocked);
 
     // Filter
     BOOST_FOREACH(const COutput& out, vCoins)
