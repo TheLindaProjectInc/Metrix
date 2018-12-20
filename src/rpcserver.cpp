@@ -36,6 +36,10 @@ using namespace json_spirit;
 
 static std::string strRPCUserColonPass;
 
+static bool fRPCInWarmup = true;
+static std::string rpcWarmupStatus("RPC server started");
+static CCriticalSection cs_rpcWarmup;
+
 // These are created by StartRPCThreads, destroyed in StopRPCThreads
 static asio::io_service* rpc_io_service = NULL;
 static map<string, boost::shared_ptr<deadline_timer> > deadlineTimers;
@@ -240,7 +244,10 @@ static const CRPCCommand vRPCCommands[] =
     { "decodescript",           &decodescript,           false,     false,     false },
     { "signrawtransaction",     &signrawtransaction,     false,     false,     false },
     { "sendrawtransaction",     &sendrawtransaction,     false,     false,     false },
-    { "getcheckpoint",          &getcheckpoint,          true,      false,     false },
+    { "gettxoutsetinfo",        &gettxoutsetinfo,        true,      false,     false },
+    { "gettxout",               &gettxout,               true,      false,     false },
+    { "lockunspent",            &lockunspent,            false,     false,     false },
+    { "listlockunspent",        &listlockunspent,        false,     false,     false },
     { "sendalert",              &sendalert,              false,     false,     false },
     { "validateaddress",        &validateaddress,        true,      false,     false },
     { "validatepubkey",         &validatepubkey,         true,      false,     false },
@@ -278,6 +285,7 @@ static const CRPCCommand vRPCCommands[] =
     { "sendfrom",               &sendfrom,               false,     false,     true },
     { "sendmany",               &sendmany,               false,     false,     true },
     { "addmultisigaddress",     &addmultisigaddress,     false,     false,     true },
+    { "createmultisig",         &createmultisig,         false,     false,     true },
     { "addredeemscript",        &addredeemscript,        false,     false,     true },
     { "gettransaction",         &gettransaction,         false,     false,     true },
     { "listtransactions",       &listtransactions,       false,     false,     true },
@@ -303,10 +311,13 @@ static const CRPCCommand vRPCCommands[] =
     { "resendtx",               &resendtx,               false,     true,      true },
     { "makekeypair",            &makekeypair,            false,     true,      false },
     { "checkkernel",            &checkkernel,            true,      false,     true },
-    { "getnewstealthaddress",   &getnewstealthaddress,   false,  false, true},
-    { "liststealthaddresses",   &liststealthaddresses,   false,  false, true},
-    { "importstealthaddress",   &importstealthaddress,   false,  false, true},
-    { "sendtostealthaddress",   &sendtostealthaddress,   false,  false, true},
+    { "getnewstealthaddress",   &getnewstealthaddress,   false,     false,     true },
+    { "liststealthaddresses",   &liststealthaddresses,   false,     false,     true },
+    { "importstealthaddress",   &importstealthaddress,   false,     false,     true },
+    { "sendtostealthaddress",   &sendtostealthaddress,   false,     false,     true },
+    { "listaddressbook",        &listaddressbook,        false,     false,     true },
+    { "addressbookadd",         &addressbookadd,         true,      false,     true },
+    { "addressbookremove",      &addressbookremove,      true,      false,     true },
 #endif
 };
 
@@ -626,6 +637,18 @@ void StopRPCThreads()
     delete rpc_io_service; rpc_io_service = NULL;
 }
 
+void SetRPCWarmupStatus(const std::string& newStatus)
+{
+    LOCK(cs_rpcWarmup);
+    rpcWarmupStatus = newStatus;
+}
+ void SetRPCWarmupFinished()
+{
+    LOCK(cs_rpcWarmup);
+    assert(fRPCInWarmup);
+    fRPCInWarmup = false;
+}
+
 void RPCRunHandler(const boost::system::error_code& err, boost::function<void(void)> func)
 {
     if (!err)
@@ -769,6 +792,21 @@ void ServiceConnection(AcceptedConnection *conn)
             Value valRequest;
             if (!read_string(strRequest, valRequest))
                 throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
+
+            // Return immediately if in warmup unless sent shutdown request
+            {
+                LOCK(cs_rpcWarmup);
+                if (fRPCInWarmup) {
+                    bool bReturnWarmup = true;
+                    if (valRequest.type() == obj_type) {
+                        jreq.parse(valRequest);
+                        if (jreq.strMethod == "stop")
+                            bReturnWarmup = false;
+                    }
+                    if (bReturnWarmup)
+                        throw JSONRPCError(RPC_IN_WARMUP, rpcWarmupStatus);
+                }                    
+            }
 
             string strReply;
 

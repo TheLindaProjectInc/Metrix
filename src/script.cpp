@@ -342,6 +342,68 @@ const char* GetOpName(opcodetype opcode)
     }
 }
 
+bool IsCanonicalPubKey(const valtype &vchPubKey) {
+    if (vchPubKey.size() < 33)
+        return error("Non-canonical public key: too short");
+    if (vchPubKey[0] == 0x04) {
+        if (vchPubKey.size() != 65)
+            return error("Non-canonical public key: invalid length for uncompressed key");
+    } else if (vchPubKey[0] == 0x02 || vchPubKey[0] == 0x03) {
+        if (vchPubKey.size() != 33)
+            return error("Non-canonical public key: invalid length for compressed key");
+    } else {
+        return error("Non-canonical public key: compressed nor uncompressed");
+    }
+    return true;
+}
+
+bool IsCanonicalSignature(const valtype &vchSig) {
+    // See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
+    // A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
+    // Where R and S are not negative (their first byte has its highest bit not set), and not
+    // excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
+    // in which case a single 0 byte is necessary and even required).
+    if (vchSig.size() < 9)
+        return error("Non-canonical signature: too short");
+    if (vchSig.size() > 73)
+        return error("Non-canonical signature: too long");
+    unsigned char nHashType = vchSig[vchSig.size() - 1] & (~(SIGHASH_ANYONECANPAY));
+    if (nHashType < SIGHASH_ALL || nHashType > SIGHASH_SINGLE)
+        return error("Non-canonical signature: unknown hashtype byte");
+    if (vchSig[0] != 0x30)
+        return error("Non-canonical signature: wrong type");
+    if (vchSig[1] != vchSig.size()-3)
+        return error("Non-canonical signature: wrong length marker");
+    unsigned int nLenR = vchSig[3];
+    if (5 + nLenR >= vchSig.size())
+        return error("Non-canonical signature: S length misplaced");
+    unsigned int nLenS = vchSig[5+nLenR];
+    if ((unsigned long)(nLenR+nLenS+7) != vchSig.size())
+        return error("Non-canonical signature: R+S length mismatch");
+
+    const unsigned char *R = &vchSig[4];
+    if (R[-2] != 0x02)
+        return error("Non-canonical signature: R value type mismatch");
+    if (nLenR == 0)
+        return error("Non-canonical signature: R length is zero");
+    if (R[0] & 0x80)
+        return error("Non-canonical signature: R value negative");
+    if (nLenR > 1 && (R[0] == 0x00) && !(R[1] & 0x80))
+        return error("Non-canonical signature: R value excessively padded");
+
+    const unsigned char *S = &vchSig[6+nLenR];
+    if (S[-2] != 0x02)
+        return error("Non-canonical signature: S value type mismatch");
+    if (nLenS == 0)
+        return error("Non-canonical signature: S length is zero");
+    if (S[0] & 0x80)
+        return error("Non-canonical signature: S value negative");
+    if (nLenS > 1 && (S[0] == 0x00) && !(S[1] & 0x80))
+        return error("Non-canonical signature: S value excessively padded");
+
+    return true;
+}
+
 static bool IsCompressedOrUncompressedPubKey(const valtype &vchPubKey) {
     if (vchPubKey.size() < 33)
         return error("Non-canonical public key: too short");
@@ -457,7 +519,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
     if (script.size() > 10000)
         return false;
     int nOpCount = 0;
-
+    bool fStrictEncodings = flags & SCRIPT_VERIFY_STRICTENC;
 
     try
     {
@@ -1137,11 +1199,10 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     // Drop the signature, since there's no way for a signature to sign itself
                     scriptCode.FindAndDelete(CScript(vchSig));
 
-                    if ((flags & SCRIPT_VERIFY_STRICTENC) && (!CheckSignatureEncoding(vchSig) || !CheckPubKeyEncoding(vchPubKey)))
-                        return false;
+                    bool fSuccess = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
+                    if (fSuccess)
+                        fSuccess = CheckSig(vchSig, vchPubKey, scriptCode, txTo, nIn, nHashType, flags);
 
-                    bool fSuccess = CheckSignatureEncoding(vchSig) && CheckPubKeyEncoding(vchPubKey) &&
-                        CheckSig(vchSig, vchPubKey, scriptCode, txTo, nIn, nHashType, flags);
 
                     popstack(stack);
                     popstack(stack);
@@ -1204,8 +1265,9 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                             return false;
 
                         // Check signature
-                        bool fOk = CheckSignatureEncoding(vchSig) && CheckPubKeyEncoding(vchPubKey) &&
-                            CheckSig(vchSig, vchPubKey, scriptCode, txTo, nIn, nHashType, flags);
+                        bool fOk = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
+                        if (fOk)
+                            fOk = CheckSig(vchSig, vchPubKey, scriptCode, txTo, nIn, nHashType, flags);
 
                         if (fOk)
                         {
@@ -2711,7 +2773,8 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     if (!EvalScript(stack, scriptSig, txTo, nIn, flags, nHashType))
         return false;
 
-    stackCopy = stack;
+    if (flags & SCRIPT_VERIFY_P2SH)
+        stackCopy = stack;
 
     if (!EvalScript(stack, scriptPubKey, txTo, nIn, flags, nHashType))
         return false;
@@ -2722,10 +2785,15 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
         return false;
 
     // Additional validation for spend-to-script-hash transactions:
-    if (scriptPubKey.IsPayToScriptHash())
+    if ((flags & SCRIPT_VERIFY_P2SH) && scriptPubKey.IsPayToScriptHash())
     {
         if (!scriptSig.IsPushOnly()) // scriptSig must be literals-only
             return false;            // or validation fails
+
+        // stackCopy cannot be empty here, because if it was the
+        // P2SH  HASH <> EQUAL  scriptPubKey would be evaluated with
+        // an empty stack and the EvalScript above would return false.
+        assert(!stackCopy.empty());
 
         const valtype& pubKeySerialized = stackCopy.back();
         CScript pubKey2(pubKeySerialized.begin(), pubKeySerialized.end());
@@ -2840,20 +2908,6 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, unsigne
 
     return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, nHashType);
 }*/
-
-bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, unsigned int flags, int nHashType)
-{
-    assert(nIn < txTo.vin.size());
-    const CTxIn& txin = txTo.vin[nIn];
-    if (txin.prevout.n >= txFrom.vout.size())
-        return false;
-    const CTxOut& txout = txFrom.vout[txin.prevout.n];
-
-    if (txin.prevout.hash != txFrom.GetHash())
-        return false;
-
-    return VerifyScript(txin.scriptSig, txout.scriptPubKey, txTo, nIn, flags, nHashType);
-}
 
 static CScript PushAll(const vector<valtype>& values)
 {
@@ -3089,7 +3143,7 @@ public:
     bool operator()(const CStealthAddress &stxAddr) const {
         script->clear();
         //*script << OP_HASH160 << scriptID << OP_EQUAL;
-        printf("TODO\n");
+        LogPrintf("TODO\n");
         return false;
     }
 };

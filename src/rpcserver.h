@@ -17,6 +17,13 @@ class CBlockIndex;
 void StartRPCThreads();
 void StopRPCThreads();
 
+/* Set the RPC warmup status.  When this is done, all RPC calls will error out
+ * immediately with RPC_IN_WARMUP.
+ */
+void SetRPCWarmupStatus(const std::string& newStatus);
+/* Mark warmup as done.  RPC calls will be processed from now on.  */
+void SetRPCWarmupFinished();
+
 /*
   Type-check arguments; throws JSONRPCError if wrong type given. Does not check that
   the right number of arguments are passed, just that any passed are the correct type.
@@ -135,6 +142,7 @@ extern json_spirit::Value movecmd(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value sendfrom(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value sendmany(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value addmultisigaddress(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value createmultisig(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value addredeemscript(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value listreceivedbyaddress(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value listreceivedbyaccount(const json_spirit::Array& params, bool fHelp);
@@ -161,8 +169,9 @@ extern json_spirit::Value getnewpubkey(const json_spirit::Array& params, bool fH
 
 extern json_spirit::Value getrawtransaction(const json_spirit::Array& params, bool fHelp); // in rcprawtransaction.cpp
 extern json_spirit::Value searchrawtransactions(const json_spirit::Array& params, bool fHelp);
-
 extern json_spirit::Value listunspent(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value lockunspent(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value listlockunspent(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value createrawtransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value decoderawtransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value decodescript(const json_spirit::Array& params, bool fHelp);
@@ -177,7 +186,8 @@ extern json_spirit::Value getrawmempool(const json_spirit::Array& params, bool f
 extern json_spirit::Value getblockhash(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getblock(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getblockbynumber(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value getcheckpoint(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value gettxoutsetinfo(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value gettxout(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getnewstealthaddress(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value liststealthaddresses(const json_spirit::Array& params, bool fHelp);
@@ -188,5 +198,9 @@ extern json_spirit::Value keepass(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value darksend(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value spork(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value masternode(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value listaddressbook(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value addressbookadd(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value addressbookremove(const json_spirit::Array& params, bool fHelp);
 
 #endif

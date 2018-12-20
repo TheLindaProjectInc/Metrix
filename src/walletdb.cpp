@@ -10,7 +10,7 @@
 #include "serialize.h"
 #include "sync.h"
 #include "wallet.h"
-
+#include <boost/version.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
@@ -364,7 +364,8 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             ssKey >> hash;
             CWalletTx& wtx = pwallet->mapWallet[hash];
             ssValue >> wtx;
-            if (wtx.CheckTransaction() && (wtx.GetHash() == hash))
+            CValidationState state;
+            if (wtx.CheckTransaction(state) && (wtx.GetHash() == hash))
                 wtx.BindWallet(pwallet);
             else
             {
@@ -406,7 +407,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         if (strType == "sxAddr")
         {
             if (fDebug)
-                printf("WalletDB ReadKeyValue sxAddr\n");
+                LogPrintf("WalletDB ReadKeyValue sxAddr\n");
             
             CStealthAddress sxAddr;
             ssValue >> sxAddr;
@@ -541,7 +542,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         else if (strType == "sxKeyMeta")
         {
             if (fDebug)
-                printf("WalletDB ReadKeyValue sxKeyMeta\n");
+                LogPrintf("WalletDB ReadKeyValue sxKeyMeta\n");
             
             CKeyID keyId;
             ssKey >> keyId;
@@ -705,6 +706,88 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
         result = ReorderTransactions(pwallet);
 
     return result;
+}
+
+DBErrors CWalletDB::FindWalletTx(CWallet* pwallet, vector<uint256>& vTxHash, vector<CWalletTx>& vWtx)
+{
+    
+    pwallet->vchDefaultKey = CPubKey();
+    CWalletScanState wss;
+    DBErrors result = DB_LOAD_OK;
+    
+     try {
+        LOCK(pwallet->cs_wallet);
+        int nMinVersion = 0;
+        if (Read((string)"minversion", nMinVersion))
+        {
+            if (nMinVersion > CLIENT_VERSION)
+                return DB_TOO_NEW;
+            pwallet->LoadMinVersion(nMinVersion);
+        }
+         
+         // Get cursor
+        Dbc* pcursor = GetCursor();
+        if (!pcursor)
+        {
+            LogPrintf("Error getting wallet database cursor\n");
+            return DB_CORRUPT;
+        }
+         
+         while (true)
+        { 
+            // Read next record
+            CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+            CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+            int ret = ReadAtCursor(pcursor, ssKey, ssValue);
+            if (ret == DB_NOTFOUND)
+                break;
+            else if (ret != 0)
+            {
+                LogPrintf("Error reading next record from wallet database\n");
+                return DB_CORRUPT;
+            }
+             
+            string strType;
+            ssKey >> strType;
+            if (strType == "tx") {
+                uint256 hash;
+                ssKey >> hash;
+                
+                CWalletTx wtx;
+                ssValue >> wtx; 
+                
+                vTxHash.push_back(hash);
+                vWtx.push_back(wtx);
+            }
+        }
+        pcursor->close();
+    }
+    catch (boost::thread_interrupted) {
+        throw;
+    }
+    catch (...) {
+        result = DB_CORRUPT;
+    }
+    
+
+    return result;
+}
+
+DBErrors CWalletDB::ZapWalletTx(CWallet* pwallet, vector<CWalletTx>& vWtx)
+{
+    // build list of wallet TXs
+    vector<uint256> vTxHash;
+    DBErrors err = FindWalletTx(pwallet, vTxHash, vWtx);
+    if (err != DB_LOAD_OK)
+        return err;
+     
+     // erase each wallet TX
+    BOOST_FOREACH (uint256& hash, vTxHash) {
+        if (!EraseTx(hash))
+            return DB_CORRUPT;
+    }
+     
+     return DB_LOAD_OK;
 }
 
 void ThreadFlushWalletDB(const string& strFile)

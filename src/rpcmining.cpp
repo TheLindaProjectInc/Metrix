@@ -47,10 +47,8 @@ Value getsubsidy(const Array& params, bool fHelp)
             "getsubsidy [nTarget]\n"
             "Returns proof-of-work subsidy value for the specified value of target.");
 
-    uint64_t nReward = GetProofOfWorkRewardV2(0,pindexBest->nHeight); 
-    
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("getsubsidy() -> nPoWSubsidy=%d", nReward);
+    uint64_t nReward = GetProofOfWorkReward(0); 
+
     return (uint64_t)nReward;
 }
 
@@ -74,14 +72,13 @@ Value getstakesubsidy(const Array& params, bool fHelp)
     }
 
     uint64_t nCoinAge;
-    CTxDB txdb("r");
-    if (!tx.GetCoinAge(txdb, nCoinAge, pindexBest->nHeight))
+    CCoinsViewCache view(*pcoinsTip, true);
+    CValidationState state;
+    if (!tx.GetCoinAge(state, view, nCoinAge, pindexBest->nHeight))
         throw JSONRPCError(RPC_MISC_ERROR, "GetCoinAge failed");
 
     uint64_t nStakeReward = GetProofOfStakeReward(nCoinAge, 0, pindexBest->nHeight);
 
-    // MBK: Added some additional debugging information
-    if (MBK_EXTRA_DEBUG) LogPrintf("getstakesubsidy() -> nStakeSubsidy=%d", nStakeReward);
     return (uint64_t)nStakeReward;
 }
 
@@ -105,7 +102,7 @@ Value getmininginfo(const Array& params, bool fHelp)
     diff.push_back(Pair("proof-of-stake",       GetDifficulty(GetLastBlockIndex(pindexBest, true))));
     diff.push_back(Pair("search-interval",      (int)nLastCoinStakeSearchInterval));
     obj.push_back(Pair("difficulty",    diff));
-    obj.push_back(Pair("blockvalue",    (uint64_t)GetProofOfWorkRewardV2(0, pindexBest->nHeight)));
+    obj.push_back(Pair("blockvalue",    (uint64_t)GetProofOfWorkReward(0)));
 
     obj.push_back(Pair("netmhashps",     GetPoWMHashPS()));
     obj.push_back(Pair("netstakeweight", GetPoSKernelPS()));
@@ -224,8 +221,8 @@ Value checkkernel(const Array& params, bool fHelp)
         return result;
 
     int64_t nFees;
-    auto_ptr<CBlock> pblock(CreateNewBlock(*pMiningKey, true, &nFees));
-
+    auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlock(*pMiningKey, true, &nFees));
+    CBlock* pblock = &pblocktemplate->block; // pointer for convenience
     pblock->nTime = pblock->vtx[0].nTime = nTime;
 
     CDataStream ss(SER_DISK, PROTOCOL_VERSION);
@@ -262,7 +259,7 @@ Value getworkex(const Array& params, bool fHelp)
 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
     static mapNewBlock_t mapNewBlock;
-    static vector<CBlock*> vNewBlock;
+    static vector<CBlockTemplate*> vNewBlockTemplate;
 
     if (params.size() == 0)
     {
@@ -270,7 +267,7 @@ Value getworkex(const Array& params, bool fHelp)
         static unsigned int nTransactionsUpdatedLast;
         static CBlockIndex* pindexPrev;
         static int64_t nStart;
-        static CBlock* pblock;
+        static CBlockTemplate* pblocktemplate;
         if (pindexPrev != pindexBest ||
             (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60))
         {
@@ -278,20 +275,21 @@ Value getworkex(const Array& params, bool fHelp)
             {
                 // Deallocate old blocks since they're obsolete now
                 mapNewBlock.clear();
-                BOOST_FOREACH(CBlock* pblock, vNewBlock)
-                    delete pblock;
-                vNewBlock.clear();
+                BOOST_FOREACH(CBlockTemplate* pblocktemplate, vNewBlockTemplate)
+                    delete pblocktemplate;
+                vNewBlockTemplate.clear();
             }
             nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
             pindexPrev = pindexBest;
             nStart = GetTime();
 
             // Create new block
-            pblock = CreateNewBlock(*pMiningKey);
-            if (!pblock)
+            pblocktemplate = CreateNewBlock(*pMiningKey);
+            if (!pblocktemplate)
                 throw JSONRPCError(-7, "Out of memory");
-            vNewBlock.push_back(pblock);
+            vNewBlockTemplate.push_back(pblocktemplate);
         }
+        CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
         // Update nTime
         pblock->nTime = max(pindexPrev->GetPastTimeLimit()+1, GetAdjustedTime());
@@ -396,7 +394,7 @@ Value getwork(const Array& params, bool fHelp)
 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
     static mapNewBlock_t mapNewBlock;    // FIXME: thread safety
-    static vector<CBlock*> vNewBlock;
+    static vector<CBlockTemplate*> vNewBlockTemplate;
 
     if (params.size() == 0)
     {
@@ -404,7 +402,7 @@ Value getwork(const Array& params, bool fHelp)
         static unsigned int nTransactionsUpdatedLast;
         static CBlockIndex* pindexPrev;
         static int64_t nStart;
-        static CBlock* pblock;
+        static CBlockTemplate* pblocktemplate;
         if (pindexPrev != pindexBest ||
             (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60))
         {
@@ -412,9 +410,9 @@ Value getwork(const Array& params, bool fHelp)
             {
                 // Deallocate old blocks since they're obsolete now
                 mapNewBlock.clear();
-                BOOST_FOREACH(CBlock* pblock, vNewBlock)
-                    delete pblock;
-                vNewBlock.clear();
+                BOOST_FOREACH(CBlockTemplate* pblocktemplate, vNewBlockTemplate)
+                    delete pblocktemplate;
+                vNewBlockTemplate.clear();
             }
 
             // Clear pindexPrev so future getworks make a new block, despite any failures from here on
@@ -426,14 +424,15 @@ Value getwork(const Array& params, bool fHelp)
             nStart = GetTime();
 
             // Create new block
-            pblock = CreateNewBlock(*pMiningKey);
-            if (!pblock)
+            pblocktemplate = CreateNewBlock(*pMiningKey);
+            if (!pblocktemplate)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
-            vNewBlock.push_back(pblock);
+            vNewBlockTemplate.push_back(pblocktemplate);
 
             // Need to update only after we know CreateNewBlock succeeded
             pindexPrev = pindexPrevNew;
         }
+        CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
         // Update nTime
         pblock->UpdateTime(pindexPrev);
@@ -542,7 +541,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     static unsigned int nTransactionsUpdatedLast;
     static CBlockIndex* pindexPrev;
     static int64_t nStart;
-    static CBlock* pblock;
+    static CBlockTemplate* pblocktemplate;
     if (pindexPrev != pindexBest ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5))
     {
@@ -555,18 +554,19 @@ Value getblocktemplate(const Array& params, bool fHelp)
         nStart = GetTime();
 
         // Create new block
-        if(pblock)
+        if(pblocktemplate)
         {
-            delete pblock;
-            pblock = NULL;
+            delete pblocktemplate;
+            pblocktemplate = NULL;
         }
-        pblock = CreateNewBlock(*pMiningKey);
-        if (!pblock)
+        pblocktemplate = CreateNewBlock(*pMiningKey);
+        if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }
+    CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
     // Update nTime
     pblock->UpdateTime(pindexPrev);
@@ -575,7 +575,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     Array transactions;
     map<uint256, int64_t> setTxIndex;
     int i = 0;
-    CTxDB txdb("r");
+
     BOOST_FOREACH (CTransaction& tx, pblock->vtx)
     {
         uint256 txHash = tx.GetHash();
@@ -592,26 +592,16 @@ Value getblocktemplate(const Array& params, bool fHelp)
 
         entry.push_back(Pair("hash", txHash.GetHex()));
 
-        MapPrevTx mapInputs;
-        map<uint256, CTxIndex> mapUnused;
-        bool fInvalid = false;
-        if (tx.FetchInputs(txdb, mapUnused, false, false, mapInputs, fInvalid))
+        Array deps;
+        BOOST_FOREACH (const CTxIn &in, tx.vin)
         {
-            entry.push_back(Pair("fee", (int64_t)(tx.GetValueIn(mapInputs) - tx.GetValueOut())));
-
-            Array deps;
-            BOOST_FOREACH (MapPrevTx::value_type& inp, mapInputs)
-            {
-                if (setTxIndex.count(inp.first))
-                    deps.push_back(setTxIndex[inp.first]);
-            }
-            entry.push_back(Pair("depends", deps));
-
-            int64_t nSigOps = GetLegacySigOpCount(tx);
-            nSigOps += GetP2SHSigOpCount(tx, mapInputs);
-            entry.push_back(Pair("sigops", nSigOps));
+            if (setTxIndex.count(in.prevout.hash))
+                deps.push_back(setTxIndex[in.prevout.hash]);
         }
-
+        entry.push_back(Pair("depends", deps));
+        int index_in_template = i - 1;
+        entry.push_back(Pair("fee", pblocktemplate->vTxFees[index_in_template]));
+        entry.push_back(Pair("sigops", pblocktemplate->vTxSigOps[index_in_template]));
         transactions.push_back(entry);
     }
 
@@ -658,17 +648,18 @@ Value submitblock(const Array& params, bool fHelp)
 
     vector<unsigned char> blockData(ParseHex(params[0].get_str()));
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
-    CBlock block;
+    CBlock pblock;
     try {
-        ssBlock >> block;
+        ssBlock >> pblock;
     }
     catch (std::exception &e) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 
-    bool fAccepted = ProcessBlock(NULL, &block);
+    CValidationState state;
+    bool fAccepted = ProcessBlock(state, NULL, &pblock);
     if (!fAccepted)
-        return "rejected";
+        return "rejected"; // TODO: report validation state
 
     return Value::null;
 }

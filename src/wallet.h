@@ -191,11 +191,9 @@ public:
     bool CanSupportFeature(enum WalletFeature wf) { AssertLockHeld(cs_wallet); return nWalletMaxVersion >= wf; }
 
     void AvailableCoinsForStaking(std::vector<COutput>& vCoins, unsigned int nSpendTime) const;
-    void AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed=true, const CCoinControl *coinControl = NULL, AvailableCoinsType coin_type=ALL_COINS, bool useIX = false) const;
+    void AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed=true, const CCoinControl *coinControl = NULL, AvailableCoinsType coin_type=ALL_COINS, bool useIX = false, bool includeLocked = false) const;
     bool SelectCoinsMinConf(int64_t nTargetValue, unsigned int nSpendTime, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64_t& nValueRet) const;
     bool SelectCoinsMinConfByCoinAge(int64_t nTargetValue, unsigned int nSpendTime, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64_t& nValueRet) const;
-
-    bool IsSpent(const uint256& hash, unsigned int n) const;
 
     bool IsLockedCoin(uint256 hash, unsigned int n) const;
     void LockCoin(COutPoint& output);
@@ -247,8 +245,8 @@ public:
 
     void MarkDirty();
     bool AddToWallet(const CWalletTx& wtxIn);
-    void SyncTransaction(const CTransaction& tx, const CBlock* pblock, bool fConnect = true);
-    bool AddToWalletIfInvolvingMe(const CTransaction& tx, const CBlock* pblock, bool fUpdate);
+    void SyncTransaction(const uint256 &hash, const CTransaction& tx, const CBlock* pblock, bool fConnect = true);
+    bool AddToWalletIfInvolvingMe(const uint256 &hash, const CTransaction& tx, const CBlock* pblock, bool fUpdate);
     void EraseFromWallet(const uint256 &hash);
     void WalletUpdateSpent(const CTransaction& prevout, bool fBlock = false);
     int ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate = false);
@@ -390,6 +388,8 @@ public:
     void SetBestChain(const CBlockLocator& loc);
 
     DBErrors LoadWallet(bool& fFirstRunRet);
+    DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);
+
 
     bool SetAddressBookName(const CTxDestination& address, const std::string& strName);
 
@@ -817,12 +817,10 @@ public:
     int64_t GetTxTime() const;
     int GetRequestCount() const;
 
-    void AddSupportingTransactions(CTxDB& txdb);
+    void AddSupportingTransactions();
 
-    bool AcceptWalletTransaction(CTxDB& txdb);
     bool AcceptWalletTransaction();
 
-    void RelayWalletTransaction(CTxDB& txdb);
     void RelayWalletTransaction();
 };
 
@@ -851,7 +849,7 @@ public:
     int Priority() const
     {
         // MBK: Added support for block height darksend fee change
-        if(tx->vout[i].nValue == (nBestHeight >= DARKSEND_V2_START_BLOCK ? DARKSEND_FEE_V2 : DARKSEND_FEE_V1)) return -20000;
+        if(tx->vout[i].nValue == DARKSEND_FEE) return -20000;
         BOOST_FOREACH(int64_t d, darkSendDenominations)
             if(tx->vout[i].nValue == d) return 10000;
         if(tx->vout[i].nValue < 1*COIN) return 20000;

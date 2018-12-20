@@ -189,6 +189,20 @@ public:
         return SerializeHash(*this);
     }
 
+    bool IsDust(int64_t nMinRelayTxFee) const
+    {
+        // "Dust" is defined in terms of CTransaction::nMinRelayTxFee,
+        // which has units satoshis-per-kilobyte.
+        // If you'd pay more than 1/3 in fees
+        // to spend something, then we consider it dust.
+        // A typical txout is 34 bytes big, and will
+        // need a CTxIn of at least 148 bytes to spend,
+        // so dust is a txout less than 546 satoshis
+        // with default nMinRelayTxFee
+        return ((nValue*1000)/(3*((int)GetSerializeSize(SER_DISK,0)+148)) < nMinRelayTxFee);
+    }
+
+
     friend bool operator==(const CTxOut& a, const CTxOut& b)
     {
         return (a.nValue       == b.nValue &&

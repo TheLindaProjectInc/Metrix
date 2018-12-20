@@ -3,6 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <boost/assign/list_of.hpp>
+
 #include "base58.h"
 #include "rpcserver.h"
 #include "init.h"
@@ -15,6 +17,8 @@
 #include "keepass.h"
 
 using namespace std;
+using namespace boost;
+using namespace boost::assign;
 using namespace json_spirit;
 
 int64_t nWalletUnlockTime;
@@ -706,22 +710,13 @@ Value sendmany(const Array& params, bool fHelp)
     return wtx.GetHash().GetHex();
 }
 
-Value addmultisigaddress(const Array& params, bool fHelp)
+//
+// Used by addmultisigaddress / createmultisig:
+//
+static CScript _createmultisig(const Array& params)
 {
-    if (fHelp || params.size() < 2 || params.size() > 3)
-    {
-        string msg = "addmultisigaddress <nrequired> <'[\"key\",\"key\"]'> [account]\n"
-            "Add a nrequired-to-sign multisignature address to the wallet\"\n"
-            "each key is a Linda address or hex-encoded public key\n"
-            "If [account] is specified, assign address to [account].";
-        throw runtime_error(msg);
-    }
-
     int nRequired = params[0].get_int();
     const Array& keys = params[1].get_array();
-    string strAccount;
-    if (params.size() > 2)
-        strAccount = AccountFromValue(params[2]);
 
     // Gather public keys
     if (nRequired < 1)
@@ -729,13 +724,13 @@ Value addmultisigaddress(const Array& params, bool fHelp)
     if ((int)keys.size() < nRequired)
         throw runtime_error(
             strprintf("not enough keys supplied "
-                      "(got %u keys, but need at least %d to redeem)", keys.size(), nRequired));
+                      "(got %"PRIszu" keys, but need at least %d to redeem)", keys.size(), nRequired));
     std::vector<CPubKey> pubkeys;
     pubkeys.resize(keys.size());
     for (unsigned int i = 0; i < keys.size(); i++)
     {
         const std::string& ks = keys[i].get_str();
-
+#ifdef ENABLE_WALLET
         // Case 1: Bitcoin address and we have full public key:
         CBitcoinAddress address(ks);
         if (pwalletMain && address.IsValid())
@@ -743,18 +738,20 @@ Value addmultisigaddress(const Array& params, bool fHelp)
             CKeyID keyID;
             if (!address.GetKeyID(keyID))
                 throw runtime_error(
-                    strprintf("%s does not refer to a key",ks));
+                    strprintf("%s does not refer to a key",ks.c_str()));
             CPubKey vchPubKey;
             if (!pwalletMain->GetPubKey(keyID, vchPubKey))
                 throw runtime_error(
-                    strprintf("no full public key for address %s",ks));
+                    strprintf("no full public key for address %s",ks.c_str()));
             if (!vchPubKey.IsFullyValid())
                 throw runtime_error(" Invalid public key: "+ks);
             pubkeys[i] = vchPubKey;
         }
 
         // Case 2: hex public key
-        else if (IsHex(ks))
+        else 
+#endif
+        if (IsHex(ks))
         {
             CPubKey vchPubKey(ParseHex(ks));
             if (!vchPubKey.IsFullyValid())
@@ -766,17 +763,59 @@ Value addmultisigaddress(const Array& params, bool fHelp)
             throw runtime_error(" Invalid public key: "+ks);
         }
     }
+    CScript result;
+    result.SetMultisig(nRequired, pubkeys);
+    return result;
+}
+
+Value addmultisigaddress(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 2 || params.size() > 3)
+    {
+        string msg = "addmultisigaddress <nrequired> <'[\"key\",\"key\"]'> [account]\n"
+            "Add a nrequired-to-sign multisignature address to the wallet\"\n"
+            "each key is a Linda address or hex-encoded public key\n"
+            "If [account] is specified, assign address to [account].";
+        throw runtime_error(msg);
+    }
+
+    string strAccount;
+    if (params.size() > 2)
+        strAccount = AccountFromValue(params[2]);
 
     // Construct using pay-to-script-hash:
-    CScript inner;
-    inner.SetMultisig(nRequired, pubkeys);
+    CScript inner = _createmultisig(params);
     CScriptID innerID = inner.GetID();
-    if (!pwalletMain->AddCScript(inner))
-        throw runtime_error("AddCScript() failed");
+    pwalletMain->AddCScript(inner);
 
     pwalletMain->SetAddressBookName(innerID, strAccount);
     return CBitcoinAddress(innerID).ToString();
 }
+
+Value createmultisig(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 2 || params.size() > 2)
+    {
+        string msg = "createmultisig <nrequired> <'[\"key\",\"key\"]'>\n"
+            "Creates a multi-signature address and returns a json object\n"
+            "with keys:\n"
+            "address : bitcoin address\n"
+            "redeemScript : hex-encoded redemption script";
+        throw runtime_error(msg);
+    }
+
+    // Construct using pay-to-script-hash:
+    CScript inner = _createmultisig(params);
+    CScriptID innerID = inner.GetID();
+    CBitcoinAddress address(innerID);
+
+    Object result;
+    result.push_back(Pair("address", address.ToString()));
+    result.push_back(Pair("redeemScript", HexStr(inner.begin(), inner.end())));
+
+    return result;
+}
+
 
 Value addredeemscript(const Array& params, bool fHelp)
 {
@@ -1013,6 +1052,18 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
     // Received
     if (listReceived.size() > 0 && wtx.GetDepthInMainChain() >= nMinDepth)
     {
+        // check for masternode payment
+        bool bHasMasternodePayment = false;
+        CTxDestination masternodeAddress;
+        if (wtx.vout.size() == 4) {
+            ExtractDestination(wtx.vout[3].scriptPubKey, masternodeAddress);
+            bHasMasternodePayment = true;
+            nFee += wtx.vout[3].nValue;
+        } else if (wtx.vout.size() == 3 && wtx.vout[1].scriptPubKey != wtx.vout[2].scriptPubKey){
+            ExtractDestination(wtx.vout[2].scriptPubKey, masternodeAddress);
+            bHasMasternodePayment = true;
+            nFee += wtx.vout[2].nValue;
+        } 
         bool stop = false;
         BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& r, listReceived)
         {
@@ -1037,12 +1088,12 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                 {
                     entry.push_back(Pair("category", "receive"));
                 }
-                if (!wtx.IsCoinStake())
+                if (!wtx.IsCoinStake() || (bHasMasternodePayment && masternodeAddress == r.first))
                     entry.push_back(Pair("amount", ValueFromAmount(r.second)));
                 else
                 {
-                    entry.push_back(Pair("amount", ValueFromAmount(-nFee)));
-                    stop = true; // only one coinstake output
+                    entry.push_back(Pair("amount", ValueFromAmount(-nFee)));                    
+                    stop = true; // only one coinstake output                 
                 }
                 if (fLong)
                     WalletTxToJSON(wtx, entry);
@@ -1284,7 +1335,7 @@ Value gettransaction(const Array& params, bool fHelp)
     {
         CTransaction tx;
         uint256 hashBlock = 0;
-        if (GetTransaction(hash, tx, hashBlock))
+        if (GetTransaction(hash, tx, hashBlock, true))
         {
             TxToJSON(tx, 0, entry);
             if (hashBlock == 0)
@@ -1619,8 +1670,7 @@ Value makekeypair(const Array& params, bool fHelp)
 
 Value settxfee(const Array& params, bool fHelp)
 {
-    // MBK: Support the tx fee increase at blockheight
-    if (fHelp || params.size() < 1 || params.size() > 1 || AmountFromValue(params[0]) < (nBestHeight >= TX_FEE_V2_INCREASE_BLOCK ? MIN_RELAY_TX_FEE_V2 : MIN_RELAY_TX_FEE_V1))
+    if (fHelp || params.size() < 1 || params.size() > 1 || AmountFromValue(params[0]) < CTransaction::nMinTxFee)
         throw runtime_error(
             "settxfee <amount>\n"
             "<amount> is a real and is rounded to the nearest 0.01");
@@ -1947,22 +1997,22 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
     {
         nBlocks++;
         CBlock block;
-        block.ReadFromDisk(pindex, true);
+        block.ReadFromDisk(pindex);
         
         BOOST_FOREACH(CTransaction& tx, block.vtx)
         {
             
             nTransactions++;
             
-            pwalletMain->AddToWalletIfInvolvingMe(tx, &block, fUpdate);
+            pwalletMain->AddToWalletIfInvolvingMe(tx.GetHash(), tx, &block, fUpdate);
         };
         
         pindex = pindex->pnext;
     };
     
-    printf("Scanned %u blocks, %u transactions\n", nBlocks, nTransactions);
-    printf("Found %u stealth transactions in blockchain.\n", pwalletMain->nStealth);
-    printf("Found %u new owned stealth transactions.\n", pwalletMain->nFoundStealth);
+    LogPrintf("Scanned %u blocks, %u transactions\n", nBlocks, nTransactions);
+    LogPrintf("Found %u stealth transactions in blockchain.\n", pwalletMain->nStealth);
+    LogPrintf("Found %u new owned stealth transactions.\n", pwalletMain->nFoundStealth);
     
     char cbuf[256];
     snprintf(cbuf, sizeof(cbuf), "%u new stealth transactions.", pwalletMain->nFoundStealth);
@@ -2024,4 +2074,155 @@ Value keepass(const Array& params, bool fHelp) {
 
     return "Invalid command";
 
+}
+
+// Linda
+Value listaddressbook(const Array &params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "listaddressbook\n"
+            "List the sending addresses saved in the wallet address book.");
+    if (fHelp)
+        return true;
+
+    Array ret;
+    BOOST_FOREACH (const PAIRTYPE(CBitcoinAddress, string) & item, pwalletMain->mapAddressBook)
+    {
+        const CBitcoinAddress &address = item.first;
+        const string &strAccount = item.second;
+        if (!IsMine(*pwalletMain, address.Get()))
+        {
+            Object obj;
+            obj.push_back(Pair("address", address.ToString()));
+            obj.push_back(Pair("account", strAccount));
+            ret.push_back(obj);
+        }
+    }
+    return ret;
+}
+
+// Linda
+Value addressbookadd(const Array &params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "addressbookadd <lindaAddress> <label>\n"
+            "Add sending Linda address to the address book with the label.");
+    if (fHelp)
+        return true;
+
+    string strAddress = params[0].get_str();
+    string strLabel = params[1].get_str();
+
+    CBitcoinAddress addr(strAddress);
+    if (!addr.IsValid())
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+
+    // Check for duplicate addresses
+    {
+        LOCK(pwalletMain->cs_wallet);
+        if (pwalletMain->mapAddressBook.count(addr.Get()))
+            throw JSONRPCError(RPC_TYPE_ERROR, "Address already in address book");
+    }
+
+    pwalletMain->SetAddressBookName(addr.Get(), strLabel);
+
+    return true;
+}
+
+// Linda
+Value addressbookremove(const Array &params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "addressbookremove <lindaAddress>\n"
+            "Remove the sending Linda address from the address book.");
+    if (fHelp)
+        return true;
+
+    string strAddress = params[0].get_str();
+
+    CBitcoinAddress addr(strAddress);
+    if (!addr.IsValid())
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+
+    {
+        LOCK(pwalletMain->cs_wallet);
+        if (pwalletMain->mapAddressBook.count(addr.Get()) && !IsMine(*pwalletMain, addr.Get()))
+            pwalletMain->DelAddressBookName(addr.Get());
+    }
+
+    return true;
+}
+
+Value lockunspent(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "lockunspent unlock? [array-of-Objects]\n"
+            "Updates list of temporarily unspendable outputs.");
+	
+     if (params.size() == 1)
+        RPCTypeCheck(params, list_of(bool_type));
+    else
+        RPCTypeCheck(params, list_of(bool_type)(array_type));
+	
+     bool fUnlock = params[0].get_bool();
+	
+     if (params.size() == 1) {
+        if (fUnlock)
+            pwalletMain->UnlockAllCoins();
+        return true;
+    }
+	
+     Array outputs = params[1].get_array();
+    BOOST_FOREACH(Value& output, outputs)
+    {
+        if (output.type() != obj_type)
+            throw JSONRPCError(-8, "Invalid parameter, expected object");
+        const Object& o = output.get_obj();
+	    
+         RPCTypeCheck(o, map_list_of("txid", str_type)("vout", int_type));
+	    
+         string txid = find_value(o, "txid").get_str();
+        if (!IsHex(txid))
+            throw JSONRPCError(-8, "Invalid parameter, expected hex txid");
+	    
+         int nOutput = find_value(o, "vout").get_int();
+        if (nOutput < 0)
+            throw JSONRPCError(-8, "Invalid parameter, vout must be positive");
+	    
+         COutPoint outpt(uint256(txid), nOutput);
+	    
+         if (fUnlock)
+            pwalletMain->UnlockCoin(outpt);
+        else
+            pwalletMain->LockCoin(outpt);
+    }
+	
+     return true;
+}
+ 
+Value listlockunspent(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 0)
+        throw runtime_error(
+            "listlockunspent\n"
+            "Returns list of temporarily unspendable outputs.");
+	
+    vector<COutPoint> vOutpts;
+    pwalletMain->ListLockedCoins(vOutpts);
+	
+    Array ret;
+	
+    BOOST_FOREACH(COutPoint &outpt, vOutpts) {
+        Object o;
+	     
+        o.push_back(Pair("txid", outpt.hash.GetHex()));
+        o.push_back(Pair("vout", (int)outpt.n));
+        ret.push_back(o);
+    }
+	
+    return ret;
 }

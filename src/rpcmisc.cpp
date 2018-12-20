@@ -69,8 +69,22 @@ Value getinfo(const Array& params, bool fHelp)
     }
     obj.push_back(Pair("paytxfee",      ValueFromAmount(nTransactionFee)));
     obj.push_back(Pair("mininput",      ValueFromAmount(nMinimumInputValue)));
-    if (pwalletMain && pwalletMain->IsCrypted())
-        obj.push_back(Pair("unlocked_until", (int64_t)nWalletUnlockTime));
+    // get lock/encryption status
+    if (pwalletMain) {
+        if (pwalletMain->IsCrypted())
+            obj.push_back(Pair("unlocked_until", (int64_t)nWalletUnlockTime));
+
+        if(!pwalletMain->IsCrypted())
+            obj.push_back(Pair("encryption_status", "Unencrypted"));
+        else if(pwalletMain->IsLocked(true))
+            obj.push_back(Pair("encryption_status", "Locked"));
+        else if(pwalletMain->IsLocked())
+            obj.push_back(Pair("encryption_status", "LockedForStaking"));
+        else if (pwalletMain->fWalletUnlockAnonymizeOnly)
+            obj.push_back(Pair("encryption_status", "UnlockedForAnonymizationOnly"));
+        else
+            obj.push_back(Pair("encryption_status", "Unlocked"));
+    }
 #endif
     obj.push_back(Pair("errors",        GetWarnings("statusbar")));
     return obj;

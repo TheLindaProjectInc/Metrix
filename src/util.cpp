@@ -3,6 +3,16 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#ifndef WIN32
+// for posix_fallocate
+#ifdef __linux__
+#define _POSIX_C_SOURCE 200112L
+#endif
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/resource.h>
+#endif
+
 #include "util.h"
 
 #include "chainparams.h"
@@ -1132,7 +1142,7 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
     if (fNetSpecific)
         path /= Params().DataDir();
 
-    fs::create_directory(path);
+    fs::create_directories(path);
 
     return path;
 }
@@ -1157,119 +1167,7 @@ void createConf()       //Automatic BitcoinDark.conf generation
                         "\nrpcallowip=127.0.0.1"
                         "\ndaemon=1"
                         "\nserver=1"
-                        "\nlistenonion=0"
-                        "\naddnode=77.23.117.38"
-                        "\naddnode=142.44.194.142"
-                        "\naddnode=140.82.59.37"
-                        "\naddnode=208.69.150.21"
-                        "\naddnode=207.246.116.234"
-                        "\naddnode=108.61.214.16"
-                        "\naddnode=144.202.54.150"
-                        "\naddnode=45.77.61.238"
-                        "\naddnode=77.20.126.113"
-                        "\naddnode=140.82.44.77"
-                        "\naddnode=144.202.107.3"
-                        "\naddnode=115.64.98.76"
-                        "\naddnode=207.148.95.253"
-                        "\naddnode=45.63.98.89"
-                        "\naddnode=107.191.41.54"
-                        "\naddnode=178.25.217.181"
-                        "\naddnode=184.59.36.204"
-                        "\naddnode=209.250.247.62"
-                        "\naddnode=208.69.150.23"
-                        "\naddnode=144.202.53.22"
-                        "\naddnode=72.14.182.104"
-                        "\naddnode=45.77.145.99"
-                        "\naddnode=45.63.42.159"
-                        "\naddnode=207.148.87.39"
-                        "\naddnode=213.161.21.113"
-                        "\naddnode=198.58.117.85"
-                        "\naddnode=8.9.30.35"
-                        "\naddnode=86.169.150.72"
-                        "\naddnode=104.156.225.135"
-                        "\naddnode=140.82.45.151"
-                        "\naddnode=144.202.62.223"
-                        "\naddnode=72.238.77.217"
-                        "\naddnode=170.10.184.93"
-                        "\naddnode=80.229.17.246"
-                        "\naddnode=207.148.29.184"
-                        "\naddnode=45.63.53.130"
-                        "\naddnode=151.106.19.60"
-                        "\naddnode=108.61.164.220"
-                        "\naddnode=45.77.152.116"
-                        "\naddnode=8.12.18.10"
-                        "\naddnode=97.90.3.243"
-                        "\naddnode=144.202.24.242"
-                        "\naddnode=144.202.81.28"
-                        "\naddnode=178.27.96.76"
-                        "\naddnode=124.60.250.217"
-                        "\naddnode=45.32.235.234"
-                        "\naddnode=107.191.40.51"
-                        "\naddnode=45.63.99.162"
-                        "\naddnode=209.250.248.224"
-                        "\naddnode=45.77.138.142"
-                        "\naddnode=45.32.26.76"
-                        "\naddnode=45.76.53.154"
-                        "\naddnode=77.58.184.214"
-                        "\naddnode=45.76.169.224"
-                        "\naddnode=125.236.242.30"
-                        "\naddnode=45.63.31.244"
-                        "\naddnode=104.207.155.165"
-                        "\naddnode=94.60.85.88"
-                        "\naddnode=148.251.183.38"
-                        "\naddnode=45.76.250.5"
-                        "\naddnode=51.15.195.84"
-                        "\naddnode=207.148.28.123"
-                        "\naddnode=210.195.158.31"
-                        "\naddnode=88.99.68.228"
-                        "\naddnode=45.32.231.49"
-                        "\naddnode=77.72.149.117"
-                        "\naddnode=8.9.37.139"
-                        "\naddnode=209.250.250.12"
-                        "\naddnode=66.69.138.63"
-                        "\naddnode=45.63.2.141"
-                        "\naddnode=209.250.246.221"
-                        "\naddnode=144.217.87.98"
-                        "\naddnode=140.82.44.20"
-                        "\naddnode=80.217.62.14"
-                        "\naddnode=207.246.109.211"
-                        "\naddnode=97.107.0.34"
-                        "\naddnode=71.91.183.51"
-                        "\naddnode=62.195.125.111"
-                        "\naddnode=46.196.104.232"
-                        "\naddnode=209.250.249.48"
-                        "\naddnode=81.169.225.222"
-                        "\naddnode=45.76.218.44"
-                        "\naddnode=198.13.35.104"
-                        "\naddnode=144.202.111.198"
-                        "\naddnode=134.119.177.175"
-                        "\naddnode=108.61.218.113"
-                        "\naddnode=207.148.4.73"
-                        "\naddnode=108.61.208.145"
-                        "\naddnode=159.89.109.209"
-                        "\naddnode=124.183.107.15"
-                        "\naddnode=140.82.53.168"
-                        "\naddnode=142.44.194.164"
-                        "\naddnode=208.167.242.195"
-                        "\naddnode=73.189.109.100"
-                        "\naddnode=207.246.122.244"
-                        "\naddnode=45.32.48.171"
-                        "\naddnode=81.183.221.11"
-                        "\naddnode=50.46.199.87"
-                        "\naddnode=140.82.2.71"
-                        "\naddnode=104.1.255.44"
-                        "\naddnode=207.189.26.18"
-                        "\naddnode=84.214.242.20"
-                        "\naddnode=45.63.99.107"
-                        "\naddnode=209.250.233.232"
-                        "\naddnode=209.250.241.2"
-                        "\naddnode=144.132.133.199"
-                        "\naddnode=45.76.117.131"
-                        "\naddnode=80.211.30.124"
-                        "\naddnode=207.148.27.253"
-                        "\naddnode=93.102.197.159"
-                        "\naddnode=140.82.44.221"
-                        "\naddnode=90.51.106.1";
+                        "\nlistenonion=0";
 
     pConf   << std::string("rpcuser=")
             +  randomStrGen(5)
@@ -1371,6 +1269,80 @@ void FileCommit(FILE *fileout)
 #endif
 }
 
+bool TruncateFile(FILE *file, unsigned int length) {
+#if defined(WIN32)
+    return _chsize(_fileno(file), length) == 0;
+#else
+    return ftruncate(fileno(file), length) == 0;
+#endif
+}
+
+// this function tries to raise the file descriptor limit to the requested number.
+// It returns the actual file descriptor limit (which may be more or less than nMinFD)
+int RaiseFileDescriptorLimit(int nMinFD) {
+#if defined(WIN32)
+    return 2048;
+#else
+    struct rlimit limitFD;
+    if (getrlimit(RLIMIT_NOFILE, &limitFD) != -1) {
+        if (limitFD.rlim_cur < (rlim_t)nMinFD) {
+            limitFD.rlim_cur = nMinFD;
+            if (limitFD.rlim_cur > limitFD.rlim_max)
+                limitFD.rlim_cur = limitFD.rlim_max;
+            setrlimit(RLIMIT_NOFILE, &limitFD);
+            getrlimit(RLIMIT_NOFILE, &limitFD);
+        }
+        return limitFD.rlim_cur;
+    }
+    return nMinFD; // getrlimit failed, assume it's fine
+#endif
+}
+
+
+// this function tries to make a particular range of a file allocated (corresponding to disk space)
+// it is advisory, and the range specified in the arguments will never contain live data
+void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length) {
+#if defined(WIN32)
+    // Windows-specific version
+    HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(file));
+    LARGE_INTEGER nFileSize;
+    int64_t nEndPos = (int64_t)offset + length;
+    nFileSize.u.LowPart = nEndPos & 0xFFFFFFFF;
+    nFileSize.u.HighPart = nEndPos >> 32;
+    SetFilePointerEx(hFile, nFileSize, 0, FILE_BEGIN);
+    SetEndOfFile(hFile);
+#elif defined(MAC_OSX)
+    // OSX specific version
+    fstore_t fst;
+    fst.fst_flags = F_ALLOCATECONTIG;
+    fst.fst_posmode = F_PEOFPOSMODE;
+    fst.fst_offset = 0;
+    fst.fst_length = (off_t)offset + length;
+    fst.fst_bytesalloc = 0;
+    if (fcntl(fileno(file), F_PREALLOCATE, &fst) == -1) {
+        fst.fst_flags = F_ALLOCATEALL;
+        fcntl(fileno(file), F_PREALLOCATE, &fst);
+    }
+    ftruncate(fileno(file), fst.fst_length);
+#elif defined(__linux__)
+    // Version using posix_fallocate
+    off_t nEndPos = (off_t)offset + length;
+    posix_fallocate(fileno(file), 0, nEndPos);
+#else
+    // Fallback version
+    // TODO: just write one byte per block
+    static const char buf[65536] = {};
+    fseek(file, offset, SEEK_SET);
+    while (length > 0) {
+        unsigned int now = 65536;
+        if (length < now)
+            now = length;
+        fwrite(buf, 1, now, file); // allowed to fail; this function is advisory anyway
+        length -= now;
+    }
+#endif
+}
+
 void ShrinkDebugFile()
 {
     // Scroll debug.log if it's getting too big
@@ -1390,6 +1362,8 @@ void ShrinkDebugFile()
             fwrite(pch, 1, nBytes, file);
             fclose(file);
         }
+        else if(file != NULL)
+	        fclose(file);
     }
 }
 

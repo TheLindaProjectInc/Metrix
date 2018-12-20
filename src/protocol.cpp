@@ -16,6 +16,19 @@ static const char* ppszTypeName[] =
     "ERROR",
     "tx",
     "block",
+    "filtered block"
+};
+
+enum {
+    MSG_TX = 1,
+    MSG_BLOCK,
+    // Nodes may always request a MSG_FILTERED_BLOCK in a getdata, however,
+    // MSG_FILTERED_BLOCK should not appear in any invs except as a part of getdata.
+    MSG_FILTERED_BLOCK,
+    MSG_TXLOCK_REQUEST,
+    MSG_TXLOCK_VOTE,
+    MSG_SPORK,
+    MSG_MASTERNODE_WINNER
 };
 
 CMessageHeader::CMessageHeader()
@@ -137,5 +150,10 @@ const char* CInv::GetCommand() const
 
 std::string CInv::ToString() const
 {
+    if (type == MSG_BLOCK)
+        return strprintf("%s %s", GetCommand(), hash.ToString());
+    if (type == MSG_TX)
+        return strprintf("%s %s", GetCommand(), hash.ToString().substr(0,10).c_str());
+
     return strprintf("%s %s", GetCommand(), hash.ToString());
 }
