@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/TheLindaProjectInc/Linda/tree/master.svg?style=svg)](https://circleci.com/gh/TheLindaProjectInc/Linda/tree/master)
+
 ![Linda](logo.png)
 
 # Linda Coin
@@ -57,12 +59,9 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 •	Chris Bowe - Director of Web-wallet & Pool
 
-
 #### Developers
 
 •	David Grunge - Lead Developer 
-
-
 
 ## Social
 [Website](https://www.lindacoin.com)
@@ -75,9 +74,7 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 [Facebook](https://www.facebook.com/lindacoincurrency)
 
-[Telegram](https://t.me/OfficaLindaproject)
-
-[GitHub](https://github.com/Lindacoin/Linda)
+[GitHub](https://github.com/TheLindaProjectInc)
 
 [YouTube](https://www.youtube.com/channel/UCzfjb47BI9lx7Ih-K6VY-TA)
 

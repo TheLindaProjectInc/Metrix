@@ -1415,7 +1415,7 @@ int64_t CWallet::GetImmatureBalance() const
 
 
 // populate vCoins with vector of spendable COutputs
-void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, AvailableCoinsType coin_type, bool useIX) const
+void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, AvailableCoinsType coin_type, bool useIX, bool includeLocked) const
 {
     vCoins.clear();
 
@@ -1474,7 +1474,7 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 //        vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
 		//if (!(IsSpent(wtxid, i)) && mine &&
 		if (!(pcoin->IsSpent(i)) && mine &&
-                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue > 0 &&
+                    (includeLocked || !IsLockedCoin((*it).first, i)) && pcoin->vout[i].nValue > 0 &&
                     (!coinControl || !coinControl->HasSelected() || coinControl->IsSelected((*it).first, i)))
                         vCoins.push_back(COutput(pcoin, i, nDepth, mine));
             }
@@ -2294,7 +2294,7 @@ bool CWallet::HasCollateralInputs() const
     BOOST_FOREACH(const COutput& out, vCoins)
         if(IsCollateralAmount(out.tx->vout[out.i].nValue)) nFound++;
 
-    return nFound > 1; // should have more than one just in case
+    return nFound > 0;
 }
 
 bool CWallet::IsCollateralAmount(int64_t nInputAmount) const
@@ -3894,11 +3894,11 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
 }
 
 
-DBErrors CWallet::ZapWalletTx()
+DBErrors CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
 {
     if (!fFileBacked)
         return DB_LOAD_OK;
-    DBErrors nZapWalletTxRet = CWalletDB(strWalletFile,"cr+").ZapWalletTx(this);
+    DBErrors nZapWalletTxRet = CWalletDB(strWalletFile,"cr+").ZapWalletTx(this, vWtx);
     if (nZapWalletTxRet == DB_NEED_REWRITE)
     {
         if (CDB::Rewrite(strWalletFile, "\x04pool"))

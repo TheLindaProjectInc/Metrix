@@ -2036,7 +2036,7 @@ bool CDarkSendSigner::VerifyMessage(CPubKey pubkey, vector<unsigned char>& vchSi
     }
 
     if (fDebug && pubkey2.GetID() != pubkey.GetID())
-        LogPrintf("CDarkSendSigner::VerifyMessage -- keys don't match: %s %s", pubkey2.GetID().ToString(), pubkey.GetID().ToString());
+        LogPrintf("CDarkSendSigner::VerifyMessage -- keys don't match: %s %s\n", pubkey2.GetID().ToString(), pubkey.GetID().ToString());
 
     return (pubkey2.GetID() == pubkey.GetID());
 }
@@ -2058,12 +2058,12 @@ bool CDarksendQueue::Sign()
     }
 
     if(!darkSendSigner.SignMessage(strMessage, errorMessage, vchSig, key2)) {
-        LogPrintf("CDarksendQueue():Relay - Sign message failed");
+        LogPrintf("CDarksendQueue():Relay - Sign message failed\n");
         return false;
     }
 
     if(!darkSendSigner.VerifyMessage(pubkey2, vchSig, strMessage, errorMessage)) {
-        LogPrintf("CDarksendQueue():Relay - Verify message failed");
+        LogPrintf("CDarksendQueue():Relay - Verify message failed\n");
         return false;
     }
 

@@ -2208,18 +2208,18 @@ Value listlockunspent(const Array& params, bool fHelp)
             "listlockunspent\n"
             "Returns list of temporarily unspendable outputs.");
 	
-     vector<COutPoint> vOutpts;
+    vector<COutPoint> vOutpts;
     pwalletMain->ListLockedCoins(vOutpts);
 	
-     Array ret;
+    Array ret;
 	
-     BOOST_FOREACH(COutPoint &outpt, vOutpts) {
+    BOOST_FOREACH(COutPoint &outpt, vOutpts) {
         Object o;
 	     
-         o.push_back(Pair("txid", outpt.hash.GetHex()));
+        o.push_back(Pair("txid", outpt.hash.GetHex()));
         o.push_back(Pair("vout", (int)outpt.n));
         ret.push_back(o);
     }
 	
-     return ret;
+    return ret;
 }

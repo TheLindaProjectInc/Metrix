@@ -84,11 +84,11 @@ class CWallet;
 struct CBlockIndexWorkComparator;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
-static const unsigned int MAX_BLOCK_SIZE = 40000000;
+static const unsigned int MAX_BLOCK_SIZE = 4000000;
 /** The maximum size for transactions we're willing to relay/mine **/
 static const unsigned int MAX_STANDARD_TX_SIZE = 100000;
 /** Default for -blockmaxsize, maximum size for mined blocks **/
-static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 14000000;
+static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 1000000;
 /** Default for -blockprioritysize, maximum space for zero/low-fee transactions **/
 static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 30000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
@@ -270,7 +270,8 @@ int GetInputAge(CTxIn& vin);
 bool AbortNode(const std::string &msg);
 /** Get statistics from node state */
 bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats);
-
+/** Increase a node's misbehavior score. */
+void Misbehaving(NodeId nodeid, int howmuch);
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue);
 
 struct CNodeStateStats {
