@@ -30,6 +30,8 @@ jobs:
             ./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
             make
             ls -l src/Linda*
+      - store_artifacts:
+          path: ~/Linda/compiles
   build-static:
     docker:
       - image: circleci/buildpack-deps:xenial
