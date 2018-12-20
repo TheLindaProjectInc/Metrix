@@ -30,9 +30,6 @@ jobs:
             ./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu
             make
             ls -l src/Linda*
-      - store_artifacts:
-          path: ~/Linda/src/Lindad
-          destination: ~/Linda/compiles/Lindad
   build-static:
     docker:
       - image: circleci/buildpack-deps:xenial
@@ -61,6 +58,9 @@ jobs:
             ./configure --prefix=`pwd`/depends/x86_64-pc-linux-gnu --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
             make
             ls -l src/Linda*
+      - store_artifacts:
+          path: ~/Linda/src/Lindad
+          destination: ~/Linda/compiles/Lindad
 
 workflows:
   version: 2
