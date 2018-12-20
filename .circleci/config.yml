@@ -31,7 +31,8 @@ jobs:
             make
             ls -l src/Linda*
       - store_artifacts:
-          path: ~/Linda/compiles
+          path: ~/Linda/src/Lindad
+          destination: ~/Linda/compiles
   build-static:
     docker:
       - image: circleci/buildpack-deps:xenial
