@@ -13,6 +13,7 @@
 #include <map>
 
 class CBlockIndex;
+class CNetAddr;
 
 void StartRPCThreads();
 void StopRPCThreads();
@@ -43,6 +44,9 @@ void RPCTypeCheck(const json_spirit::Object& o,
   Overrides previous timer <name> (if any).
  */
 void RPCRunLater(const std::string& name, boost::function<void(void)> func, int64_t nSeconds);
+
+//! Convert boost::asio address to CNetAddr
+extern CNetAddr BoostAsioToCNetAddr(boost::asio::ip::address address);
 
 typedef json_spirit::Value(*rpcfn_type)(const json_spirit::Array& params, bool fHelp);
 
