@@ -137,7 +137,7 @@ void Shutdown()
     {
         LOCK(cs_main);
         if (pwalletMain)
-            pwalletMain->SetBestChain(CBlockLocator(pindexBest));
+            pwalletMain->SetBestChain(CBlockLocator(chainActive.Tip()));
     }
     if (pwalletMain)
         bitdb.Flush(true);
@@ -292,6 +292,7 @@ std::string HelpMessage()
     strUsage += "  -rpcthreads=<n>        " + _("Set the number of threads to service RPC calls (default: 4)") + "\n";
     strUsage += "  -blocknotify=<cmd>     " + _("Execute command when the best block changes (%s in cmd is replaced by block hash)") + "\n";
     strUsage += "  -walletnotify=<cmd>    " + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n";
+    strUsage += "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)") + "\n";
     strUsage += "  -confchange            " + _("Require a confirmations for change (default: 0)") + "\n";
     strUsage += "  -minimizecoinage       " + _("Minimize weight consumption (experimental) (default: 0)") + "\n";
     strUsage += "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received (%s in cmd is replaced by message)") + "\n";
@@ -934,6 +935,11 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
+                // If the loaded chain has a wrong genesis, bail out immediately
+                // (we're likely using a testnet datadir, or the other way around).
+                if (!mapBlockIndex.empty() && chainActive.Genesis() == NULL)
+                    return InitError(_("Incorrect or no genesis block found. Wrong datadir for network?"));
+
                 // Initialize the block index (no-op if non-empty database was already loaded)
                 if (!InitBlockIndex()) {
                     strLoadError = _("Error initializing block database");
@@ -941,11 +947,12 @@ bool AppInit2(boost::thread_group& threadGroup)
                 }
 
                 uiInterface.InitMessage(_("Verifying block database..."));
-                if (!VerifyDB()) {
+                if (!VerifyDB(GetArg("-checklevel", 3), GetArg("-checkblocks", 288))) {
                     strLoadError = _("Corrupted block database detected");
                     break;
                 }
             } catch(std::exception &e) {
+                if (fDebug) printf("%s\n", e.what());
                 strLoadError = _("Error opening block database");
                 break;
             }
@@ -957,7 +964,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             // first suggest a reindex
             if (!fReset) {
                 bool fRet = uiInterface.ThreadSafeMessageBox(
-                    strLoadError + ".\n" + _("Do you want to rebuild the block database now?"),
+                    strLoadError + ".\n\n" + _("Do you want to rebuild the block database now?"),
                     "", CClientUIInterface::MSG_ERROR | CClientUIInterface::BTN_ABORT);
                 if (fRet) {
                     fReindex = true;
@@ -999,7 +1006,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             {
                 CBlockIndex* pindex = (*mi).second;
                 CBlock block;
-                block.ReadFromDisk(pindex);
+                ReadBlockFromDisk(block, pindex);
                 block.BuildMerkleTree();
                 LogPrintf("%s\n", block.ToString());
                 nFound++;
@@ -1090,7 +1097,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                     strErrors << _("Cannot write default address") << "\n";
             }
 
-            pwalletMain->SetBestChain(CBlockLocator(pindexBest));
+            pwalletMain->SetBestChain(CBlockLocator(chainActive.Tip()));
         }
 
         LogPrintf("%s", strErrors.str());
@@ -1098,9 +1105,9 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         RegisterWallet(pwalletMain);
 
-        CBlockIndex *pindexRescan = pindexBest;
+        CBlockIndex *pindexRescan = chainActive.Tip();
         if (GetBoolArg("-rescan", false))
-            pindexRescan = pindexGenesisBlock;
+            pindexRescan = chainActive.Genesis();
         else
         {
             CWalletDB walletdb(strWalletFileName);
@@ -1108,16 +1115,16 @@ bool AppInit2(boost::thread_group& threadGroup)
             if (walletdb.ReadBestBlock(locator))
                 pindexRescan = locator.GetBlockIndex();
             else
-                pindexRescan = pindexGenesisBlock;
+                pindexRescan = chainActive.Genesis();
         }
-        if (pindexBest != pindexRescan && pindexBest && pindexRescan && pindexBest->nHeight > pindexRescan->nHeight)
+        if (chainActive.Tip() != pindexRescan && chainActive.Tip() && pindexRescan && chainActive.Height() > pindexRescan->nHeight)
         {
             uiInterface.InitMessage(_("Rescanning..."));
-            LogPrintf("Rescanning last %i blocks (from block %i)...\n", pindexBest->nHeight - pindexRescan->nHeight, pindexRescan->nHeight);
+            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->nHeight, pindexRescan->nHeight);
             nStart = GetTimeMillis();
             pwalletMain->ScanForWalletTransactions(pindexRescan, true);
             LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
-            pwalletMain->SetBestChain(CBlockLocator(pindexBest));
+            pwalletMain->SetBestChain(CBlockLocator(chainActive.Tip()));
             nWalletDBUpdated++;
 
             // Restore wallet transaction metadata after -zapwallettxes=1
@@ -1311,7 +1318,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     //// debug print
     LogPrintf("mapBlockIndex.size() = %u\n",   mapBlockIndex.size());
-    LogPrintf("nBestHeight = %d\n",                   nBestHeight);
+    LogPrintf("nBestHeight = %d\n",            chainActive.Height());
 #ifdef ENABLE_WALLET
     LogPrintf("setKeyPool.size() = %u\n",      pwalletMain ? pwalletMain->setKeyPool.size() : 0);
     LogPrintf("mapWallet.size() = %u\n",       pwalletMain ? pwalletMain->mapWallet.size() : 0);

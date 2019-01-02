@@ -144,16 +144,11 @@ extern CTxMemPool mempool;
 extern std::map<uint256, CBlockIndex*> mapBlockIndex;
 extern std::set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid;
 extern std::set<std::pair<COutPoint, unsigned int> > setStakeSeen;
-extern CBlockIndex* pindexGenesisBlock;
 extern unsigned int nStakeMinAge;
 extern unsigned int nStakeMaxAge;
 extern unsigned int nNodeLifespan;
 extern int nCoinbaseMaturity;
-extern int nBestHeight;
-extern uint256 nBestChainTrust;
 extern uint256 nBestInvalidTrust;
-extern uint256 hashBestChain;
-extern CBlockIndex* pindexBest;
 extern uint64_t nLastBlockTx;
 extern uint64_t nLastBlockSize;
 extern int64_t nLastCoinStakeSearchInterval;
@@ -224,11 +219,9 @@ bool LoadBlockIndex();
 /** Unload database information */
 void UnloadBlockIndex();
 /** Verify consistency of the block and coin databases */
-bool VerifyDB();
+bool VerifyDB(int nCheckLevel, int nCheckDepth);
 /** Print the loaded block tree */
 void PrintBlockTree();
-/** Find a block by height in the currently-connected chain */
-CBlockIndex* FindBlockByHeight(int nHeight);
 /** Process protocol messages received from a given node */
 bool ProcessMessages(CNode* pfrom);
 /** Send queued protocol messages to be sent to a give node */
@@ -1361,60 +1354,7 @@ public:
         }
         return hash;
     }
-
-
-    bool WriteToDisk(CDiskBlockPos &pos)
-    {
-        // Open history file to append
-        CAutoFile fileout = CAutoFile(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
-        if (!fileout)
-            return error("CBlock::WriteToDisk() : OpenBlockFile failed");
-
-        // Write index header
-        unsigned int nSize = fileout.GetSerializeSize(*this);
-        fileout << FLATDATA(Params().MessageStart()) << nSize;
-
-        // Write block
-        long fileOutPos = ftell(fileout);
-        if (fileOutPos < 0)
-            return error("CBlock::WriteToDisk() : ftell failed");
-        pos.nPos = (unsigned int)fileOutPos;
-        fileout << *this;
-
-        // Flush stdio buffers and commit to disk before returning
-        fflush(fileout);
-        if (!IsInitialBlockDownload())
-            FileCommit(fileout);
-
-        return true;
-    }
-
-    bool ReadFromDisk(const CDiskBlockPos &pos)
-    {
-        SetNull();
-
-        // Open history file to read
-        CAutoFile filein = CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
-        if (!filein)
-            return error("CBlock::ReadFromDisk() : OpenBlockFile failed");
-
-        // Read block
-        try {
-            filein >> *this;
-        }
-        catch (std::exception &e) {
-            return error("%s() : deserialize or I/O error", __PRETTY_FUNCTION__);
-        }
-
-        // Check the header
-        if (IsProofOfWork() && !CheckProofOfWork(GetPoWHash(), nBits))
-            return error("CBlock::ReadFromDisk() : errors in block header");
-
-        return true;
-    }
-
-
-
+        
     std::string ToString() const
     {
         std::stringstream s;
@@ -1437,34 +1377,38 @@ public:
         return s.str();
     }
 
-
-    /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
-     *  In case pfClean is provided, operation will try to be tolerant about errors, and *pfClean
-     *  will be true if no problems were found. Otherwise, the return value will be false in case
-     *  of problems. Note that in any case, coins may be modified. */
-    bool DisconnectBlock(CValidationState &state, CBlockIndex *pindex, CCoinsViewCache &coins, bool *pfClean = NULL);
-
-    // Apply the effects of this block (with given index) on the UTXO set represented by coins
-    bool ConnectBlock(CValidationState &state, CBlockIndex *pindex, CCoinsViewCache &coins, bool fJustCheck=false);
-
-    // Read a block from disk
-    bool ReadFromDisk(const CBlockIndex* pindex);
-
-    // Add this block to the block index, and if necessary, switch the active block chain to this
-    bool AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos, const uint256& hashProof);
-
-    // Context-independent validity checks
-    bool CheckBlock(CValidationState &state, bool fCheckPOW=true, bool fCheckMerkleRoot=true, bool fCheckSig=true) const;
-
-    // Store block on disk
-    // if dbp is provided, the file is known to already reside on disk
-    bool AcceptBlock(CValidationState &state, CDiskBlockPos *dbp = NULL);
-
-    bool SignBlock(CWallet& keystore, int64_t nFees);
-    bool CheckBlockSignature() const;
 };
 
+/** Functions for disk access for blocks */
+bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos);
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos);
+bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex);
 
+/** Functions for validating blocks and updating the block tree */
+ /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
+ *  In case pfClean is provided, operation will try to be tolerant about errors, and *pfClean
+ *  will be true if no problems were found. Otherwise, the return value will be false in case
+ *  of problems. Note that in any case, coins may be modified. */
+bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool* pfClean = NULL);
+
+// Apply the effects of this block (with given index) on the UTXO set represented by coins
+bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool fJustCheck = false);
+
+// Add this block to the block index, and if necessary, switch the active block chain to this
+bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos, const uint256& hashProof);
+
+// Context-independent validity checks
+bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true, bool fCheckSig=true);
+
+// Store block on disk
+// if dbp is provided, the file is known to already reside on disk
+bool AcceptBlock(CBlock& block, CValidationState &state, CDiskBlockPos *dbp = NULL);
+
+// Linda: attempt to generate suitable proof-of-stake
+bool SignBlock(CBlock& block, CWallet& keystore, int64_t nFees);
+
+//UTXO: The public key that signs must match the public key associated with the first utxo of the coinstake tx.
+bool CheckBlockSignature(const CBlock& block);
 
 class CBlockFileInfo
 {
@@ -1543,10 +1487,8 @@ enum BlockStatus {
 
 /** The block chain is a tree shaped structure starting with the
  * genesis block at the root, with each block potentially having multiple
- * candidates to be the next block.  pprev and pnext link a path through the
- * main/longest chain.  A blockindex may have multiple pprev pointing back
- * to it, but pnext will only point forward to the longest branch, or will
- * be null if the block is not part of the longest chain.
+ * candidates to be the next block. A blockindex may have multiple pprev pointing
+ * to it, but at most one of them can be part of the currently active branch.
  */
 class CBlockIndex
 {
@@ -1555,8 +1497,6 @@ public:
     const uint256* phashBlock;
     // pointer to the index of the predecessor of this block
     CBlockIndex* pprev;
-    // (memory only) pointer to the index of the *active* successor of this block
-    CBlockIndex* pnext;
     uint256 nChainTrust; // ppcoin: trust score of block chain
     // height of the entry in the chain. The genesis block has height 0
     int nHeight;
@@ -1605,7 +1545,6 @@ public:
     {
         phashBlock = NULL;
         pprev = NULL;
-        pnext = NULL;
         nHeight = 0;
         nFile = 0;
         nDataPos = 0;
@@ -1633,7 +1572,6 @@ public:
     {
         phashBlock = NULL;
         pprev = NULL;
-        pnext = NULL;
         nHeight = 0;
         nFile = 0;
         nDataPos = 0;
@@ -1709,11 +1647,6 @@ public:
 
     uint256 GetBlockTrust() const;
 
-    bool IsInMainChain() const
-    {
-        return (pnext || this == pindexBest);
-    }
-
     bool CheckIndex() const
     {
         return true;
@@ -1739,6 +1672,8 @@ public:
         std::sort(pbegin, pend);
         return pbegin[(pend - pbegin)/2];
     }
+
+    int64_t GetMedianTime() const;
 
     /**
      * Returns true if there are nRequired or more blocks of minVersion or above
@@ -1790,8 +1725,8 @@ public:
 
     std::string ToString() const
     {
-        return strprintf("CBlockIndex(nprev=%p, pnext=%p, nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016x, hashProof=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s)",
-            pprev, pnext, nHeight,
+        return strprintf("CBlockIndex(nprev=%p, nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016x, hashProof=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s)",
+            pprev, nHeight,
             FormatMoney(nMint), FormatMoney(nMoneySupply),
             GeneratedStakeModifier() ? "MOD" : "-", GetStakeEntropyBit(), IsProofOfStake()? "PoS" : "PoW",
             nStakeModifier,
@@ -1992,12 +1927,7 @@ public:
         Set(pindex);
     }
 
-    explicit CBlockLocator(uint256 hashBlock)
-    {
-        std::map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
-        if (mi != mapBlockIndex.end())
-            Set((*mi).second);
-    }
+    explicit CBlockLocator(uint256 hashBlock);
 
     CBlockLocator(const std::vector<uint256>& vHaveIn)
     {
@@ -2021,83 +1951,17 @@ public:
         return vHave.empty();
     }
 
-    void Set(const CBlockIndex* pindex)
-    {
-        vHave.clear();
-        int nStep = 1;
-        while (pindex)
-        {
-            vHave.push_back(pindex->GetBlockHash());
+    /** Given a block initialises the locator to that point in the chain. */
+    void Set(const CBlockIndex* pindex);
+    /** Returns the distance in blocks this locator is from our chain head. */
+    int GetDistanceBack();
+    /** Returns the first best-chain block the locator contains. */
+    CBlockIndex* GetBlockIndex();
+    /** Returns the hash of the first best chain block the locator contains. */
+    uint256 GetBlockHash();
+    /** Returns the height of the first best chain block the locator has. */
+    int GetHeight();
 
-            // Exponentially larger steps back
-            for (int i = 0; pindex && i < nStep; i++)
-                pindex = pindex->pprev;
-            if (vHave.size() > 10)
-                nStep *= 2;
-        }
-        vHave.push_back(Params().HashGenesisBlock());
-    }
-
-    int GetDistanceBack()
-    {
-        // Retrace how far back it was in the sender's branch
-        int nDistance = 0;
-        int nStep = 1;
-        BOOST_FOREACH(const uint256& hash, vHave)
-        {
-            std::map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hash);
-            if (mi != mapBlockIndex.end())
-            {
-                CBlockIndex* pindex = (*mi).second;
-                if (pindex->IsInMainChain())
-                    return nDistance;
-            }
-            nDistance += nStep;
-            if (nDistance > 10)
-                nStep *= 2;
-        }
-        return nDistance;
-    }
-
-    CBlockIndex* GetBlockIndex()
-    {
-        // Find the first block the caller has in the main chain
-        BOOST_FOREACH(const uint256& hash, vHave)
-        {
-            std::map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hash);
-            if (mi != mapBlockIndex.end())
-            {
-                CBlockIndex* pindex = (*mi).second;
-                if (pindex->IsInMainChain())
-                    return pindex;
-            }
-        }
-        return pindexGenesisBlock;
-    }
-
-    uint256 GetBlockHash()
-    {
-        // Find the first block the caller has in the main chain
-        BOOST_FOREACH(const uint256& hash, vHave)
-        {
-            std::map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hash);
-            if (mi != mapBlockIndex.end())
-            {
-                CBlockIndex* pindex = (*mi).second;
-                if (pindex->IsInMainChain())
-                    return hash;
-            }
-        }
-        return Params().HashGenesisBlock();
-    }
-
-    int GetHeight()
-    {
-        CBlockIndex* pindex = GetBlockIndex();
-        if (!pindex)
-            return 0;
-        return pindex->nHeight;
-    }
 };
 
 
@@ -2249,5 +2113,52 @@ public:
     )
 };
 
+/** An in-memory indexed chain of blocks. */
+class CChain {
+private:
+    std::vector<CBlockIndex*> vChain;
+    
+public:
+    /** Returns the index entry for the genesis block of this chain, or NULL if none. */
+    CBlockIndex *Genesis() const {
+        return vChain.size() > 0 ? vChain[0] : NULL;
+    }
+
+    /** Returns the index entry for the tip of this chain, or NULL if none. */
+    CBlockIndex *Tip() const {
+        return vChain.size() > 0 ? vChain[vChain.size() - 1] : NULL;
+    }
+    /** Returns the index entry at a particular height in this chain, or NULL if no such height exists. */
+    CBlockIndex *operator[](int nHeight) const {
+        if (nHeight < 0 || nHeight >= (int)vChain.size())
+            return NULL;
+        return vChain[nHeight];
+    }
+    /** Compare two chains efficiently. */
+    friend bool operator==(const CChain &a, const CChain &b) {
+        return a.vChain.size() == b.vChain.size() &&
+            a.vChain[a.vChain.size() - 1] == b.vChain[b.vChain.size() - 1];
+    }
+    /** Efficiently check whether a block is present in this chain. */
+    bool Contains(const CBlockIndex *pindex) const {
+        return (*this)[pindex->nHeight] == pindex;
+    }
+    /** Find the successor of a block in this chain, or NULL if the given index is not found or is the tip. */
+    CBlockIndex *Next(const CBlockIndex *pindex) const {
+        if (Contains(pindex))
+            return (*this)[pindex->nHeight + 1];
+        else
+            return NULL;
+    }
+    /** Return the maximal height in the chain. Is equal to chain.Tip() ? chain.Tip()->nHeight : -1. */
+    int Height() const {
+        return vChain.size() - 1;
+    }
+    /** Set/initialize a chain with a given tip. Returns the forking point. */
+    CBlockIndex *SetTip(CBlockIndex *pindex);
+};
+
+/** The currently-connected chain of blocks. */
+extern CChain chainActive;
 
 #endif

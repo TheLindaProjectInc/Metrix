@@ -1059,18 +1059,18 @@ int CWallet::ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate)
             // no need to read and scan block, if block was created before
             // our wallet birthday (as adjusted for block time variability)
             if (nTimeFirstKey && (pindex->nTime < (nTimeFirstKey - 7200))) {
-                pindex = pindex->pnext;
+                pindex = chainActive.Next(pindex);
                 continue;
             }
 
             CBlock block;
-            block.ReadFromDisk(pindex);
+            ReadBlockFromDisk(block, pindex);
             BOOST_FOREACH(CTransaction& tx, block.vtx)
             {
                 if (AddToWalletIfInvolvingMe(tx.GetHash(), tx, &block, fUpdate))
                     ret++;
             }
-            pindex = pindex->pnext;
+            pindex = chainActive.Next(pindex);
         }
     }
     return ret;
@@ -1124,7 +1124,7 @@ void CWallet::ReacceptWalletTransactions()
         if (fMissing)
         {
             // TODO: optimize this to scan just part of the block chain?
-            if (ScanForWalletTransactions(pindexGenesisBlock))
+            if (ScanForWalletTransactions(chainActive.Genesis()))
                 fRepeat = true;  // Found missing transactions: re-do re-accept.
         }
     }
@@ -1489,10 +1489,10 @@ static bool HasMasternodePayment(CTxOut vout, int nDepth) {
     // only check a maximum of 10 000 blocks so we don't get stuck here for too long
     nDepth = min(nDepth, 10000);
     if (vout.nValue == MASTERNODE_COLLATERAL) {
-        CBlockIndex* pblockindex = mapBlockIndex[hashBestChain];
+        CBlockIndex* pblockindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
         for (int n = 0; n < nDepth; n++) {
             CBlock block;
-            if (block.ReadFromDisk(pblockindex)) {
+            if (ReadBlockFromDisk(block, pblockindex)) {
                 if (block.HasMasternodePayment()) {
                     CScript payee;
                     if (block.vtx[1].vout.size() == 3) {
@@ -3340,12 +3340,12 @@ uint64_t CWallet::GetStakeWeight() const
 
 bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64_t nSearchInterval, int64_t nFees, CTransaction& txNew, CKey& key)
 {
-    CBlockIndex* pindexPrev = pindexBest;
-    if(pindexBest->nHeight < POS_START_BLOCK)
+    CBlockIndex* pindexPrev = chainActive.Tip();
+    if(chainActive.Height() < POS_START_BLOCK)
         return false;
 
     // height of block being minted
-    int nHeight = pindexBest->nHeight+1;
+    int nHeight = chainActive.Height()+1;
 
     CBigNum bnTargetPerCoinDay;
     bnTargetPerCoinDay.SetCompact(nBits);
@@ -3382,7 +3382,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     {
         static int nMaxStakeSearchInterval = 60;
         bool fKernelFound = false;
-        for (unsigned int n=0; n<min(nSearchInterval,(int64_t)nMaxStakeSearchInterval) && !fKernelFound && pindexPrev == pindexBest; n++)
+        for (unsigned int n=0; n<min(nSearchInterval,(int64_t)nMaxStakeSearchInterval) && !fKernelFound && pindexPrev == chainActive.Tip(); n++)
         {
             boost::this_thread::interruption_point();
             // Search backward in time from the given txNew timestamp 
@@ -4431,7 +4431,7 @@ void CWallet::GetKeyBirthTimes(std::map<CKeyID, int64_t> &mapKeyBirth) const {
             mapKeyBirth[it->first] = it->second.nCreateTime;
 
     // map in which we'll infer heights of other keys
-    CBlockIndex *pindexMax = FindBlockByHeight(std::max(0, nBestHeight - 144)); // the tip can be reorganised; use a 144-block safety margin
+    CBlockIndex *pindexMax = chainActive[std::max(0, chainActive.Height() - 144)]; // the tip can be reorganised; use a 144-block safety margin
     std::map<CKeyID, CBlockIndex*> mapKeyFirstBlock;
     std::set<CKeyID> setKeys;
     GetKeys(setKeys);
@@ -4451,7 +4451,7 @@ void CWallet::GetKeyBirthTimes(std::map<CKeyID, int64_t> &mapKeyBirth) const {
         // iterate over all wallet transactions...
         const CWalletTx &wtx = (*it).second;
         std::map<uint256, CBlockIndex*>::const_iterator blit = mapBlockIndex.find(wtx.hashBlock);
-        if (blit != mapBlockIndex.end() && blit->second->IsInMainChain()) {
+        if (blit != mapBlockIndex.end() && chainActive.Contains(blit->second)) {
             // ... which are already in a block
             int nHeight = blit->second->nHeight;
             BOOST_FOREACH(const CTxOut &txout, wtx.vout) {
