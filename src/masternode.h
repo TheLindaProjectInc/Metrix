@@ -143,14 +143,14 @@ public:
 
     int GetMasternodeInputAge()
     {
-        if(pindexBest == NULL) return 0;
+        if(chainActive.Tip() == NULL) return 0;
 
         if(cacheInputAge == 0){
             cacheInputAge = GetInputAge(vin);
-            cacheInputAgeBlock = pindexBest->nHeight;
+            cacheInputAgeBlock = chainActive.Height();
         }
 
-        return cacheInputAge+(pindexBest->nHeight-cacheInputAgeBlock);
+        return cacheInputAge+(chainActive.Height()-cacheInputAgeBlock);
     }
 };
 
