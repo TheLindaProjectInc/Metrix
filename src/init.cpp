@@ -416,12 +416,12 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
             LogPrintf("Warning: Could not open blocks file %s\n", path.string());
         }
     }
-}
 
     if (GetBoolArg("-stopafterblockimport", false)) {
         LogPrintf("Stopping after block import\n");
         StartShutdown();
     }
+}
 
 /** Initialize Lindacoin.
  *  @pre Parameters should be parsed and config file should be read.
