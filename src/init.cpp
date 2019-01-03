@@ -550,6 +550,8 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (GetBoolArg("-nodebug", false) || find(categories.begin(), categories.end(), string("0")) != categories.end())
         fDebug = false;
 
+    mempool.setSanityCheck(GetBoolArg("-checkmempool", RegTest()));
+
     // -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency
     nScriptCheckThreads = GetArg("-par", 0);
     if (nScriptCheckThreads <= 0)

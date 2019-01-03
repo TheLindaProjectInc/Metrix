@@ -11,6 +11,10 @@ using namespace std;
 
 CTxMemPool::CTxMemPool()
 {
+// Sanity checks off by default for performance, because otherwise
+// accepting transactions becomes O(N^2) where N is the number
+// of transactions in the pool
+    fSanityCheck = false;
 }
 
 unsigned int CTxMemPool::GetTransactionsUpdated() const
@@ -23,6 +27,44 @@ void CTxMemPool::AddTransactionsUpdated(unsigned int n)
 {
     LOCK(cs);
     nTransactionsUpdated += n;
+}
+
+void CTxMemPool::check(CTxMemPool::CoinLookupFunc fnLookup) const
+{
+    if (!fSanityCheck)
+        return;
+
+    LogPrint("mempool", "Checking mempool with %u transactions and %u inputs\n", (unsigned int)mapTx.size(), (unsigned int)mapNextTx.size());
+
+    LOCK(cs);
+    for (std::map<uint256, CTransaction>::const_iterator it = mapTx.begin(); it != mapTx.end(); it++) {
+        unsigned int i = 0;
+        BOOST_FOREACH(const CTxIn &txin, it->second.vin) {
+            // Check that every mempool transaction's inputs refer to available coins, or other mempool tx's.
+            std::map<uint256, CTransaction>::const_iterator it2 = mapTx.find(txin.prevout.hash);
+            if (it2 != mapTx.end()) {
+                assert(it2->second.vout.size() > txin.prevout.n && !it2->second.vout[txin.prevout.n].IsNull());
+            }
+            else {
+                CCoins &coins = (*fnLookup)(txin.prevout.hash);
+                assert(coins.IsAvailable(txin.prevout.n));
+            }
+            // Check whether its inputs are marked in mapNextTx.
+            std::map<COutPoint, CInPoint>::const_iterator it3 = mapNextTx.find(txin.prevout);
+            assert(it3 != mapNextTx.end());
+            assert(it3->second.ptx == &it->second);
+            assert(it3->second.n == i);
+            i++;
+        }
+    }
+    for (std::map<COutPoint, CInPoint>::const_iterator it = mapNextTx.begin(); it != mapNextTx.end(); it++) {
+        uint256 hash = it->second.ptx->GetHash();
+        std::map<uint256, CTransaction>::const_iterator it2 = mapTx.find(hash);
+        assert(it2 != mapTx.end());
+        assert(&it2->second == it->second.ptx);
+        assert(it2->second.vin.size() > it->second.n);
+        assert(it->first == it->second.ptx->vin[it->second.n].prevout);
+    }
 }
 
 bool CTxMemPool::addUnchecked(const uint256& hash, const CTransaction &tx)
