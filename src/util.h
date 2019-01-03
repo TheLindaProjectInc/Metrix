@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 
+#include <boost/version.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
@@ -107,10 +108,13 @@ boost::filesystem::path GetMasternodeConfigFile();
 
 inline void MilliSleep(int64_t n)
 {
-#if BOOST_VERSION >= 105000
+#if defined(HAVE_WORKING_BOOST_SLEEP_FOR)
     boost::this_thread::sleep_for(boost::chrono::milliseconds(n));
-#else
+#elif defined(HAVE_WORKING_BOOST_SLEEP)
     boost::this_thread::sleep(boost::posix_time::milliseconds(n));
+#else
+    //should never get here
+#error missing boost sleep implementation
 #endif
 }
 
@@ -212,10 +216,11 @@ std::string DecodeBase32(const std::string& str);
 std::string EncodeBase32(const unsigned char* pch, size_t len);
 std::string EncodeBase32(const std::string& str);
 void ParseParameters(int argc, const char*const argv[]);
-bool WildcardMatch(const char* psz, const char* mask);
-bool WildcardMatch(const std::string& str, const std::string& mask);
 void FileCommit(FILE *fileout);
 bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest);
+bool TruncateFile(FILE *file, unsigned int length);
+int RaiseFileDescriptorLimit(int nMinFD);
+void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length);
 boost::filesystem::path GetDefaultDataDir();
 const boost::filesystem::path &GetDataDir(bool fNetSpecific = true);
 boost::filesystem::path GetConfigFile();
@@ -373,13 +378,6 @@ inline std::string DateTimeStrFormat(int64_t nTime)
     return DateTimeStrFormat(strTimestampFormat.c_str(), nTime);
 }
 
-
-template<typename T>
-void skipspaces(T& it)
-{
-    while (isspace(*it))
-        ++it;
-}
 
 inline bool IsSwitchChar(char c)
 {

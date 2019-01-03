@@ -11,6 +11,10 @@ using namespace std;
 
 CTxMemPool::CTxMemPool()
 {
+// Sanity checks off by default for performance, because otherwise
+// accepting transactions becomes O(N^2) where N is the number
+// of transactions in the pool
+    fSanityCheck = false;
 }
 
 unsigned int CTxMemPool::GetTransactionsUpdated() const
@@ -25,7 +29,45 @@ void CTxMemPool::AddTransactionsUpdated(unsigned int n)
     nTransactionsUpdated += n;
 }
 
-bool CTxMemPool::addUnchecked(const uint256& hash, CTransaction &tx)
+void CTxMemPool::check(CTxMemPool::CoinLookupFunc fnLookup) const
+{
+    if (!fSanityCheck)
+        return;
+
+    LogPrint("mempool", "Checking mempool with %u transactions and %u inputs\n", (unsigned int)mapTx.size(), (unsigned int)mapNextTx.size());
+
+    LOCK(cs);
+    for (std::map<uint256, CTransaction>::const_iterator it = mapTx.begin(); it != mapTx.end(); it++) {
+        unsigned int i = 0;
+        BOOST_FOREACH(const CTxIn &txin, it->second.vin) {
+            // Check that every mempool transaction's inputs refer to available coins, or other mempool tx's.
+            std::map<uint256, CTransaction>::const_iterator it2 = mapTx.find(txin.prevout.hash);
+            if (it2 != mapTx.end()) {
+                assert(it2->second.vout.size() > txin.prevout.n && !it2->second.vout[txin.prevout.n].IsNull());
+            }
+            else {
+                CCoins &coins = (*fnLookup)(txin.prevout.hash);
+                assert(coins.IsAvailable(txin.prevout.n));
+            }
+            // Check whether its inputs are marked in mapNextTx.
+            std::map<COutPoint, CInPoint>::const_iterator it3 = mapNextTx.find(txin.prevout);
+            assert(it3 != mapNextTx.end());
+            assert(it3->second.ptx == &it->second);
+            assert(it3->second.n == i);
+            i++;
+        }
+    }
+    for (std::map<COutPoint, CInPoint>::const_iterator it = mapNextTx.begin(); it != mapNextTx.end(); it++) {
+        uint256 hash = it->second.ptx->GetHash();
+        std::map<uint256, CTransaction>::const_iterator it2 = mapTx.find(hash);
+        assert(it2 != mapTx.end());
+        assert(&it2->second == it->second.ptx);
+        assert(it2->second.vin.size() > it->second.n);
+        assert(it->first == it->second.ptx->vin[it->second.n].prevout);
+    }
+}
+
+bool CTxMemPool::addUnchecked(const uint256& hash, const CTransaction &tx)
 {
     // Add to memory pool without checking anything.
     // Used by main.cpp AcceptToMemoryPool(), which DOES do
@@ -40,21 +82,34 @@ bool CTxMemPool::addUnchecked(const uint256& hash, CTransaction &tx)
     return true;
 }
 
+void CTxMemPool::pruneSpent(const uint256 &hashTx, CCoins &coins)
+{
+    LOCK(cs);
+
+    std::map<COutPoint, CInPoint>::iterator it = mapNextTx.lower_bound(COutPoint(hashTx, 0));
+
+    // iterate over all COutPoints in mapNextTx whose hash equals the provided hashTx
+    while (it != mapNextTx.end() && it->first.hash == hashTx) {
+        coins.Spend(it->first.n); // and remove those outputs from coins
+        it++;
+    }
+}
+
 bool CTxMemPool::remove(const CTransaction &tx, bool fRecursive)
 {
     // Remove transaction from memory pool
     {
         LOCK(cs);
         uint256 hash = tx.GetHash();
+        if (fRecursive) {
+            for (unsigned int i = 0; i < tx.vout.size(); i++) {
+                std::map<COutPoint, CInPoint>::iterator it = mapNextTx.find(COutPoint(hash, i));
+                if (it != mapNextTx.end())
+                    remove(*it->second.ptx, true);
+            }
+        }
         if (mapTx.count(hash))
         {
-            if (fRecursive) {
-                for (unsigned int i = 0; i < tx.vout.size(); i++) {
-                    std::map<COutPoint, CInPoint>::iterator it = mapNextTx.find(COutPoint(hash, i));
-                    if (it != mapNextTx.end())
-                        remove(*it->second.ptx, true);
-                }
-            }
             BOOST_FOREACH(const CTxIn& txin, tx.vin)
                 mapNextTx.erase(txin.prevout);
             mapTx.erase(hash);
@@ -97,11 +152,12 @@ void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
         vtxid.push_back((*mi).first);
 }
 
-bool CTxMemPool::lookup(uint256 hash, CTransaction& result) const
+CTransaction CTxMemPool::lookup(uint256 hash) const
 {
     LOCK(cs);
+    CTransaction result;
     std::map<uint256, CTransaction>::const_iterator i = mapTx.find(hash);
-    if (i == mapTx.end()) return false;
+    if (i == mapTx.end()) return result;
     result = i->second;
-    return true;
+    return result;
 }

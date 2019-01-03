@@ -8,6 +8,7 @@ debug/
 *.o
 *.d
 .*
+*.a
 .circleci/run-build-locally.sh
 !.circleci/
 src/Lindad
@@ -17,6 +18,26 @@ Linda-qt
 qrc_bitcoin.cpp
 src/obj/build.h
 object_script.Linda-qt.*
+# autotools
 Makefile.*
 Makefile
+!Makefile.am
+!Makefile.include
+!depends/Makefile
 *plugin_import.cpp
+configure
+aclocal.m4
+config.status
+build-aux/compile
+build-aux/config.guess
+build-aux/config.sub
+build-aux/depcomp
+build-aux/install-sh
+build-aux/missing
+depends/x86_64-*/*
+depends/built/*
+depends/sources/*
+depends/SDKs/*
+share/setup.nsi
+src/stamp-h1
+src/bitcoin-config.*

@@ -143,14 +143,14 @@ public:
 
     int GetMasternodeInputAge()
     {
-        if(pindexBest == NULL) return 0;
+        if(chainActive.Tip() == NULL) return 0;
 
         if(cacheInputAge == 0){
             cacheInputAge = GetInputAge(vin);
-            cacheInputAgeBlock = pindexBest->nHeight;
+            cacheInputAgeBlock = chainActive.Height();
         }
 
-        return cacheInputAge+(pindexBest->nHeight-cacheInputAgeBlock);
+        return cacheInputAge+(chainActive.Height()-cacheInputAgeBlock);
     }
 };
 
@@ -220,8 +220,8 @@ private:
 public:
 
     CMasternodePayments() {
-        strMainPubKey = "031166155cfa74939d2d759f7a1bd45e5ea07463442a3449b46ec536dc4213992e";
-        strTestPubKey = "031166155cfa74939d2d759f7a1bd45e5ea07463442a3449b46ec536dc4213992e";
+        strMainPubKey = "0469d959402805bde2f4be0b26db7920d92bddfaa3025e4d1167a3916e6c466f1be4d92d9ea04f1c81ed939a79be9617cde2b51f917d195680c6855c58eb3a5519";
+        strTestPubKey = "0469d959402805bde2f4be0b26db7920d92bddfaa3025e4d1167a3916e6c466f1be4d92d9ea04f1c81ed939a79be9617cde2b51f917d195680c6855c58eb3a5519";
         enabled = false;
     }
 

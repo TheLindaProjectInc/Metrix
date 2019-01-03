@@ -50,15 +50,15 @@ Value getinfo(const Array& params, bool fHelp)
         obj.push_back(Pair("stake",         ValueFromAmount(pwalletMain->GetStake())));
     }
 #endif
-    obj.push_back(Pair("blocks",        (int)nBestHeight));
+    obj.push_back(Pair("blocks",        (int)chainActive.Height()));
     obj.push_back(Pair("timeoffset",    (int64_t)GetTimeOffset()));
-    obj.push_back(Pair("moneysupply",   ValueFromAmount(pindexBest->nMoneySupply)));
+    obj.push_back(Pair("moneysupply",   ValueFromAmount(chainActive.Tip()->nMoneySupply)));
     obj.push_back(Pair("connections",   (int)vNodes.size()));
     obj.push_back(Pair("proxy",         (proxy.IsValid() ? proxy.ToStringIPPort() : string())));
     obj.push_back(Pair("ip",            GetLocalAddress(NULL).ToStringIP()));
 
     diff.push_back(Pair("proof-of-work",  GetDifficulty()));
-    diff.push_back(Pair("proof-of-stake", GetDifficulty(GetLastBlockIndex(pindexBest, true))));
+    diff.push_back(Pair("proof-of-stake", GetDifficulty(GetLastBlockIndex(chainActive.Tip(), true))));
     obj.push_back(Pair("difficulty",    diff));
 
     obj.push_back(Pair("testnet",       TestNet()));
@@ -69,8 +69,22 @@ Value getinfo(const Array& params, bool fHelp)
     }
     obj.push_back(Pair("paytxfee",      ValueFromAmount(nTransactionFee)));
     obj.push_back(Pair("mininput",      ValueFromAmount(nMinimumInputValue)));
-    if (pwalletMain && pwalletMain->IsCrypted())
-        obj.push_back(Pair("unlocked_until", (int64_t)nWalletUnlockTime));
+    // get lock/encryption status
+    if (pwalletMain) {
+        if (pwalletMain->IsCrypted())
+            obj.push_back(Pair("unlocked_until", (int64_t)nWalletUnlockTime));
+
+        if(!pwalletMain->IsCrypted())
+            obj.push_back(Pair("encryption_status", "Unencrypted"));
+        else if(pwalletMain->IsLocked(true))
+            obj.push_back(Pair("encryption_status", "Locked"));
+        else if(pwalletMain->IsLocked())
+            obj.push_back(Pair("encryption_status", "LockedForStaking"));
+        else if (pwalletMain->fWalletUnlockAnonymizeOnly)
+            obj.push_back(Pair("encryption_status", "UnlockedForAnonymizationOnly"));
+        else
+            obj.push_back(Pair("encryption_status", "Unlocked"));
+    }
 #endif
     obj.push_back(Pair("errors",        GetWarnings("statusbar")));
     return obj;
