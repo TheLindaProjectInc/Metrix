@@ -102,7 +102,7 @@ Value getnewpubkey(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
     CKeyID keyID = newKey.GetID();
 
-    pwalletMain->SetAddressBookName(keyID, strAccount);
+    pwalletMain->SetAddressBook(keyID, strAccount, "receive");
 
     return HexStr(newKey.begin(), newKey.end());
 }
@@ -132,7 +132,7 @@ Value getnewaddress(const Array& params, bool fHelp)
     if (!pwalletMain->GetKeyFromPool(account.vchPubKey))
             throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
-    pwalletMain->SetAddressBookName(account.vchPubKey.GetID(), strAccount);
+    pwalletMain->SetAddressBook(account.vchPubKey.GetID(), strAccount, "receive");
     walletdb.WriteAccount(strAccount, account);
 
     return CBitcoinAddress(account.vchPubKey.GetID()).ToString();
@@ -170,7 +170,7 @@ CBitcoinAddress GetAccountAddress(string strAccount, bool bForceNew=false)
         if (!pwalletMain->GetKeyFromPool(account.vchPubKey))
             throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
-        pwalletMain->SetAddressBookName(account.vchPubKey.GetID(), strAccount);
+        pwalletMain->SetAddressBook(account.vchPubKey.GetID(), strAccount, "receive");
         walletdb.WriteAccount(strAccount, account);
     }
 
@@ -216,7 +216,7 @@ Value setaccount(const Array& params, bool fHelp)
     if (!pwalletMain->mapAddressBook.count(address.Get()))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Linda address");
 
-    pwalletMain->SetAddressBookName(address.Get(), strAccount);
+    pwalletMain->SetAddressBook(address.Get(), strAccount, "receive");
 
     return Value::null;
 }
@@ -234,9 +234,9 @@ Value getaccount(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Linda address");
 
     string strAccount;
-    map<CTxDestination, string>::iterator mi = pwalletMain->mapAddressBook.find(address.Get());
-    if (mi != pwalletMain->mapAddressBook.end() && !(*mi).second.empty())
-        strAccount = (*mi).second;
+    map<CTxDestination, CAddressBookData>::iterator mi = pwalletMain->mapAddressBook.find(address.Get());
+    if (mi != pwalletMain->mapAddressBook.end() && !(*mi).second.name.empty())
+        strAccount = (*mi).second.name;
     return strAccount;
 }
 
@@ -252,10 +252,10 @@ Value getaddressesbyaccount(const Array& params, bool fHelp)
 
     // Find all addresses that have the given account
     Array ret;
-    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, string)& item, pwalletMain->mapAddressBook)
+    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, CAddressBookData)& item, pwalletMain->mapAddressBook)
     {
         const CBitcoinAddress& address = item.first;
-        const string& strName = item.second;
+        const string& strName = item.second.name;
         if (strName == strAccount)
             ret.push_back(address.ToString());
     }
@@ -323,7 +323,7 @@ Value listaddressgroupings(const Array& params, bool fHelp)
             {
                 LOCK(pwalletMain->cs_wallet);
                 if (pwalletMain->mapAddressBook.find(CBitcoinAddress(address).Get()) != pwalletMain->mapAddressBook.end())
-                    addressInfo.push_back(pwalletMain->mapAddressBook.find(CBitcoinAddress(address).Get())->second);
+                    addressInfo.push_back(pwalletMain->mapAddressBook.find(CBitcoinAddress(address).Get())->second.name);
             }
             jsonGrouping.push_back(addressInfo);
         }
@@ -405,18 +405,6 @@ Value getreceivedbyaddress(const Array& params, bool fHelp)
     return  ValueFromAmount(nAmount);
 }
 
-
-void GetAccountAddresses(string strAccount, set<CTxDestination>& setAddress)
-{
-    BOOST_FOREACH(const PAIRTYPE(CTxDestination, string)& item, pwalletMain->mapAddressBook)
-    {
-        const CTxDestination& address = item.first;
-        const string& strName = item.second;
-        if (strName == strAccount)
-            setAddress.insert(address);
-    }
-}
-
 Value getreceivedbyaccount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
@@ -433,8 +421,7 @@ Value getreceivedbyaccount(const Array& params, bool fHelp)
 
     // Get the set of pub keys assigned to account
     string strAccount = AccountFromValue(params[0]);
-    set<CTxDestination> setAddress;
-    GetAccountAddresses(strAccount, setAddress);
+    set<CTxDestination> setAddress = pwalletMain->GetAccountAddresses(strAccount);
 
     // Tally
     int64_t nAmount = 0;
@@ -788,7 +775,7 @@ Value addmultisigaddress(const Array& params, bool fHelp)
     CScriptID innerID = inner.GetID();
     pwalletMain->AddCScript(inner);
 
-    pwalletMain->SetAddressBookName(innerID, strAccount);
+    pwalletMain->SetAddressBook(innerID, strAccount, "send");
     return CBitcoinAddress(innerID).ToString();
 }
 
@@ -838,7 +825,7 @@ Value addredeemscript(const Array& params, bool fHelp)
     if (!pwalletMain->AddCScript(inner))
         throw runtime_error("AddCScript() failed");
 
-    pwalletMain->SetAddressBookName(innerID, strAccount);
+    pwalletMain->SetAddressBook(innerID, strAccount, "receive");
     return CBitcoinAddress(innerID).ToString();
 }
 
@@ -895,10 +882,10 @@ Value ListReceived(const Array& params, bool fByAccounts)
     // Reply
     Array ret;
     map<string, tallyitem> mapAccountTally;
-    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, string)& item, pwalletMain->mapAddressBook)
+    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, CAddressBookData)& item, pwalletMain->mapAddressBook)
     {        
         const CBitcoinAddress& address = item.first;
-        const string& strAccount = item.second;        
+        const string& strAccount = item.second.name;        
         map<CBitcoinAddress, tallyitem>::iterator it = mapTally.find(address);
         if ((it == mapTally.end() && !fIncludeEmpty) || !IsMine(*pwalletMain, address.Get()))
             continue;
@@ -943,7 +930,7 @@ Value ListReceived(const Array& params, bool fByAccounts)
         const CBitcoinAddress& address = item.first;
         const string& strAccount = "(change)";
 
-        map<CTxDestination, string>::iterator mi = pwalletMain->mapAddressBook.find(address.Get());
+        map<CTxDestination, CAddressBookData>::iterator mi = pwalletMain->mapAddressBook.find(address.Get());
         if (mi == pwalletMain->mapAddressBook.end()) {
         
             if (!IsMine(*pwalletMain, address.Get()))
@@ -1081,7 +1068,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
         {
             string account;
             if (pwalletMain->mapAddressBook.count(r.first))
-                account = pwalletMain->mapAddressBook[r.first];
+                account = pwalletMain->mapAddressBook[r.first].name;
             if (fAllAccounts || (account == strAccount))
             {
                 Object entry;
@@ -1206,9 +1193,9 @@ Value listaccounts(const Array& params, bool fHelp)
         nMinDepth = params[0].get_int();
 
     map<string, int64_t> mapAccountBalances;
-    BOOST_FOREACH(const PAIRTYPE(CTxDestination, string)& entry, pwalletMain->mapAddressBook) {
+    BOOST_FOREACH(const PAIRTYPE(CTxDestination, CAddressBookData)& entry, pwalletMain->mapAddressBook) {
         if (IsMine(*pwalletMain, entry.first)) // This address belongs to me
-            mapAccountBalances[entry.second] = 0;
+            mapAccountBalances[entry.second.name] = 0;
     }
 
     for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
@@ -1229,7 +1216,7 @@ Value listaccounts(const Array& params, bool fHelp)
         {
             BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& r, listReceived)
                 if (pwalletMain->mapAddressBook.count(r.first))
-                    mapAccountBalances[pwalletMain->mapAddressBook[r.first]] += r.second;
+                    mapAccountBalances[pwalletMain->mapAddressBook[r.first].name] += r.second;
                 else
                     mapAccountBalances[""] += r.second;
         }
@@ -2084,10 +2071,10 @@ Value listaddressbook(const Array &params, bool fHelp)
         return true;
 
     Array ret;
-    BOOST_FOREACH (const PAIRTYPE(CBitcoinAddress, string) & item, pwalletMain->mapAddressBook)
+    BOOST_FOREACH (const PAIRTYPE(CBitcoinAddress, CAddressBookData) & item, pwalletMain->mapAddressBook)
     {
         const CBitcoinAddress &address = item.first;
-        const string &strAccount = item.second;
+        const string &strAccount = item.second.name;
         if (!IsMine(*pwalletMain, address.Get()))
         {
             Object obj;
@@ -2123,7 +2110,7 @@ Value addressbookadd(const Array &params, bool fHelp)
             throw JSONRPCError(RPC_TYPE_ERROR, "Address already in address book");
     }
 
-    pwalletMain->SetAddressBookName(addr.Get(), strLabel);
+    pwalletMain->SetAddressBook(addr.Get(), strLabel, "send");
 
     return true;
 }
@@ -2147,7 +2134,7 @@ Value addressbookremove(const Array &params, bool fHelp)
     {
         LOCK(pwalletMain->cs_wallet);
         if (pwalletMain->mapAddressBook.count(addr.Get()) && !IsMine(*pwalletMain, addr.Get()))
-            pwalletMain->DelAddressBookName(addr.Get());
+            pwalletMain->DelAddressBook(addr.Get());
     }
 
     return true;

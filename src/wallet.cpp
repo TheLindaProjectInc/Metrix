@@ -686,7 +686,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
                         if (GetKeyFromPool(newDefaultKey))
                         {
                             SetDefaultKey(newDefaultKey);
-                            SetAddressBookName(vchDefaultKey.GetID(), "");
+                            SetAddressBook(vchDefaultKey.GetID(), "", "receive");
                         }
                     }
                 }
@@ -974,8 +974,8 @@ void CWalletTx::GetAccountAmounts(const string& strAccount, int64_t& nReceived,
         {
             if (pwallet->mapAddressBook.count(r.first))
             {
-                map<CTxDestination, string>::const_iterator mi = pwallet->mapAddressBook.find(r.first);
-                if (mi != pwallet->mapAddressBook.end() && (*mi).second == strAccount)
+                map<CTxDestination, CAddressBookData>::const_iterator mi = pwallet->mapAddressBook.find(r.first);
+                if (mi != pwallet->mapAddressBook.end() && (*mi).second.name == strAccount)
                     nReceived += r.second;
             }
             else if (strAccount.empty())
@@ -3191,7 +3191,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     CKeyID keyId = cpkE.GetID();
                     CBitcoinAddress coinAddress(keyId);
                     std::string sLabel = it->Encoded();
-                    SetAddressBookName(keyId, sLabel);
+                    SetAddressBook(keyId, sLabel, "unknown");
                     
                     CPubKey cpkEphem(vchEphemPK);
                     CPubKey cpkScan(it->scan_pubkey);
@@ -3263,7 +3263,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     };
                     
                     std::string sLabel = it->Encoded();
-                    SetAddressBookName(keyID, sLabel);
+                    SetAddressBook(keyID, sLabel, "unknown");
                     nFoundStealth++;
                 };
                 
@@ -3916,23 +3916,25 @@ DBErrors CWallet::ZapWalletTx(std::vector<CWalletTx>& vWtx)
 }
 
 
-bool CWallet::SetAddressBookName(const CTxDestination& address, const string& strName)
+bool CWallet::SetAddressBook(const CTxDestination& address, const string& strName, const string& strPurpose)
 {
     bool fUpdated = false;
     {
         LOCK(cs_wallet); // mapAddressBook
-        std::map<CTxDestination, std::string>::iterator mi = mapAddressBook.find(address);
+        std::map<CTxDestination, CAddressBookData>::iterator mi = mapAddressBook.find(address);
         fUpdated = mi != mapAddressBook.end();
-        mapAddressBook[address] = strName;
+        mapAddressBook[address].name = strName;
     }
     NotifyAddressBookChanged(this, address, strName, ::IsMine(*this, address),
                              (fUpdated ? CT_UPDATED : CT_NEW) );
     if (!fFileBacked)
         return false;
+    if (!strPurpose.empty() && !CWalletDB(strWalletFile).WritePurpose(CBitcoinAddress(address).ToString(), strPurpose))
+        return false;
     return CWalletDB(strWalletFile).WriteName(CBitcoinAddress(address).ToString(), strName);
 }
 
-bool CWallet::DelAddressBookName(const CTxDestination& address)
+bool CWallet::DelAddressBook(const CTxDestination& address)
 {
     {
         LOCK(cs_wallet); // mapAddressBook
@@ -3944,6 +3946,7 @@ bool CWallet::DelAddressBookName(const CTxDestination& address)
 
     if (!fFileBacked)
         return false;
+    CWalletDB(strWalletFile).ErasePurpose(CBitcoinAddress(address).ToString());
     return CWalletDB(strWalletFile).EraseName(CBitcoinAddress(address).ToString());
 }
 
@@ -4242,6 +4245,20 @@ set< set<CTxDestination> > CWallet::GetAddressGroupings()
 
     return ret;
 }
+
+set<CTxDestination> CWallet::GetAccountAddresses(string strAccount) const
+{
+    set<CTxDestination> result;
+    BOOST_FOREACH(const PAIRTYPE(CTxDestination, CAddressBookData)& item, mapAddressBook)
+    {
+        const CTxDestination& address = item.first;
+        const string& strName = item.second.name;
+        if (strName == strAccount)
+            result.insert(address);
+    }
+    return result;
+}
+
 
 // ppcoin: check 'spent' consistency between wallet and txindex
 // ppcoin: fix wallet spent state according to txindex
