@@ -76,6 +76,11 @@ Alternatvely use the following to retain compatibility. Make a note of the libra
     make
     sudo make install
 
+Ensure that the BDB librries are globally linked.
+
+    sudo echo "/usr/local/BerkeleyDB.5.0/lib" > /etc/ld.so.conf.d/bdb5.0.conf
+    sudo ldconfig
+
 Optional:
 
     sudo apt-get install libminiupnpc-dev (see --with-miniupnpc and --enable-upnp-default)
