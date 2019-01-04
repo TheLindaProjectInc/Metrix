@@ -76,7 +76,7 @@ Alternatvely use the following to retain compatibility. Make a note of the libra
     make
     sudo make install
 
-Ensure that the BDB librries are globally linked.
+Ensure that the BDB libraries are globally linked.
 
     sudo echo "/usr/local/BerkeleyDB.5.0/lib" > /etc/ld.so.conf.d/bdb5.0.conf
     sudo ldconfig
@@ -105,6 +105,14 @@ make
 strip src/Lindad
 strip src/Lindad-cli
 ```
+
+If you receive an error on x64 Linux machines during the configure command about missing boost libraries add the following configure flag. Boost libraries may be somewhere else on x64 machines.
+
+```
+--with-boost-libdir=/usr/lib/x86_64-linux-gnu
+
+```
+
 
 # STATIC BUILD INSTRUCTIONS
 The following instructions have been tested on the following distributions:
@@ -155,12 +163,5 @@ cd ..
 make
 strip src/Lindad
 strip src/Lindad-cli
-
-```
-
-If you receive an error on x64 Linux machines about missing boost libraries add the following configure flag. Boost libraries may be somewhere else on x64 machines.
-
-```
---with-boost-libdir=/usr/lib/x86_64-linux-gnu
 
 ```
