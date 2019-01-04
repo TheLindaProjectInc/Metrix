@@ -66,23 +66,15 @@ Use build in Ubuntu + Debian Berkley DB with this.
 
     sudo apt install libdb-dev libdb++-dev
 
-Alternatvely use the following to retain compatibility.
+Alternatvely use the following to retain compatibility. Make a note of the library install location thats returned after "make install". you will need this for the Lindad configure command.
 
-    cd ~
-    mkdir bitcoin/db4/
-    
+    cd ~  
     wget 'http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz'
     tar -xzvf db-5.0.32.NC.tar.gz
     cd db-5.0.32.NC/build_unix/
     ../dist/configure --enable-cxx
     make
     sudo make install
-
-To build Secp256k1:
-
-    cd src/secp256k1/ && ./configure && make
-    sudo make install
-    sudo ldconfig
 
 Optional:
 
@@ -103,7 +95,7 @@ This builds Lindad and Linda-cli using the dynamic dependancies of the current s
 
 ```
 ./autogen.sh
-./configure --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
+./configure --with-incompatible-bdb BDB_LIBS="-L/usr/local/BerkeleyDB.5.0/lib -ldb_cxx-5.0" BDB_CFLAGS="-I/usr/local/BerkeleyDB.5.0/include"
 make
 strip src/Lindad
 strip src/Lindad-cli
@@ -161,9 +153,9 @@ strip src/Lindad-cli
 
 ```
 
-If you receive an error on x64 Linux machines about missing boost libraries use the following configure line. Boost libraries may be somewhere else on x64 machines.
+If you receive an error on x64 Linux machines about missing boost libraries add the following configure flag. Boost libraries may be somewhere else on x64 machines.
 
 ```
-./configure --with-boost-libdir=/usr/lib/x86_64-linux-gnu --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
+--with-boost-libdir=/usr/lib/x86_64-linux-gnu
 
 ```
