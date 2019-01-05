@@ -385,12 +385,16 @@ public:
     int64_t GetCredit(const CTransaction& tx) const
     {
         int64_t nCredit = 0;
+        uint256 hashTx = GetHash();
         BOOST_FOREACH(const CTxOut& txout, tx.vout)
+        {
+        if (!pwallet->IsSpent(hashTx, i))
         {
             nCredit += GetCredit(txout);
             if (!MoneyRange(nCredit))
                 throw std::runtime_error("CWallet::GetCredit() : value out of range");
         }
+    }
         return nCredit;
     }
     int64_t GetChange(const CTransaction& tx) const
