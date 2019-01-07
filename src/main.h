@@ -414,31 +414,6 @@ public:
         return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
     }
 
-    /** Amount of bitcoins spent by this transaction.
-        @return sum of all outputs (note: does not include fees)
-     */
-    int64_t GetValueOut() const
-    {
-        int64_t nValueOut = 0;
-        BOOST_FOREACH(const CTxOut& txout, vout)
-        {
-            nValueOut += txout.nValue;
-            if (!MoneyRange(txout.nValue) || !MoneyRange(nValueOut))
-                throw std::runtime_error("CTransaction::GetValueOut() : value out of range");
-        }
-        return nValueOut;
-    }
-
-    /** Amount of bitcoins coming in to this transaction
-        Note that lightweight clients may not know anything besides the hash of previous transactions,
-        so may not be able to calculate this.
-
-        @param[in] mapInputs	Map of previous transactions that have outputs we're spending
-        @return	Sum of value of all inputs (scriptSigs)
-        @see CTransaction::FetchInputs
-     */
-    int64_t GetValueIn(CCoinsViewCache& mapInputs) const;
-
     friend bool operator==(const CTransaction& a, const CTransaction& b)
     {
         return (a.nVersion  == b.nVersion &&
@@ -471,30 +446,28 @@ public:
         return str;
     }
 
-
-      // Check whether all prevouts of this transaction are present in the UTXO set represented by view
-    bool HaveInputs(CCoinsViewCache &view) const;
-
-    // Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)
-    // This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
-    // instead of being performed inline.
-    bool CheckInputs(CValidationState &state, CCoinsViewCache &view, bool fScriptChecks = true,
-                     unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC,
-                     std::vector<CScriptCheck> *pvChecks = NULL) const;
-
-    // Apply the effects of this transaction on the UTXO set represented by view
-    void UpdateCoins(CValidationState &state, CCoinsViewCache &view, CTxUndo &txundo, int nHeight, const uint256 &txhash) const;
-
-    // Context-independent validity checks
-    bool CheckTransaction(CValidationState &state) const;
-
-    bool GetCoinAge(CValidationState &state, CCoinsViewCache &view, uint64_t& nCoinAge, unsigned int nHeight) const;  // ppcoin: get transaction coin age
-
-    static const CTxOut &GetOutputFor(const CTxIn& input, CCoinsViewCache& view);
 };
 
+/** Amount of bitcoins spent by this transaction.
+    @return sum of all outputs (note: does not include fees)
+ */
+int64_t GetValueOut(const CTransaction& tx);
 
+// Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)
+// This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
+// instead of being performed inline.
+bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCache &view, bool fScriptChecks = true,
+                    unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC,
+                    std::vector<CScriptCheck> *pvChecks = NULL);
 
+// Apply the effects of this transaction on the UTXO set represented by view
+void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &view, CTxUndo &txundo, int nHeight, const uint256 &txhash);
+
+// Context-independent validity checks
+bool CheckTransaction(const CTransaction& tx, CValidationState &state);
+
+// ppcoin: get transaction coin age
+bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache &view, uint64_t& nCoinAge, unsigned int nHeight);
 
 /** wrapper for CTxOut that provides a more compact serialization */
 class CTxOutCompressor
@@ -2079,6 +2052,22 @@ protected:
     bool Flush();
      // Calculate the size of the cache (in number of transactions)
     unsigned int GetCacheSize();
+
+    /** Amount of bitcoins coming in to this transaction
+    Note that lightweight clients may not know anything besides the hash of previous transactions,
+    so may not be able to calculate this.
+
+    @param[in] mapInputs	Map of previous transactions that have outputs we're spending
+    @return	Sum of value of all inputs (scriptSigs)
+    @see CTransaction::FetchInputs
+    */
+    int64_t GetValueIn(const CTransaction& tx);
+
+    // Check whether all prevouts of this transaction are present in the UTXO set represented by view
+    bool HaveInputs(const CTransaction& tx);
+
+    static const CTxOut &GetOutputFor(const CTxIn& input);
+       
  private:
     std::map<uint256,CCoins>::iterator FetchCoins(const uint256 &txid);
 };

@@ -766,7 +766,7 @@ bool AreInputsStandard(const CTransaction& tx, CCoinsViewCache& mapInputs)
 
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
-        const CTxOut& prev = tx.GetOutputFor(tx.vin[i], mapInputs);
+        const CTxOut& prev = mapInputs.GetOutputFor(tx.vin[i]);
 
         vector<vector<unsigned char> > vSolutions;
         txnouttype whichType;
@@ -840,7 +840,7 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, CCoinsViewCache& inputs)
     unsigned int nSigOps = 0;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
-        const CTxOut &prevout = tx.GetOutputFor(tx.vin[i], inputs);
+        const CTxOut &prevout = inputs.GetOutputFor(tx.vin[i]);
         if (prevout.scriptPubKey.IsPayToScriptHash())
             nSigOps += prevout.scriptPubKey.GetSigOpCount(tx.vin[i].scriptSig);
     }
@@ -901,55 +901,70 @@ int CMerkleTx::SetMerkleBranch(const CBlock* pblock)
 
 
 
-bool CTransaction::CheckTransaction(CValidationState &state) const
+bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 {
     // Basic checks that don't depend on any context
-    if (vin.empty())
-        return state.DoS(10, error("CTransaction::CheckTransaction() : vin empty"));
-    if (vout.empty())
-        return state.DoS(10, error("CTransaction::CheckTransaction() : vout empty"));
+    if (tx.vin.empty())
+        return state.DoS(10, error("CheckTransaction() : vin empty"));
+    if (tx.vout.empty())
+        return state.DoS(10, error("CheckTransaction() : vout empty"));
     // Size limits
-    if (::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
-        return state.DoS(100, error("CTransaction::CheckTransaction() : size limits failed"));
+    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
+        return state.DoS(100, error("CheckTransaction() : size limits failed"));
 
     // Check for negative or overflow output values
     int64_t nValueOut = 0;
-    for (unsigned int i = 0; i < vout.size(); i++)
+    for (unsigned int i = 0; i < tx.vout.size(); i++)
     {
-        const CTxOut& txout = vout[i];
-        if (txout.IsEmpty() && !IsCoinBase() && !IsCoinStake())
-            return state.DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
+        const CTxOut& txout = tx.vout[i];
+        if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
+            return state.DoS(100, error("CheckTransaction() : txout empty for user transaction"));
         if (txout.nValue < 0)
-            return state.DoS(100, error("CTransaction::CheckTransaction() : txout.nValue negative"));
+            return state.DoS(100, error("CheckTransaction() : txout.nValue negative"));
         if (txout.nValue > MAX_MONEY)
-            return state.DoS(100, error("CTransaction::CheckTransaction() : txout.nValue too high"));
+            return state.DoS(100, error("CheckTransaction() : txout.nValue too high"));
         nValueOut += txout.nValue;
         if (!MoneyRange(nValueOut))
-            return state.DoS(100, error("CTransaction::CheckTransaction() : txout total out of range"));
+            return state.DoS(100, error("CheckTransaction() : txout total out of range"));
     }
 
     // Check for duplicate inputs
     set<COutPoint> vInOutPoints;
-    BOOST_FOREACH(const CTxIn& txin, vin)
+    BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
         if (vInOutPoints.count(txin.prevout))
-            return state.DoS(100, error("CTransaction::CheckTransaction() : duplicate inputs"));
+            return state.DoS(100, error("CheckTransaction() : duplicate inputs"));
         vInOutPoints.insert(txin.prevout);
     }
 
-    if (IsCoinBase())
+    if (tx.IsCoinBase())
     {
-        if (vin[0].scriptSig.size() < 2 || vin[0].scriptSig.size() > 100)
-            return state.DoS(100, error("CTransaction::CheckTransaction() : coinbase script size is invalid"));
+        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+            return state.DoS(100, error("CheckTransaction() : coinbase script size is invalid"));
     }
     else
     {
-        BOOST_FOREACH(const CTxIn& txin, vin)
+        BOOST_FOREACH(const CTxIn& txin, tx.vin)
             if (txin.prevout.IsNull())
-                return state.DoS(10, error("CTransaction::CheckTransaction() : prevout is null"));
+                return state.DoS(10, error("CheckTransaction() : prevout is null"));
     }
 
     return true;
+}
+
+/** Amount of bitcoins spent by the transaction.
+    @return sum of all outputs (note: does not include fees)
+ */
+int64_t GetValueOut(const CTransaction& tx)
+{
+    int64_t nValueOut = 0;
+    BOOST_FOREACH(const CTxOut& txout, tx.vout)
+    {
+        nValueOut += txout.nValue;
+        if (!MoneyRange(txout.nValue) || !MoneyRange(nValueOut))
+            throw std::runtime_error("GetValueOut() : value out of range");
+    }
+    return nValueOut;
 }
 
 int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize, enum GetMinFee_mode mode, unsigned int nBytes)
@@ -998,7 +1013,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
     if (pfMissingInputs)
         *pfMissingInputs = false;
 
-    if (!tx.CheckTransaction(state)) {
+    if (!CheckTransaction(tx, state)) {
         errorMessage = "CheckTransaction failed";
         return error("AcceptToMemoryPool : CheckTransaction failed");
     }
@@ -1072,7 +1087,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
             }
 
             // are the actual inputs available?
-            if (!tx.HaveInputs(view)) {
+            if (!view.HaveInputs(tx)) {
                 errorMessage = "inputs already spent";
                 return state.Invalid(error("CTxMemPool::accept() : inputs already spent"));
             }
@@ -1104,7 +1119,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
                                 hash.ToString(), nSigOps, MAX_TX_SIGOPS));
         }
 
-        int64_t nFees = tx.GetValueIn(view)-tx.GetValueOut();
+        int64_t nFees = view.GetValueIn(tx)-GetValueOut(tx);
         unsigned int nSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
 
         // Don't accept it if it can't get into a block
@@ -1149,7 +1164,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!tx.CheckInputs(state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS))
+        if (!CheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS))
         {
             errorMessage = "ConnectInputs failed " + hash.ToString();
             return error("AcceptToMemoryPool : ConnectInputs failed %s", hash.ToString());
@@ -1173,7 +1188,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
 
     CTransaction tx(txo);
 
-    if (!tx.CheckTransaction(state))
+    if (!CheckTransaction(tx, state))
         return error("AcceptableInputs : CheckTransaction failed");
 
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1232,7 +1247,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
             }
 
             // are the actual inputs available?
-            if (!tx.HaveInputs(view))
+            if (!view.HaveInputs(tx))
                 return state.Invalid(error("AcceptToMemoryPool : inputs already spent"));
 
             // Bring the best block into scope
@@ -1242,7 +1257,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
             view.SetBackend(dummy);
         }
 
-        int64_t nFees = tx.GetValueIn(view)-tx.GetValueOut();
+        int64_t nFees = view.GetValueIn(tx)-GetValueOut(tx);
         unsigned int nSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
 
         // Don't accept it if it can't get into a block
@@ -1279,7 +1294,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!tx.CheckInputs(state, view, false, STANDARD_SCRIPT_VERIFY_FLAGS))
+        if (!CheckInputs(tx, state, view, false, STANDARD_SCRIPT_VERIFY_FLAGS))
         {
             return error("AcceptableInputs : ConnectInputs failed %s", hash.ToString());
         }
@@ -1901,30 +1916,30 @@ bool ConnectBestBlock(CValidationState &state) {
 
 
 
-const CTxOut &CTransaction::GetOutputFor(const CTxIn& input, CCoinsViewCache& view)
+const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input)
 {
-    const CCoins &coins = view.GetCoins(input.prevout.hash);
+    const CCoins &coins = GetCoins(input.prevout.hash);
     assert(coins.IsAvailable(input.prevout.n));
     return coins.vout[input.prevout.n];
 }
 
-int64_t CTransaction::GetValueIn(CCoinsViewCache& inputs) const
+int64_t CCoinsViewCache::GetValueIn(const CTransaction& tx)
 {
-    if (IsCoinBase())
+    if (tx.IsCoinBase())
         return 0;
 
     int64_t nResult = 0;
-    for (unsigned int i = 0; i < vin.size(); i++)
-        nResult += GetOutputFor(vin[i], inputs).nValue;
+    for (unsigned int i = 0; i < tx.vin.size(); i++)
+        nResult += GetOutputFor(tx.vin[i]).nValue;
 
     return nResult;
 }
 
-void CTransaction::UpdateCoins(CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash) const
+void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash)
 {
     // mark inputs spent
-    if (!IsCoinBase()) {
-        BOOST_FOREACH(const CTxIn &txin, vin) {
+    if (!tx.IsCoinBase()) {
+        BOOST_FOREACH(const CTxIn &txin, tx.vin) {
             CCoins &coins = inputs.GetCoins(txin.prevout.hash);
             CTxInUndo undo;
             assert(coins.Spend(txin.prevout, undo));
@@ -1933,23 +1948,23 @@ void CTransaction::UpdateCoins(CValidationState &state, CCoinsViewCache &inputs,
     }
 
     // add outputs
-    assert(inputs.SetCoins(txhash, CCoins(*this, nHeight)));
+    assert(inputs.SetCoins(txhash, CCoins(tx, nHeight)));
 }
 
-bool CTransaction::HaveInputs(CCoinsViewCache &inputs) const
+bool HaveInputs(const CTransaction& tx)
 {
-    if (!IsCoinBase()) {
+    if (!tx.IsCoinBase()) {
         // first check whether information about the prevout hash is available
-        for (unsigned int i = 0; i < vin.size(); i++) {
-            const COutPoint &prevout = vin[i].prevout;
-            if (!inputs.HaveCoins(prevout.hash))
+        for (unsigned int i = 0; i < tx.vin.size(); i++) {
+            const COutPoint &prevout = tx.vin[i].prevout;
+            if (!HaveCoins(prevout.hash))
                 return false;
         }
 
         // then check whether the actual outputs are available
-        for (unsigned int i = 0; i < vin.size(); i++) {
-            const COutPoint &prevout = vin[i].prevout;
-            const CCoins &coins = inputs.GetCoins(prevout.hash);
+        for (unsigned int i = 0; i < tx.vin.size(); i++) {
+            const COutPoint &prevout = tx.vin[i].prevout;
+            const CCoins &coins = GetCoins(prevout.hash);
             if (!coins.IsAvailable(prevout.n))
                 return false;
         }
@@ -1969,25 +1984,25 @@ bool VerifySignature(const CCoins& txFrom, const CTransaction& txTo, unsigned in
     return CScriptCheck(txFrom, txTo, nIn, flags, nHashType)();
 }
 
-bool CTransaction::CheckInputs(CValidationState &state, CCoinsViewCache &inputs, bool fScriptChecks, unsigned int flags, 
+bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, bool fScriptChecks, unsigned int flags,
     std::vector<CScriptCheck> *pvChecks) const
 {
-    if (!IsCoinBase())
+    if (!tx.IsCoinBase())
     {
         if (pvChecks)
-            pvChecks->reserve(vin.size());
+            pvChecks->reserve(tx.vin.size());
         // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
         // for an attacker to attempt to split the network.
-        if (!HaveInputs(inputs))
-            return state.Invalid(error("CheckInputs() : %s inputs unavailable", GetHash().ToString().substr(0,10).c_str()));
+        if (!inputs.HaveInputs(tx))
+            return state.Invalid(error("CheckInputs() : %s inputs unavailable", tx.GetHash().ToString().substr(0,10).c_str()));
         // While checking, GetBestBlock() refers to the parent block.
         // This is also true for mempool checks.
         int nSpendHeight = inputs.GetBestBlock()->nHeight + 1;
         int64_t nValueIn = 0;
         int64_t nFees = 0;
-        for (unsigned int i = 0; i < vin.size(); i++)
+        for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
-            const COutPoint &prevout = vin[i].prevout;
+            const COutPoint &prevout = tx.vin[i].prevout;
             const CCoins &coins = inputs.GetCoins(prevout.hash);
 
             // If prev is coinbase or coinstake, check that it's matured
@@ -1996,7 +2011,7 @@ bool CTransaction::CheckInputs(CValidationState &state, CCoinsViewCache &inputs,
                     return state.Invalid(error("CheckInputs() : tried to spend %s at depth %d", coins.IsCoinBase() ? "coinbase" : "coinstake", nSpendHeight - coins.nHeight));
 
             // ppcoin: check transaction timestamp
-            if (coins.nTime > nTime)
+            if (coins.nTime > tx.nTime)
                 return state.DoS(100, error("CheckInputs() : transaction timestamp earlier than input transaction"));
 
             // Check for negative or overflow input values
@@ -2006,20 +2021,20 @@ bool CTransaction::CheckInputs(CValidationState &state, CCoinsViewCache &inputs,
 
         }
 
-        if (!IsCoinStake())
+        if (!tx.IsCoinStake())
         {
-            if (nValueIn < GetValueOut())
-                return state.DoS(100, error("CheckInputs() : %s value in < value out", GetHash().ToString()));
+            if (nValueIn < GetValueOut(tx))
+                return state.DoS(100, error("CheckInputs() : %s value in < value out", tx.GetHash().ToString()));
 
             // Tally transaction fees
-            int64_t nTxFee = nValueIn - GetValueOut();
+            int64_t nTxFee = nValueIn - GetValueOut(tx);
             if (nTxFee < 0)
-                return state.DoS(100, error("CheckInputs() : %s nTxFee < 0", GetHash().ToString()));
+                return state.DoS(100, error("CheckInputs() : %s nTxFee < 0", tx.GetHash().ToString()));
 
             // enforce transaction fees for every block
-            int64_t nRequiredFee = GetMinFee(*this);
+            int64_t nRequiredFee = GetMinFee(tx);
             if (nTxFee < nRequiredFee)
-                return state.DoS(100, error("ConnectInputs() : %s not paying required fee=%s, paid=%s", GetHash().ToString(), FormatMoney(nRequiredFee), FormatMoney(nTxFee)));
+                return state.DoS(100, error("ConnectInputs() : %s not paying required fee=%s, paid=%s", tx.GetHash().ToString(), FormatMoney(nRequiredFee), FormatMoney(nTxFee)));
 
             nFees += nTxFee;
             if (!MoneyRange(nFees))
@@ -2034,12 +2049,12 @@ bool CTransaction::CheckInputs(CValidationState &state, CCoinsViewCache &inputs,
         // before the last block chain checkpoint. This is safe because block merkle hashes are
         // still computed and checked, and any change will be caught at the next checkpoint.
         if (fScriptChecks) {
-            for (unsigned int i = 0; i < vin.size(); i++) {
-                const COutPoint &prevout = vin[i].prevout;
+            for (unsigned int i = 0; i < tx.vin.size(); i++) {
+                const COutPoint &prevout = tx.vin[i].prevout;
                 const CCoins &coins = inputs.GetCoins(prevout.hash);
 
                 // Verify signature
-                CScriptCheck check(coins, *this, i, flags, 0);
+                CScriptCheck check(coins, tx, i, flags, 0);
                 if (pvChecks) {
                     pvChecks->push_back(CScriptCheck());
                     check.swap(pvChecks->back());
@@ -2047,7 +2062,7 @@ bool CTransaction::CheckInputs(CValidationState &state, CCoinsViewCache &inputs,
                     if (flags & SCRIPT_VERIFY_STRICTENC) {
                         // For now, check whether the failure was caused by non-canonical
                         // encodings or not; if so, don't trigger DoS protection.
-                        CScriptCheck check(coins, *this, i, flags & (~SCRIPT_VERIFY_STRICTENC), 0);
+                        CScriptCheck check(coins, tx, i, flags & (~SCRIPT_VERIFY_STRICTENC), 0);
                         if (check())
                             return state.Invalid();
                     }
@@ -2210,10 +2225,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             return state.DoS(100, error("ConnectBlock() : too many sigops"));
 
         if (tx.IsCoinBase())
-            nValueOut += tx.GetValueOut();
+            nValueOut += GetValueOut(tx);
         else
         {
-            if (!tx.HaveInputs(view))
+            if (!view.HaveInputs(tx))
                 return state.DoS(100, error("ConnectBlock() : inputs missing/spent"));
 
             // Add in sigops done by pay-to-script-hash inputs;
@@ -2223,8 +2238,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             if (nSigOps > MAX_BLOCK_SIGOPS)
                 return state.DoS(100, error("ConnectBlock() : too many sigops"));
 
-            int64_t nTxValueIn = tx.GetValueIn(view);
-            int64_t nTxValueOut = tx.GetValueOut();
+            int64_t nTxValueIn = view.GetValueIn(tx);
+            int64_t nTxValueOut = GetValueOut(tx);
             nValueIn += nTxValueIn;
             nValueOut += nTxValueOut;
             if (!tx.IsCoinStake())
@@ -2233,12 +2248,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                 nStakeReward = nTxValueOut - nTxValueIn;
 
             std::vector<CScriptCheck> vChecks;
-            if (!tx.CheckInputs(state, view, fScriptChecks, flags, nScriptCheckThreads ? &vChecks : NULL))
+            if (!CheckInputs(tx, state, view, fScriptChecks, flags, nScriptCheckThreads ? &vChecks : NULL))
                 return false;
             control.Add(vChecks);
         }
         CTxUndo txundo;
-        tx.UpdateCoins(state, view, txundo, pindex->nHeight, block.GetTxHash(i));
+        UpdateCoins(tx, state, view, txundo, pindex->nHeight, block.GetTxHash(i));
 
         if (!tx.IsCoinBase())
             blockundo.vtxundo.push_back(txundo);
@@ -2250,16 +2265,16 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         int64_t nReward = GetProofOfWorkReward(nFees);
         
         // Check coinbase reward
-        if (block.vtx[0].GetValueOut() > nReward)
+        if (GetValueOut(block.vtx[0]) > nReward)
             return state.DoS(50, error("ConnectBlock() : coinbase reward exceeded (actual=%d vs calculated=%d)",
-                   block.vtx[0].GetValueOut(),
+                   GetValueOut(block.vtx[0]),
                    nReward));
     }
 
     if (block.IsProofOfStake()) {
         // ppcoin: coin stake tx earns reward instead of paying fee
         uint64_t nCoinAge;
-        if (!block.vtx[1].GetCoinAge(state, view, nCoinAge, pindex->nHeight))
+        if (!GetCoinAge(block.vtx[1], state, view, nCoinAge, pindex->nHeight))
             return error("ConnectBlock() : %s unable to get coin age for coinstake", block.vtx[1].GetHash().ToString());
 
         int64_t nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindex->nHeight);
@@ -2523,15 +2538,15 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
 // guaranteed to be in main chain by sync-checkpoint. This rule is
 // introduced to help nodes establish a consistent view of the coin
 // age (trust score) of competing branches.
-bool CTransaction::GetCoinAge(CValidationState &state, CCoinsViewCache &view, uint64_t& nCoinAge, unsigned int nHeight) const
+bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache &view, uint64_t& nCoinAge, unsigned int nHeight)
 {
     CBigNum bnCentSecond = 0;  // coin age in the unit of cent-seconds
     nCoinAge = 0;
 
-    if (IsCoinBase())
+    if (tx.IsCoinBase())
         return true;
 
-    BOOST_FOREACH(const CTxIn& txin, vin)
+    BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
         // First try finding the previous transaction in database
         const COutPoint &prevout = txin.prevout;
@@ -2575,9 +2590,9 @@ bool CTransaction::GetCoinAge(CValidationState &state, CCoinsViewCache &view, ui
             bnCentSecond += CBigNum(nValueIn) * nTimeWeight / CENT;
 
             if (fDebug && GetBoolArg("-printcoinage", false)) {
-                LogPrint("getcoinage","CTransaction::GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, nTime - txPrev.nTime);
-                LogPrint("getcoinage","CTransaction::GetCoinAge::CALC nValueIn=%d nTimeDiff=%d\n", nValueIn, nTimeWeight);
-                LogPrint("getcoinage","CTransaction::GetCoinAge bnCentSecond=%s\n", bnCentSecond.ToString());
+                LogPrint("getcoinage","GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, nTime - txPrev.nTime);
+                LogPrint("getcoinage","GetCoinAge::CALC nValueIn=%d nTimeDiff=%d\n", nValueIn, nTimeWeight);
+                LogPrint("getcoinage","GetCoinAge bnCentSecond=%s\n", bnCentSecond.ToString());
             }
         }
         else
@@ -2856,7 +2871,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                 // If we don't already have its previous block, skip masternode payment step
                 if (!fIsInitialDownload)
                 {
-                    CAmount masternodePaymentAmount = GetMasternodePayment(pindex->nHeight+1, block.vtx[0].GetValueOut());
+                    CAmount masternodePaymentAmount = GetMasternodePayment(pindex->nHeight+1, GetValueOut(block.vtx[0]));
                     bool foundPaymentAmount = false;
                     bool foundPayee = false;
                     bool foundPaymentAndPayee = false;
@@ -2906,7 +2921,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
     {
-        if (!tx.CheckTransaction(state))
+        if (!CheckTransaction(tx, state))
             return error("CheckBlock() : CheckTransaction failed");
 
         // ppcoin: check transaction timestamp
