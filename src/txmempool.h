@@ -22,6 +22,7 @@ class CCoins;
 class CTxMemPool
 {
 private:
+    bool fSanityCheck; // Normally false, true if -checkmempool or -regtest
     unsigned int nTransactionsUpdated;
 
 public:
@@ -30,6 +31,16 @@ public:
     std::map<COutPoint, CInPoint> mapNextTx;
 
     CTxMemPool();
+
+    /*
+     * If sanity-checking is turned on, check makes sure the pool is
+     * consistent (does not contain two transactions that spend the same inputs,
+     * all inputs are in the mapNextTx array). If sanity-checking is turned off,
+     * check does nothing.
+     */
+    typedef CCoins& (*CoinLookupFunc)(const uint256&);
+    void check(CoinLookupFunc fnLookup) const;
+    void setSanityCheck(bool _fSanityCheck) { fSanityCheck = _fSanityCheck; }
 
     bool addUnchecked(const uint256& hash, const CTransaction &tx);
     bool remove(const CTransaction &tx, bool fRecursive = false);
