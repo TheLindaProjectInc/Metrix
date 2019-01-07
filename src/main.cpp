@@ -985,14 +985,14 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
 {
     try {
         std::string errorMessage;
-        return AcceptToMemoryPool(pool, state, tx, fLimitFree, pfMissingInputs, errorMessage);
+        return AcceptToMemoryPool(pool, state, tx, fLimitFree, pfMissingInputs, fRejectInsaneFee, errorMessage);
     } catch(std::runtime_error &e) {
         return state.Abort(_("System error: ") + e.what());
     }
 }
 
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction &tx, bool fLimitFree,
-                        bool* pfMissingInputs, std::string& errorMessage)
+                        bool* pfMissingInputs, bool fRejectInsaneFee, std::string& errorMessage)
 {
     AssertLockHeld(cs_main);
     if (pfMissingInputs)
@@ -1143,8 +1143,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
         }
 	    
 	if (fRejectInsaneFee && nFees > CTransaction::nMinRelayTxFee * 10000)
-            return error("CTxMemPool::accept() : insane fees %s, %"PRI64d" > %"PRI64d,
-                         hash.ToString().c_str(),
+            return error("CTxMemPool::accept() : insane fees %s, %d > %d",
+                         hash.ToString(),
                          nFees, CTransaction::nMinRelayTxFee * 10000);
 
         // Check against previous transactions
