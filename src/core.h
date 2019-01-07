@@ -10,6 +10,7 @@
 #include "serialize.h"
 #include "util.h"
 #include "script.h"
+#include "timedata.h"
 
 #include <stdio.h>
 
@@ -220,6 +221,102 @@ public:
         if (IsEmpty()) return "CTxOut(empty)";
         return strprintf("CTxOut(nValue=%s, scriptPubKey=%s)", FormatMoney(nValue), scriptPubKey.ToString());
     }
+};
+
+
+/** The basic transaction that is broadcasted on the network and contained in
+ * blocks. A transaction can contain multiple inputs and outputs.
+ */
+class CTransaction
+{
+public:
+    static int64_t nMinTxFee;
+    static int64_t nMinRelayTxFee;
+    static const int CURRENT_VERSION = 1;
+    int nVersion;
+    unsigned int nTime;
+    std::vector<CTxIn> vin;
+    std::vector<CTxOut> vout;
+    unsigned int nLockTime;
+
+    CTransaction()
+    {
+        SetNull();
+    }
+
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(this->nVersion);
+    nVersion = this->nVersion;
+    READWRITE(nTime);
+    READWRITE(vin);
+    READWRITE(vout);
+    READWRITE(nLockTime);
+    )
+
+        void SetNull()
+    {
+        nVersion = CTransaction::CURRENT_VERSION;
+        nTime = GetAdjustedTime();
+        vin.clear();
+        vout.clear();
+        nLockTime = 0;
+    }
+
+    bool IsNull() const
+    {
+        return (vin.empty() && vout.empty());
+    }
+
+    uint256 GetHash() const
+    {
+        return SerializeHash(*this);
+    }
+
+    bool IsCoinBase() const
+    {
+        return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);
+    }
+
+    bool IsCoinStake() const
+    {
+        // ppcoin: the coin stake transaction is marked with the first output empty
+        return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
+    }
+
+    friend bool operator==(const CTransaction& a, const CTransaction& b)
+    {
+        return (a.nVersion == b.nVersion &&
+            a.nTime == b.nTime &&
+            a.vin == b.vin &&
+            a.vout == b.vout &&
+            a.nLockTime == b.nLockTime);
+    }
+
+    friend bool operator!=(const CTransaction& a, const CTransaction& b)
+    {
+        return !(a == b);
+    }
+
+    std::string ToString() const
+    {
+        std::string str;
+        str += IsCoinBase() ? "Coinbase" : (IsCoinStake() ? "Coinstake" : "CTransaction");
+        str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%u, vout.size=%u, nLockTime=%d)\n",
+            GetHash().ToString(),
+            nTime,
+            nVersion,
+            vin.size(),
+            vout.size(),
+            nLockTime);
+        for (unsigned int i = 0; i < vin.size(); i++)
+            str += "    " + vin[i].ToString() + "\n";
+        for (unsigned int i = 0; i < vout.size(); i++)
+            str += "    " + vout[i].ToString() + "\n";
+        return str;
+    }
+
 };
 
 #endif
