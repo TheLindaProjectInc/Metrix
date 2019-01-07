@@ -291,7 +291,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
                 std::make_heap(vecPriority.begin(), vecPriority.end(), comparer);
             }
 
-            if (!tx.HaveInputs(view))
+            if (!view.HaveInputs(tx))
                 continue;
 
             int64_t nTxFees = view.GetValueIn(tx)-GetValueOut(tx);
@@ -308,7 +308,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
                 continue;
             CTxUndo txundo;
             uint256 hash = tx.GetHash();
-            tx.UpdateCoins(state, view, txundo, pindexPrev->nHeight+1, hash);
+            UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1, hash);
 
             // Added
             pblock->vtx.push_back(tx);

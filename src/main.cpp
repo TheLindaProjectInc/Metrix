@@ -1951,7 +1951,7 @@ void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCach
     assert(inputs.SetCoins(txhash, CCoins(tx, nHeight)));
 }
 
-bool HaveInputs(const CTransaction& tx)
+bool CCoinsViewCache::HaveInputs(const CTransaction& tx)
 {
     if (!tx.IsCoinBase()) {
         // first check whether information about the prevout hash is available
@@ -1985,7 +1985,7 @@ bool VerifySignature(const CCoins& txFrom, const CTransaction& txTo, unsigned in
 }
 
 bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, bool fScriptChecks, unsigned int flags,
-    std::vector<CScriptCheck> *pvChecks) const
+    std::vector<CScriptCheck> *pvChecks)
 {
     if (!tx.IsCoinBase())
     {
@@ -2554,7 +2554,7 @@ bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache
 
         if (!view.GetCoins(prevout.hash, coins))
             continue;  // previous transaction not in main chain
-        if (nTime < coins.nTime)
+        if (tx.nTime < coins.nTime)
             return false;  // Transaction timestamp violation
 
         CDiskTxPos postx;
@@ -2573,7 +2573,7 @@ bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache
             if (txPrev.GetHash() != prevout.hash)
                 return error("%s() : txid mismatch in GetCoinAge()", __PRETTY_FUNCTION__);
 
-            if (header.GetBlockTime() + nStakeMinAge > nTime)
+            if (header.GetBlockTime() + nStakeMinAge > tx.nTime)
                 continue; // only count coins meeting min age requirement
 
             int64_t nValueIn = 0; 
@@ -2581,16 +2581,16 @@ bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache
 
             if (nHeight < V3_START_BLOCK) {
                 nValueIn = txPrev.vout[txin.prevout.n].nValue;
-                nTimeWeight = nTime - txPrev.nTime;
+                nTimeWeight = tx.nTime - txPrev.nTime;
             } else {
                 nValueIn = min(txPrev.vout[txin.prevout.n].nValue, MAX_STAKE_VALUE);
-                nTimeWeight = min(nTime - txPrev.nTime, nStakeMaxAge);
+                nTimeWeight = min(tx.nTime - txPrev.nTime, nStakeMaxAge);
             }
 
             bnCentSecond += CBigNum(nValueIn) * nTimeWeight / CENT;
 
             if (fDebug && GetBoolArg("-printcoinage", false)) {
-                LogPrint("getcoinage","GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, nTime - txPrev.nTime);
+                LogPrint("getcoinage","GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, tx.nTime - txPrev.nTime);
                 LogPrint("getcoinage","GetCoinAge::CALC nValueIn=%d nTimeDiff=%d\n", nValueIn, nTimeWeight);
                 LogPrint("getcoinage","GetCoinAge bnCentSecond=%s\n", bnCentSecond.ToString());
             }
