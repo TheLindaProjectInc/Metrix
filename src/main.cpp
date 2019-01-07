@@ -1768,14 +1768,14 @@ void CheckForkWarningConditions()
         }
         if (pindexBestForkTip)
         {
-            printf("CheckForkWarningConditions: Warning: Large valid fork found\n  forking the chain at height %d (%s)\n  lasting to height %d (%s).\nChain state database corruption likely.\n",
+            LogPrintf("CheckForkWarningConditions: Warning: Large valid fork found\n  forking the chain at height %d (%s)\n  lasting to height %d (%s).\nChain state database corruption likely.\n",
                 pindexBestForkBase->nHeight, pindexBestForkBase->phashBlock->ToString().c_str(),
                 pindexBestForkTip->nHeight, pindexBestForkTip->phashBlock->ToString().c_str());
             fLargeWorkForkFound = true;
         }
         else
         {
-            printf("CheckForkWarningConditions: Warning: Found invalid chain at least ~6 blocks longer than our best chain.\nChain state database corruption likely.\n");
+            LogPrintf("CheckForkWarningConditions: Warning: Found invalid chain at least ~6 blocks longer than our best chain.\nChain state database corruption likely.\n");
             fLargeWorkInvalidChainFound = true;
         }
     }
