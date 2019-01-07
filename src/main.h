@@ -268,7 +268,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
                         bool* pfMissingInputsbool, bool fRejectInsaneFee = false);
 
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction &tx, bool fLimitFree,
-                        bool* pfMissingInputs, std::string& errorMessage);
+                        bool* pfMissingInputs, bool fRejectInsaneFee, std::string& errorMessage);
 
 bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransaction &txo, bool fLimitFree,
                         bool* pfMissingInputs);
