@@ -784,7 +784,8 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
     static uint64_t GetTotalBytesRecv();
     static uint64_t GetTotalBytesSent();
 };
-
+class CTxIn;
+class CTxOut;
 class CTransaction;
 void RelayTransaction(const CTransaction& tx);
 void RelayTransaction(const CTransaction& tx, const CDataStream& ss);

@@ -1914,7 +1914,10 @@ bool ConnectBestBlock(CValidationState &state) {
     } while(true);
 }
 
-
+void UpdateTime(CBlockHeader& block, const CBlockIndex* pindexPrev)
+{
+    block.nTime = max(block.GetBlockTime(), GetAdjustedTime());
+}
 
 const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input)
 {

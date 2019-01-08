@@ -4,3 +4,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "core.h"
+#include "util.h"
+#include "scrypt.h"
+
+
+uint256 CBlockHeader::GetPoWHash() const
+{
+    return scrypt_blockhash(CVOIDBEGIN(nVersion));
+}
