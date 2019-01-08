@@ -766,4 +766,171 @@ public:
 
 };
 
+
+
+class CBlock : public CBlockHeader
+{
+public:
+    // network and disk
+    std::vector<CTransaction> vtx;
+    // ppcoin: block signature - signed by coin base txout[0]'s owner
+    std::vector<unsigned char> vchBlockSig;
+    // memory only
+    mutable std::vector<uint256> vMerkleTree;
+    CBlock()
+    {
+        SetNull();
+    }
+    CBlock(const CBlockHeader &header)
+    {
+        SetNull();
+        *((CBlockHeader*)this) = header;
+    }
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(*(CBlockHeader*)this);
+    READWRITE(vtx);
+    READWRITE(vchBlockSig);
+    )
+        void SetNull()
+    {
+        CBlockHeader::SetNull();
+        vtx.clear();
+        vchBlockSig.clear();
+        vMerkleTree.clear();
+    }
+    CBlockHeader GetBlockHeader() const
+    {
+        CBlockHeader block;
+        block.nVersion = nVersion;
+        block.hashPrevBlock = hashPrevBlock;
+        block.hashMerkleRoot = hashMerkleRoot;
+        block.nTime = nTime;
+        block.nBits = nBits;
+        block.nNonce = nNonce;
+        return block;
+    }
+
+    // entropy bit for stake modifier if chosen by modifier
+    unsigned int GetStakeEntropyBit() const
+    {
+        // Take last bit of block hash as entropy bit
+        unsigned int nEntropyBit = ((GetHash().Get64()) & 1llu);
+        LogPrint("stakemodifier", "GetStakeEntropyBit: hashBlock=%s nEntropyBit=%u\n", GetHash().ToString(), nEntropyBit);
+        return nEntropyBit;
+    }
+
+    // ppcoin: two types of block: proof-of-work or proof-of-stake
+    bool IsProofOfStake() const
+    {
+        return (vtx.size() > 1 && vtx[1].IsCoinStake());
+    }
+
+    bool HasMasternodePayment() const
+    {
+        return (
+            IsProofOfStake() &&
+            (vtx[1].vout.size() == 4 || (vtx[1].vout.size() == 3 && vtx[1].vout[1].scriptPubKey != vtx[1].vout[2].scriptPubKey))
+            );
+    }
+
+    bool IsProofOfWork() const
+    {
+        return !IsProofOfStake();
+    }
+
+    std::pair<COutPoint, unsigned int> GetProofOfStake() const
+    {
+        return IsProofOfStake() ? std::make_pair(vtx[1].vin[0].prevout, vtx[1].nTime) : std::make_pair(COutPoint(), (unsigned int)0);
+    }
+
+    // ppcoin: get max transaction timestamp
+    int64_t GetMaxTransactionTime() const
+    {
+        int64_t maxTransactionTime = 0;
+        BOOST_FOREACH(const CTransaction& tx, vtx)
+            maxTransactionTime = std::max(maxTransactionTime, (int64_t)tx.nTime);
+        return maxTransactionTime;
+    }
+
+    uint256 BuildMerkleTree() const
+    {
+        vMerkleTree.clear();
+        BOOST_FOREACH(const CTransaction& tx, vtx)
+            vMerkleTree.push_back(tx.GetHash());
+        int j = 0;
+        for (int nSize = vtx.size(); nSize > 1; nSize = (nSize + 1) / 2)
+        {
+            for (int i = 0; i < nSize; i += 2)
+            {
+                int i2 = std::min(i + 1, nSize - 1);
+                vMerkleTree.push_back(Hash(BEGIN(vMerkleTree[j + i]), END(vMerkleTree[j + i]),
+                    BEGIN(vMerkleTree[j + i2]), END(vMerkleTree[j + i2])));
+            }
+            j += nSize;
+        }
+        return (vMerkleTree.empty() ? 0 : vMerkleTree.back());
+    }
+
+    const uint256 &GetTxHash(unsigned int nIndex) const {
+        assert(vMerkleTree.size() > 0); // BuildMerkleTree must have been called first
+        assert(nIndex < vtx.size());
+        return vMerkleTree[nIndex];
+    }
+
+    std::vector<uint256> GetMerkleBranch(int nIndex) const
+    {
+        if (vMerkleTree.empty())
+            BuildMerkleTree();
+        std::vector<uint256> vMerkleBranch;
+        int j = 0;
+        for (int nSize = vtx.size(); nSize > 1; nSize = (nSize + 1) / 2)
+        {
+            int i = std::min(nIndex ^ 1, nSize - 1);
+            vMerkleBranch.push_back(vMerkleTree[j + i]);
+            nIndex >>= 1;
+            j += nSize;
+        }
+        return vMerkleBranch;
+    }
+
+    static uint256 CheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMerkleBranch, int nIndex)
+    {
+        if (nIndex == -1)
+            return 0;
+        BOOST_FOREACH(const uint256& otherside, vMerkleBranch)
+        {
+            if (nIndex & 1)
+                hash = Hash(BEGIN(otherside), END(otherside), BEGIN(hash), END(hash));
+            else
+                hash = Hash(BEGIN(hash), END(hash), BEGIN(otherside), END(otherside));
+            nIndex >>= 1;
+        }
+        return hash;
+    }
+
+    std::string ToString() const
+    {
+        std::stringstream s;
+        s << strprintf("CBlock(hash=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%u, vchBlockSig=%s)\n",
+            GetHash().ToString(),
+            nVersion,
+            hashPrevBlock.ToString(),
+            hashMerkleRoot.ToString(),
+            nTime, nBits, nNonce,
+            vtx.size(),
+            HexStr(vchBlockSig.begin(), vchBlockSig.end()));
+        for (unsigned int i = 0; i < vtx.size(); i++)
+        {
+            s << "  " << vtx[i].ToString() << "\n";
+        }
+        s << "  vMerkleTree: ";
+        for (unsigned int i = 0; i < vMerkleTree.size(); i++)
+            s << " " << vMerkleTree[i].ToString();
+        s << "\n";
+        return s.str();
+    }
+
+};
+
 #endif
