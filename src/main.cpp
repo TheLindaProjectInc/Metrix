@@ -4724,7 +4724,7 @@ bool ProcessMessages(CNode* pfrom)
 }
 
 
-bool SendMessages(CNode* pto, bool fSendTrickle)
+bool SendMessages(CNode* pto)
 {
     TRY_LOCK(cs_main, lockMain);
     if (lockMain) {
@@ -4789,34 +4789,18 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         if (!fReindex && !fImporting && !IsInitialBlockDownload())
             ResendWalletTransactions();
 
-        // Address refresh broadcast
-        static int64_t nBroadcastInterval = 60 * 5;
-        static int64_t nLastRebroadcast;
-
-        if (!IsInitialBlockDownload() && (GetTime() - nLastRebroadcast > nBroadcastInterval))
-		{
-		   LOCK(cs_vNodes);
-		   BOOST_FOREACH(CNode* pnode, vNodes)
-		   {
-			   // Periodically clear setAddrKnown to allow refresh broadcasts
-			   if (GetTime() - nLastRebroadcast > (nBroadcastInterval * 60 * 24))
-			   {
-				   pnode->setAddrKnown.clear();
-			   }
-
-			   // Rebroadcast our address
-			   AdvertizeLocal(pnode);
-		   }
-		   if (!vNodes.empty())
-			   nLastRebroadcast = GetTime();
-		}
+        int64_t nNow = GetTimeMicros();
+        if (!IsInitialBlockDownload() && pto->nNextLocalAddrSend < nNow) {
+            AdvertizeLocal(pto);
+            pto->nNextLocalAddrSend = PoissonNextSend(nNow, AVG_LOCAL_ADDRESS_BROADCAST_INTERVAL);
+        }
 
 
         //
         // Message: addr
         //
-        if (fSendTrickle)
-        {
+        if (pto->nNextAddrSend < nNow) {
+            pto->nNextAddrSend = PoissonNextSend(nNow, AVG_ADDRESS_BROADCAST_INTERVAL);
             vector<CAddress> vAddr;
             vAddr.reserve(pto->vAddrToSend.size());
             BOOST_FOREACH(const CAddress& addr, pto->vAddrToSend)
@@ -4845,14 +4829,19 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         vector<CInv> vInv;
         vector<CInv> vInvWait;
         {
+            bool fSendTrickle = false;
+            if (pto->nNextInvSend < nNow) {
+                fSendTrickle = true;
+                pto->nNextInvSend = PoissonNextSend(nNow, AVG_INVENTORY_BROADCAST_INTERVAL);
+            }
             LOCK(pto->cs_inventory);
             vInv.reserve(pto->vInventoryToSend.size());
-            vInvWait.reserve(pto->vInventoryToSend.size());
+            vInv.reserve(std::min<size_t>(1000, pto->vInventoryToSend.size()));
             BOOST_FOREACH(const CInv& inv, pto->vInventoryToSend)
             {
                 if (pto->setInventoryKnown.count(inv))
                     continue;
-
+                
                 // trickle out tx inv to protect privacy
                 if (inv.type == MSG_TX && !fSendTrickle)
                 {
@@ -4944,7 +4933,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
         //
         // Message: getdata (non-blocks)
         //
-        int64_t nNow = GetTimeMicros();
+        nNow = GetTimeMicros();
         while (!pto->fDisconnect && !pto->mapAskFor.empty() && (*pto->mapAskFor.begin()).first <= nNow)
         {
             const CInv& inv = (*pto->mapAskFor.begin()).second;
