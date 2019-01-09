@@ -2047,7 +2047,6 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         // specially with outsEmpty.
         CCoins outsEmpty;
         CCoins &outs = view.HaveCoins(hash) ? view.GetCoins(hash) : outsEmpty;
-        CCoins &outs = view.GetCoins(hash);
         outs.ClearUnspendable();
 
         CCoins outsBlock = CCoins(tx, pindex->nHeight);
