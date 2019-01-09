@@ -5,6 +5,11 @@
 # Linda Coin
 Lindacoin is a peer to peer hybrid digital currency. It creates utility products that allow Linda to be used in everyday scenarios. It also offers partnership opportunities to other cryptocurrencies to use the Lindacoin platform. As the Linda wallet technology evolves, we strive to simplify the processes of staking or masternode ownership as well as improve your overall wallet experience
 
+## Important Wallet Information
+If you wish to use the Linda wallet on your Windows, Mac and/or Linux GUI computer, download the executable from the [Altitude Repository](https://github.com/TheLindaProjectInc/Altitude/releases/latest).
+
+If you need the Lindad daemon, download it from the current [Linda Repository](https://github.com/TheLindaProjectInc/Linda/releases/latest).
+
 ## Specs
 <table>
 <tr><td>Coin Name</td><td>Linda Coin</td></tr>
@@ -80,9 +85,11 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 
 ## Handy Links
-[Linda FAQ, tips, media and tutorials](https://www.lindaprojectinfo.com)
+[FAQ, tips and tutorials](https://github.com/TheLindaProjectInc/Documentation)
 
-[Bootstrap your wallet](https://bit.ly/lindabootstrap)
+[Media](https://github.com/TheLindaProjectInc/Media)
+
+[Bootstrap for Linda v3.2.0.0 and newer](https://drive.google.com/open?id=1vJr59oEIKlPWUMo8Uzf87HOPKPETdOcj)
 
 ## Realizations
 
@@ -99,3 +106,6 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 [Website](https://www.mynodepool.com)
 
 [Discord](https://discord.gg/2sMJnjk)
+
+### Altitude - Brand New Wallet Interface
+[Github](https://github.com/TheLindaProjectInc/Altitude)
