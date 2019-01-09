@@ -1613,7 +1613,6 @@ bool BindListenPort(const CService &addrBind, string& strError, bool fWhiteliste
 
     vhListenSocket.push_back(ListenSocket(hListenSocket, fWhitelisted));
 
-
     if (addrBind.IsRoutable() && fDiscover && !fWhitelisted)
         AddLocal(addrBind, LOCAL_BIND);
 

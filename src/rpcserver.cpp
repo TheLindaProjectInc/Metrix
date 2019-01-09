@@ -287,7 +287,6 @@ static const CRPCCommand vRPCCommands[] =
     { "dumpwallet",             &dumpwallet,             true,      false,     true },
     { "encryptwallet",          &encryptwallet,          false,     false,     true },
     { "getaccountaddress",      &getaccountaddress,      true,      false,     true },
-    { "setaccount",             &setaccount,             true,      false,     true },
     { "getaccount",             &getaccount,             false,     false,     true },
     { "getaddressesbyaccount",  &getaddressesbyaccount,  true,      false,     true },
     { "getbalance",             &getbalance,             false,     false,     true },

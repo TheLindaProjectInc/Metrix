@@ -1391,6 +1391,7 @@ public:
 
     /** Find the last common block between this chain and a locator. */
     CBlockIndex *FindFork(const CBlockLocator &locator) const;
+
 };
 
 /** The currently-connected chain of blocks. */

@@ -64,7 +64,7 @@ workflows:
   commits:
     jobs:
       - build-dynamic
-  nightly:
+  weekly:
     triggers:
       - schedule:
           cron: "00 12 * * 0"
