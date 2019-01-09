@@ -9,7 +9,10 @@
 #include "bitcoin-config.h"
 #endif
 
-#include "wallet.h"
+#include <string>
+#include <boost/thread.hpp>
+
+class CWallet;
 
 namespace boost {
     class thread_group;
