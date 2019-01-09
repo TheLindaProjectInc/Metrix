@@ -87,6 +87,29 @@ const string strMessageMagic = "Linda Signed Message:\n";
 
 std::set<uint256> setValidatedTx;
 
+// Internal stuff
+namespace {
+    struct CBlockIndexWorkComparator
+    {
+        bool operator()(CBlockIndex *pa, CBlockIndex *pb) {
+            if (pa->nChainTrust > pb->nChainTrust) return false;
+            if (pa->nChainTrust < pb->nChainTrust) return true;
+
+            if (pa->GetBlockHash() < pb->GetBlockHash()) return false;
+            if (pa->GetBlockHash() > pb->GetBlockHash()) return true;
+
+            return false; // identical blocks
+        }
+    };
+
+    CBlockIndex *pindexBestInvalid;
+    set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
+
+    CCriticalSection cs_LastBlockFile;
+    CBlockFileInfo infoLastBlockFile;
+    int nLastBlockFile = 0;
+}
+
 // Blocks that are in flight, and that are in the queue to be downloaded.
 // Protected by cs_main.
 map<uint256, pair<NodeId, list<QueuedBlock>::iterator> > mapBlocksInFlight;
@@ -3412,10 +3435,6 @@ bool CheckDiskSpace(uint64_t nAdditionalBytes)
         return AbortNode(_("Error: Disk space is low!"));
     return true;
 }
-
-CCriticalSection cs_LastBlockFile;
-CBlockFileInfo infoLastBlockFile;
-int nLastBlockFile = 0;
 
 FILE* OpenDiskFile(const CDiskBlockPos &pos, const char *prefix, bool fReadOnly)
 {
