@@ -51,9 +51,6 @@ unsigned int nModifierInterval = 10 * 60; // time to elapse before new modifier 
 int nCoinbaseMaturity = 10;
 
 CChain chainActive;
-CBlockIndex *pindexBestInvalid;
-
-set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
 int64_t nTimeBestReceived = 0;
 int nScriptCheckThreads = 0;
 bool fImporting = false;
