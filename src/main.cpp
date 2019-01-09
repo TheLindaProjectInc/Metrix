@@ -51,7 +51,7 @@ unsigned int nModifierInterval = 10 * 60; // time to elapse before new modifier 
 int nCoinbaseMaturity = 10;
 
 CChain chainActive;
-uint256 nBestInvalidTrust = 0;
+CBlockIndex *pindexBestInvalid;
 
 set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
 int64_t nTimeBestReceived = 0;
@@ -1704,7 +1704,7 @@ void CheckForkWarningConditions()
     if (pindexBestForkTip && chainActive.Height() - pindexBestForkTip->nHeight >= 72)
         pindexBestForkTip = NULL;
 
-    if (pindexBestForkTip || nBestInvalidTrust > chainActive.Tip()->nChainTrust + (CBigNum(chainActive.Tip()->GetBlockTrust()) * 6).getuint256())
+    if (pindexBestForkTip || (pindexBestInvalid && pindexBestInvalid->nChainTrust > chainActive.Tip()->nChainTrust + (CBigNum(chainActive.Tip()->GetBlockTrust()) * 6).getuint256()))
     {
         if (!fLargeWorkForkFound)
         {
@@ -1769,10 +1769,13 @@ void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)
 
 void static InvalidChainFound(CBlockIndex* pindexNew)
 {
-    if (pindexNew->nChainTrust > nBestInvalidTrust)
+    if (!pindexBestInvalid || pindexNew->nChainTrust > pindexBestInvalid->nChainTrust)
     {
-        nBestInvalidTrust = pindexNew->nChainTrust;
-        pblocktree->WriteBestInvalidTrust(CBigNum(nBestInvalidTrust));
+        pindexBestInvalid = pindexNew;
+        // The current code doesn't actually read the BestInvalidWork entry in
+        // the block database anymore, as it is derived from the flags in block
+        // index entry. We only write it for backward compatibility.
+        pblocktree->WriteBestInvalidTrust(CBigNum(pindexBestInvalid->nChainTrust));
     }
 
     uint256 nBestInvalidBlockTrust = pindexNew->nChainTrust - pindexNew->pprev->nChainTrust;
@@ -3489,6 +3492,8 @@ bool static LoadBlockIndexDB()
         pindex->nChainTx = (pindex->pprev ? pindex->pprev->nChainTx : 0) + pindex->nTx;
         if ((pindex->nStatus & BLOCK_VALID_MASK) >= BLOCK_VALID_TRANSACTIONS && !(pindex->nStatus & BLOCK_FAILED_MASK))
             setBlockIndexValid.insert(pindex);
+        if (pindex->nStatus & BLOCK_FAILED_MASK && (!pindexBestInvalid || pindex->nChainTrust > pindexBestInvalid->nChainTrust))
+            pindexBestInvalid = pindex;
     }
 
     // Load block file info
@@ -3497,17 +3502,12 @@ bool static LoadBlockIndexDB()
     if (pblocktree->ReadBlockFileInfo(nLastBlockFile, infoLastBlockFile))
         LogPrintf("LoadBlockIndex(): last block file: %s\n", infoLastBlockFile.ToString().c_str());
 
-    // Load bnBestInvalidWork, OK if it doesn't exist
-    CBigNum bnBestInvalidTrust;
-    pblocktree->ReadBestInvalidTrust(bnBestInvalidTrust);
-    nBestInvalidTrust = bnBestInvalidTrust.getuint256();
-
     // Check whether we need to continue reindexing
     bool fReindexing = false;
     pblocktree->ReadReindexing(fReindexing);
     fReindex |= fReindexing;
 
-    // Load hashBestChain pointer to end of best chain
+    // Load pointer to end of best chain
     chainActive.SetTip(pcoinsTip->GetBestBlock());
     if (chainActive.Tip() == NULL)
         return true;
@@ -3598,7 +3598,7 @@ void UnloadBlockIndex()
     mapBlockIndex.clear();
     setBlockIndexValid.clear();
     chainActive.SetTip(NULL);
-    nBestInvalidTrust = 0;
+    pindexBestInvalid = NULL;
 }
 
 bool LoadBlockIndex()
