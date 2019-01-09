@@ -28,6 +28,7 @@ BITCOIN_CORE_H = \
   coincontrol.h \
   compat.h \
   core.h \
+  coins.h \
   crypter.h \
   darksend.h \
   db.h \
@@ -108,6 +109,7 @@ libbitcoin_a_SOURCES = \
   chainparams.cpp \
   checkpoints.cpp \
   core.cpp \
+  coins.cpp \
   crypter.cpp \
   darksend.cpp \
   db.cpp \
