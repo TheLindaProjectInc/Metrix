@@ -185,7 +185,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
                 strHTML += "<b>" + tr("Credit") + ":</b> " + BitcoinUnits::formatWithUnit(unit, nValue) + "<br>";
             }
 
-            int64_t nTxFee = nDebit - wtx.GetValueOut();
+            int64_t nTxFee = nDebit - GetValueOut(wtx);
             if (nTxFee > 0)
                 strHTML += "<b>" + tr("Transaction fee") + ":</b> " + BitcoinUnits::formatWithUnit(unit, -nTxFee) + "<br>";
         }
@@ -234,8 +234,6 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
         strHTML += "<br><b>" + tr("Transaction") + ":</b><br>";
         strHTML += GUIUtil::HtmlEscape(wtx.ToString(), true);
 
-        CTxDB txdb("r"); // To fetch source txouts
-
         strHTML += "<br><b>" + tr("Inputs") + ":</b>";
         strHTML += "<ul>";
 
@@ -243,8 +241,8 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
         {
             COutPoint prevout = txin.prevout;
 
-            CTransaction prev;
-            if(txdb.ReadDiskTx(prevout.hash, prev))
+            CCoins prev;
+            if(pcoinsTip->GetCoins(prevout.hash, prev))
             {
                 if (prevout.n < prev.vout.size())
                 {

@@ -1,177 +1,150 @@
-Copyright (c) 2009-2012 Bitcoin Developers
-Distributed under the MIT/X11 software license, see the accompanying
-file license.txt or http://www.opensource.org/licenses/mit-license.php.
-This product includes software developed by the OpenSSL Project for use in
-the OpenSSL Toolkit (http://www.openssl.org/).  This product includes
-cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP
-software written by Thomas Bernard.
-
-
-See readme-qt.rst for instructions on building Linda QT, the
-graphical user interface.
-
 WINDOWS BUILD NOTES
-===================
+====================
 
-Compilers Supported
--------------------
-Since we need to compile with QT5 statically, we will use recent mingw-w64 compiler.
-Download Msys2 from their site here: https://www.msys2.org/ OR use Chocolatey Package Manager to install Msys2.
+Below are some notes on how to build Lindad Core for Windows.
 
-Prepare environment
--------------------
-In your install directory c:\msys64, execute mingw32.exe for msys shell with path to 32bit mingw compiler or mingw64.exe for msys shell with path to 64bit compiler. We will use 32bit compiler in this guide.
+The options known to work for building Lindad Core on Windows are:
 
-In MSYS launched from Mingw32.exe for the first time, we need to download up to date packages :
+* On Linux, using the [Mingw-w64](https://mingw-w64.org/doku.php) cross compiler tool chain. Ubuntu Xenial 16.04 minimum is required
+and is the platform used to build the Lindad Core Windows release binaries.
+* On Windows, using [Windows
+Subsystem for Linux (WSL)](https://msdn.microsoft.com/commandline/wsl/about) and the Mingw-w64 cross compiler tool chain.
 
-	pacman -Sy
-	pacman --needed -S bash pacman pacman-mirrors msys2-runtime
+Other options which may work, but which have not been extensively tested are (please contribute instructions):
 
-You must exit out from MSYS2-shell, restart MSYS2-shell, then run below command, to complete rest of other components update:
+* On Windows, using a POSIX compatibility layer application such as [cygwin](http://www.cygwin.com/) or [msys2](http://www.msys2.org/).
+* On Windows, using a native compiler tool chain such as [Visual Studio](https://www.visualstudio.com).
 
-	pacman -Su
+Installing Windows Subsystem for Linux
+---------------------------------------
 
-Download development packages :
+With Windows 10, Microsoft has released a new feature named the [Windows
+Subsystem for Linux (WSL)](https://msdn.microsoft.com/commandline/wsl/about). This
+feature allows you to run a bash shell directly on Windows in an Ubuntu-based
+environment. Within this environment you can cross compile for Windows without
+the need for a separate Linux VM or server. Note that while WSL can be installed with
+other Linux variants, such as OpenSUSE, the following instructions have only been
+tested with Ubuntu.
 
-	pacman -S base-devel git mercurial cvs wget p7zip
-	pacman -S perl ruby python2 mingw-w64-i686-toolchain
+This feature is not supported in versions of Windows prior to Windows 10 or on
+Windows Server SKUs. In addition, it is available [only for 64-bit versions of
+Windows](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide).
 
-Install QT 5
----------------
-Obtain Pre-Built Qt files and Use instantly without Building/Compiling (version currently used is 5.10.1)
+Full instructions to install WSL are available on the above link.
+To install WSL on Windows 10 with Fall Creators Update installed (version >= 16215.0) do the following:
 
-	pacman -S mingw-w64-i686-qt5-static mingw-w64-i686-jasper 
-	
-One of Linda’s dependencies that will not need to be compiled cause static lib package available (currently 1.0.2n) :
+1. Enable the Windows Subsystem for Linux feature
+  * Open the Windows Features dialog (`OptionalFeatures.exe`)
+  * Enable 'Windows Subsystem for Linux'
+  * Click 'OK' and restart if necessary
+2. Install Ubuntu
+  * Open Microsoft Store and search for "Ubuntu 18.04" or use [this link](https://www.microsoft.com/store/productId/9N9TNGVNDL3Q)
+  * Click Install
+3. Complete Installation
+  * Open a cmd prompt and type "Ubuntu1804"
+  * Create a new UNIX user account (this is a separate account from your Windows account)
 
-	pacman -S mingw-w64-i686-openssl
+After the bash shell is active, you can follow the instructions below, starting
+with the "Cross-compilation" section. Compiling the 64-bit version is
+recommended, but it is possible to compile the 32-bit version.
 
-Its license:
+Cross-compilation for Ubuntu and Windows Subsystem for Linux
+------------------------------------------------------------
 
-	OpenSSL        Old BSD license with the problematic advertising requirement
+The steps below can be performed on Ubuntu (including in a VM) or WSL. The depends system
+will also work on other Linux distributions, however the commands for
+installing the toolchain will be different.
 
-Dependencies
-------------
-Other dependencies will directly be compiled from source and placed here :
+First, install the general dependencies:
 
-	C:\deps
+    sudo apt update
+    sudo apt upgrade
+    sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
 
-They are already built on windows, but sourcecode is included so that you can rebuild them if required.
+A host toolchain (`build-essential`) is necessary because some dependency
+packages (such as `protobuf`) need to build host utilities that are used in the
+build process.
 
-Their licenses:
+See also: [depends\README.md](../depends/README.md).
 
-	Berkeley DB    New BSD license with additional requirement that linked software must be free open source
-	Boost          MIT-like license
-	miniupnpc      New (3-clause) BSD license
+## Building for 64-bit Windows
 
-Versions used in this release:
+The first step is to install the mingw-w64 cross-compilation tool chain:
 
-	Berkeley DB  5.0.32.NC
-	Boost        1.58.0
-	miniupnpc    1.9
+    sudo apt install g++-mingw-w64-x86-64
 
-Build Berkeley DB
------------
-Download Berkley DB 5.0.32 from here 
-http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz
-<br>Put the archive in c:\deps.
+Ubuntu Bionic 16.04 <sup>[1](#footnote1)</sup>:
 
-MSYS shell launched from Mingw32.exe:
+    sudo update-alternatives --config x86_64-w64-mingw32-g++ # Set the default mingw32 g++ compiler option to posix.
 
-	cd /c/deps/
-	tar xvfz db-5.0.32.NC.tar.gz
+Once the toolchain is installed the build steps are common:
 
-	cd /c/db-5.0.32.NC/build_unix
-	sh ../dist/configure --enable-mingw --enable-cxx --disable-replication
-	make
+Note that for WSL the Linda Core source path MUST be somewhere in the default mount file system, for
+example /usr/src/linda, AND not under /mnt/d/. If this is not the case the dependency autoconf scripts will fail.
+This means you cannot use a directory that is located directly on the host Windows file system to perform the build.
 
-Build Boost
------
-Download Boost 1.58 here : https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download
-<br>Put the archive in c:\deps
+Acquire the source in the usual way:
 
-In Mingw32 Msys shell :
+    git clone https://github.com/TheLindaProjectInc/Linda.git
 
-	cd /c/deps
-	tar xvfz boost_1_58_0.tar.gz
+Once the source code is ready the build steps are below:
 
-From DOS prompt configured for MingW :<br>
-(You must remember to set your path properly for the architecture you are compiling for. msys64/mingw32/bin for x86 and msys64/mingw64/bin for x64. Also, in both of those directories, you must rename mingw32make.exe to make.exe in order to run make in the CMD enviroment. To switch to x64 you will have to switch your path. (Settings > Enviroment Variables)
-
-	cd c:\deps\boost_1_58_0
-	bootstrap.bat mingw
-	b2 --build-type=complete --with-chrono --with-filesystem --with-program_options --with-system --with-thread toolset=gcc variant=release link=static threading=multi runtime-link=static stage
-
-Build MiniUPnPc
----------
-UPnP support is optional, make with `USE_UPNP=` to disable it.
-Download it from here http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.9.tar.gz
-and place it in your deps folder, next from the msys shell unpack it like this.
-
-	cd /c/deps/
-	tar xvfz miniupnpc-1.9.tar.gz
-
-From DOS prompt configured for MingW (launch cmd after setting PATH variable) :
-
-	cd c:\deps\miniupnpc-1.9
-	make -f Makefile.mingw init upnpc-static
-	
-Important : then rename "miniupnpc-1.9" directory to "miniupnpc".
-
-Build Linda QT
--------
-First we need to adapt c:\Linda\Linda-qt.pro file to fit dependencies compiled above. Modify this section at the beginning of the file accordingly :
-
-    windows {
-      DEPS_PATH = C:/deps
-      SECP256K1_LIB_PATH = src/secp256k1/.libs
-      SECP256K1_INCLUDE_PATH = src/secp256k1/include
-      MINIUPNPC_LIB_PATH = $$DEPS_PATH/miniupnpc
-      MINIUPNPC_INCLUDE_PATH = $$DEPS_PATH
-      BOOST_LIB_PATH = $$DEPS_PATH/boost_1_58_0/stage/lib
-      BOOST_INCLUDE_PATH = $$DEPS_PATH/boost_1_58_0
-      BOOST_LIB_SUFFIX= -mgw73-mt-s-1_58
-      BDB_LIB_PATH = $$DEPS_PATH/db-5.0.32.NC/build_unix
-      BDB_INCLUDE_PATH = $$DEPS_PATH/db-5.0.32.NC/build_unix
-      #OPENSSL_LIB_PATH = $$DEPS_PATH/
-      #OPENSSL_INCLUDE_PATH = $$DEPS_PATH/
-    }
-
-Build leveldb, in MSYS shell executed from Mingw32.exe:
-
-    cd /c/Linda/src/leveldb
-    make clean
-    TARGET_OS=NATIVE_WINDOWS make libleveldb.a libmemenv.a
-
-Still in MSYS2 shell, build Secp256k1
-
-    cd /c/Linda/src/secp256k1
-    ./autogen.sh
-    ./configure
+    PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g') # strip out problematic Windows %PATH% imported var
+    cd depends
+    make HOST=x86_64-w64-mingw32
+    cd ..
+    ./autogen.sh # not required when building from tarball
+    CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --prefix=/ --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
     make
 
-then it's finally possible to compile Linda from Mingw32 Msys shell :
+## Building for 32-bit Windows
 
-	export PATH=/mingw32/qt5-static/bin/:$PATH
+To build executables for Windows 32-bit, install the following dependencies:
 
-	cd /c/Linda
-	make clean
-	qmake
-	make -f Makefile.Release
+    sudo apt install g++-mingw-w64-i686 mingw-w64-i686-dev
 
-NOTE : instructions for compiling 64bit windows wallet are the same except that :
-- Mingw64.exe will be launched as MSYS2 shell.
-- packages name that were beginning with "mingw-w64-i686-" for 32bit env, must be replaced by "mingw-w64-x86_64-" when using pacman to install 64bit libs
--You MUST set your path variable for the CMD prompt sections to work. Ensure you follow those steps properly.
-- following path will be used before compiling Linda QT :
+For Ubuntu Bionic 16.04 and Windows Subsystem for Linux <sup>[1](#footnote1)</sup>:
 
-      export PATH=/mingw64/qt5-static/bin/:$PATH
+    sudo update-alternatives --config i686-w64-mingw32-g++  # Set the default mingw32 g++ compiler option to posix.
 
+Note that for WSL the Linda Core source path MUST be somewhere in the default mount file system, for
+example /usr/src/linda, AND not under /mnt/d/. If this is not the case the dependency autoconf scripts will fail.
+This means you cannot use a directory that located directly on the host Windows file system to perform the build.
 
-Build Lindad
--------
-DOS prompt:
+Acquire the source in the usual way:
 
-    cd c:\Linda\src
-    mingw32-make -f makefile.mingw
-    strip Lindad.exe
+    git clone https://github.com/TheLindaProjectInc/Linda.git
+
+Then build using:
+
+    PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g') # strip out problematic Windows %PATH% imported var
+    cd depends
+    make HOST=i686-w64-mingw32
+    cd ..
+    ./autogen.sh # not required when building from tarball
+    CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --prefix=/ --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
+    make
+
+## Depends system
+
+For further documentation on the depends system see [README.md](../depends/README.md) in the depends directory.
+
+Installation
+-------------
+
+After building using the Windows subsystem it can be useful to copy the compiled
+executables to a directory on the Windows drive in the same directory structure
+as they appear in the release `.zip` archive. This can be done in the following
+way. This will install to `c:\workspace\linda`, for example:
+
+    make install DESTDIR=/mnt/c/workspace/linda
+
+Footnotes
+---------
+
+<a name="footnote1">1</a>: Starting from Ubuntu Xenial 16.04, both the 32 and 64 bit Mingw-w64 packages install two different
+compiler options to allow a choice between either posix or win32 threads. The default option is win32 threads which is the more
+efficient since it will result in binary code that links directly with the Windows kernel32.lib. Unfortunately, the headers
+required to support win32 threads conflict with some of the classes in the C++11 standard library, in particular std::mutex.
+It's not possible to build the Linda Core code using the win32 version of the Mingw-w64 cross compilers (at least not without
+modifying headers in the Linda Core source code).

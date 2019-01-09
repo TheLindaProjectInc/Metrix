@@ -6,11 +6,12 @@
 #ifndef NOVACOIN_MINER_H
 #define NOVACOIN_MINER_H
 
+#include "core.h"
 #include "main.h"
 #include "wallet.h"
 
 /* Generate a new block, without valid proof-of-work */
-CBlock* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake=false, int64_t* pFees = 0);
+CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake=false, int64_t* pFees = 0);
 
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);

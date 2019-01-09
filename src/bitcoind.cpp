@@ -42,18 +42,24 @@ bool AppInit(int argc, char* argv[])
         ParseParameters(argc, argv);
         if (!boost::filesystem::is_directory(GetDataDir(false)))
         {
-            fprintf(stderr, "Error: Specified directory does not exist\n");
-            Shutdown();
+            fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
+            return false;
         }
         ReadConfigFile(mapArgs, mapMultiArgs);
+        // Check for -testnet or -regtest parameter (TestNet() calls are only valid after this clause)
+        if (!SelectParamsFromCommandLine()) {
+            fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
+            return false;
+        }
 
         if (mapArgs.count("-?") || mapArgs.count("--help"))
         {
             // First part of help message is specific to bitcoind / RPC client
             std::string strUsage = _("Linda version") + " " + FormatFullVersion() + "\n\n" +
                 _("Usage:") + "\n" +
-                  "  Lindad [options]                     " + "\n" +
-                  "  Lindad [options] <command> [params]  " + _("Send command to -server or Lindad") + "\n" +
+                  "  Lindad [options]                     " + _("Start Lindad server") + "\n" +
+                  _("Usage (deprecated, use Lindad-cli):") + "\n" +
+                  "  Lindad [options] <command> [params]  " + _("Send command to Lindad server") + "\n" +
                   "  Lindad [options] help                " + _("List commands") + "\n" +
                   "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
 
@@ -70,10 +76,6 @@ bool AppInit(int argc, char* argv[])
 
         if (fCommandLine)
         {
-            if (!SelectParamsFromCommandLine()) {
-                fprintf(stderr, "Error: invalid combination of -regtest and -testnet.\n");
-                return false;
-            }
             int ret = CommandLineRPC(argc, argv);
             exit(ret);
         }

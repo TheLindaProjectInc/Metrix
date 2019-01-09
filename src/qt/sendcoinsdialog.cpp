@@ -235,7 +235,7 @@ void SendCoinsDialog::clear()
     // Remove entries until only one left
     while(ui->entries->count())
     {
-        delete ui->entries->takeAt(0)->widget();
+        ui->entries->takeAt(0)->widget()->deleteLater(););
     }
     addEntry();
 
@@ -293,7 +293,7 @@ void SendCoinsDialog::updateRemoveEnabled()
 
 void SendCoinsDialog::removeEntry(SendCoinsEntry* entry)
 {
-    delete entry;
+    entry->deleteLater();
     updateRemoveEnabled();
 }
 

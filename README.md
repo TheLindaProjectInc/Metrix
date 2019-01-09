@@ -74,9 +74,7 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 [Facebook](https://www.facebook.com/lindacoincurrency)
 
-[Telegram](https://t.me/OfficaLindaproject)
-
-[GitHub](https://github.com/Lindacoin/Linda)
+[GitHub](https://github.com/TheLindaProjectInc)
 
 [YouTube](https://www.youtube.com/channel/UCzfjb47BI9lx7Ih-K6VY-TA)
 

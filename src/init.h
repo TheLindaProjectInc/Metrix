@@ -5,12 +5,16 @@
 #ifndef BITCOIN_INIT_H
 #define BITCOIN_INIT_H
 
+#if defined(HAVE_CONFIG_H)
+#include "bitcoin-config.h"
+#endif
+
 #include "wallet.h"
 
 namespace boost {
     class thread_group;
 } // namespace boost
-
+extern volatile bool fRequestShutdown;
 extern CWallet* pwalletMain;
 void StartShutdown();
 bool ShutdownRequested();
