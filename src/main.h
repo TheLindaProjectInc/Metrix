@@ -1199,23 +1199,31 @@ class CCoinsView
 public:
     // Retrieve the CCoins (unspent transaction outputs) for a given txid
     virtual bool GetCoins(const uint256 &txid, CCoins &coins);
-     // Modify the CCoins for a given txid
+    
+    // Modify the CCoins for a given txid
     virtual bool SetCoins(const uint256 &txid, const CCoins &coins);
-     // Just check whether we have data for a given txid.
+    
+    // Just check whether we have data for a given txid.
     // This may (but cannot always) return true for fully spent transactions
     virtual bool HaveCoins(const uint256 &txid);
-     // Retrieve the block index whose state this CCoinsView currently represents
-    virtual CBlockIndex *GetBestBlock();
-     // Modify the currently active block index
-    virtual bool SetBestBlock(CBlockIndex *pindex);
-     // Do a bulk modification (multiple SetCoins + one SetBestBlock)
-    virtual bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
-     // Calculate statistics about the unspent transaction output set
+    
+    // Retrieve the block hash whose state this CCoinsView currently represents
+    virtual uint256 GetBestBlock();
+    
+    // Modify the currently active block hash
+    virtual bool SetBestBlock(const uint256 &hashBlock);
+    
+    // Do a bulk modification (multiple SetCoins + one SetBestBlock)
+    virtual bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, const uint256 &hashBlock);
+    
+    // Calculate statistics about the unspent transaction output set
     virtual bool GetStats(CCoinsStats &stats);
-     // As we use CCoinsViews polymorphically, have a virtual destructor
+    
+    // As we use CCoinsViews polymorphically, have a virtual destructor
     virtual ~CCoinsView() {}
 };
- /** CCoinsView backed by another CCoinsView */
+ 
+/** CCoinsView backed by another CCoinsView */
 class CCoinsViewBacked : public CCoinsView
 {
 protected:
@@ -1225,35 +1233,40 @@ protected:
     bool GetCoins(const uint256 &txid, CCoins &coins);
     bool SetCoins(const uint256 &txid, const CCoins &coins);
     bool HaveCoins(const uint256 &txid);
-    CBlockIndex *GetBestBlock();
-    bool SetBestBlock(CBlockIndex *pindex);
+    uint256 GetBestBlock();
+    bool SetBestBlock(const uint256 &hashBlock);
     void SetBackend(CCoinsView &viewIn);
-    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
+    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, const uint256 &hashBlock);
     bool GetStats(CCoinsStats &stats);
 };
- /** CCoinsView that adds a memory cache for transactions to another CCoinsView */
+
+/** CCoinsView that adds a memory cache for transactions to another CCoinsView */
 class CCoinsViewCache : public CCoinsViewBacked
 {
 protected:
-    CBlockIndex *pindexTip;
+    uint256 hashBlock;
     std::map<uint256,CCoins> cacheCoins;
  public:
     CCoinsViewCache(CCoinsView &baseIn, bool fDummy = false);
-     // Standard CCoinsView methods
+    
+    // Standard CCoinsView methods
     bool GetCoins(const uint256 &txid, CCoins &coins);
     bool SetCoins(const uint256 &txid, const CCoins &coins);
     bool HaveCoins(const uint256 &txid);
-    CBlockIndex *GetBestBlock();
-    bool SetBestBlock(CBlockIndex *pindex);
-    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
-     // Return a modifiable reference to a CCoins. Check HaveCoins first.
+    uint256 GetBestBlock();
+    bool SetBestBlock(const uint256 &hashBlock);
+    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, const uint256 &hashBlock);
+    
+    // Return a modifiable reference to a CCoins. Check HaveCoins first.
     // Many methods explicitly require a CCoinsViewCache because of this method, to reduce
     // copying.
     CCoins &GetCoins(const uint256 &txid);
-     // Push the modifications applied to this cache to its base.
+    
+    // Push the modifications applied to this cache to its base.
     // Failure to call this method before destruction will cause the changes to be forgotten.
     bool Flush();
-     // Calculate the size of the cache (in number of transactions)
+    
+    // Calculate the size of the cache (in number of transactions)
     unsigned int GetCacheSize();
 
     /** Amount of bitcoins coming in to this transaction
