@@ -51,9 +51,6 @@ unsigned int nModifierInterval = 10 * 60; // time to elapse before new modifier 
 int nCoinbaseMaturity = 10;
 
 CChain chainActive;
-uint256 nBestInvalidTrust = 0;
-
-set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
 int64_t nTimeBestReceived = 0;
 int nScriptCheckThreads = 0;
 bool fImporting = false;
@@ -66,7 +63,7 @@ int64_t CTransaction::nMinTxFee = 100000;  // Override with -mintxfee
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
 int64_t CTransaction::nMinRelayTxFee = 100000;
 
-CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
+static CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
 map<uint256, CBlock*> mapOrphanBlocks;
 multimap<uint256, CBlock*> mapOrphanBlocksByPrev;
@@ -86,6 +83,29 @@ CScript COINBASE_FLAGS;
 const string strMessageMagic = "Linda Signed Message:\n";
 
 std::set<uint256> setValidatedTx;
+
+// Internal stuff
+namespace {
+    struct CBlockIndexWorkComparator
+    {
+        bool operator()(CBlockIndex *pa, CBlockIndex *pb) {
+            if (pa->nChainTrust > pb->nChainTrust) return false;
+            if (pa->nChainTrust < pb->nChainTrust) return true;
+
+            if (pa->GetBlockHash() < pb->GetBlockHash()) return false;
+            if (pa->GetBlockHash() > pb->GetBlockHash()) return true;
+
+            return false; // identical blocks
+        }
+    };
+
+    CBlockIndex *pindexBestInvalid;
+    set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
+
+    CCriticalSection cs_LastBlockFile;
+    CBlockFileInfo infoLastBlockFile;
+    int nLastBlockFile = 0;
+}
 
 // Blocks that are in flight, and that are in the queue to be downloaded.
 // Protected by cs_main.
@@ -1314,25 +1334,6 @@ bool CMerkleTx::AcceptToMemoryPool(bool fLimitFree)
 }
 
 
-
-bool CWalletTx::AcceptWalletTransaction()
-{
-    {
-        // Add previous supporting transactions first
-        BOOST_FOREACH(CMerkleTx& tx, vtxPrev)
-        {
-            if (!(tx.IsCoinBase() || tx.IsCoinStake()))
-            {
-                uint256 hash = tx.GetHash();
-                if (!mempool.exists(hash) && pcoinsTip->HaveCoins(hash))
-                    tx.AcceptToMemoryPool(false);
-            }
-        }
-        return AcceptToMemoryPool(false);
-    }
-    return false;
-}
-
 int GetInputAge(CTxIn& vin)
 {
     const uint256& prevHash = vin.prevout.hash;
@@ -1723,7 +1724,7 @@ void CheckForkWarningConditions()
     if (pindexBestForkTip && chainActive.Height() - pindexBestForkTip->nHeight >= 72)
         pindexBestForkTip = NULL;
 
-    if (pindexBestForkTip || nBestInvalidTrust > chainActive.Tip()->nChainTrust + (CBigNum(chainActive.Tip()->GetBlockTrust()) * 6).getuint256())
+    if (pindexBestForkTip || (pindexBestInvalid && pindexBestInvalid->nChainTrust > chainActive.Tip()->nChainTrust + (CBigNum(chainActive.Tip()->GetBlockTrust()) * 6).getuint256()))
     {
         if (!fLargeWorkForkFound)
         {
@@ -1788,10 +1789,13 @@ void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)
 
 void static InvalidChainFound(CBlockIndex* pindexNew)
 {
-    if (pindexNew->nChainTrust > nBestInvalidTrust)
+    if (!pindexBestInvalid || pindexNew->nChainTrust > pindexBestInvalid->nChainTrust)
     {
-        nBestInvalidTrust = pindexNew->nChainTrust;
-        pblocktree->WriteBestInvalidTrust(CBigNum(nBestInvalidTrust));
+        pindexBestInvalid = pindexNew;
+        // The current code doesn't actually read the BestInvalidWork entry in
+        // the block database anymore, as it is derived from the flags in block
+        // index entry. We only write it for backward compatibility.
+        pblocktree->WriteBestInvalidTrust(CBigNum(pindexBestInvalid->nChainTrust));
     }
 
     uint256 nBestInvalidBlockTrust = pindexNew->nChainTrust - pindexNew->pprev->nChainTrust;
@@ -2057,12 +2061,12 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         const CTransaction &tx = block.vtx[i];
         uint256 hash = tx.GetHash();
 
-        // check that all outputs are available
-        if (!view.HaveCoins(hash)) {
-            fClean = fClean && error("DisconnectBlock() : outputs still spent? database corrupted");
-            view.SetCoins(hash, CCoins());
-        }
-        CCoins &outs = view.GetCoins(hash);
+        // Check that all outputs are available and match the outputs in the block itself
+        // exactly. Note that transactions with only provably unspendable outputs won't
+        // have outputs available even in the block itself, so we handle that case
+        // specially with outsEmpty.
+        CCoins outsEmpty;
+        CCoins &outs = view.HaveCoins(hash) ? view.GetCoins(hash) : outsEmpty;
         outs.ClearUnspendable();
 
         CCoins outsBlock = CCoins(tx, pindex->nHeight);
@@ -3429,10 +3433,6 @@ bool CheckDiskSpace(uint64_t nAdditionalBytes)
     return true;
 }
 
-CCriticalSection cs_LastBlockFile;
-CBlockFileInfo infoLastBlockFile;
-int nLastBlockFile = 0;
-
 FILE* OpenDiskFile(const CDiskBlockPos &pos, const char *prefix, bool fReadOnly)
 {
     if (pos.IsNull())
@@ -3507,6 +3507,8 @@ bool static LoadBlockIndexDB()
         pindex->nChainTx = (pindex->pprev ? pindex->pprev->nChainTx : 0) + pindex->nTx;
         if ((pindex->nStatus & BLOCK_VALID_MASK) >= BLOCK_VALID_TRANSACTIONS && !(pindex->nStatus & BLOCK_FAILED_MASK))
             setBlockIndexValid.insert(pindex);
+        if (pindex->nStatus & BLOCK_FAILED_MASK && (!pindexBestInvalid || pindex->nChainTrust > pindexBestInvalid->nChainTrust))
+            pindexBestInvalid = pindex;
     }
 
     // Load block file info
@@ -3515,17 +3517,12 @@ bool static LoadBlockIndexDB()
     if (pblocktree->ReadBlockFileInfo(nLastBlockFile, infoLastBlockFile))
         LogPrintf("LoadBlockIndex(): last block file: %s\n", infoLastBlockFile.ToString().c_str());
 
-    // Load bnBestInvalidWork, OK if it doesn't exist
-    CBigNum bnBestInvalidTrust;
-    pblocktree->ReadBestInvalidTrust(bnBestInvalidTrust);
-    nBestInvalidTrust = bnBestInvalidTrust.getuint256();
-
     // Check whether we need to continue reindexing
     bool fReindexing = false;
     pblocktree->ReadReindexing(fReindexing);
     fReindex |= fReindexing;
 
-    // Load hashBestChain pointer to end of best chain
+    // Load pointer to end of best chain
     chainActive.SetTip(pcoinsTip->GetBestBlock());
     if (chainActive.Tip() == NULL)
         return true;
@@ -3616,7 +3613,7 @@ void UnloadBlockIndex()
     mapBlockIndex.clear();
     setBlockIndexValid.clear();
     chainActive.SetTip(NULL);
-    nBestInvalidTrust = 0;
+    pindexBestInvalid = NULL;
 }
 
 bool LoadBlockIndex()
@@ -4939,8 +4936,7 @@ bool ProcessMessages(CNode* pfrom)
 
 bool SendMessages(CNode* pto)
 {
-    TRY_LOCK(cs_main, lockMain);
-    if (lockMain) {
+    {
         // Don't send anything until we get their version message
         if (pto->nVersion == 0)
             return true;
@@ -4989,6 +4985,7 @@ bool SendMessages(CNode* pto)
             state.fShouldBan = false;
         }
 
+
         // Start block sync
         if (pto->fStartSync && !fImporting && !fReindex) {
             PushGetBlocks(pto, chainActive.Tip(), uint256(0));
@@ -4999,19 +4996,14 @@ bool SendMessages(CNode* pto)
         // Resend wallet transactions that haven't gotten in a block yet
         // Except during reindex, importing and IBD, when old wallet
         // transactions become unconfirmed and spams other nodes.
-        if (!fReindex && !fImporting && !IsInitialBlockDownload())
+        if (!fReindex && !fImporting && !IsInitialBlockDownload()) {
             ResendWalletTransactions();
-
-        int64_t nNow = GetTimeMicros();
-        if (!IsInitialBlockDownload() && pto->nNextLocalAddrSend < nNow) {
-            AdvertizeLocal(pto);
-            pto->nNextLocalAddrSend = PoissonNextSend(nNow, AVG_LOCAL_ADDRESS_BROADCAST_INTERVAL);
         }
-
 
         //
         // Message: addr
-        //
+        //        
+        int64_t nNow = GetTimeMicros();
         if (pto->nNextAddrSend < nNow) {
             pto->nNextAddrSend = PoissonNextSend(nNow, AVG_ADDRESS_BROADCAST_INTERVAL);
             vector<CAddress> vAddr;
@@ -5035,6 +5027,10 @@ bool SendMessages(CNode* pto)
                 pto->PushMessage("addr", vAddr);
         }
 
+        if (!IsInitialBlockDownload() && pto->nNextLocalAddrSend < nNow) {
+            AdvertizeLocal(pto);
+            pto->nNextLocalAddrSend = PoissonNextSend(nNow, AVG_LOCAL_ADDRESS_BROADCAST_INTERVAL);
+        }
 
         //
         // Message: inventory

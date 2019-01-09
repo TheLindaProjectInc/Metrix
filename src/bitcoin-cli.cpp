@@ -31,7 +31,7 @@ static bool AppInitRPC(int argc, char* argv[])
             "  Linda-cli [options] <command> [params]  " + _("Send command to Linda server") + "\n" +
             "  Linda-cli [options] help                " + _("List commands") + "\n" +
             "  Linda-cli [options] help <command>      " + _("Get help for a command") + "\n";
-        strUsage += "\n" + HelpMessage();
+        strUsage += "\n" + HelpMessage(HMM_BITCOIN_CLI);
         fprintf(stdout, "%s", strUsage.c_str());
         return false;
     }

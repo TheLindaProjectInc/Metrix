@@ -3,9 +3,12 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "ui_interface.h"
+#include "init.h"
+#include "util.h"
+#include "main.h"
 #include "rpcserver.h"
 #include "rpcclient.h"
-#include "init.h"
 #include <boost/algorithm/string/predicate.hpp>
 
 void WaitForShutdown(boost::thread_group* threadGroup)
@@ -63,7 +66,7 @@ bool AppInit(int argc, char* argv[])
                   "  Lindad [options] help                " + _("List commands") + "\n" +
                   "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
 
-            strUsage += "\n" + HelpMessage();
+            strUsage += "\n" + HelpMessage(HMM_BITCOIND);
 
             fprintf(stdout, "%s", strUsage.c_str());
             return false;

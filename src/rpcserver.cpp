@@ -6,6 +6,8 @@
 #include "rpcserver.h"
 
 #include "base58.h"
+#include "main.h"
+#include "wallet.h"
 #include "init.h"
 #include "util.h"
 #include "sync.h"
