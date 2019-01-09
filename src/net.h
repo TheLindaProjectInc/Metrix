@@ -272,6 +272,9 @@ protected:
 
     std::vector<std::string> vecRequestsFulfilled; //keep track of what client has asked for
     
+        // Basic fuzz-testing
+    void Fuzz(int nChance); // modifies ssSend
+
 public:
     int nMisbehavior;
     uint256 hashContinue;
@@ -524,12 +527,18 @@ public:
     // TODO: Document the precondition of this function.  Is cs_vSend locked?
     void EndMessage() UNLOCK_FUNCTION(cs_vSend)
     {
-        if (mapArgs.count("-dropmessagestest") && GetRand(atoi(mapArgs["-dropmessagestest"])) == 0)
+        // The -*messagestest options are intentionally not documented in the help message,
+        // since they are only used during development to debug the networking code and are
+        // not intended for end-users.
+        if (mapArgs.count("-dropmessagestest") && GetRand(GetArg("-dropmessagestest", 2)) == 0)
         {
             LogPrint("net", "dropmessages DROPPING SEND MESSAGE\n");
             AbortMessage();
             return;
         }
+
+        if (mapArgs.count("-fuzzmessagestest"))
+            Fuzz(GetArg("-fuzzmessagestest", 10));
 
         if (ssSend.size() == 0)
             return;
