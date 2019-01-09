@@ -4939,8 +4939,7 @@ bool ProcessMessages(CNode* pfrom)
 
 bool SendMessages(CNode* pto)
 {
-    TRY_LOCK(cs_main, lockMain);
-    if (lockMain) {
+    {
         // Don't send anything until we get their version message
         if (pto->nVersion == 0)
             return true;
@@ -4974,7 +4973,7 @@ bool SendMessages(CNode* pto)
             }
         }
 
-        TRY_LOCK(cs_main, lockMain); // Acquire cs_main for IsInitialBlockDownload() and CNodeState()
+        TRY_LOCK(cs_main, lockMain); // Acquire cs_main for CNodeState()
         if (!lockMain)
             return true;
 
@@ -4988,26 +4987,6 @@ bool SendMessages(CNode* pto)
             }
             state.fShouldBan = false;
         }
-
-        // Start block sync
-        if (pto->fStartSync && !fImporting && !fReindex) {
-            PushGetBlocks(pto, chainActive.Tip(), uint256(0));
-            pto->tGetblocks = GetTimeMillis();
-            pto->fStartSync = false;
-        }
-
-        // Resend wallet transactions that haven't gotten in a block yet
-        // Except during reindex, importing and IBD, when old wallet
-        // transactions become unconfirmed and spams other nodes.
-        if (!fReindex && !fImporting && !IsInitialBlockDownload())
-            ResendWalletTransactions();
-
-        int64_t nNow = GetTimeMicros();
-        if (!IsInitialBlockDownload() && pto->nNextLocalAddrSend < nNow) {
-            AdvertizeLocal(pto);
-            pto->nNextLocalAddrSend = PoissonNextSend(nNow, AVG_LOCAL_ADDRESS_BROADCAST_INTERVAL);
-        }
-
 
         //
         // Message: addr
@@ -5035,6 +5014,30 @@ bool SendMessages(CNode* pto)
                 pto->PushMessage("addr", vAddr);
         }
 
+
+        TRY_LOCK(cs_main, lockMain); // Acquire cs_main for IsInitialBlockDownload()
+        if (!lockMain)
+            return true;
+
+        // Start block sync
+        if (pto->fStartSync && !fImporting && !fReindex) {
+            PushGetBlocks(pto, chainActive.Tip(), uint256(0));
+            pto->tGetblocks = GetTimeMillis();
+            pto->fStartSync = false;
+        }
+
+        // Resend wallet transactions that haven't gotten in a block yet
+        // Except during reindex, importing and IBD, when old wallet
+        // transactions become unconfirmed and spams other nodes.
+        if (!fReindex && !fImporting && !IsInitialBlockDownload()) {
+            ResendWalletTransactions();
+        }
+
+        int64_t nNow = GetTimeMicros();
+        if (!IsInitialBlockDownload() && pto->nNextLocalAddrSend < nNow) {
+            AdvertizeLocal(pto);
+            pto->nNextLocalAddrSend = PoissonNextSend(nNow, AVG_LOCAL_ADDRESS_BROADCAST_INTERVAL);
+        }
 
         //
         // Message: inventory
