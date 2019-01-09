@@ -80,6 +80,7 @@ class CKeyItem;
 class CNode;
 class CReserveKey;
 class CWallet;
+class CBlockLocator;
 
 struct CBlockIndexWorkComparator;
 
@@ -1204,13 +1205,6 @@ public:
     {
     }
 
-    explicit CBlockLocator(const CBlockIndex* pindex)
-    {
-        Set(pindex);
-    }
-
-    explicit CBlockLocator(uint256 hashBlock);
-
     CBlockLocator(const std::vector<uint256>& vHaveIn)
     {
         vHave = vHaveIn;
@@ -1233,27 +1227,8 @@ public:
         return vHave.empty();
     }
 
-    /** Given a block initialises the locator to that point in the chain. */
-    void Set(const CBlockIndex* pindex);
-    /** Returns the distance in blocks this locator is from our chain head. */
-    int GetDistanceBack();
-    /** Returns the first best-chain block the locator contains. */
-    CBlockIndex* GetBlockIndex();
-    /** Returns the hash of the first best chain block the locator contains. */
-    uint256 GetBlockHash();
-    /** Returns the height of the first best chain block the locator has. */
-    int GetHeight();
-
+    friend class CChain;
 };
-
-
-
-
-
-
-
-
-
 
 
 class CWalletInterface {
@@ -1454,6 +1429,12 @@ public:
     }
     /** Set/initialize a chain with a given tip. Returns the forking point. */
     CBlockIndex *SetTip(CBlockIndex *pindex);
+
+    /** Return a CBlockLocator that refers to a block in this chain (by default the tip). */
+    CBlockLocator GetLocator(const CBlockIndex *pindex = NULL) const;
+
+    /** Find the last common block between this chain and a locator. */
+    CBlockIndex *FindFork(const CBlockLocator &locator) const;
 };
 
 /** The currently-connected chain of blocks. */
