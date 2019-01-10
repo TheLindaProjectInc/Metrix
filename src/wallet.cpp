@@ -673,21 +673,19 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
             if (!wtx.WriteToDisk())
                 return false;
 
-        if (!fHaveGUI) {
-            // If default receiving address gets used, replace it with a new one
-            if (vchDefaultKey.IsValid()) {
-                CScript scriptDefaultKey;
-                scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
-                BOOST_FOREACH(const CTxOut& txout, wtx.vout)
+        // If default receiving address gets used, replace it with a new one
+        if (vchDefaultKey.IsValid()) {
+            CScript scriptDefaultKey;
+            scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
+            BOOST_FOREACH(const CTxOut& txout, wtx.vout)
+            {
+                if (txout.scriptPubKey == scriptDefaultKey)
                 {
-                    if (txout.scriptPubKey == scriptDefaultKey)
+                    CPubKey newDefaultKey;
+                    if (GetKeyFromPool(newDefaultKey))
                     {
-                        CPubKey newDefaultKey;
-                        if (GetKeyFromPool(newDefaultKey))
-                        {
-                            SetDefaultKey(newDefaultKey);
-                            SetAddressBook(vchDefaultKey.GetID(), "", "receive");
-                        }
+                        SetDefaultKey(newDefaultKey);
+                        SetAddressBook(vchDefaultKey.GetID(), "", "receive");
                     }
                 }
             }
