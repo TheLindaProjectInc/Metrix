@@ -66,7 +66,7 @@ struct CNodeSignals
 {
     boost::signals2::signal<int()> GetHeight;
     boost::signals2::signal<bool (CNode*)> ProcessMessages;
-    boost::signals2::signal<bool (CNode*, bool)> SendMessages;
+    boost::signals2::signal<bool (CNode*)> SendMessages;
     boost::signals2::signal<void (NodeId, const CNode*)> InitializeNode;
     boost::signals2::signal<void (NodeId)> FinalizeNode;
 };
@@ -272,6 +272,9 @@ protected:
 
     std::vector<std::string> vecRequestsFulfilled; //keep track of what client has asked for
     
+        // Basic fuzz-testing
+    void Fuzz(int nChance); // modifies ssSend
+
 public:
     int nMisbehavior;
     uint256 hashContinue;
@@ -285,12 +288,15 @@ public:
     mruset<CAddress> setAddrKnown;
     bool fGetAddr;
     std::set<uint256> setKnown;
+    int64_t nNextAddrSend;
+    int64_t nNextLocalAddrSend;
 
     // inventory based relay
     mruset<CInv> setInventoryKnown;
     std::vector<CInv> vInventoryToSend;
     CCriticalSection cs_inventory;
     std::multimap<int64_t, CInv> mapAskFor;
+    int64_t nNextInvSend;
 
     // Ping time measurement:
     // The pong reply we're expecting, or 0 if no pong expected.
@@ -345,6 +351,9 @@ public:
         nStartingHeight = -1;
         fStartSync = false;
         fGetAddr = false;
+        nNextLocalAddrSend = 0;
+        nNextAddrSend = 0;
+        nNextInvSend = 0;
         nMisbehavior = 0;
         setInventoryKnown.max_size(SendBufferSize() / 1000);
         nPingNonceSent = 0;
@@ -491,6 +500,7 @@ public:
             mapAlreadyAskedFor.update(it, nRequestTime);
         else
             mapAlreadyAskedFor.insert(std::make_pair(inv, nRequestTime));
+        mapAskFor.insert(std::make_pair(nRequestTime, inv));
     }
 
 
@@ -517,12 +527,18 @@ public:
     // TODO: Document the precondition of this function.  Is cs_vSend locked?
     void EndMessage() UNLOCK_FUNCTION(cs_vSend)
     {
-        if (mapArgs.count("-dropmessagestest") && GetRand(atoi(mapArgs["-dropmessagestest"])) == 0)
+        // The -*messagestest options are intentionally not documented in the help message,
+        // since they are only used during development to debug the networking code and are
+        // not intended for end-users.
+        if (mapArgs.count("-dropmessagestest") && GetRand(GetArg("-dropmessagestest", 2)) == 0)
         {
             LogPrint("net", "dropmessages DROPPING SEND MESSAGE\n");
             AbortMessage();
             return;
         }
+
+        if (mapArgs.count("-fuzzmessagestest"))
+            Fuzz(GetArg("-fuzzmessagestest", 10));
 
         if (ssSend.size() == 0)
             return;
@@ -777,7 +793,8 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
     static uint64_t GetTotalBytesRecv();
     static uint64_t GetTotalBytesSent();
 };
-
+class CTxIn;
+class CTxOut;
 class CTransaction;
 void RelayTransaction(const CTransaction& tx);
 void RelayTransaction(const CTransaction& tx, const CDataStream& ss);
@@ -804,5 +821,8 @@ public:
     bool Write(const CAddrMan& addr);
     bool Read(CAddrMan& addr);
 };
+
+/** Return a timestamp in the future (in microseconds) for exponentially distributed events. */
+int64_t PoissonNextSend(int64_t nNow, int average_interval_seconds);
 
 #endif

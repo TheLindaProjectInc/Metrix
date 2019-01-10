@@ -17,6 +17,8 @@
 #include "darksend.h"
 #include "wallet.h"
 
+#include <math.h>
+
 #ifdef WIN32
 #include <fcntl.h>
 #include <string.h>
@@ -1460,11 +1462,6 @@ void ThreadMessageHandler()
         if (!fHaveSyncNode)
             StartSync(vNodesCopy);
 
-        // Poll the connected nodes for messages
-        CNode* pnodeTrickle = NULL;
-        if (!vNodesCopy.empty())
-            pnodeTrickle = vNodesCopy[GetRand(vNodesCopy.size())];
-
         bool fSleep = true;
 
         BOOST_FOREACH(CNode* pnode, vNodesCopy)
@@ -1495,7 +1492,7 @@ void ThreadMessageHandler()
             {
                 TRY_LOCK(pnode->cs_vSend, lockSend);
                 if (lockSend)
-                    g_signals.SendMessages(pnode, pnode == pnodeTrickle);
+                    g_signals.SendMessages(pnode);
             }
             boost::this_thread::interruption_point();
         }
@@ -1615,7 +1612,6 @@ bool BindListenPort(const CService &addrBind, string& strError, bool fWhiteliste
     }
 
     vhListenSocket.push_back(ListenSocket(hListenSocket, fWhitelisted));
-
 
     if (addrBind.IsRoutable() && fDiscover && !fWhitelisted)
         AddLocal(addrBind, LOCAL_BIND);
@@ -1919,6 +1915,41 @@ uint64_t CNode::GetTotalBytesSent()
     return nTotalBytesSent;
 }
 
+void CNode::Fuzz(int nChance)
+{
+    if (!fSuccessfullyConnected) return; // Don't fuzz initial handshake
+    if (GetRand(nChance) != 0) return; // Fuzz 1 of every nChance messages
+
+    switch (GetRand(3))
+    {
+    case 0:
+        // xor a random byte with a random value:
+        if (!ssSend.empty()) {
+            CDataStream::size_type pos = GetRand(ssSend.size());
+            ssSend[pos] ^= (unsigned char)(GetRand(256));
+        }
+        break;
+    case 1:
+        // delete a random byte:
+        if (!ssSend.empty()) {
+            CDataStream::size_type pos = GetRand(ssSend.size());
+            ssSend.erase(ssSend.begin() + pos);
+        }
+        break;
+    case 2:
+        // insert a random byte at a random position
+    {
+        CDataStream::size_type pos = GetRand(ssSend.size());
+        char ch = (char)GetRand(256);
+        ssSend.insert(ssSend.begin() + pos, ch);
+    }
+    break;
+    }
+    // Chance of more than one change half the time:
+    // (more changes exponentially less likely):
+    Fuzz(2);
+}
+
 //
 // CAddrDB
 //
@@ -2017,4 +2048,8 @@ bool CAddrDB::Read(CAddrMan& addr)
     }
 
     return true;
+}
+
+int64_t PoissonNextSend(int64_t nNow, int average_interval_seconds) {
+    return nNow + (int64_t)(log1p(GetRand(1ULL << 48) * -0.0000000000000035527136788 /* -1/2^48 */) * average_interval_seconds * -1000000.0 + 0.5);
 }

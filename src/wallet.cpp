@@ -904,7 +904,7 @@ void CWalletTx::GetAmounts(list<pair<CTxDestination, int64_t> >& listReceived,
     int64_t nDebit = GetDebit();
     if (nDebit > 0) // debit>0 means we signed/sent this transaction
     {
-        int64_t nValueOut = GetValueOut();
+        int64_t nValueOut = GetValueOut(*this);
         nFee = nDebit - nValueOut;
     }
 
@@ -1037,6 +1037,24 @@ void CWalletTx::AddSupportingTransactions()
     }
 
     reverse(vtxPrev.begin(), vtxPrev.end());
+}
+
+bool CWalletTx::AcceptWalletTransaction()
+{
+    {
+        // Add previous supporting transactions first
+        BOOST_FOREACH(CMerkleTx& tx, vtxPrev)
+        {
+            if (!(tx.IsCoinBase() || tx.IsCoinStake()))
+            {
+                uint256 hash = tx.GetHash();
+                if (!mempool.exists(hash) && pcoinsTip->HaveCoins(hash))
+                    tx.AcceptToMemoryPool(false);
+            }
+        }
+        return AcceptToMemoryPool(false);
+    }
+    return false;
 }
 
 bool CWalletTx::WriteToDisk()
@@ -3496,7 +3514,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         uint64_t nCoinAge;
         CCoinsViewCache view(*pcoinsTip, true);
         CValidationState state;
-        if (!txNew.GetCoinAge(state, view, nCoinAge, nHeight))
+        if (!GetCoinAge(txNew, state, view, nCoinAge, nHeight))
             return error("CreateCoinStake : failed to calculate coin age");
 
         nReward = GetProofOfStakeReward(nCoinAge, nFees, nHeight);

@@ -11,13 +11,15 @@ debug/
 *.a
 .circleci/run-build-locally.sh
 !.circleci/
-src/Lindad
 .vscode/
 .vs/
 Linda-qt
 qrc_bitcoin.cpp
 src/obj/build.h
 object_script.Linda-qt.*
+# daemons
+src/Linda-cli
+src/Lindad
 # autotools
 Makefile.*
 Makefile

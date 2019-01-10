@@ -1234,7 +1234,13 @@ void FileCommit(FILE *fileout)
 #ifdef WIN32
     _commit(_fileno(fileout));
 #else
-    fsync(fileno(fileout));
+    #if defined(__linux__) || defined(__NetBSD__)
+        fdatasync(fileno(fileout));
+    #elif defined(__APPLE__) && defined(F_FULLFSYNC)
+        fcntl(fileno(fileout), F_FULLFSYNC, 0);
+    #else
+        fsync(fileno(fileout));
+    #endif
 #endif
 }
 

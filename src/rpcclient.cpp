@@ -10,6 +10,8 @@
 #include "util.h"
 #include "ui_interface.h"
 #include "chainparams.h" // for Params().RPCPort()
+#include "main.h"
+#include "wallet.h"
 
 #include <stdint.h>
 

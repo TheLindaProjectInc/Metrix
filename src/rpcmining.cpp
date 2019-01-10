@@ -74,7 +74,7 @@ Value getstakesubsidy(const Array& params, bool fHelp)
     uint64_t nCoinAge;
     CCoinsViewCache view(*pcoinsTip, true);
     CValidationState state;
-    if (!tx.GetCoinAge(state, view, nCoinAge, chainActive.Height()))
+    if (!GetCoinAge(tx, state, view, nCoinAge, chainActive.Height()))
         throw JSONRPCError(RPC_MISC_ERROR, "GetCoinAge failed");
 
     uint64_t nStakeReward = GetProofOfStakeReward(nCoinAge, 0, chainActive.Height());
@@ -435,7 +435,7 @@ Value getwork(const Array& params, bool fHelp)
         CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
         // Update nTime
-        pblock->UpdateTime(pindexPrev);
+        UpdateTime(*pblock, pindexPrev);
         pblock->nNonce = 0;
 
         // Update nExtraNonce
@@ -569,7 +569,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
     // Update nTime
-    pblock->UpdateTime(pindexPrev);
+    UpdateTime(*pblock, pindexPrev);
     pblock->nNonce = 0;
 
     Array transactions;
