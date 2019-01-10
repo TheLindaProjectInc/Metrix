@@ -25,6 +25,7 @@
 #define START_MASTERNODE_PAYMENTS 1429738064
 
 static const int REWARD_START      = 51;
+static const int PREMINE_BLOCK     = 10;
 static const int FAIR_LAUNCH_BLOCK = 50;
 
 // MBK: Added globals to simplify future potential changes
