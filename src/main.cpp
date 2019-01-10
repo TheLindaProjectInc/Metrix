@@ -496,6 +496,7 @@ bool CCoinsViewMemPool::GetCoins(const uint256 &txid, CCoins &coins) {
         return true;
     CTransaction tx;
     if (mempool.lookup(txid, tx))
+    {
         coins = CCoins(tx, MEMPOOL_HEIGHT);
         return true;
     }
