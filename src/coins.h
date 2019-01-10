@@ -80,7 +80,13 @@ public:
     // version of the CTransaction; accesses to this value should probably check for nHeight as well,
     // as new tx version will probably only be introduced at certain heights
     int nVersion;
+    
+    // ppcoin: whether transaction is a coinstake
+    bool fCoinStake;
 
+    // ppcoin: transaction timestamp
+    unsigned int nTime;
+    
     // construct a CCoins from a CTransaction, at a given height
     CCoins(const CTransaction &tx, int nHeightIn) : fCoinBase(tx.IsCoinBase()), vout(tx.vout), nHeight(nHeightIn), nVersion(tx.nVersion) {
         ClearUnspendable();
@@ -110,6 +116,8 @@ public:
         to.vout.swap(vout);
         std::swap(to.nHeight, nHeight);
         std::swap(to.nVersion, nVersion);
+        std::swap(to.fCoinStake, fCoinStake);
+        std::swap(to.nTime, nTime);
     }
 
     // equality test
@@ -120,7 +128,8 @@ public:
          return a.fCoinBase == b.fCoinBase &&
                 a.nHeight == b.nHeight &&
                 a.nVersion == b.nVersion &&
-                a.vout == b.vout;
+                a.vout == b.vout &&
+                a.fCoinStake == b.fCoinStake;
     }
     friend bool operator!=(const CCoins &a, const CCoins &b) {
         return !(a == b);
@@ -152,6 +161,11 @@ public:
                 nSize += ::GetSerializeSize(CTxOutCompressor(REF(vout[i])), nType, nVersion);
         // height
         nSize += ::GetSerializeSize(VARINT(nHeight), nType, nVersion);
+        // ppcoin flags
+        unsigned int nFlag = fCoinStake ? 1 : 0;
+        nSize += ::GetSerializeSize(VARINT(nFlag), nType, nVersion);
+        // ppcoin transaction timestamp
+        nSize += ::GetSerializeSize(VARINT(nTime), nType, nVersion);
         return nSize;
     }
 
@@ -182,6 +196,11 @@ public:
         }
         // coinbase height
         ::Serialize(s, VARINT(nHeight), nType, nVersion);
+        // ppcoin flags
+        unsigned int nFlag = fCoinStake ? 1 : 0;
+        ::Serialize(s, VARINT(nFlag), nType, nVersion);
+        // ppcoin transaction timestamp
+        ::Serialize(s, VARINT(nTime), nType, nVersion);
     }
 
     template<typename Stream>
@@ -215,6 +234,12 @@ public:
         }
         // coinbase height
         ::Unserialize(s, VARINT(nHeight), nType, nVersion);
+        // ppcoin flags
+        unsigned int nFlag = 0;
+        ::Unserialize(s, VARINT(nFlag), nType, nVersion);
+        fCoinStake = nFlag & 1;
+        // ppcoin transaction timestamp
+        ::Unserialize(s, VARINT(nTime), nType, nVersion);
         Cleanup();
     }
 
