@@ -1992,7 +1992,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
 
             // ppcoin: check transaction timestamp
             if (coins.nTime > tx.nTime)
-                return state.DoS(100, error("CheckInputs() : transaction timestamp earlier than input transaction")
+                return state.DoS(100, error("CheckInputs() : transaction timestamp earlier than input transaction"),
                     REJECT_INVALID, "timestamp earlier than input transaction");
 
             // Check for negative or overflow input values
@@ -2989,7 +2989,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         nHeight = pindexPrev->nHeight+1;
 
         if (block.IsProofOfStake() && nHeight < POS_START_BLOCK)
-            return state.DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK)
+            return state.DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK),
                 REJECT_INVALID, "pos height rejected");
 
         // Check coinbase timestamp
