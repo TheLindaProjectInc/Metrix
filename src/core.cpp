@@ -83,7 +83,7 @@ uint256 CTransaction::GetHash() const
 int64_t CTransaction::GetValueOut() const
 {
     int64_t nValueOut = 0;
-    BOOST_FOREACH(const CTxOut& txout, tx.vout)
+    BOOST_FOREACH(const CTxOut& txout, vout)
     {
         nValueOut += txout.nValue;
         if (!MoneyRange(txout.nValue) || !MoneyRange(nValueOut))
