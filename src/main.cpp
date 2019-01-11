@@ -2215,7 +2215,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                     REJECT_INVALID, "too many sigops");
 
             int64_t nTxValueIn = view.GetValueIn(tx);
-            int64_t nTxValueOut = GetValueOut(tx);
+            int64_t nTxValueOut = tx.GetValueOut();
             nValueIn += nTxValueIn;
             nValueOut += nTxValueOut;
             if (!tx.IsCoinStake())
@@ -2241,7 +2241,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         int64_t nReward = GetProofOfWorkReward(nFees);
         
         // Check coinbase reward
-        if (GetValueOut(block.vtx[0]) > nReward)
+        if (block.vtx[0].GetValueOut() > nReward)
             return state.DoS(50, error("ConnectBlock() : coinbase reward exceeded (actual=%d vs calculated=%d)",
                 block.vtx[0].GetValueOut(),
                    nReward),
