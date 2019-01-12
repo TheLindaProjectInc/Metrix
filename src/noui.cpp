@@ -5,6 +5,7 @@
 
 #include "ui_interface.h"
 #include "init.h"
+#include "util.h"
 
 #include <string>
 

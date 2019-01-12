@@ -152,12 +152,11 @@ void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
         vtxid.push_back((*mi).first);
 }
 
-CTransaction CTxMemPool::lookup(uint256 hash) const
+bool CTxMemPool::lookup(uint256 hash, CTransaction& result) const
 {
     LOCK(cs);
-    CTransaction result;
     std::map<uint256, CTransaction>::const_iterator i = mapTx.find(hash);
-    if (i == mapTx.end()) return result;
+    if (i == mapTx.end()) return false;
     result = i->second;
-    return result;
+    return true;
 }

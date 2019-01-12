@@ -6,10 +6,18 @@
 #define _BITCOIN_COMPAT_H
 
 #ifdef WIN32
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
 #define _WIN32_WINNT 0x0501
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
+#endif
 #ifndef NOMINMAX
 #define NOMINMAX
+#endif
+#ifdef FD_SETSIZE
+#undef FD_SETSIZE // prevent redefinition compiler warning
 #endif
 #define FD_SETSIZE 1024 // max number of fds in fd_set
 #include <winsock2.h>

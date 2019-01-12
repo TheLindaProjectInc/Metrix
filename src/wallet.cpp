@@ -673,21 +673,19 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
             if (!wtx.WriteToDisk())
                 return false;
 
-        if (!fHaveGUI) {
-            // If default receiving address gets used, replace it with a new one
-            if (vchDefaultKey.IsValid()) {
-                CScript scriptDefaultKey;
-                scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
-                BOOST_FOREACH(const CTxOut& txout, wtx.vout)
+        // If default receiving address gets used, replace it with a new one
+        if (vchDefaultKey.IsValid()) {
+            CScript scriptDefaultKey;
+            scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
+            BOOST_FOREACH(const CTxOut& txout, wtx.vout)
+            {
+                if (txout.scriptPubKey == scriptDefaultKey)
                 {
-                    if (txout.scriptPubKey == scriptDefaultKey)
+                    CPubKey newDefaultKey;
+                    if (GetKeyFromPool(newDefaultKey))
                     {
-                        CPubKey newDefaultKey;
-                        if (GetKeyFromPool(newDefaultKey))
-                        {
-                            SetDefaultKey(newDefaultKey);
-                            SetAddressBook(vchDefaultKey.GetID(), "", "receive");
-                        }
+                        SetDefaultKey(newDefaultKey);
+                        SetAddressBook(vchDefaultKey.GetID(), "", "receive");
                     }
                 }
             }
@@ -1037,6 +1035,24 @@ void CWalletTx::AddSupportingTransactions()
     }
 
     reverse(vtxPrev.begin(), vtxPrev.end());
+}
+
+bool CWalletTx::AcceptWalletTransaction()
+{
+    {
+        // Add previous supporting transactions first
+        BOOST_FOREACH(CMerkleTx& tx, vtxPrev)
+        {
+            if (!(tx.IsCoinBase() || tx.IsCoinStake()))
+            {
+                uint256 hash = tx.GetHash();
+                if (!mempool.exists(hash) && pcoinsTip->HaveCoins(hash))
+                    tx.AcceptToMemoryPool(false);
+            }
+        }
+        return AcceptToMemoryPool(false);
+    }
+    return false;
 }
 
 bool CWalletTx::WriteToDisk()
@@ -3496,7 +3512,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         uint64_t nCoinAge;
         CCoinsViewCache view(*pcoinsTip, true);
         CValidationState state;
-        if (!txNew.GetCoinAge(state, view, nCoinAge, nHeight))
+        if (!GetCoinAge(txNew, state, view, nCoinAge, nHeight))
             return error("CreateCoinStake : failed to calculate coin age");
 
         nReward = GetProofOfStakeReward(nCoinAge, nFees, nHeight);

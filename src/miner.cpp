@@ -291,10 +291,10 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
                 std::make_heap(vecPriority.begin(), vecPriority.end(), comparer);
             }
 
-            if (!tx.HaveInputs(view))
+            if (!view.HaveInputs(tx))
                 continue;
 
-            int64_t nTxFees = tx.GetValueIn(view)-tx.GetValueOut();
+            int64_t nTxFees = view.GetValueIn(tx)-tx.GetValueOut();
             if (nTxFees < nMinFee)
                 continue;
 
@@ -304,11 +304,11 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
 
             CValidationState state;
 
-            if (!tx.CheckInputs(state, view, true, SCRIPT_VERIFY_P2SH))
+            if (!CheckInputs(tx, state, view, true, SCRIPT_VERIFY_P2SH))
                 continue;
             CTxUndo txundo;
             uint256 hash = tx.GetHash();
-            tx.UpdateCoins(state, view, txundo, pindexPrev->nHeight+1, hash);
+            UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1, hash);
 
             // Added
             pblock->vtx.push_back(tx);
@@ -362,7 +362,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
         pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
         pblock->nTime          = max(pindexPrev->GetPastTimeLimit()+1, pblock->GetMaxTransactionTime());
         if (!fProofOfStake)
-            pblock->UpdateTime(pindexPrev);
+            UpdateTime(*pblock, pindexPrev);
         pblock->nNonce         = 0;
         pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(pblock->vtx[0]);
 

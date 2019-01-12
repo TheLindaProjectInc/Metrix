@@ -9,7 +9,10 @@
 #include "bitcoin-config.h"
 #endif
 
-#include "wallet.h"
+#include <string>
+#include <boost/thread.hpp>
+
+class CWallet;
 
 namespace boost {
     class thread_group;
@@ -19,8 +22,17 @@ extern CWallet* pwalletMain;
 void StartShutdown();
 bool ShutdownRequested();
 void Shutdown();
-bool AppInit2(boost::thread_group& threadGroup);
-std::string HelpMessage();
+bool AppInit2(boost::thread_group& threadGroup, bool fForceServer);
 extern bool fOnlyTor;
+
+/* The help message mode determines what help message to show */
+enum HelpMessageMode
+{
+    HMM_BITCOIND,
+    HMM_BITCOIN_QT,
+    HMM_BITCOIN_CLI
+};
+
+std::string HelpMessage(HelpMessageMode mode);
 
 #endif

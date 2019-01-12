@@ -15,7 +15,7 @@
 void HandleError(const leveldb::Status &status) throw(leveldb_error) {
     if (status.ok())
         return;
-    printf("%s\n", status.ToString().c_str());
+    LogPrintf("%s\n", status.ToString().c_str());
     if (status.IsCorruption())
         throw leveldb_error("Database corrupted");
     if (status.IsIOError())

@@ -1,7 +1,7 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 3)
-define(_CLIENT_VERSION_MINOR, 2)
+define(_CLIENT_VERSION_MINOR, 3)
 define(_CLIENT_VERSION_REVISION, 0)
 define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, false)
@@ -197,6 +197,10 @@ case $host in
      AC_CHECK_LIB([mswsock],      [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([shlwapi],      [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([iphlpapi],      [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([crypt32],      [main],, AC_MSG_ERROR(lib missing))
+
+     AX_CHECK_LINK_FLAG([[-static-libgcc]],[LDFLAGS="$LDFLAGS -static-libgcc"])
+     AX_CHECK_LINK_FLAG([[-static-libstdc++]],[LDFLAGS="$LDFLAGS -static-libstdc++"])
 
      AC_PATH_PROG([MAKENSIS], [makensis], none)
      if test x$MAKENSIS = xnone; then
@@ -250,9 +254,6 @@ case $host in
        AX_CHECK_LINK_FLAG([[$base_frameworks]],[LIBS="$LIBS $base_frameworks"],[AC_MSG_ERROR(could not find base frameworks)])
      fi
 
-     AX_CHECK_COMPILE_FLAG([-mmacosx-version-min=10.5],[RELEASE_CXXFLAGS="$RELEASE_CXXFLAGS -mmacosx-version-min=10.5"])
-     AX_CHECK_COMPILE_FLAG([-arch i386],[RELEASE_CXXFLAGS="$RELEASE_CXXFLAGS -arch i386"])
-     RELEASE_CXXFLAGS="$RELEASE_CXXFLAGS -O3"
      CPPFLAGS="$CPPFLAGS -DMAC_OSX"
      TESTDEFS="-DBOOST_TEST_DYN_LINK"
      ;;
