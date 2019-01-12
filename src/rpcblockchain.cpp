@@ -302,7 +302,7 @@ Value gettxoutsetinfo(const Array& params, bool fHelp)
      Object ret;
      CCoinsStats stats;
     if (pcoinsTip->GetStats(stats)) {
-        ret.push_back(Pair("bestblock", pcoinsTip->GetBestBlock()->GetBlockHash().GetHex()));
+        ret.push_back(Pair("bestblock", stats.hashBlock.GetHex()));
         ret.push_back(Pair("transactions", (boost::int64_t)stats.nTransactions));
         ret.push_back(Pair("txouts", (boost::int64_t)stats.nTransactionOutputs));
         ret.push_back(Pair("bytes_serialized", (boost::int64_t)stats.nSerializedSize));
