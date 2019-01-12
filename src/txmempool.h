@@ -67,7 +67,7 @@ public:
         return (mapTx.count(hash) != 0);
     }
 
-    CTransaction lookup(uint256 hash) const;
+    bool lookup(uint256 hash, CTransaction& result) const;
 };
 
 /** CCoinsView that brings transactions from a memorypool into view.

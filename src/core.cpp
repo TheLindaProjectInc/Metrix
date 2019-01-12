@@ -77,6 +77,22 @@ uint256 CTransaction::GetHash() const
     return SerializeHash(*this);
 }
 
+/** Amount of bitcoins spent by the transaction.
+    @return sum of all outputs (note: does not include fees)
+ */
+int64_t CTransaction::GetValueOut() const
+{
+    int64_t nValueOut = 0;
+    BOOST_FOREACH(const CTxOut& txout, vout)
+    {
+        nValueOut += txout.nValue;
+        if (!MoneyRange(txout.nValue) || !MoneyRange(nValueOut))
+            throw std::runtime_error("GetValueOut() : value out of range");
+    }
+    return nValueOut;
+}
+
+
 std::string CTransaction::ToString() const
 {
     std::string str;

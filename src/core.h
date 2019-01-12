@@ -18,6 +18,10 @@
 class CScript;
 class CTransaction;
 
+/** No amount larger than this (in satoshi) is valid */
+static const int64_t MAX_MONEY = 30000000000 * COIN; // 30B coins
+inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
@@ -222,6 +226,9 @@ public:
     }
 
     uint256 GetHash() const;
+
+    // Return sum of txouts.
+    int64_t GetValueOut() const;
 
     bool IsCoinBase() const
     {
