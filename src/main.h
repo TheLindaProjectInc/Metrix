@@ -9,6 +9,7 @@
 #include "bitcoin-config.h"
 #endif
 
+#include "coins.h"
 #include "core.h"
 #include "bignum.h"
 #include "sync.h"
@@ -73,6 +74,16 @@ static const int64_t MAX_STAKE_VALUE        = (100*1000000*COIN); // POS rewards
 #define MASTERNODE_REMOVAL_SECONDS             (70*60)
 
 
+/** "reject" message codes **/
+static const unsigned char REJECT_MALFORMED = 0x01;
+static const unsigned char REJECT_INVALID = 0x10;
+static const unsigned char REJECT_OBSOLETE = 0x11;
+static const unsigned char REJECT_DUPLICATE = 0x12;
+static const unsigned char REJECT_NONSTANDARD = 0x40;
+static const unsigned char REJECT_DUST = 0x41;
+static const unsigned char REJECT_INSUFFICIENTFEE = 0x42;
+static const unsigned char REJECT_CHECKPOINT = 0x43;
+
 class CBlock;
 class CBlockIndex;
 class CInv;
@@ -107,15 +118,10 @@ static const unsigned int MAX_BLOCKFILE_SIZE = 0x8000000; // 128 MiB
 static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; // 16 MiB
 /** The pre-allocation chunk size for rev?????.dat files (since 0.8) */
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
-/** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
-static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 static const int64_t MIN_TX_FEE_V1 = 10000; 
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
 static const int64_t MIN_RELAY_TX_FEE_V1 = MIN_TX_FEE_V1;
-/** No amount larger than this (in satoshi) is valid */
-static const int64_t MAX_MONEY = 30000000000 * COIN; // 30B coins
-inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 /** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
 static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 /** Maximum number of script-checking threads allowed */
@@ -181,8 +187,6 @@ class CBlockTreeDB;
 struct CDiskBlockPos;
 class CCoins;
 class CTxUndo;
-class CCoinsView;
-class CCoinsViewCache;
 class CScriptCheck;
 class CValidationState;
  struct CBlockTemplate;
@@ -348,10 +352,7 @@ enum GetMinFee_mode
 
 int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize = 1, enum GetMinFee_mode mode = GMF_BLOCK, unsigned int nBytes = 0);
 
-/** Amount of bitcoins spent by this transaction.
-    @return sum of all outputs (note: does not include fees)
- */
-int64_t GetValueOut(const CTransaction& tx);
+
 
 // Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)
 // This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
@@ -1181,110 +1182,6 @@ protected:
     friend void ::UnregisterAllWallets();
 };
 
-struct CCoinsStats
-{
-    int nHeight;
-    uint256 hashBlock;
-    uint64_t nTransactions;
-    uint64_t nTransactionOutputs;
-    uint64_t nSerializedSize;
-    uint256 hashSerialized;
-    uint64_t nTotalAmount;
-
-    CCoinsStats() : nHeight(0), hashBlock(0), nTransactions(0), nTransactionOutputs(0), nSerializedSize(0), hashSerialized(0), nTotalAmount(0) {}
-};
- /** Abstract view on the open txout dataset. */
-class CCoinsView
-{
-public:
-    // Retrieve the CCoins (unspent transaction outputs) for a given txid
-    virtual bool GetCoins(const uint256 &txid, CCoins &coins);
-     // Modify the CCoins for a given txid
-    virtual bool SetCoins(const uint256 &txid, const CCoins &coins);
-     // Just check whether we have data for a given txid.
-    // This may (but cannot always) return true for fully spent transactions
-    virtual bool HaveCoins(const uint256 &txid);
-     // Retrieve the block index whose state this CCoinsView currently represents
-    virtual CBlockIndex *GetBestBlock();
-     // Modify the currently active block index
-    virtual bool SetBestBlock(CBlockIndex *pindex);
-     // Do a bulk modification (multiple SetCoins + one SetBestBlock)
-    virtual bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
-     // Calculate statistics about the unspent transaction output set
-    virtual bool GetStats(CCoinsStats &stats);
-     // As we use CCoinsViews polymorphically, have a virtual destructor
-    virtual ~CCoinsView() {}
-};
- /** CCoinsView backed by another CCoinsView */
-class CCoinsViewBacked : public CCoinsView
-{
-protected:
-    CCoinsView *base;
- public:
-    CCoinsViewBacked(CCoinsView &viewIn);
-    bool GetCoins(const uint256 &txid, CCoins &coins);
-    bool SetCoins(const uint256 &txid, const CCoins &coins);
-    bool HaveCoins(const uint256 &txid);
-    CBlockIndex *GetBestBlock();
-    bool SetBestBlock(CBlockIndex *pindex);
-    void SetBackend(CCoinsView &viewIn);
-    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
-    bool GetStats(CCoinsStats &stats);
-};
- /** CCoinsView that adds a memory cache for transactions to another CCoinsView */
-class CCoinsViewCache : public CCoinsViewBacked
-{
-protected:
-    CBlockIndex *pindexTip;
-    std::map<uint256,CCoins> cacheCoins;
- public:
-    CCoinsViewCache(CCoinsView &baseIn, bool fDummy = false);
-     // Standard CCoinsView methods
-    bool GetCoins(const uint256 &txid, CCoins &coins);
-    bool SetCoins(const uint256 &txid, const CCoins &coins);
-    bool HaveCoins(const uint256 &txid);
-    CBlockIndex *GetBestBlock();
-    bool SetBestBlock(CBlockIndex *pindex);
-    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
-     // Return a modifiable reference to a CCoins. Check HaveCoins first.
-    // Many methods explicitly require a CCoinsViewCache because of this method, to reduce
-    // copying.
-    CCoins &GetCoins(const uint256 &txid);
-     // Push the modifications applied to this cache to its base.
-    // Failure to call this method before destruction will cause the changes to be forgotten.
-    bool Flush();
-     // Calculate the size of the cache (in number of transactions)
-    unsigned int GetCacheSize();
-
-    /** Amount of bitcoins coming in to this transaction
-    Note that lightweight clients may not know anything besides the hash of previous transactions,
-    so may not be able to calculate this.
-
-    @param[in] mapInputs	Map of previous transactions that have outputs we're spending
-    @return	Sum of value of all inputs (scriptSigs)
-    @see CTransaction::FetchInputs
-    */
-    int64_t GetValueIn(const CTransaction& tx);
-
-    // Check whether all prevouts of this transaction are present in the UTXO set represented by view
-    bool HaveInputs(const CTransaction& tx);
-
-    const CTxOut &GetOutputFor(const CTxIn& input);
-       
- private:
-    std::map<uint256,CCoins>::iterator FetchCoins(const uint256 &txid);
-};
- /** CCoinsView that brings transactions from a memorypool into view.
-    It does not check for spendings by memory pool transactions. */
-class CCoinsViewMemPool : public CCoinsViewBacked
-{
-protected:
-    CTxMemPool &mempool;
- public:
-    CCoinsViewMemPool(CCoinsView &baseIn, CTxMemPool &mempoolIn);
-    bool GetCoins(const uint256 &txid, CCoins &coins);
-    bool HaveCoins(const uint256 &txid);
-};
  /** Global variable that points to the active CCoinsView (protected by cs_main) */
 extern CCoinsViewCache *pcoinsTip;
  /** Global variable that points to the active block tree (protected by cs_main) */

@@ -230,7 +230,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
             // This is a more accurate fee-per-kilobyte than is used by the client code, because the
             // client code rounds up the size to the nearest 1K. That's good, because it gives an
             // incentive to create smaller transactions.
-            double dFeePerKb =  double(nTotalIn-GetValueOut(tx)) / (double(nTxSize)/1000.0);
+            double dFeePerKb =  double(nTotalIn-tx.GetValueOut()) / (double(nTxSize)/1000.0);
 
             if (porphan)
             {
@@ -294,7 +294,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
             if (!view.HaveInputs(tx))
                 continue;
 
-            int64_t nTxFees = view.GetValueIn(tx)-GetValueOut(tx);
+            int64_t nTxFees = view.GetValueIn(tx)-tx.GetValueOut();
             if (nTxFees < nMinFee)
                 continue;
 
@@ -504,7 +504,7 @@ bool CheckStake(CBlock* pblock, CWallet& wallet)
     //// debug print
     LogPrintf("CheckStake() : new proof-of-stake block found  \n  hash: %s \nproofhash: %s  \ntarget: %s\n", hashBlock.GetHex(), proofHash.GetHex(), hashTarget.GetHex());
     LogPrintf("%s\n", pblock->ToString());
-    LogPrintf("out %s\n", FormatMoney(GetValueOut(pblock->vtx[1])));
+    LogPrintf("out %s\n", FormatMoney(pblock->vtx[1].GetValueOut()));
 
     // Found a solution
     {

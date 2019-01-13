@@ -450,7 +450,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
 /** Initialize Lindacoin.
  *  @pre Parameters should be parsed and config file should be read.
  */
-bool AppInit2(boost::thread_group& threadGroup)
+bool AppInit2(boost::thread_group& threadGroup, bool fForceServer)
 {
     // ********************************************************* Step 1: setup
 #ifdef _MSC_VER
@@ -588,14 +588,11 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (mapArgs.count("-socks"))
         return InitError(_("Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported."));
 
-    if (fDaemon)
+    if (fDaemon || fForceServer)
         fServer = true;
     else
         fServer = GetBoolArg("-server", false);
 
-    /* force fServer when running without GUI */
-    if (!fHaveGUI)
-        fServer = true;
     fPrintToConsole = GetBoolArg("-printtoconsole", false);
     fLogTimestamps = GetBoolArg("-logtimestamps", true);
 #ifdef ENABLE_WALLET

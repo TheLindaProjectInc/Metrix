@@ -257,7 +257,7 @@ Value gettxoutsetinfo(const Array& params, bool fHelp)
      Object ret;
      CCoinsStats stats;
     if (pcoinsTip->GetStats(stats)) {
-        ret.push_back(Pair("bestblock", pcoinsTip->GetBestBlock()->GetBlockHash().GetHex()));
+        ret.push_back(Pair("bestblock", stats.hashBlock.GetHex()));
         ret.push_back(Pair("transactions", (boost::int64_t)stats.nTransactions));
         ret.push_back(Pair("txouts", (boost::int64_t)stats.nTransactionOutputs));
         ret.push_back(Pair("bytes_serialized", (boost::int64_t)stats.nSerializedSize));
@@ -290,11 +290,14 @@ Value gettxoutsetinfo(const Array& params, bool fHelp)
     }
     if (n<0 || (unsigned int)n>=coins.vout.size() || coins.vout[n].IsNull())
         return Value::null;
-     ret.push_back(Pair("bestblock", pcoinsTip->GetBestBlock()->GetBlockHash().GetHex()));
+
+    std::map<uint256, CBlockIndex*>::iterator it = mapBlockIndex.find(pcoinsTip->GetBestBlock());
+    CBlockIndex *pindex = it->second;
+    ret.push_back(Pair("bestblock", pindex->GetBlockHash().GetHex()));
     if ((unsigned int)coins.nHeight == MEMPOOL_HEIGHT)
         ret.push_back(Pair("confirmations", 0));
     else
-        ret.push_back(Pair("confirmations", pcoinsTip->GetBestBlock()->nHeight - coins.nHeight + 1));
+        ret.push_back(Pair("confirmations", pindex->nHeight - coins.nHeight + 1));
     ret.push_back(Pair("value", ValueFromAmount(coins.vout[n].nValue)));
     Object o;
     ScriptPubKeyToJSON(coins.vout[n].scriptPubKey, o);

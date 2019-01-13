@@ -77,6 +77,22 @@ uint256 CTransaction::GetHash() const
     return SerializeHash(*this);
 }
 
+/** Amount of bitcoins spent by the transaction.
+    @return sum of all outputs (note: does not include fees)
+ */
+int64_t CTransaction::GetValueOut() const
+{
+    int64_t nValueOut = 0;
+    BOOST_FOREACH(const CTxOut& txout, vout)
+    {
+        nValueOut += txout.nValue;
+        if (!MoneyRange(txout.nValue) || !MoneyRange(nValueOut))
+            throw std::runtime_error("GetValueOut() : value out of range");
+    }
+    return nValueOut;
+}
+
+
 std::string CTransaction::ToString() const
 {
     std::string str;
@@ -149,48 +165,6 @@ uint64_t CTxOutCompressor::DecompressAmount(uint64_t x)
         e--;
     }
     return n;
-}
-
-void CCoins::CalcMaskSize(unsigned int &nBytes, unsigned int &nNonzeroBytes) const {
-    unsigned int nLastUsedByte = 0;
-    for (unsigned int b = 0; 2 + b * 8 < vout.size(); b++) {
-        bool fZero = true;
-        for (unsigned int i = 0; i < 8 && 2 + b * 8 + i < vout.size(); i++) {
-            if (!vout[2 + b * 8 + i].IsNull()) {
-                fZero = false;
-                continue;
-            }
-        }
-        if (!fZero) {
-            nLastUsedByte = b + 1;
-            nNonzeroBytes++;
-        }
-    }
-    nBytes += nLastUsedByte;
-}
-
-bool CCoins::Spend(const COutPoint &out, CTxInUndo &undo) {
-    if (out.n >= vout.size())
-        return false;
-    if (vout[out.n].IsNull())
-        return false;
-    undo = CTxInUndo(vout[out.n]);
-    vout[out.n].SetNull();
-    Cleanup();
-    if (vout.size() == 0) {
-        undo.nHeight = nHeight;
-        undo.fCoinBase = fCoinBase;
-        undo.nVersion = this->nVersion;
-        undo.fCoinStake = fCoinStake;  // ppcoin
-        undo.nTime = nTime;            // ppcoin
-    }
-    return true;
-}
-
-bool CCoins::Spend(int nPos) {
-    CTxInUndo undo;
-    COutPoint out(0, nPos);
-    return Spend(out, undo);
 }
 
 uint256 CBlockHeader::GetHash() const
