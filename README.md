@@ -5,10 +5,10 @@
 # Linda Coin
 Lindacoin is a peer to peer hybrid digital currency. It creates utility products that allow Linda to be used in everyday scenarios. It also offers partnership opportunities to other cryptocurrencies to use the Lindacoin platform. As the Linda wallet technology evolves, we strive to simplify the processes of staking or masternode ownership as well as improve your overall wallet experience
 
-## Important Wallet Information
-If you wish to use the Linda wallet on your Windows, Mac and/or Linux GUI computer, download the executable from the [Altitude Repository](https://github.com/TheLindaProjectInc/Altitude/releases/latest).
+## Wallet Information
+The new Lindacoin wallet Altitude can be downloaded from the [Altitude Repository](https://github.com/TheLindaProjectInc/Altitude/releases/latest).
 
-If you need the Lindad daemon, download it from the current [Linda Repository](https://github.com/TheLindaProjectInc/Linda/releases/latest).
+If you need the Linda daemon, download it from the current [Linda Repository](https://github.com/TheLindaProjectInc/Linda/releases/latest).
 
 ## Specs
 <table>
@@ -16,7 +16,7 @@ If you need the Lindad daemon, download it from the current [Linda Repository](h
 <tr><td>Abbreviation</td><td>LINDA</td></tr>
 <tr><td>Coin Type</td><td>PoS (Proof of Stake)</td></tr>
 <tr><td>Max Supply</td><td>30,000,000,000</td></tr>
-<tr><td>Block Time</td><td>60 Seconds</td></tr>
+<tr><td>Block Time</td><td>90 Seconds</td></tr>
 <tr><td>Maximum Block Size</td><td>4MB</td></tr>
 <tr><td>Minimum Stake Age</td><td>24 Hours</td></tr>
 <tr><td>Maximum Stake Age</td><td>30 Days</td></tr>
@@ -28,7 +28,7 @@ If you need the Lindad daemon, download it from the current [Linda Repository](h
 </table>
 
 ## Masternode
-Lindacoin’s use of masternodes enables Linda to have unique features that are not possible in other cryptocurrencies. Our masternodes do the brunt of the work, sorting out blocks and managing peers. The Linda community will operate these masternodes to help keep the network flowing. Our masternodes perform all of the InstantX and private transactions, and are the heart of our blockchain. A masternode is simply a Linda full node or a computer wallet that stores the complete copy of the blockchain in real time. But, the central nodes are considerably different - they perform more functionalities to give Linda special features. One example of this is Linda’s extraordinary speed and instant transactions. This makes Linda transactions suitable for everyone. Some of the unique functions that these nodes perform are: 
+Lindacoin’s use of masternodes enables Linda to have unique features that are not possible in other cryptocurrencies. The Linda community will operate these masternodes to help keep the network flowing. Our masternodes perform all of the InstantX and private transactions, and are the heart of our blockchain. A masternode is simply a Linda full node or a computer wallet that stores the complete copy of the blockchain in real time. But, the central nodes are considerably different - they perform more functionalities to give Linda special features. One example of this is Linda’s extraordinary speed and instant transactions. This makes Linda transactions suitable for everyone. Some of the unique functions that these nodes perform are: 
 
 ● Increasing the confidentiality of transactions 
 
