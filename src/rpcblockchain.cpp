@@ -165,7 +165,13 @@ Value getbestblockhash(const Array& params, bool fHelp)
     if (fHelp || params.size() != 0)
         throw runtime_error(
             "getbestblockhash\n"
-            "Returns the hash of the best block in the longest block chain.");
+            "\nReturns the hash of the best (tip) block in the longest block chain.\n"
+            "\nResult\n"
+            "\"hex\"      (string) the block hash hex encoded\n"
+            "\nExamples\n"
+            + HelpExampleCli("getbestblockhash", "")
+            + HelpExampleRpc("getbestblockhash", "")
+        );
 
     return chainActive.Tip()->GetBlockHash().GetHex();
 }
@@ -175,7 +181,13 @@ Value getblockcount(const Array& params, bool fHelp)
     if (fHelp || params.size() != 0)
         throw runtime_error(
             "getblockcount\n"
-            "Returns the number of blocks in the longest block chain.");
+            "\nReturns the number of blocks in the longest block chain.\n"
+            "\nResult:\n"
+            "n    (numeric) The current block count\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getblockcount", "")
+            + HelpExampleRpc("getblockcount", "")
+        );
 
     return chainActive.Height();
 }
@@ -197,27 +209,95 @@ Value getdifficulty(const Array& params, bool fHelp)
 
 Value getrawmempool(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() != 0)
+    if (fHelp || params.size() > 1)
         throw runtime_error(
-            "getrawmempool\n"
-            "Returns all transaction ids in memory pool.");
+            "getrawmempool ( verbose )\n"
+            "\nReturns all transaction ids in memory pool as a json array of string transaction ids.\n"
+            "\nArguments:\n"
+            "1. verbose           (boolean, optional, default=false) true for a json object, false for array of transaction ids\n"
+            "\nResult: (for verbose = false):\n"
+            "[                     (json array of string)\n"
+            "  \"transactionid\"     (string) The transaction id\n"
+            "  ,...\n"
+            "]\n"
+            "\nResult: (for verbose = true):\n"
+            "{                           (json object)\n"
+            "  \"transactionid\" : {       (json object)\n"
+            "    \"size\" : n,             (numeric) transaction size in bytes\n"
+            "    \"fee\" : n,              (numeric) transaction fee in bitcoins\n"
+            "    \"time\" : n,             (numeric) local time transaction entered pool in seconds since 1 Jan 1970 GMT\n"
+            "    \"height\" : n,           (numeric) block height when transaction entered pool\n"
+            "    \"startingpriority\" : n, (numeric) priority when transaction entered pool\n"
+            "    \"currentpriority\" : n,  (numeric) transaction priority now\n"
+            "    \"depends\" : [           (array) unconfirmed transactions used as inputs for this transaction\n"
+            "        \"transactionid\",    (string) parent transaction id\n"
+            "       ... ]\n"
+            "  }, ...\n"
+            "]\n"
+            "\nExamples\n"
+            + HelpExampleCli("getrawmempool", "true")
+            + HelpExampleRpc("getrawmempool", "true"
+        );
 
-    vector<uint256> vtxid;
-    mempool.queryHashes(vtxid);
+    bool fVerbose = false;
+    if (params.size() > 0)
+        fVerbose = params[0].get_bool();
 
-    Array a;
-    BOOST_FOREACH(const uint256& hash, vtxid)
-        a.push_back(hash.ToString());
+    if (fVerbose)
+    {
+        LOCK(mempool.cs);
+        Object o;
+        BOOST_FOREACH(const PAIRTYPE(uint256, CTxMemPoolEntry)& entry, mempool.mapTx)
+        {
+            const uint256& hash = entry.first;
+            const CTxMemPoolEntry& e = entry.second;
+            Object info;
+            info.push_back(Pair("size", (int)e.GetTxSize()));
+            info.push_back(Pair("fee", ValueFromAmount(e.GetFee())));
+            info.push_back(Pair("time", (boost::int64_t)e.GetTime()));
+            info.push_back(Pair("height", (int)e.GetHeight()));
+            info.push_back(Pair("startingpriority", e.GetPriority(e.GetHeight())));
+            info.push_back(Pair("currentpriority", e.GetPriority(chainActive.Height())));
+            const CTransaction& tx = e.GetTx();
+            set<string> setDepends;
+            BOOST_FOREACH(const CTxIn& txin, tx.vin)
+            {
+                if (mempool.exists(txin.prevout.hash))
+                    setDepends.insert(txin.prevout.hash.ToString());
+            }
+            Array depends(setDepends.begin(), setDepends.end());
+            info.push_back(Pair("depends", depends));
+            o.push_back(Pair(hash.ToString(), info));
+        }
+        return o;
+    }
+    else
+    {
+        vector<uint256> vtxid;
+        mempool.queryHashes(vtxid);
 
-    return a;
+        Array a;
+        BOOST_FOREACH(const uint256& hash, vtxid)
+            a.push_back(hash.ToString());
+
+        return a;
+    }
 }
 
 Value getblockhash(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "getblockhash <index>\n"
-            "Returns hash of block in best-block-chain at <index>.");
+            "getblockhash index\n"
+            "\nReturns hash of block in best-block-chain at index provided.\n"
+            "\nArguments:\n"
+            "1. index         (numeric, required) The block index\n"
+            "\nResult:\n"
+            "\"hash\"         (string) The block hash\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getblockhash", "1000")
+            + HelpExampleRpc("getblockhash", "1000")
+        );
 
     int nHeight = params[0].get_int();
     if (nHeight < 0 || nHeight > chainActive.Height())
@@ -253,7 +333,23 @@ Value gettxoutsetinfo(const Array& params, bool fHelp)
     if (fHelp || params.size() != 0)
         throw runtime_error(
             "gettxoutsetinfo\n"
-            "Returns statistics about the unspent transaction output set.");
+            "\nReturns statistics about the unspent transaction output set.\n"
+            "Note this call may take some time.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"height\":n,     (numeric) The current block height (index)\n"
+            "  \"bestblock\": \"hex\",   (string) the best block hash hex\n"
+            "  \"transactions\": n,      (numeric) The number of transactions\n"
+            "  \"txouts\": n,            (numeric) The number of output transactions\n"
+            "  \"bytes_serialized\": n,  (numeric) The serialized size\n"
+            "  \"hash_serialized\": \"hash\",   (string) The serialized hash\n"
+            "  \"total_amount\": x.xxx          (numeric) The total amount\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("gettxoutsetinfo", "")
+            + HelpExampleRpc("gettxoutsetinfo", "")
+        );
+
      Object ret;
      CCoinsStats stats;
     if (pcoinsTip->GetStats(stats)) {
@@ -268,10 +364,43 @@ Value gettxoutsetinfo(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 2 || params.size() > 3)
         throw runtime_error(
-            "gettxout <txid> <n> [includemempool=true]\n"
-            "Returns details about an unspent transaction output.");
+            "gettxout \"txid\" n ( includemempool )\n"
+            "\nReturns details about an unspent transaction output.\n"
+            "\nArguments:\n"
+            "1. \"txid\"       (string, required) The transaction id\n"
+            "2. n              (numeric, required) vout value\n"
+            "3. includemempool  (boolean, optional) Whether to included the mem pool\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"bestblock\" : \"hash\",    (string) the block hash\n"
+            "  \"confirmations\" : n,       (numeric) The number of confirmations\n"
+            "  \"value\" : x.xxx,           (numeric) The transaction value in btc\n"
+            "  \"scriptPubKey\" : {         (json object)\n"
+            "     \"asm\" : \"code\",       (string) \n"
+            "     \"hex\" : \"hex\",        (string) \n"
+            "     \"reqSigs\" : n,          (numeric) Number of required signatures\n"
+            "     \"type\" : \"pubkeyhash\", (string) The type, eg pubkeyhash\n"
+            "     \"addresses\" : [          (array of string) array of bitcoin addresses\n"
+            "        \"bitcoinaddress\"     (string) bitcoin address\n"
+            "        ,...\n"
+            "     ]\n"
+            "  },\n"
+            "  \"version\" : n,            (numeric) The version\n"
+            "  \"coinbase\" : true|false   (boolean) Coinbase or not\n"
+            "}\n"
+
+            "\nExamples:\n"
+            "\nGet unspent transactions\n"
+            + HelpExampleCli("listunspent", "") +
+            "\nView the details\n"
+            + HelpExampleCli("gettxout", "\"txid\" 1") +
+            "\nAs a json rpc call\n"
+            + HelpExampleRpc("gettxout", "\"txid\", 1")
+        );
+
      Object ret;
-     std::string strHash = params[0].get_str();
+
+    std::string strHash = params[0].get_str();
     uint256 hash(strHash);
     int n = params[1].get_int();
     bool fMempool = true;
@@ -336,8 +465,18 @@ Value verifychain(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 2)
         throw runtime_error(
-            "verifychain [check level] [num blocks]\n"
-            "Verifies blockchain database.");
+            "verifychain ( checklevel numblocks )\n"
+            "\nVerifies blockchain database.\n"
+            "\nArguments:\n"
+            "1. checklevel   (numeric, optional, default=3) The level\n"
+            "2. numblocks    (numeric, optional, 288) The number of blocks\n"
+            "\nResult:\n"
+            "true|false       (boolean) Verified or not\n"
+            "\nExamples:\n"
+            + HelpExampleCli("verifychain", "")
+            + HelpExampleRpc("verifychain", "")
+        );
+        
     int nCheckLevel = GetArg("-checklevel", 3);
     int nCheckDepth = GetArg("-checkblocks", 288);
     if (params.size() > 0)

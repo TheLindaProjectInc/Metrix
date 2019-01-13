@@ -96,6 +96,9 @@ extern double GetPoWMHashPS();
 extern double GetPoSKernelPS();
 
 extern std::string HelpRequiringPassphrase();
+extern std::string HelpExampleCli(std::string methodname, std::string args);
+extern std::string HelpExampleRpc(std::string methodname, std::string args);
+
 extern void EnsureWalletIsUnlocked();
 
 //

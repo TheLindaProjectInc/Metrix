@@ -1018,7 +1018,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
     }
 
     // Store transaction in memory
-    pool.addUnchecked(hash, tx);
+    pool.addUnchecked(hash, entry);
     setValidatedTx.insert(hash);
 
     SyncWithWallets(hash, tx, NULL);
@@ -1104,8 +1104,13 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
             view.SetBackend(dummy);
         }
 
-        int64_t nFees = view.GetValueIn(tx)-tx.GetValueOut();
-        unsigned int nSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
+        int64_t nValueIn = view.GetValueIn(tx);
+        int64_t nValueOut = tx.GetValueOut();
+        int64_t nFees = nValueIn-nValueOut;
+        double dPriority = view.GetPriority(tx, chainActive.Height());
+
+        CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
+        unsigned int nSize = entry.GetTxSize()
 
         // Don't accept it if it can't get into a block
         // MBK: Support the tx fee increase at blockheight
