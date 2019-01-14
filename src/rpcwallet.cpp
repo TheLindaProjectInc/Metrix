@@ -366,8 +366,6 @@ Value sendtoaddress(const Array& params, bool fHelp)
             + HelpExampleRpc("sendtoaddress", "\"LeuaKA9DmsLNExw14vLMSk1MBBJ4vyrgVG\", 100, \"donation\", \"seans outpost\"")
         );
 
-            + HelpRequiringPassphrase());
-
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Linda address");

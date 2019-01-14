@@ -1,7 +1,9 @@
 # Helper for rules and subdir Makefiles to find parent targets.
 # Flags and other non-target variables should not be set here.
 
-LIBBITCOIN=$(top_builddir)/src/libbitcoin.a
+LIBBITCOIN_SERVER=$(top_builddir)/src/libbitcoin_server.a
+LIBBITCOIN_COMMON=$(top_builddir)/src/libbitcoin_common.a
+LIBBITCOIN_CLI=$(top_builddir)/src/libbitcoin_cli.a
 LIBLEVELDB=$(top_builddir)/src/leveldb/libleveldb.a
 LIBMEMENV=$(top_builddir)/src/leveldb/libmemenv.a
 

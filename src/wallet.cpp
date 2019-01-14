@@ -2361,7 +2361,9 @@ bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::strin
     // make our change address
     CScript scriptChange;
     CPubKey vchPubKey;
-    assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
+    bool ret;
+    ret = reservekey.GetReservedKey(vchPubKey);
+    assert(ret); // should never fail, as we just unlocked
     scriptChange =GetScriptForDestination(vchPubKey.GetID());
     reservekey.KeepKey();
 
