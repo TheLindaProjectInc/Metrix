@@ -29,8 +29,7 @@ extern bool fOnlyTor;
 enum HelpMessageMode
 {
     HMM_BITCOIND,
-    HMM_BITCOIN_QT,
-    HMM_BITCOIN_CLI
+    HMM_BITCOIN_QT
 };
 
 std::string HelpMessage(HelpMessageMode mode);
