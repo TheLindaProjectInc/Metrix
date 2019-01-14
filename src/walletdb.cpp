@@ -380,14 +380,12 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         {
             uint256 hash;
             ssKey >> hash;
-            CWalletTx& wtx = pwallet->mapWallet[hash];
+            CWalletTx wtx;
             ssValue >> wtx;
             CValidationState state;
             if (CheckTransaction(wtx, state) && (wtx.GetHash() == hash))
-                wtx.BindWallet(pwallet);
-            else
             {
-                pwallet->mapWallet.erase(hash);
+                wtx.BindWallet(pwallet);
                 return false;
             }
 
@@ -414,6 +412,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             if (wtx.nOrderPos == -1)
                 wss.fAnyUnordered = true;
 
+            pwallet->mapWallet[hash] = wtx;
             //// debug print
             //LogPrintf("LoadWallet  %s\n", wtx.GetHash().ToString());
             //LogPrintf(" %12d  %s  %s  %s\n",
