@@ -1690,12 +1690,12 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
 
     LogPrintf("InvalidChainFound: invalid block=%s  height=%d  trust=%s  blocktrust=%d  date=%s\n",
       pindexNew->GetBlockHash().ToString(), pindexNew->nHeight,
-      CBigNum(pindexNew->nChainTrust).ToString(), nBestInvalidBlockTrust.Get64(),
+      CBigNum(pindexNew->nChainTrust).ToString(), nBestInvalidBlockTrust.GetLow64(),
       DateTimeStrFormat("%x %H:%M:%S", pindexNew->GetBlockTime()));
     LogPrintf("InvalidChainFound:  current best=%s  height=%d  trust=%s  blocktrust=%d  date=%s\n",
         chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(),
       CBigNum(chainActive.Tip()->nChainTrust).ToString(),
-      nBestBlockTrust.Get64(),
+      nBestBlockTrust.GetLow64(),
       DateTimeStrFormat("%x %H:%M:%S", chainActive.Tip()->GetBlockTime()));
     CheckForkWarningConditions();
 }
@@ -2329,7 +2329,7 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     LogPrintf("SetBestChain: new best=%s  height=%d  trust=%s  blocktrust=%d  tx=%lu  date=%s\n",
       chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(),
       CBigNum(chainActive.Tip()->nChainTrust).ToString(),
-      nBestBlockTrust.Get64(),
+      nBestBlockTrust.GetLow64(),
       (unsigned long)pindexNew->nChainTx,
       DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()));
 
