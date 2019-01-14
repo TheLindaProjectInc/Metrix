@@ -494,7 +494,7 @@ Value decodescript(const Array& params, bool fHelp)
             "\nExamples:\n"
             + HelpExampleCli("decodescript", "\"hexstring\"")
             + HelpExampleRpc("decodescript", "\"hexstring\"")
-
+        );
     RPCTypeCheck(params, list_of(str_type));
 
     Object r;
