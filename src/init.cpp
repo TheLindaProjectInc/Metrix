@@ -5,6 +5,7 @@
 
 #include "init.h"
 #include "main.h"
+#include "db.h"
 #include "chainparams.h"
 #include "txdb.h"
 #include "rpcserver.h"

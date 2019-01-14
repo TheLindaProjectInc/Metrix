@@ -6,6 +6,10 @@ AM_LDFLAGS = $(PTHREAD_CFLAGS)
 
 noinst_LIBRARIES = libbitcoin_server.a libbitcoin_common.a libbitcoin_cli.a
 
+if ENABLE_WALLET
+noinst_LIBRARIES += libbitcoin_wallet.a
+endif
+
 bin_PROGRAMS = Lindad Linda-cli
 
 SUBDIRS = . $(BUILD_QT) $(BUILD_TEST)
@@ -107,51 +111,55 @@ libbitcoin_server_a_SOURCES = \
   bloom.cpp \
   checkpoints.cpp \
   coins.cpp \
-  crypter.cpp \
-  darksend.cpp \
-  db.cpp \
   init.cpp \
-  instantx.cpp \
-  keepass.cpp \
   kernel.cpp \
   keystore.cpp \
   leveldbwrapper.cpp \
   main.cpp \
-  masternode.cpp \
-  masternodeconfig.cpp \
   miner.cpp \
   net.cpp \
   noui.cpp \
   rpcblockchain.cpp \
   rpcdarksend.cpp \
-  rpcdump.cpp \
   rpcmining.cpp \
   rpcmisc.cpp \
   rpcnet.cpp \
   rpcrawtransaction.cpp \
   rpcserver.cpp \
-  rpcwallet.cpp \
   spork.cpp \
-  stealth.cpp \
   txdb.cpp \
   txmempool.cpp \
+  $(JSON_H) \
+  $(BITCOIN_CORE_H)
+
+  libbitcoin_wallet_a_SOURCES = \
+  db.cpp \
+  keepass.cpp \
+  crypter.cpp \
+  rpcdump.cpp \
+  rpcwallet.cpp \
+  stealth.cpp \
   wallet.cpp \
   walletdb.cpp \
-  $(JSON_H) \
   $(BITCOIN_CORE_H)
 
 libbitcoin_common_a_SOURCES = \
   chainparams.cpp \
   core.cpp \
+  darksend.cpp \
   eccryptoverify.cpp \
   hash.cpp \
+  instantx.cpp \
   key.cpp \
+  masternode.cpp \
+  masternodeconfig.cpp \
   netbase.cpp \
   protocol.cpp \
   pbkdf2.cpp \
   rpcprotocol.cpp \
   script.cpp \
   scrypt.cpp \
+  stealth.cpp \
   sync.cpp \
   timedata.cpp \
   util.cpp \
@@ -182,6 +190,9 @@ Lindad_LDADD = \
   libbitcoin_server.a libbitcoin_cli.a libbitcoin_common.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
+if ENABLE_WALLET
+Lindad_LDADD += libbitcoin_wallet.a
+endif
 Lindad_SOURCES = bitcoind.cpp
 #
 
