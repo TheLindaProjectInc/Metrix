@@ -26,6 +26,10 @@
 using namespace std;
 using namespace boost;
 
+#if defined(NDEBUG)
+# error "Bitcoin cannot be compiled without assertions."
+#endif
+
 //
 // Global state
 //
@@ -1763,18 +1767,21 @@ void UpdateTime(CBlockHeader& block, const CBlockIndex* pindexPrev)
 
 void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight, const uint256 &txhash)
 {
+    bool ret;
     // mark inputs spent
     if (!tx.IsCoinBase()) {
         BOOST_FOREACH(const CTxIn &txin, tx.vin) {
             CCoins &coins = inputs.GetCoins(txin.prevout.hash);
             CTxInUndo undo;
-            assert(coins.Spend(txin.prevout, undo));
+            ret = coins.Spend(txin.prevout, undo);
+            assert(ret);
             txundo.vprevout.push_back(undo);
         }
     }
 
     // add outputs
-    assert(inputs.SetCoins(txhash, CCoins(tx, nHeight)));
+    ret = inputs.SetCoins(txhash, CCoins(tx, nHeight));
+    assert(ret);
 }
 
 bool CScriptCheck::operator()() const {
@@ -2148,7 +2155,9 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     if (!pblocktree->WriteTxIndex(vPos))
         return state.Abort(_("Failed to write transaction index"));
     // add this block to the view's block chain
-    assert(view.SetBestBlock(pindex->GetBlockHash()));
+    bool ret;
+    ret = view.SetBestBlock(pindex->GetBlockHash());
+    assert(ret);
 
     for (unsigned int i = 0; i < block.vtx.size(); i++){
         SyncWithWallets(block.GetTxHash(i), block.vtx[i], &block, true);
@@ -2264,7 +2273,9 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     }
     
     // Flush changes to global coin state
-    assert(view.Flush());
+    bool ret;
+    ret = view.Flush();
+    assert(ret);
 
     // Make sure it's successfully written to disk before changing memory structure
     bool fIsInitialDownload = IsInitialBlockDownload();
