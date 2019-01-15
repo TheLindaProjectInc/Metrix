@@ -3089,6 +3089,20 @@ bool CScript::IsPayToScriptHash() const
             this->at(22) == OP_EQUAL);
 }
 
+bool CScript::IsPushOnly() const
+{
+    const_iterator pc = begin();
+    while (pc < end())
+    {
+        opcodetype opcode;
+        if (!GetOp(pc, opcode))
+            return false;
+        if (opcode > OP_16)
+            return false;
+    }
+    return true;
+}
+
 bool CScript::HasCanonicalPushes() const
 {
     const_iterator pc = begin();
