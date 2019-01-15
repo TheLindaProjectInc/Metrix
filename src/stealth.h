@@ -11,7 +11,6 @@
 #include <stdlib.h> 
 #include <stdio.h> 
 #include <vector>
-#include <inttypes.h>
 
 
 typedef std::vector<uint8_t> data_chunk;
