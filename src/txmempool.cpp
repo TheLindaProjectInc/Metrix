@@ -92,7 +92,6 @@ void CTxMemPool::check(CCoinsViewCache *pcoins) const
         const CTransaction& tx = it2->second.GetTx();;
         assert(&tx == it->second.ptx);
         assert(tx.vin.size() > it->second.n);
-        assert(it2->second.vin.size() > it->second.n);
         assert(it->first == it->second.ptx->vin[it->second.n].prevout);
     }
 }

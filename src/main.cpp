@@ -965,8 +965,13 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
                                 hash.ToString(), nSigOps, MAX_TX_SIGOPS));
         }
 
-        int64_t nFees = view.GetValueIn(tx)-tx.GetValueOut();
-        unsigned int nSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
+        int64_t nValueIn = view.GetValueIn(tx);
+        int64_t nValueOut = tx.GetValueOut();
+        int64_t nFees = nValueIn - nValueOut;
+        double dPriority = view.GetPriority(tx, chainActive.Height());
+
+        CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
+        unsigned int nSize = entry.GetTxSize();
 
         // Don't accept it if it can't get into a block
         int64_t txMinFee = GetMinFee(tx, 1000, GMF_RELAY, nSize);
@@ -1003,7 +1008,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
             dFreeCount += nSize;
         }
 	    
-	if (fRejectInsaneFee && nFees > CTransaction::nMinRelayTxFee * 10000)
+	    if (fRejectInsaneFee && nFees > CTransaction::nMinRelayTxFee * 10000)
             return error("CTxMemPool::accept() : insane fees %s, %d > %d",
                          hash.ToString(),
                          nFees, CTransaction::nMinRelayTxFee * 10000);
@@ -1015,10 +1020,10 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction 
             errorMessage = "ConnectInputs failed " + hash.ToString();
             return error("AcceptToMemoryPool : ConnectInputs failed %s", hash.ToString());
         }
+        // Store transaction in memory
+        pool.addUnchecked(hash, entry);
     }
 
-    // Store transaction in memory
-    pool.addUnchecked(hash, entry);
     setValidatedTx.insert(hash);
 
     SyncWithWallets(hash, tx, NULL);
@@ -1110,7 +1115,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         double dPriority = view.GetPriority(tx, chainActive.Height());
 
         CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
-        unsigned int nSize = entry.GetTxSize()
+        unsigned int nSize = entry.GetTxSize();
 
         // Don't accept it if it can't get into a block
         // MBK: Support the tx fee increase at blockheight

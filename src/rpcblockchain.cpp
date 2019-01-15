@@ -236,7 +236,7 @@ Value getrawmempool(const Array& params, bool fHelp)
             "]\n"
             "\nExamples\n"
             + HelpExampleCli("getrawmempool", "true")
-            + HelpExampleRpc("getrawmempool", "true"
+            + HelpExampleRpc("getrawmempool", "true")
         );
 
     bool fVerbose = false;
