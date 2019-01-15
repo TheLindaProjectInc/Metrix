@@ -11,6 +11,8 @@
 #include "rpcclient.h"
 #include <boost/algorithm/string/predicate.hpp>
 
+static bool fDaemon;
+
 void WaitForShutdown(boost::thread_group* threadGroup)
 {
     bool fShutdown = ShutdownRequested();
@@ -66,7 +68,7 @@ bool AppInit(int argc, char* argv[])
                   "  Lindad [options] help                " + _("List commands") + "\n" +
                   "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
 
-            strUsage += "\n" + HelpMessage(HMM_BITCOIND);
+            strUsage += "\n" + HelpMessageCli(true);
 
             fprintf(stdout, "%s", strUsage.c_str());
             return false;
@@ -86,6 +88,8 @@ bool AppInit(int argc, char* argv[])
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon)
         {
+            fprintf(stdout, "Bitcoin server starting\n");
+
             // Daemonize
             pid_t pid = fork();
             if (pid < 0)
@@ -105,8 +109,9 @@ bool AppInit(int argc, char* argv[])
                 fprintf(stderr, "Error: setsid() returned %d errno %d\n", sid, errno);
         }
 #endif
+        SoftSetBoolArg("-server", true);
 
-        fRet = AppInit2(threadGroup, true);
+        fRet = AppInit2(threadGroup);
     }
     catch (std::exception& e) {
         PrintException(&e, "AppInit()");

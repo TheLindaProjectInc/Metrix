@@ -731,11 +731,11 @@ uint64_t CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
     uint256 n3 = Hash(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
     uint256 n4 = n3 > n2 ? (n3 - n2) : (n2 - n3);
 
-    //LogPrintf(" -- CMasternodePayments CalculateScore() n2 = %d \n", n2.Get64());
-    //LogPrintf(" -- CMasternodePayments CalculateScore() n3 = %d \n", n3.Get64());
-    //LogPrintf(" -- CMasternodePayments CalculateScore() n4 = %d \n", n4.Get64());
+    //LogPrintf(" -- CMasternodePayments CalculateScore() n2 = %d \n", n2.GetLow64());
+    //LogPrintf(" -- CMasternodePayments CalculateScore() n3 = %d \n", n3.GetLow64());
+    //LogPrintf(" -- CMasternodePayments CalculateScore() n4 = %d \n", n4.GetLow64());
 
-    return n4.Get64();
+    return n4.GetLow64();
 }
 
 bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
