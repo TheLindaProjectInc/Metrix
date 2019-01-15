@@ -5,6 +5,7 @@
 
 #include "init.h"
 #include "main.h"
+#include "db.h"
 #include "chainparams.h"
 #include "txdb.h"
 #include "rpcserver.h"
@@ -255,13 +256,8 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -paytxfee=<amt>        " + _("Fee per KB to add to transactions you send") + "\n";
     strUsage += "  -mininput=<amt>        " + _("When creating transactions, ignore inputs with value less than this (default: 0.01)") + "\n";
 
-
-    if (hmm == HMM_BITCOIN_QT)
-    {
-        strUsage += "  -server                " + _("Accept command line and JSON-RPC commands") + "\n";
-    }
-
-
+    strUsage += "  -server                " + _("Accept command line and JSON-RPC commands") + "\n";
+    
 #if !defined(WIN32)
         strUsage += "  -daemon                " + _("Run in the background as a daemon and accept commands") + "\n";
 #endif
@@ -438,7 +434,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
 /** Initialize Lindacoin.
  *  @pre Parameters should be parsed and config file should be read.
  */
-bool AppInit2(boost::thread_group& threadGroup, bool fForceServer)
+bool AppInit2(boost::thread_group& threadGroup)
 {
     // ********************************************************* Step 1: setup
 #ifdef _MSC_VER
@@ -576,11 +572,7 @@ bool AppInit2(boost::thread_group& threadGroup, bool fForceServer)
     if (mapArgs.count("-socks"))
         return InitError(_("Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported."));
 
-    if (fDaemon || fForceServer)
-        fServer = true;
-    else
-        fServer = GetBoolArg("-server", false);
-
+    fServer = GetBoolArg("-server", false);
     fPrintToConsole = GetBoolArg("-printtoconsole", false);
     fLogTimestamps = GetBoolArg("-logtimestamps", true);
 #ifdef ENABLE_WALLET
@@ -682,8 +674,6 @@ bool AppInit2(boost::thread_group& threadGroup, bool fForceServer)
     //ignore masternodes below protocol version
     CMasterNode::minProtoVersion = GetArg("-masternodeminprotocol", MIN_MN_PROTO_VERSION);
 
-    if (fDaemon)
-        fprintf(stdout, "Linda server starting\n");
 
     if (nScriptCheckThreads) {
         LogPrintf("Using %u threads for script verification\n", nScriptCheckThreads);

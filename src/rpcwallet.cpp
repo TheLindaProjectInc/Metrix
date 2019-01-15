@@ -387,8 +387,7 @@ Value sendtoaddress(const Array& params, bool fHelp)
     if (params.size() > 3 && params[3].type() != null_type && !params[3].get_str().empty())
         wtx.mapValue["to"]      = params[3].get_str();
 
-    if (pwalletMain->IsLocked())
-        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    EnsureWalletIsUnlocked();
 
     string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, sNarr, wtx);
     if (strError != "")
@@ -705,6 +704,14 @@ Value getbalance(const Array& params, bool fHelp)
     return ValueFromAmount(nBalance);
 }
 
+Value getunconfirmedbalance(const Array &params, bool fHelp)
+{
+    if (fHelp || params.size() > 0)
+        throw runtime_error(
+            "getunconfirmedbalance\n"
+            "Returns the server's total unconfirmed balance\n");
+    return ValueFromAmount(pwalletMain->GetUnconfirmedBalance());
+}
 
 Value movecmd(const Array& params, bool fHelp)
 {
@@ -1806,11 +1813,12 @@ Value keypoolrefill(const Array& params, bool fHelp)
             + HelpExampleRpc("keypoolrefill", "")
         );
 
-    unsigned int nSize = max(GetArg("-keypool", 100), (int64_t)0);
+    // 0 is interpreted by TopUpKeyPool() as the default keypool size given by -keypool
+    unsigned int nSize = 0;
     if (params.size() > 0) {
         if (params[0].get_int() < 0)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected valid size");
-        nSize = (unsigned int) params[0].get_int();
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected valid size.");
+        nSize = (unsigned int)params[0].get_int();
     }
 
     EnsureWalletIsUnlocked();
