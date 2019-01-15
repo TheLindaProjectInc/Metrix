@@ -27,6 +27,7 @@ extern int64_t nReserveBalance;
 extern int64_t nMinimumInputValue;
 extern bool fWalletUnlockStakingOnly;
 extern bool fConfChange;
+extern bool bSpendZeroConfChange;
 
 class CAccountingEntry;
 class CCoinControl;

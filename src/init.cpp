@@ -314,6 +314,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -reindex               " + _("Rebuild blockchain index from current blk000??.dat files") + "\n" +
     strUsage += "  -par=N                 " + _("Set the number of script verification threads (1-16, 0=auto, default: 0)") + "\n" +
     strUsage += "  -maxorphanblocks=<n>   " + strprintf(_("Keep at most <n> unconnectable blocks in memory (default: %u)"), DEFAULT_MAX_ORPHAN_BLOCKS) + "\n";
+    strUsage += "  -spendzeroconfchange   " + _("Spend unconfirmed change when sending transactions (default: 1)") + "\n";
 
     strUsage += "\n" + _("Block creation options:") + "\n";
     strUsage += "  -blockminsize=<n>      " + _("Set minimum block size in bytes (default: 0)") + "\n";
@@ -617,6 +618,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (nTransactionFee > 0.25 * COIN)
             InitWarning(_("Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction."));
     }
+    bSpendZeroConfChange = GetArg("-spendzeroconfchange", true);
 #endif
 
     fConfChange = GetBoolArg("-confchange", false);
