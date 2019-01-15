@@ -1233,7 +1233,8 @@ void FileCommit(FILE *fileout)
 {
     fflush(fileout);                // harmless if redundantly called
 #ifdef WIN32
-    _commit(_fileno(fileout));
+    HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(fileout));
+    FlushFileBuffers(hFile);
 #else
     #if defined(__linux__) || defined(__NetBSD__)
         fdatasync(fileno(fileout));
