@@ -3486,7 +3486,7 @@ bool static LoadBlockIndexDB()
     pblocktree->ReadLastBlockFile(nLastBlockFile);
     LogPrintf("LoadBlockIndex(): last block file = %i\n", nLastBlockFile);
     if (pblocktree->ReadBlockFileInfo(nLastBlockFile, infoLastBlockFile))
-        LogPrintf("LoadBlockIndex(): last block file: %s\n", infoLastBlockFile.ToString().c_str());
+        LogPrintf("LoadBlockIndex(): last block file: %s\n", infoLastBlockFile.ToString());
 
     // Check whether we need to continue reindexing
     bool fReindexing = false;
@@ -3499,9 +3499,10 @@ bool static LoadBlockIndexDB()
         return true;
     chainActive.SetTip(it->second);
 
-    LogPrintf("LoadBlockIndex(): hashBestChain=%s  height=%d date=%s\n",
+    LogPrintf("LoadBlockIndex(): hashBestChain=%s  height=%d date=%s  progress=%f\n",
         chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(),
-        DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()).c_str());
+        DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()),
+        Checkpoints::GuessVerificationProgress(chainActive.Tip()));
 
     return true;
 }
