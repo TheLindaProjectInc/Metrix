@@ -253,10 +253,8 @@ bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock, b
 uint256 WantedByOrphan(const CBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void ThreadStakeMiner(CWallet *pwallet);
-/** Connect/disconnect blocks until pindexNew is the new tip of the active block chain */
-bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew);
 /** Find the best known block, and make it the tip of the block chain */
-bool ConnectBestBlock(CValidationState &state);
+bool ActivateBestChain(CValidationState &state);
 /** Create a new block index entry for a given block hash */
 CBlockIndex * InsertBlockIndex(uint256 hash);
 /** Verify a signature */
@@ -264,10 +262,10 @@ bool VerifySignature(const CCoins& txFrom, const CTransaction& txTo, unsigned in
 
 
 /** (try to) add transaction to memory pool **/
-bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction &tx, bool fLimitFree,
+bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransaction &tx, bool fLimitFree,
                         bool* pfMissingInputsbool, bool fRejectInsaneFee = false);
 
-bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, CTransaction &tx, bool fLimitFree,
+bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransaction &tx, bool fLimitFree,
                         bool* pfMissingInputs, bool fRejectInsaneFee, std::string& errorMessage);
 
 bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransaction &txo, bool fLimitFree,
@@ -816,6 +814,9 @@ public:
     unsigned int nBits;
     unsigned int nNonce;
 
+    // (memory only) Sequencial id assigned to distinguish order in which blocks are received.
+    uint32_t nSequenceId;
+
     CBlockIndex()
     {
         phashBlock = NULL;
@@ -828,6 +829,7 @@ public:
         nTx = 0;
         nChainTx = 0;
         nStatus = 0;
+        nSequenceId = 0;
         nMint = 0;
         nMoneySupply = 0;
         nFlags = 0;
@@ -855,6 +857,7 @@ public:
         nTx = 0;
         nChainTx = 0;
         nStatus = 0;
+        nSequenceId = 0;
         nMint = 0;
         nMoneySupply = 0;
         nFlags = 0;
@@ -1274,5 +1277,8 @@ public:
 
 /** The currently-connected chain of blocks. */
 extern CChain chainActive;
+
+/** The currently best known chain of headers (some of which may be invalid). */
+extern CChain chainMostWork;
 
 #endif
