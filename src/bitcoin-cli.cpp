@@ -50,18 +50,20 @@ int main(int argc, char* argv[])
     try
     {
         if (!AppInitRPC(argc, argv))
-            return 1;
+            return abs(RPC_MISC_ERROR);
     }
     catch (std::exception& e) {
         PrintExceptionContinue(&e, "AppInitRPC()");
+        return abs(RPC_MISC_ERROR);
     }
     catch (...) {
         PrintExceptionContinue(NULL, "AppInitRPC()");
+        return abs(RPC_MISC_ERROR);
     }
+    int ret = abs(RPC_MISC_ERROR);
     try
     {
-        if (!CommandLineRPC(argc, argv))
-            return 1;
+        ret = CommandLineRPC(argc, argv);
     }
     catch (std::exception& e) {
         PrintExceptionContinue(&e, "CommandLineRPC()");
@@ -69,5 +71,5 @@ int main(int argc, char* argv[])
     catch (...) {
         PrintExceptionContinue(NULL, "CommandLineRPC()");
     }
-    return 0;
+    return ret;
 }

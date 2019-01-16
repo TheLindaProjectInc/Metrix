@@ -27,6 +27,7 @@ extern int64_t nReserveBalance;
 extern int64_t nMinimumInputValue;
 extern bool fWalletUnlockStakingOnly;
 extern bool fConfChange;
+extern bool bSpendZeroConfChange;
 
 class CAccountingEntry;
 class CCoinControl;
@@ -129,6 +130,13 @@ private:
 
     int64_t nNextResend;
     int64_t nLastResend;
+
+    // Used to detect and report conflicted transactions:
+    typedef std::multimap<COutPoint, uint256> TxConflicts;
+    TxConflicts mapTxConflicts;
+    void AddToConflicts(const uint256& wtxhash);
+    void SyncMetaData(std::pair<TxConflicts::iterator, TxConflicts::iterator>);
+
 
 public:
     /// Main wallet lock.
@@ -274,7 +282,7 @@ public:
     TxItems OrderedTxItems(std::list<CAccountingEntry>& acentries, std::string strAccount = "");
 
     void MarkDirty();
-    bool AddToWallet(const CWalletTx& wtxIn);
+    bool AddToWallet(const CWalletTx& wtxIn, bool fFromLoadWallet = false);
     void SyncTransaction(const uint256 &hash, const CTransaction& tx, const CBlock* pblock, bool fConnect = true);
     bool AddToWalletIfInvolvingMe(const uint256 &hash, const CTransaction& tx, const CBlock* pblock, bool fUpdate);
     void EraseFromWallet(const uint256 &hash);
@@ -454,6 +462,9 @@ public:
 
     // get the current wallet format (the oldest client version guaranteed to understand this wallet)
     int GetVersion() { LOCK(cs_wallet); return nWalletVersion; }
+
+    // Get wallet transactions that conflict with given transaction (spend same outputs)
+    std::set<uint256> GetConflicts(const uint256& txid) const;
 
     void FixSpentCoins(int& nMismatchSpent, int64_t& nBalanceInQuestion, bool fCheckOnly = false);
     void DisableTransaction(const CTransaction &tx);
@@ -853,6 +864,8 @@ public:
     bool AcceptWalletTransaction();
 
     void RelayWalletTransaction();
+
+    std::set<uint256> GetConflicts() const;
 };
 
 

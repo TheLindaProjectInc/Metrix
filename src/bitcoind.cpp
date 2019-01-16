@@ -114,9 +114,11 @@ bool AppInit(int argc, char* argv[])
         fRet = AppInit2(threadGroup);
     }
     catch (std::exception& e) {
-        PrintException(&e, "AppInit()");
+        PrintExceptionContinue(&e, "AppInit()");
+        throw;
     } catch (...) {
-        PrintException(NULL, "AppInit()");
+        PrintExceptionContinue(NULL, "AppInit()");
+        throw;
     }
 
     if (!fRet)
