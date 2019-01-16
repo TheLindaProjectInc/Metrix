@@ -1811,7 +1811,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
             if (coins.IsCoinBase() || coins.IsCoinStake())
                 if (nSpendHeight - coins.nHeight < nCoinbaseMaturity)
                     return state.Invalid(
-                        error("CheckInputs() : tried to spend coinbase at depth %d", coins.IsCoinBase() ? "coinbase" : "coinstake", nSpendHeight - coins.nHeight),
+                        error("CheckInputs() : tried to spend %s at depth %d", coins.IsCoinBase() ? "coinbase" : "coinstake", nSpendHeight - coins.nHeight),
                         REJECT_INVALID, "premature spend of coinbase");
 
             // ppcoin: check transaction timestamp
@@ -2037,7 +2037,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         if (nSigOps > MAX_BLOCK_SIGOPS)
             return state.DoS(100, error("ConnectBlock() : too many sigops"),
                 REJECT_INVALID, "too many sigops");
-
+        
         if (tx.IsCoinBase())
             nValueOut += tx.GetValueOut();
         else
@@ -2070,7 +2070,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         }
         CTxUndo txundo;
         UpdateCoins(tx, state, view, txundo, pindex->nHeight, block.GetTxHash(i));
-
+        
         if (!tx.IsCoinBase())
             blockundo.vtxundo.push_back(txundo);
         vPos.push_back(std::make_pair(block.GetTxHash(i), pos));
