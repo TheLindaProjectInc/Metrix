@@ -88,7 +88,7 @@ bool AppInit(int argc, char* argv[])
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon)
         {
-            fprintf(stdout, "Bitcoin server starting\n");
+            fprintf(stdout, "Linda server starting\n");
 
             // Daemonize
             pid_t pid = fork();
