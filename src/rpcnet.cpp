@@ -261,8 +261,6 @@ Value getaddednodeinfo(const Array& params, bool fHelp)
         return ret;
     }
 
-    Array ret;
-
     list<pair<string, vector<CService> > > laddedAddreses(0);
     BOOST_FOREACH(string& strAddNode, laddedNodes)
     {
