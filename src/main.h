@@ -169,7 +169,6 @@ extern bool fReindex;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
 
-extern std::map<uint256, CBlock*> mapOrphanBlocks;
 extern bool fHaveGUI;
 
 // Settings
