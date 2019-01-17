@@ -1423,9 +1423,9 @@ uint256 static GetOrphanRoot(const uint256& hash)
 
 uint256 WantedByOrphan(const COrphanBlock* pblockOrphan)
 {
-    while (mapOrphanBlocks.count(pblockOrphan->hashPrevBlock))
-        pblockOrphan = mapOrphanBlocks[pblockOrphan->hashPrevBlock];
-    return pblockOrphan->hashPrevBlock;
+    while (mapOrphanBlocks.count(pblockOrphan->hashPrev))
+        pblockOrphan = mapOrphanBlocks[pblockOrphan->hashPrev];
+    return pblockOrphan->hashPrev;
 }
 
 // Remove a random orphan block (which does not have any dependent orphans).
@@ -1441,14 +1441,13 @@ void static PruneOrphanBlocks()
 
     // As long as this block has other orphans depending on it, move to one of those successors.
     do {
-        std::multimap<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocksByPrev.find(it->second->GetHash());
+        std::multimap<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocksByPrev.find(it->second->hashBlock);
         if (it2 == mapOrphanBlocksByPrev.end())
             break;
         it = it2;
     } while(1);
 
-    setStakeSeenOrphan.erase(it->second->GetProofOfStake());
-    uint256 hash = it->second->GetHash();
+    uint256 hash = it->second->hashBlock;
     delete it->second;
     mapOrphanBlocksByPrev.erase(it);
     mapOrphanBlocks.erase(hash);
@@ -3088,7 +3087,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         // Duplicate stake allowed only when there is orphan child block
         // allow the best blocks stake to be reused just incase we are in a fork
         if (!(chainActive.Tip()->IsProofOfStake() && proofOfStake.first == chainActive.Tip()->prevoutStake) &&
-            setStakeSeen.count(proofOfStake) && !mapOrphanBlocksByPrev.count(hash) && (mapOrphanBlocks.count(hash) && !WantedByOrphan(mapOrphanBlocks[hash])))
+            setStakeSeen.count(proofOfStake) && !mapOrphanBlocksByPrev.count(hash))
                 return state.Invalid(error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for block %s", proofOfStake.first.ToString(), proofOfStake.second, hash.ToString()));
     }
 
@@ -3123,26 +3122,26 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             }
             pblock2->hashBlock = hash;
             pblock2->hashPrev = pblock->hashPrevBlock;
-	    mapOrphanBlocks.insert(make_pair(hash, pblock2));
-	    mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
+	        mapOrphanBlocks.insert(make_pair(hash, pblock2));
+	        mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
 		
             // ppcoin: check proof-of-stake
-            if (pblock2->IsProofOfStake())
+            if (pblock->IsProofOfStake())
             {
                 // Limited duplicity on stake: prevents block flood attack
                 // Duplicate stake allowed only when there is orphan child block
-                if (setStakeSeenOrphan.count(pblock2->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash) && (mapOrphanBlocks.count(hash) && !WantedByOrphan(mapOrphanBlocks[hash])))
+                if (setStakeSeenOrphan.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash))
                 {
-                    error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock2->GetProofOfStake().first.ToString().c_str(), pblock2->GetProofOfStake().second, hash.ToString().c_str());
+                    error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock->GetProofOfStake().first.ToString().c_str(), pblock->GetProofOfStake().second, hash.ToString().c_str());
                     //pblock2 will not be needed, free it
-                    delete pblock2;
+                    delete pblock;
                     return false;
                 }
                 else
-                    setStakeSeenOrphan.insert(pblock2->GetProofOfStake());
+                    setStakeSeenOrphan.insert(pblock->GetProofOfStake());
             }
             mapOrphanBlocks.insert(make_pair(hash, pblock2));
-            mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
+            mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
 
             // Ask this peer to fill in what we're missing
             PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(hash));
@@ -3179,7 +3178,10 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             if (AcceptBlock(block, stateDummy))
                 vWorkQueue.push_back(mi->second->hashBlock);
             mapOrphanBlocks.erase(mi->second->hashBlock);
-            setStakeSeenOrphan.erase(block->GetProofOfStake());
+
+            if (block.IsProofOfStake())
+                setStakeSeenOrphan.erase(block.GetProofOfStake());
+
             delete mi->second;
         }
         mapOrphanBlocksByPrev.erase(hashPrev);

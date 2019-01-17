@@ -168,6 +168,8 @@ extern bool fImporting;
 extern bool fReindex;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
+struct COrphanBlock;
+extern std::map<uint256, COrphanBlock*> mapOrphanBlocks;
 
 // Settings
 extern bool fUseFastIndex;
