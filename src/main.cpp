@@ -1436,12 +1436,12 @@ void static PruneOrphanBlocks()
 
     // Pick a random orphan block.
     int pos = insecure_rand() % mapOrphanBlocksByPrev.size();
-    std::multimap<uint256, CBlock*>::iterator it = mapOrphanBlocksByPrev.begin();
+    std::multimap<uint256, COrphanBlock*>::iterator it = mapOrphanBlocksByPrev.begin();
     while (pos--) it++;
 
     // As long as this block has other orphans depending on it, move to one of those successors.
     do {
-        std::multimap<uint256, CBlock*>::iterator it2 = mapOrphanBlocksByPrev.find(it->second->GetHash());
+        std::multimap<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocksByPrev.find(it->second->GetHash());
         if (it2 == mapOrphanBlocksByPrev.end())
             break;
         it = it2;
