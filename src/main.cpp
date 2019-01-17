@@ -70,17 +70,16 @@ int64_t CTransaction::nMinRelayTxFee = 100000;
 
 static CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
-map<uint256, CBlock*> mapOrphanBlocks;
-multimap<uint256, CBlock*> mapOrphanBlocksByPrev;
-set<pair<COutPoint, unsigned int> > setStakeSeenOrphan;
-
-struct COrphanTx {
-    CTransaction tx;
-    NodeId fromPeer;
+struct COrphanBlock {
+    uint256 hashBlock;
+    uint256 hashPrev;
+    vector<unsigned char> vchBlock;
 };
+map<uint256, COrphanBlock*> mapOrphanBlocks;
+multimap<uint256, COrphanBlock*> mapOrphanBlocksByPrev;
+
 map<uint256, COrphanTx> mapOrphanTransactions;
 map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
-void EraseOrphansFor(NodeId peer);
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1400,11 +1399,19 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
     return true;
 }
 
-uint256 static GetOrphanRoot(const CBlockHeader* pblock)
+uint256 static GetOrphanRoot(const uint256& hash)
 {
-    while (mapOrphanBlocks.count(pblock->hashPrevBlock))
-        pblock = mapOrphanBlocks[pblock->hashPrevBlock];
-    return pblock->GetHash();
+    map<uint256, COrphanBlock*>::iterator it = mapOrphanBlocks.find(hash);
+    if (it == mapOrphanBlocks.end())
+        return hash;
+	
+    // Work back to the first block in the orphan chain
+    do {
+        map<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocks.find(it->second->hashPrev);
+        if (it2 == mapOrphanBlocks.end())
+            return it->first;
+        it = it2;
+    } while(true);
 }
 
 uint256 WantedByOrphan(const CBlock* pblockOrphan)
@@ -3101,7 +3108,17 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         // Accept orphans as long as there is a node to request its parents from
         if (pfrom) {
             PruneOrphanBlocks();
-            CBlock* pblock2 = new CBlock(*pblock);
+            COrphanBlock* pblock2 = new COrphanBlock();
+            {
+                CDataStream ss(SER_DISK, CLIENT_VERSION);
+                ss << *pblock;
+                pblock2->vchBlock = std::vector<unsigned char>(ss.begin(), ss.end());
+            }
+            pblock2->hashBlock = hash;
+            pblock2->hashPrev = pblock->hashPrevBlock;
+	    mapOrphanBlocks.insert(make_pair(hash, pblock2));
+	    mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
+		
             // ppcoin: check proof-of-stake
             if (pblock2->IsProofOfStake())
             {
@@ -3121,7 +3138,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
 
             // Ask this peer to fill in what we're missing
-            PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(pblock2));
+            PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(hash));
             // ppcoin: getblocks may not obtain the ancestor block rejected
             // earlier by duplicate-stake check so we ask for it again directly
             if (!IsInitialBlockDownload())
@@ -3140,11 +3157,16 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     for (unsigned int i = 0; i < vWorkQueue.size(); i++)
     {
         uint256 hashPrev = vWorkQueue[i];
-        for (multimap<uint256, CBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
+        for (multimap<uint256, COrphanBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
              mi != mapOrphanBlocksByPrev.upper_bound(hashPrev);
              ++mi)
         {
-            CBlock* pblockOrphan = (*mi).second;
+            CBlock block;
+            {
+                CDataStream ss(mi->second->vchBlock, SER_DISK, CLIENT_VERSION);
+                ss >> block;
+            }
+            block.BuildMerkleTree();
             // Use a dummy CValidationState so someone can't setup nodes to counter-DoS based on orphan resolution (that is, feeding people an invalid block based on LegitBlockX in order to get anyone relaying LegitBlockX banned)
             CValidationState stateDummy;
             if (AcceptBlock(*pblockOrphan, stateDummy))
@@ -4354,7 +4376,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                         pfrom->AskFor(inv);
                 }
             } else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash))
-                PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(mapOrphanBlocks[inv.hash]));
+                PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(inv.hash));
 
             // Track requests for our stuff
             g_signals.Inventory(inv.hash);
@@ -5212,7 +5234,7 @@ public:
             delete (*it1).second;
         mapBlockIndex.clear();
         // orphan blocks
-        map<uint256, CBlock*>::iterator it2 = mapOrphanBlocks.begin();
+        std::map<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocks.begin();
         for (; it2 != mapOrphanBlocks.end(); it2++)
             delete (*it2).second;
         mapOrphanBlocks.clear();
