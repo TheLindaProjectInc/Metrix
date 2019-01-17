@@ -169,8 +169,6 @@ extern bool fReindex;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
 
-extern bool fHaveGUI;
-
 // Settings
 extern bool fUseFastIndex;
 extern unsigned int nDerivationMethodIndex;
