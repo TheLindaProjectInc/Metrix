@@ -412,7 +412,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             if (wtx.nOrderPos == -1)
                 wss.fAnyUnordered = true;
 
-            pwallet->mapWallet[hash] = wtx;
+            pwallet->AddToWallet(wtx, true);
             //// debug print
             //LogPrintf("LoadWallet  %s\n", wtx.GetHash().ToString());
             //LogPrintf(" %12d  %s  %s  %s\n",

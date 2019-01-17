@@ -194,7 +194,6 @@ static inline bool error(const char* format)
 }
 
 
-void PrintException(std::exception* pex, const char* pszThread);
 void PrintExceptionContinue(std::exception* pex, const char* pszThread);
 void ParseString(const std::string& str, char c, std::vector<std::string>& v);
 std::string FormatMoney(int64_t n, bool fPlus=false);
@@ -583,10 +582,12 @@ template <typename Callable> void LoopForever(const char* name,  Callable func, 
         throw;
     }
     catch (std::exception& e) {
-        PrintException(&e, name);
+        PrintExceptionContinue(&e, name);
+        throw;
     }
     catch (...) {
-        PrintException(NULL, name);
+        PrintExceptionContinue(NULL, name);
+        throw;
     }
 }
 // .. and a wrapper that just calls func once
@@ -606,10 +607,12 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
         throw;
     }
     catch (std::exception& e) {
-        PrintException(&e, name);
+        PrintExceptionContinue(&e, name);
+        throw;
     }
     catch (...) {
-        PrintException(NULL, name);
+        PrintExceptionContinue(NULL, name);
+        throw;
     }
 }
 

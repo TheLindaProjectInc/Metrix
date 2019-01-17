@@ -1035,15 +1035,6 @@ static std::string FormatException(std::exception* pex, const char* pszThread)
             "UNKNOWN EXCEPTION       \n%s in %s       \n", pszModule, pszThread);
 }
 
-void PrintException(std::exception* pex, const char* pszThread)
-{
-    std::string message = FormatException(pex, pszThread);
-    LogPrintf("\n\n************************\n%s\n", message);
-    fprintf(stderr, "\n\n************************\n%s\n", message.c_str());
-    strMiscWarning = message;
-    throw;
-}
-
 void PrintExceptionContinue(std::exception* pex, const char* pszThread)
 {
     std::string message = FormatException(pex, pszThread);
@@ -1233,7 +1224,8 @@ void FileCommit(FILE *fileout)
 {
     fflush(fileout);                // harmless if redundantly called
 #ifdef WIN32
-    _commit(_fileno(fileout));
+    HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(fileout));
+    FlushFileBuffers(hFile);
 #else
     #if defined(__linux__) || defined(__NetBSD__)
         fdatasync(fileno(fileout));
