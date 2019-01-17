@@ -168,9 +168,8 @@ extern bool fImporting;
 extern bool fReindex;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
-
-extern std::map<uint256, CBlock*> mapOrphanBlocks;
-extern bool fHaveGUI;
+struct COrphanBlock;
+extern std::map<uint256, COrphanBlock*> mapOrphanBlocks;
 
 // Settings
 extern bool fUseFastIndex;
@@ -250,7 +249,7 @@ bool IsInitialBlockDownload();
 std::string GetWarnings(std::string strFor);
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
 bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock, bool fAllowSlow);
-uint256 WantedByOrphan(const CBlock* pblockOrphan);
+uint256 WantedByOrphan(const COrphanBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void ThreadStakeMiner(CWallet *pwallet);
 /** Find the best known block, and make it the tip of the block chain */
