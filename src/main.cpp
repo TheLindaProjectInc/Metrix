@@ -70,6 +70,11 @@ int64_t CTransaction::nMinRelayTxFee = 100000;
 
 static CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
+struct COrphanTx {
+    CTransaction tx;
+    NodeId fromPeer;
+};
+
 struct COrphanBlock {
     uint256 hashBlock;
     uint256 hashPrev;
@@ -77,9 +82,11 @@ struct COrphanBlock {
 };
 map<uint256, COrphanBlock*> mapOrphanBlocks;
 multimap<uint256, COrphanBlock*> mapOrphanBlocksByPrev;
+set<pair<COutPoint, unsigned int> > setStakeSeenOrphan;
 
 map<uint256, COrphanTx> mapOrphanTransactions;
 map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
+void EraseOrphansFor(NodeId peer);
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -3169,10 +3176,10 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             block.BuildMerkleTree();
             // Use a dummy CValidationState so someone can't setup nodes to counter-DoS based on orphan resolution (that is, feeding people an invalid block based on LegitBlockX in order to get anyone relaying LegitBlockX banned)
             CValidationState stateDummy;
-            if (AcceptBlock(*pblockOrphan, stateDummy))
-                vWorkQueue.push_back(mi->second->GetHash());
-            mapOrphanBlocks.erase(mi->second->GetHash());
-            setStakeSeenOrphan.erase(pblockOrphan->GetProofOfStake());
+            if (AcceptBlock(block, stateDummy))
+                vWorkQueue.push_back(mi->second->hashBlock);
+            mapOrphanBlocks.erase(mi->second->hashBlock);
+            setStakeSeenOrphan.erase(block->GetProofOfStake());
             delete mi->second;
         }
         mapOrphanBlocksByPrev.erase(hashPrev);
