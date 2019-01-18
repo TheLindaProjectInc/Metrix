@@ -283,10 +283,10 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "\n" + _("Debugging/Testing options:") + "\n";
     if (GetBoolArg("-help-debug", false))
     {
-    strUsage += "  -checkpoints           " + _("Only accept block chain matching built-in checkpoints (default: 1)") + "\n"
+        strUsage += "  -checkpoints           " + _("Only accept block chain matching built-in checkpoints (default: 1)") + "\n";
     strUsage += "  -confchange            " + _("Require a confirmations for change (default: 0)") + "\n";
     strUsage += "  -minimizecoinage       " + _("Minimize weight consumption (experimental) (default: 0)") + "\n";
-    strUsage += "  -regtest               " + _("Enter regression test mode, which uses a special chain in which blocks can be "
+    strUsage += "  -regtest               " + _("Enter regression test mode, which uses a special chain in which blocks can be ";
     strUsage += "solved instantly. This is intended for regression testing tools and app development.") + "\n";
     }
     strUsage += "  -debug=<category>      " + _("Output debugging information (default: 0, supplying <category> is optional)") + "\n";
