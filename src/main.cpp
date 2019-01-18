@@ -3711,7 +3711,7 @@ void PrintBlockTree()
         // print item
         CBlock block;
         ReadBlockFromDisk(block, pindex);
-        LogPrintf("%d (blk%05u.dat:0x%x) %s  %08x  %s  mint %7s  tx %u",
+        LogPrintf("%d (blk%05u.dat:0x%x) %s  %08x  %s  mint %7s  tx %u\n",
             pindex->nHeight,
             pindex->GetBlockPos().nFile,
             pindex->GetBlockPos().nPos,
