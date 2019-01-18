@@ -3113,18 +3113,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
         // Accept orphans as long as there is a node to request its parents from
         if (pfrom) {
-            PruneOrphanBlocks();
-            COrphanBlock* pblock2 = new COrphanBlock();
-            {
-                CDataStream ss(SER_DISK, CLIENT_VERSION);
-                ss << *pblock;
-                pblock2->vchBlock = std::vector<unsigned char>(ss.begin(), ss.end());
-            }
-            pblock2->hashBlock = hash;
-            pblock2->hashPrev = pblock->hashPrevBlock;
-	        mapOrphanBlocks.insert(make_pair(hash, pblock2));
-	        mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
-		
+            PruneOrphanBlocks(); 
             // ppcoin: check proof-of-stake
             if (pblock->IsProofOfStake())
             {
@@ -3133,15 +3122,21 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                 if (setStakeSeenOrphan.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash))
                 {
                     error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock->GetProofOfStake().first.ToString().c_str(), pblock->GetProofOfStake().second, hash.ToString().c_str());
-                    //pblock2 will not be needed, free it
-                    delete pblock;
                     return false;
                 }
                 else
                     setStakeSeenOrphan.insert(pblock->GetProofOfStake());
             }
+            COrphanBlock* pblock2 = new COrphanBlock();
+            {
+                CDataStream ss(SER_DISK, CLIENT_VERSION);
+                ss << *pblock;
+                pblock2->vchBlock = std::vector<unsigned char>(ss.begin(), ss.end());
+            }
+            pblock2->hashBlock = hash;
+            pblock2->hashPrev = pblock->hashPrevBlock;
             mapOrphanBlocks.insert(make_pair(hash, pblock2));
-            mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
+	        mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
 
             // Ask this peer to fill in what we're missing
             PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(hash));
@@ -4865,15 +4860,19 @@ bool ProcessMessages(CNode* pfrom)
 
     // this maintains the order of responses
     if (!pfrom->vRecvGetData.empty()) return fOk;
-
-    int nBlocksToDownload = State(pfrom->id)->nBlocksToDownload;
-    int nBlocksInFlight = State(pfrom->id)->nBlocksInFlight;
-    // Cause a new syncnode to be reselected since we're about to stop receiving blocks
-    // (and we'll be ignoring the inv the current syncnode sends in favour of selecting
-    // a potentially better syncnode.
-    if (nBlocksInFlight + nBlocksToDownload == 1 && !CaughtUp())
-        pfrom->tGetblocks = 0;
-
+    int nBlocksToDownload = 0;
+    int nBlocksInFlight = 0;
+    {
+        LOCK(cs_main);
+        CNodeState *state = State(pfrom->id);
+        nBlocksToDownload = state->nBlocksToDownload;
+        nBlocksInFlight = state->nBlocksInFlight;
+        // Cause a new syncnode to be reselected since we're about to stop receiving blocks
+        // (and we'll be ignoring the inv the current syncnode sends in favour of selecting
+        // a potentially better syncnode.
+        if (nBlocksInFlight + nBlocksToDownload == 1 && !CaughtUp())
+            pfrom->tGetblocks = 0;
+    }
 
     std::deque<CNetMessage>::iterator it = pfrom->vRecvMsg.begin();
     while (!pfrom->fDisconnect && it != pfrom->vRecvMsg.end()) {
