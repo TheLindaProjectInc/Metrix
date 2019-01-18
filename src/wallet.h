@@ -29,6 +29,9 @@ extern bool fWalletUnlockStakingOnly;
 extern bool fConfChange;
 extern bool bSpendZeroConfChange;
 
+// -paytxfee will warn if called with a higher fee than this amount (in satoshis) per KB
+static const int nHighTransactionFeeWarning = 0.01 * COIN;
+
 class CAccountingEntry;
 class CCoinControl;
 class CWalletTx;
