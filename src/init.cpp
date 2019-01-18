@@ -231,7 +231,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -datadir=<dir>         " + _("Specify data directory") + "\n";
     strUsage += "  -keypool=<n>           " + _("Set key pool size to <n> (default: 100)") + "\n";
     strUsage += "  -loadblock=<file>      " + _("Imports blocks from external blk000?.dat file") + "\n";
-    strUsage += "  -par=N                 " + _("Set the number of script verification threads (1-16, 0=auto, default: 0)") + "\n";
+    strUsage += "  -par=<n>               " + strprintf(_("Set the number of script verification threads (%u to %d, 0 = auto, <0 = leave that many cores free, default: %d)"), -(int)boost::thread::hardware_concurrency(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS) + "\n";
     strUsage += "  -pid=<file>            " + _("Specify pid file (default: Lindad.pid)") + "\n";
     strUsage += "  -reindex               " + _("Rebuild blockchain index from current blk000??.dat files") + "\n";
 
@@ -572,7 +572,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     mempool.setSanityCheck(GetBoolArg("-checkmempool", RegTest()));
 
     // -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency
-    nScriptCheckThreads = GetArg("-par", 0);
+    nScriptCheckThreads = GetArg("-par", DEFAULT_SCRIPTCHECK_THREADS);
     if (nScriptCheckThreads <= 0)
         nScriptCheckThreads += boost::thread::hardware_concurrency();
     if (nScriptCheckThreads <= 1)
