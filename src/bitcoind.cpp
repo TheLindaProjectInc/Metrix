@@ -68,7 +68,8 @@ bool AppInit(int argc, char* argv[])
                   "  Lindad [options] help                " + _("List commands") + "\n" +
                   "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
 
-            strUsage += "\n" + HelpMessageCli(true);
+            strUsage += "\n" + HelpMessage(HMM_BITCOIND);
+            strUsage += "\n" + HelpMessageCli(false);
 
             fprintf(stdout, "%s", strUsage.c_str());
             return false;
