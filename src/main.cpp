@@ -524,6 +524,7 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 
 bool IsStandardTx(const CTransaction& tx, string& reason)
 {
+    AssertLockHeld(cs_main);
     if (tx.nVersion > CTransaction::CURRENT_VERSION || tx.nVersion < 1) {
         reason = "version";
         return false;
@@ -1624,7 +1625,7 @@ bool CaughtUp()
 
 bool IsInitialBlockDownload()
 {
-    LOCK(cs_main);
+    AssertLockHeld(cs_main);
     if (fReindex || fImporting || chainActive.Height() < Checkpoints::GetTotalBlocksEstimate())
         return true;
     static int64_t nLastUpdate;
@@ -1689,6 +1690,7 @@ void CheckForkWarningConditions()
 
 void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)
 {
+    AssertLockHeld(cs_main);
     // If we are on a fork that is sufficiently large, set a warning flag
     CBlockIndex* pfork = pindexNewForkTip;
     CBlockIndex* plonger = chainActive.Tip();
@@ -2391,7 +2393,9 @@ void static FindMostWorkChain()
 }
 
 // Try to activate to the most-work chain (thereby connecting it).
-bool ActivateBestChain(CValidationState &state) {
+bool ActivateBestChain(CValidationState &state)
+{
+    AssertLockHeld(cs_main);
     CBlockIndex *pindexOldTip = chainActive.Tip();
     bool fComplete = false;
     while (!fComplete) {
@@ -3027,6 +3031,7 @@ bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, uns
 
 int64_t CBlockIndex::GetMedianTime() const
 {
+    AssertLockHeld(cs_main);
     const CBlockIndex* pindex = this;
     for (int i = 0; i < nMedianTimeSpan / 2; i++)
     {
@@ -3039,6 +3044,7 @@ int64_t CBlockIndex::GetMedianTime() const
 
 void PushGetBlocks(CNode* pnode, CBlockIndex* pindexBegin, uint256 hashEnd)
 {
+    AssertLockHeld(cs_main);
     // Filter out duplicate requests
     if (pindexBegin == pnode->pindexLastGetBlocksBegin && hashEnd == pnode->hashLastGetBlocksEnd)
         return;
