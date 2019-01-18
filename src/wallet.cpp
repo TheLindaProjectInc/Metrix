@@ -837,7 +837,7 @@ void CWallet::SyncTransaction(const uint256 &hash, const CTransaction& tx, const
         }
         return;
     }
-
+    LOCK2(cs_main, cs_wallet);
     AddToWalletIfInvolvingMe(hash, tx, pblock, true);
 }
 

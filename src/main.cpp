@@ -1625,7 +1625,7 @@ bool CaughtUp()
 
 bool IsInitialBlockDownload()
 {
-    AssertLockHeld(cs_main);
+    LOCK(cs_main);
     if (fReindex || fImporting || chainActive.Height() < Checkpoints::GetTotalBlocksEstimate())
         return true;
     static int64_t nLastUpdate;
@@ -2395,7 +2395,7 @@ void static FindMostWorkChain()
 // Try to activate to the most-work chain (thereby connecting it).
 bool ActivateBestChain(CValidationState &state)
 {
-    AssertLockHeld(cs_main);
+    LOCK(cs_main);
     CBlockIndex *pindexOldTip = chainActive.Tip();
     bool fComplete = false;
     while (!fComplete) {
@@ -2519,8 +2519,6 @@ bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache
 
 bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos, const uint256& hashProof)
 {
-    AssertLockHeld(cs_main);
-
     // Check for duplicate
     uint256 hash = block.GetHash();
     if (mapBlockIndex.count(hash))
@@ -2578,6 +2576,8 @@ bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos
     // New best?
     if (!ActivateBestChain(state))
         return false;
+
+    LOCK(cs_main);
     if (pindexNew == chainActive.Tip())
     {
         // Clear fork warning if its no longer applicable
@@ -3642,6 +3642,7 @@ bool LoadBlockIndex()
 
 bool InitBlockIndex()
 {
+    LOCK(cs_main);
     // Check whether we're already initialized
     if (chainActive.Genesis() != NULL)
         return true;
