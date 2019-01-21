@@ -243,6 +243,18 @@ void SetReachable(enum Network net, bool fFlag)
         vfReachable[NET_IPV4] = true;
 }
 
+bool IsReachable(enum Network net)
+{
+    LOCK(cs_mapLocalHost);
+    return !vfLimited[net];
+}
+
+bool IsReachable(const CNetAddr &addr)
+{
+    return IsReachable(addr.GetNetwork());
+}
+
+
 // learn a new local address
 bool AddLocal(const CService& addr, int nScore)
 {
@@ -314,14 +326,6 @@ bool IsLocal(const CService& addr)
 {
     LOCK(cs_mapLocalHost);
     return mapLocalHost.count(addr) > 0;
-}
-
-/** check whether a given address is in a network we can probably connect to */
-bool IsReachable(const CNetAddr& addr)
-{
-    LOCK(cs_mapLocalHost);
-    enum Network net = addr.GetNetwork();
-    return vfReachable[net] && !vfLimited[net];
 }
 
 void AddressCurrentlyConnected(const CService& addr)

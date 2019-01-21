@@ -12,6 +12,7 @@
 #include "sync.h"
 #include "timedata.h"
 #include "util.h"
+#include "version.h"
 
 #include <boost/foreach.hpp>
 #include "json/json_spirit_value.h"
@@ -465,7 +466,7 @@ Value getnetworkinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("timeoffset", GetTimeOffset()));
     obj.push_back(Pair("connections", (int)vNodes.size()));
     obj.push_back(Pair("networks", GetNetworksInfo()));
-    obj.push_back(Pair("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK())));
+    obj.push_back(Pair("relayfee", ValueFromAmount(CTransaction::nMinRelayTxFee)));
     Array localAddresses;
     {
         LOCK(cs_mapLocalHost);
