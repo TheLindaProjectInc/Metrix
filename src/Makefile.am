@@ -12,8 +12,8 @@ endif
 
 bin_PROGRAMS = Lindad Linda-cli
 
-SUBDIRS = . $(BUILD_QT) $(BUILD_TEST)
-DIST_SUBDIRS = . qt test
+SUBDIRS = . $(BUILD_TEST)
+DIST_SUBDIRS = . test
 .PHONY: FORCE
 # Linda core #
 BITCOIN_CORE_H = \
