@@ -2618,8 +2618,7 @@ bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindexNew)))
         return state.Abort(_("Failed to write block index"));
 
-    // New best?
-    return ActivateBestChain(state);
+    return true;
 }
 
 bool FindBlockPos(CValidationState &state, CDiskBlockPos &pos, unsigned int nAddSize, unsigned int nHeight, uint64_t nTime, bool fKnown = false)
@@ -3091,10 +3090,11 @@ bool static IsCanonicalBlockSignature(CBlock* pblock)
 
 bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBlockPos *dbp)
 {
-    AssertLockHeld(cs_main);
-
     // Check for duplicate
     uint256 hash = pblock->GetHash();
+
+    {
+    LOCK(cs_main);
     if (mapBlockIndex.count(hash))
         return state.Invalid(error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString()));
     if (mapOrphanBlocks.count(hash))
@@ -3204,7 +3204,10 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         mapOrphanBlocksByPrev.erase(hashPrev);
     }
 
-    LogPrintf("ProcessBlock: ACCEPTED\n");
+     }
+
+    if (!ActivateBestChain(state))
+        return error("ProcessBlock() : ActivateBestChain failed");
 
     return true;
 }
@@ -3682,6 +3685,8 @@ bool InitBlockIndex()
                 return error("LoadBlockIndex() : writing genesis block to disk failed");
             if (!AddToBlockIndex(block, state, blockPos, Params().HashGenesisBlock()))
                 return error("LoadBlockIndex() : genesis block not accepted");
+             if (!ActivateBestChain(state))
+                return error("LoadBlockIndex() : genesis block cannot be activated");
         } catch(std::runtime_error &e) {
             return error("LoadBlockIndex() : failed to initialize block database: %s", e.what());
         }
@@ -3812,7 +3817,6 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
 
                 // process block
                 if (nBlockPos >= nStartByte) {
-                    LOCK(cs_main);
                     if (dbp)
                         dbp->nPos = nBlockPos;
                     CValidationState state;
@@ -4621,10 +4625,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 inv.hash.ToString(), size, timetodownload / 1000, size * 1000 / timetodownload, pfrom->id);
         else
             LogPrint("net", "received block %s (%u bytes) peer=%d\n", inv.hash.ToString(), size, pfrom->id);
-
-        LOCK(cs_main);
-
-        MarkBlockAsReceived(inv.hash, pfrom->GetId());
+        {
+            LOCK(cs_main);
+            MarkBlockAsReceived(inv.hash, pfrom->GetId());
+        }
 
         CValidationState state;
         ProcessBlock(state, pfrom, &block);
