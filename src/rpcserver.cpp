@@ -517,7 +517,6 @@ static void RPCAcceptHandler(boost::shared_ptr< basic_socket_acceptor<Protocol, 
     // TODO: Actually handle errors
     if (error)
     {
-        delete conn;
         // TODO: Actually handle errors
         LogPrintf("%s: Error: %s\n", __func__, error.message());
     }
