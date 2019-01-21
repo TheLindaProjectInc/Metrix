@@ -70,6 +70,11 @@ int64_t CTransaction::nMinRelayTxFee = 100000;
 
 static CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
+struct COrphanTx {
+    CTransaction tx;
+    NodeId fromPeer;
+};
+
 struct COrphanBlock {
     uint256 hashBlock;
     uint256 hashPrev;
@@ -77,9 +82,11 @@ struct COrphanBlock {
 };
 map<uint256, COrphanBlock*> mapOrphanBlocks;
 multimap<uint256, COrphanBlock*> mapOrphanBlocksByPrev;
+set<pair<COutPoint, unsigned int> > setStakeSeenOrphan;
 
 map<uint256, COrphanTx> mapOrphanTransactions;
 map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
+void EraseOrphansFor(NodeId peer);
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1414,11 +1421,11 @@ uint256 static GetOrphanRoot(const uint256& hash)
     } while(true);
 }
 
-uint256 WantedByOrphan(const CBlock* pblockOrphan)
+uint256 WantedByOrphan(const COrphanBlock* pblockOrphan)
 {
-    while (mapOrphanBlocks.count(pblockOrphan->hashPrevBlock))
-        pblockOrphan = mapOrphanBlocks[pblockOrphan->hashPrevBlock];
-    return pblockOrphan->hashPrevBlock;
+    while (mapOrphanBlocks.count(pblockOrphan->hashPrev))
+        pblockOrphan = mapOrphanBlocks[pblockOrphan->hashPrev];
+    return pblockOrphan->hashPrev;
 }
 
 // Remove a random orphan block (which does not have any dependent orphans).
@@ -1429,19 +1436,18 @@ void static PruneOrphanBlocks()
 
     // Pick a random orphan block.
     int pos = insecure_rand() % mapOrphanBlocksByPrev.size();
-    std::multimap<uint256, CBlock*>::iterator it = mapOrphanBlocksByPrev.begin();
+    std::multimap<uint256, COrphanBlock*>::iterator it = mapOrphanBlocksByPrev.begin();
     while (pos--) it++;
 
     // As long as this block has other orphans depending on it, move to one of those successors.
     do {
-        std::multimap<uint256, CBlock*>::iterator it2 = mapOrphanBlocksByPrev.find(it->second->GetHash());
+        std::multimap<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocksByPrev.find(it->second->hashBlock);
         if (it2 == mapOrphanBlocksByPrev.end())
             break;
         it = it2;
     } while(1);
 
-    setStakeSeenOrphan.erase(it->second->GetProofOfStake());
-    uint256 hash = it->second->GetHash();
+    uint256 hash = it->second->hashBlock;
     delete it->second;
     mapOrphanBlocksByPrev.erase(it);
     mapOrphanBlocks.erase(hash);
@@ -3081,7 +3087,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         // Duplicate stake allowed only when there is orphan child block
         // allow the best blocks stake to be reused just incase we are in a fork
         if (!(chainActive.Tip()->IsProofOfStake() && proofOfStake.first == chainActive.Tip()->prevoutStake) &&
-            setStakeSeen.count(proofOfStake) && !mapOrphanBlocksByPrev.count(hash) && (mapOrphanBlocks.count(hash) && !WantedByOrphan(mapOrphanBlocks[hash])))
+            setStakeSeen.count(proofOfStake) && !mapOrphanBlocksByPrev.count(hash))
                 return state.Invalid(error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for block %s", proofOfStake.first.ToString(), proofOfStake.second, hash.ToString()));
     }
 
@@ -3107,7 +3113,20 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
 
         // Accept orphans as long as there is a node to request its parents from
         if (pfrom) {
-            PruneOrphanBlocks();
+            PruneOrphanBlocks(); 
+            // ppcoin: check proof-of-stake
+            if (pblock->IsProofOfStake())
+            {
+                // Limited duplicity on stake: prevents block flood attack
+                // Duplicate stake allowed only when there is orphan child block
+                if (setStakeSeenOrphan.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash))
+                {
+                    error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock->GetProofOfStake().first.ToString().c_str(), pblock->GetProofOfStake().second, hash.ToString().c_str());
+                    return false;
+                }
+                else
+                    setStakeSeenOrphan.insert(pblock->GetProofOfStake());
+            }
             COrphanBlock* pblock2 = new COrphanBlock();
             {
                 CDataStream ss(SER_DISK, CLIENT_VERSION);
@@ -3116,26 +3135,8 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             }
             pblock2->hashBlock = hash;
             pblock2->hashPrev = pblock->hashPrevBlock;
-	    mapOrphanBlocks.insert(make_pair(hash, pblock2));
-	    mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
-		
-            // ppcoin: check proof-of-stake
-            if (pblock2->IsProofOfStake())
-            {
-                // Limited duplicity on stake: prevents block flood attack
-                // Duplicate stake allowed only when there is orphan child block
-                if (setStakeSeenOrphan.count(pblock2->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash) && (mapOrphanBlocks.count(hash) && !WantedByOrphan(mapOrphanBlocks[hash])))
-                {
-                    error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock2->GetProofOfStake().first.ToString().c_str(), pblock2->GetProofOfStake().second, hash.ToString().c_str());
-                    //pblock2 will not be needed, free it
-                    delete pblock2;
-                    return false;
-                }
-                else
-                    setStakeSeenOrphan.insert(pblock2->GetProofOfStake());
-            }
             mapOrphanBlocks.insert(make_pair(hash, pblock2));
-            mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
+	        mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrev, pblock2));
 
             // Ask this peer to fill in what we're missing
             PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(hash));
@@ -3169,10 +3170,13 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
             block.BuildMerkleTree();
             // Use a dummy CValidationState so someone can't setup nodes to counter-DoS based on orphan resolution (that is, feeding people an invalid block based on LegitBlockX in order to get anyone relaying LegitBlockX banned)
             CValidationState stateDummy;
-            if (AcceptBlock(*pblockOrphan, stateDummy))
-                vWorkQueue.push_back(mi->second->GetHash());
-            mapOrphanBlocks.erase(mi->second->GetHash());
-            setStakeSeenOrphan.erase(pblockOrphan->GetProofOfStake());
+            if (AcceptBlock(block, stateDummy))
+                vWorkQueue.push_back(mi->second->hashBlock);
+            mapOrphanBlocks.erase(mi->second->hashBlock);
+
+            if (block.IsProofOfStake())
+                setStakeSeenOrphan.erase(block.GetProofOfStake());
+
             delete mi->second;
         }
         mapOrphanBlocksByPrev.erase(hashPrev);
@@ -4856,15 +4860,19 @@ bool ProcessMessages(CNode* pfrom)
 
     // this maintains the order of responses
     if (!pfrom->vRecvGetData.empty()) return fOk;
-
-    int nBlocksToDownload = State(pfrom->id)->nBlocksToDownload;
-    int nBlocksInFlight = State(pfrom->id)->nBlocksInFlight;
-    // Cause a new syncnode to be reselected since we're about to stop receiving blocks
-    // (and we'll be ignoring the inv the current syncnode sends in favour of selecting
-    // a potentially better syncnode.
-    if (nBlocksInFlight + nBlocksToDownload == 1 && !CaughtUp())
-        pfrom->tGetblocks = 0;
-
+    int nBlocksToDownload = 0;
+    int nBlocksInFlight = 0;
+    {
+        LOCK(cs_main);
+        CNodeState *state = State(pfrom->id);
+        nBlocksToDownload = state->nBlocksToDownload;
+        nBlocksInFlight = state->nBlocksInFlight;
+        // Cause a new syncnode to be reselected since we're about to stop receiving blocks
+        // (and we'll be ignoring the inv the current syncnode sends in favour of selecting
+        // a potentially better syncnode.
+        if (nBlocksInFlight + nBlocksToDownload == 1 && !CaughtUp())
+            pfrom->tGetblocks = 0;
+    }
 
     std::deque<CNetMessage>::iterator it = pfrom->vRecvMsg.begin();
     while (!pfrom->fDisconnect && it != pfrom->vRecvMsg.end()) {
