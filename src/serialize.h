@@ -378,6 +378,12 @@ protected:
     char* pend;
 public:
     CFlatData(void* pbeginIn, void* pendIn) : pbegin((char*)pbeginIn), pend((char*)pendIn) { }
+    template <class T, class TAl>
+    explicit CFlatData(std::vector<T,TAl> &v)
+    {
+        pbegin = (char*)begin_ptr(v);
+        pend = (char*)end_ptr(v);
+    }
     char* begin() { return pbegin; }
     const char* begin() const { return pbegin; }
     char* end() { return pend; }
