@@ -236,6 +236,7 @@ static const CRPCCommand vRPCCommands[] =
     { "stop",                   &stop,                   true,      true,      false },
     
     /* P2P networking */
+    { "getnetworkinfo",         &getnetworkinfo,         true,      false,      false },
     { "addnode",                &addnode,                true,      true,      false },
     { "getaddednodeinfo",       &getaddednodeinfo,       true,      true,      false },
     { "getconnectioncount",     &getconnectioncount,     true,      false,     false },
@@ -244,6 +245,7 @@ static const CRPCCommand vRPCCommands[] =
     { "ping",                   &ping,                   true,      false,     false },
     
     /* Block chain and UTXO */
+    { "getblockchaininfo",      &getblockchaininfo,      true,      false,      false },
     { "getbestblockhash",       &getbestblockhash,       true,      false,     false },
     { "getblockcount",          &getblockcount,          true,      false,     false },
     { "getblock",               &getblock,               false,     false,     false },
