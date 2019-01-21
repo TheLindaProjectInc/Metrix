@@ -16,7 +16,7 @@ $(LIBLEVELDB) $(LIBMEMENV):
 
 .mm.o:
 	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	  $(CPPFLAGS) $(AM_CXXFLAGS) $(QT_INCLUDES) $(CXXFLAGS)  -c -o $@ $<
+	  $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)  -c -o $@ $<
 
 .rc.o:
 	@test -f $(WINDRES) && $(WINDRES) -i $< -o $@ || \
@@ -29,12 +29,12 @@ ui_%.h: %.ui
 	$(SED) -i.bak -e '/^\*\*.*by:/d' $(abs_builddir)/$@ && rm $(abs_builddir)/$@.bak
 
 %.moc: %.cpp
-	$(MOC) $(QT_INCLUDES) $(MOC_DEFS) -o $@ $<
+	$(MOC) $(MOC_DEFS) -o $@ $<
 	$(SED) -i.bak -e '/^\*\*.*Created:/d' $@ && rm $@.bak
 	$(SED) -i.bak -e '/^\*\*.*by:/d' $@ && rm $@.bak
 
 moc_%.cpp: %.h
-	$(MOC) $(QT_INCLUDES) $(MOC_DEFS) -o $@ $<
+	$(MOC) $(MOC_DEFS) -o $@ $<
 	$(SED) -i.bak -e '/^\*\*.*Created:/d' $@ && rm $@.bak
 	$(SED) -i.bak -e '/^\*\*.*by:/d' $@ && rm $@.bak
 
