@@ -29,6 +29,9 @@ extern bool fWalletUnlockStakingOnly;
 extern bool fConfChange;
 extern bool bSpendZeroConfChange;
 
+// -paytxfee default
+static const int64_t DEFAULT_TRANSACTION_FEE = 0;
+
 // -paytxfee will warn if called with a higher fee than this amount (in satoshis) per KB
 static const int nHighTransactionFeeWarning = 0.01 * COIN;
 
