@@ -144,6 +144,7 @@ libbitcoin_server_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 libbitcoin_common_a_SOURCES = \
+  base58.cpp \
   chainparams.cpp \
   core.cpp \
   darksend.cpp \
