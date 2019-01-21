@@ -685,16 +685,16 @@ Value getbalance(const Array& params, bool fHelp)
 
             int64_t allFee;
             string strSentAccount;
-            list<pair<CTxDestination, int64_t> > listReceived;
-            list<pair<CTxDestination, int64_t> > listSent;
+            list<COutputEntry> listReceived;
+            list<COutputEntry> listSent;
             wtx.GetAmounts(listReceived, listSent, allFee, strSentAccount);
             if (wtx.GetDepthInMainChain() >= nMinDepth && wtx.GetBlocksToMaturity() == 0)
             {
-                BOOST_FOREACH(const PAIRTYPE(CTxDestination,int64_t)& r, listReceived)
-                    nBalance += r.second;
+            BOOST_FOREACH(const COutputEntry& r, listReceived)
+                nBalance += r.amount;
             }
-            BOOST_FOREACH(const PAIRTYPE(CTxDestination,int64_t)& r, listSent)
-                nBalance -= r.second;
+            BOOST_FOREACH(const COutputEntry& s, listSent)
+                nBalance -= s.amount;
             nBalance -= allFee;
         }
         return  ValueFromAmount(nBalance);
@@ -1336,8 +1336,9 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
 {
     int64_t nFee;
     string strSentAccount;
-    list<pair<CTxDestination, int64_t> > listReceived;
-    list<pair<CTxDestination, int64_t> > listSent;
+    list<COutputEntry> listReceived;
+    list<COutputEntry> listSent;
+
 
     wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount);
 
@@ -1346,13 +1347,14 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
     // Sent
     if ((!wtx.IsCoinStake()) && (!listSent.empty() || nFee != 0) && (fAllAccounts || strAccount == strSentAccount))
     {
-        BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& s, listSent)
+        BOOST_FOREACH(const COutputEntry& s, listSent)
         {
             Object entry;
             entry.push_back(Pair("account", strSentAccount));
-            MaybePushAddress(entry, s.first);
+            MaybePushAddress(entry, s.destination);
             entry.push_back(Pair("category", "send"));
-            entry.push_back(Pair("amount", ValueFromAmount(-s.second)));
+            entry.push_back(Pair("amount", ValueFromAmount(-s.amount)));
+            entry.push_back(Pair("vout", s.vout));
             entry.push_back(Pair("fee", ValueFromAmount(-nFee)));
             if (fLong)
                 WalletTxToJSON(wtx, entry);
@@ -1376,16 +1378,16 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             nFee += wtx.vout[2].nValue;
         } 
         bool stop = false;
-        BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& r, listReceived)
+        BOOST_FOREACH(const COutputEntry& r, listReceived)
         {
             string account;
-            if (pwalletMain->mapAddressBook.count(r.first))
-                account = pwalletMain->mapAddressBook[r.first].name;
+            if (pwalletMain->mapAddressBook.count(r.destination))
+                account = pwalletMain->mapAddressBook[r.destination].name;
             if (fAllAccounts || (account == strAccount))
             {
                 Object entry;
                 entry.push_back(Pair("account", account));
-                MaybePushAddress(entry, r.first);
+                MaybePushAddress(entry, r.destination);
                 if (wtx.IsCoinBase() || wtx.IsCoinStake())
                 {
                     if (wtx.GetDepthInMainChain() < 1)
@@ -1400,7 +1402,8 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                     entry.push_back(Pair("category", "receive"));
                 }
                 if (!wtx.IsCoinStake() || (bHasMasternodePayment && masternodeAddress == r.first))
-                    entry.push_back(Pair("amount", ValueFromAmount(r.second)));
+                    entry.push_back(Pair("amount", ValueFromAmount(r.amount)));
+                    entry.push_back(Pair("vout", r.vout));
                 else
                 {
                     entry.push_back(Pair("amount", ValueFromAmount(-nFee)));                    
@@ -1459,6 +1462,7 @@ Value listtransactions(const Array& params, bool fHelp)
             "    \"amount\": x.xxx,          (numeric) The amount in btc. This is negative for the 'send' category, and for the\n"
             "                                         'move' category for moves outbound. It is positive for the 'receive' category,\n"
             "                                         and for the 'move' category for inbound funds.\n"
+            "    \"vout\" : n,               (numeric) the vout value\n"
             "    \"fee\": x.xxx,             (numeric) The amount of the fee in LINDA. This is negative and only available for the \n"
             "                                         'send' category of transactions.\n"
             "    \"confirmations\": n,       (numeric) The number of confirmations for the transaction. Available for 'send' and \n"
@@ -1582,8 +1586,8 @@ Value listaccounts(const Array& params, bool fHelp)
         const CWalletTx& wtx = (*it).second;
         int64_t nFee;
         string strSentAccount;
-        list<pair<CTxDestination, int64_t> > listReceived;
-        list<pair<CTxDestination, int64_t> > listSent;
+        list<COutputEntry> listReceived;
+        list<COutputEntry> listSent;
         if (wtx.GetBlocksToMaturity() > 0)
             continue;
         int nDepth = wtx.GetDepthInMainChain();
@@ -1591,15 +1595,15 @@ Value listaccounts(const Array& params, bool fHelp)
             continue;
         wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount);
         mapAccountBalances[strSentAccount] -= nFee;
-        BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& s, listSent)
-            mapAccountBalances[strSentAccount] -= s.second;
+        BOOST_FOREACH(const COutputEntry& s, listSent)
+            mapAccountBalances[strSentAccount] -= s.amount;
         if (nDepth >= nMinDepth && wtx.GetBlocksToMaturity() == 0)
         {
-            BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& r, listReceived)
-                if (pwalletMain->mapAddressBook.count(r.first))
-                    mapAccountBalances[pwalletMain->mapAddressBook[r.first].name] += r.second;
+            BOOST_FOREACH(const COutputEntry& r, listReceived)
+                if (pwalletMain->mapAddressBook.count(r.destination))
+                    mapAccountBalances[pwalletMain->mapAddressBook[r.destination].name] += r.amount;
                 else
-                    mapAccountBalances[""] += r.second;
+                    mapAccountBalances[""] += r.amount;
         }
     }
 
@@ -1632,6 +1636,7 @@ Value listsinceblock(const Array& params, bool fHelp)
             "    \"category\":\"send|receive\",     (string) The transaction category. 'send' has negative amounts, 'receive' has positive amounts.\n"
             "    \"amount\": x.xxx,          (numeric) The amount in btc. This is negative for the 'send' category, and for the 'move' category for moves \n"
             "                                          outbound. It is positive for the 'receive' category, and for the 'move' category for inbound funds.\n"
+            "    \"vout\" : n,               (numeric) the vout value\n"
             "    \"fee\": x.xxx,             (numeric) The amount of the fee in LINDA. This is negative and only available for the 'send' category of transactions.\n"
             "    \"confirmations\": n,       (numeric) The number of confirmations for the transaction. Available for 'send' and 'receive' category of transactions.\n"
             "    \"blockhash\": \"hashvalue\",     (string) The block hash containing the transaction. Available for 'send' and 'receive' category of transactions.\n"
@@ -1705,6 +1710,7 @@ Value gettransaction(const Array& params, bool fHelp)
             "\nResult:\n"
             "{\n"
             "  \"amount\" : x.xxx,        (numeric) The transaction amount in LINDA\n"
+            "  \"vout\" : n,              (numeric) the vout value\n"
             "  \"confirmations\" : n,     (numeric) The number of confirmations\n"
             "  \"blockhash\" : \"hash\",  (string) The block hash\n"
             "  \"blockindex\" : xx,       (numeric) The block index\n"
