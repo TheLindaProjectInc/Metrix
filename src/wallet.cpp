@@ -6,6 +6,7 @@
 #include "wallet.h"
 
 #include "base58.h"
+#include "checkpoints.h"
 #include "coincontrol.h"
 #include "kernel.h"
 #include "net.h"
@@ -21,7 +22,7 @@
 #include "instantx.h"
 #include "masternode.h"
 #include "chainparams.h"
-#include "checkpoints.h"
+
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/range/algorithm.hpp>
@@ -30,7 +31,7 @@
 using namespace std;
 
 // Settings
-int64_t nTransactionFee = 0;
+int64_t nTransactionFee = DEFAULT_TRANSACTION_FEE;
 int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
 bool bSpendZeroConfChange = true;
@@ -837,7 +838,7 @@ void CWallet::SyncTransaction(const uint256 &hash, const CTransaction& tx, const
         }
         return;
     }
-
+    LOCK2(cs_main, cs_wallet);
     AddToWalletIfInvolvingMe(hash, tx, pblock, true);
 }
 

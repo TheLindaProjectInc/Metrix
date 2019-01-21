@@ -6,6 +6,7 @@
 #include "rpcserver.h"
 #include "main.h"
 #include "kernel.h"
+#include "checkpoints.h"
 
 using namespace json_spirit;
 using namespace std;
@@ -484,4 +485,40 @@ Value verifychain(const Array& params, bool fHelp)
     if (params.size() > 1)
         nCheckDepth = params[1].get_int();
     return VerifyDB(nCheckLevel, nCheckDepth);
+}
+
+Value getblockchaininfo(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "getblockchaininfo\n"
+            "Returns an object containing various state info regarding block chain processing.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"chain\": \"xxxx\",        (string) current chain (main, testnet3, regtest)\n"
+            "  \"blocks\": xxxxxx,         (numeric) the current number of blocks processed in the server\n"
+            "  \"bestblockhash\": \"...\", (string) the hash of the currently best block\n"
+            "  \"difficulty\": xxxxxx,     (numeric) the current difficulty\n"
+            "  \"verificationprogress\": xxxx, (numeric) estimate of verification progress [0..1]\n"
+            "  \"chaintrust\": \"xxxx\"     (string) total amount of work in active chain, in hexadecimal\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getblockchaininfo", "")
+            + HelpExampleRpc("getblockchaininfo", "")
+        );
+
+    proxyType proxy;
+    GetProxy(NET_IPV4, proxy);
+
+    Object obj;
+    std::string chain = Params().DataDir();
+    if (chain.empty())
+        chain = "main";
+    obj.push_back(Pair("chain", chain));
+    obj.push_back(Pair("blocks", (int)chainActive.Height()));
+    obj.push_back(Pair("bestblockhash", chainActive.Tip()->GetBlockHash().GetHex()));
+    obj.push_back(Pair("difficulty", (double)GetDifficulty()));
+    obj.push_back(Pair("verificationprogress", Checkpoints::GuessVerificationProgress(chainActive.Tip())));
+    obj.push_back(Pair("chaintrust", chainActive.Tip()->nChainTrust.GetHex()));
+    return obj;
 }

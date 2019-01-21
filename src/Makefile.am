@@ -12,8 +12,8 @@ endif
 
 bin_PROGRAMS = Lindad Linda-cli
 
-SUBDIRS = . $(BUILD_QT) $(BUILD_TEST)
-DIST_SUBDIRS = . qt test
+SUBDIRS = . $(BUILD_TEST)
+DIST_SUBDIRS = . test
 .PHONY: FORCE
 # Linda core #
 BITCOIN_CORE_H = \
@@ -144,6 +144,7 @@ libbitcoin_server_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 libbitcoin_common_a_SOURCES = \
+  base58.cpp \
   chainparams.cpp \
   core.cpp \
   darksend.cpp \
@@ -221,10 +222,6 @@ leveldb/%.a:
 	@echo "Building LevelDB ..." && $(MAKE) -C $(@D) $(@F) CXX="$(CXX)" \
 	  CC="$(CC)" PLATFORM=$(TARGET_OS) AR="$(AR)" $(LEVELDB_TARGET_FLAGS) \
 	  OPT="$(CXXFLAGS) $(CPPFLAGS)"
-
-qt/bitcoinstrings.cpp: $(libbitcoin_server_a_SOURCES) $(libbitcoin_common_a_SOURCES) $(libbitcoin_cli_a_SOURCES)
-	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
-	@cd $(top_srcdir); XGETTEXT=$(XGETTEXT) share/qt/extract_strings_qt.py
 
 CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
 
