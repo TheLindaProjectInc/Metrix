@@ -5,6 +5,7 @@
 
 #include "init.h"
 #include "main.h"
+#include "key.h"
 #include "db.h"
 #include "chainparams.h"
 #include "txdb.h"
@@ -446,6 +447,23 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
         LogPrintf("Stopping after block import\n");
         StartShutdown();
     }
+}
+
+/** Sanity checks
+ *  Ensure that Linda is running in a usable environment with all
+ *  necessary library support.
+ */
+bool InitSanityCheck(void)
+{
+    if (!ECC_InitSanityCheck()) {
+        InitError("OpenSSL appears to lack support for elliptic curve cryptography. For more "
+            "information, visit https://en.bitcoin.it/wiki/OpenSSL_and_EC_Libraries");
+        return false;
+    }
+
+    // TODO: remaining sanity checks, see #4081
+
+    return true;
 }
 
 /** Initialize Lindacoin.
