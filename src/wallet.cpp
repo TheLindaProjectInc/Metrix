@@ -1064,7 +1064,7 @@ void CWalletTx::GetAccountAmounts(const string& strAccount, int64_t& nReceived,
             {
                 map<CTxDestination, CAddressBookData>::const_iterator mi = pwallet->mapAddressBook.find(r.destination);
                 if (mi != pwallet->mapAddressBook.end() && (*mi).second.name == strAccount)
-                    nnReceived += r.amount;
+                    nReceived += r.amount;
             }
             else if (strAccount.empty())
             {
