@@ -1401,9 +1401,11 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                 {
                     entry.push_back(Pair("category", "receive"));
                 }
-                if (!wtx.IsCoinStake() || (bHasMasternodePayment && masternodeAddress == r.first))
+                if (!wtx.IsCoinStake() || (bHasMasternodePayment && masternodeAddress == r.destination))
+                {
                     entry.push_back(Pair("amount", ValueFromAmount(r.amount)));
                     entry.push_back(Pair("vout", r.vout));
+                }
                 else
                 {
                     entry.push_back(Pair("amount", ValueFromAmount(-nFee)));                    
