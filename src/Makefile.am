@@ -12,8 +12,8 @@ endif
 
 bin_PROGRAMS = Lindad Linda-cli
 
-SUBDIRS = . $(BUILD_TEST)
-DIST_SUBDIRS = . test
+SUBDIRS = .
+DIST_SUBDIRS = .
 .PHONY: FORCE
 # Linda core #
 BITCOIN_CORE_H = \
@@ -76,6 +76,7 @@ BITCOIN_CORE_H = \
   version.h \
   wallet.h \
   walletdb.h \
+  crypto/common.h \
   crypto/sha1.h \
   crypto/sha256.h \
   crypto/sha512.h \

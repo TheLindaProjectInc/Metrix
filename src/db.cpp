@@ -469,6 +469,8 @@ void CDBEnv::Flush(bool fShutdown)
             {
                 dbenv.log_archive(&listp, DB_ARCH_REMOVE);
                 Close();
+                if (!fMockDb)
+                    boost::filesystem::remove_all(pathEnv / "database");
             }
         }
     }
