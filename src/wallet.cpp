@@ -1283,8 +1283,8 @@ void CWallet::ResendWalletTransactions(bool fForce)
         static int64_t nNextTime;
         if (GetTime() < nNextTime)
             return;
-        bool fFirst = (nNextTime == 0);
-        nNextTime = GetTime() + GetRand(30 * 60);
+        bool fFirst = (nNextResend == 0);
+        nNextResend = GetTime() + GetRand(30 * 60);
         if (fFirst)
             return;
 
@@ -1292,7 +1292,7 @@ void CWallet::ResendWalletTransactions(bool fForce)
         static int64_t nLastTime;
         if (nTimeBestReceived < nLastTime)
             return;
-        nLastTime = GetTime();
+        nNextResend = GetTime();
     }
 
     // Rebroadcast any of our txes that aren't in a block yet
