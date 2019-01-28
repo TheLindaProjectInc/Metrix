@@ -5,6 +5,7 @@
 
 #include "txdb.h"
 #include "main.h"
+#include "hash.h"
 
 using namespace std;
 
