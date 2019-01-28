@@ -1,8 +1,8 @@
 ---
-name: "linda-linux-3.2"
+name: "linda-linux-3.3"
 enable_cache: true
 suites:
-- "trusty"
+- "xenial"
 architectures:
 - "amd64"
 packages:
@@ -10,9 +10,9 @@ packages:
 - "ca-certificates"
 - "g++-multilib"
 - "gcc-multilib"
-- "git-core"
+- "git"
 - "pkg-config"
-- "autoconf2.13"
+- "autoconf"
 - "libtool"
 - "automake"
 - "faketime"
