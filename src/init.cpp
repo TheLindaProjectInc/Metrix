@@ -129,6 +129,10 @@ void Shutdown()
     UnregisterNodeSignals(GetNodeSignals());
     {
         LOCK(cs_main);
+#ifdef ENABLE_WALLET
+        if (pwalletMain)
+            pwalletMain->SetBestChain(chainActive.GetLocator());
+#endif
         if (pblocktree)
             pblocktree->Flush();
         if (pcoinsTip)
@@ -137,20 +141,18 @@ void Shutdown()
         delete pcoinsdbview;
         delete pblocktree;
     }
-    #ifdef ENABLE_WALLET
-    {
-        LOCK(cs_main);
-        if (pwalletMain)
-            pwalletMain->SetBestChain(chainActive.GetLocator());
-    }
+#ifdef ENABLE_WALLET
     if (pwalletMain)
         bitdb.Flush(true);
 #endif
     boost::filesystem::remove(GetPidFile());
     UnregisterAllWallets();
 #ifdef ENABLE_WALLET
-    delete pwalletMain;
-    pwalletMain = NULL;
+    if (pwalletMain)
+    {
+        delete pwalletMain;
+        pwalletMain = NULL;
+    }
 #endif
     LogPrintf("Shutdown : done\n");
 }
