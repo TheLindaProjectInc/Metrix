@@ -853,7 +853,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 }
 
 
-int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize, enum GetMinFee_mode mode, unsigned int nBytes)
+int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int nBytes)
 {
     int64_t nMinTxFee = CTransaction::nMinTxFee;
     int64_t nMinRelayTxFee = CTransaction::nMinRelayTxFee;
@@ -865,16 +865,7 @@ int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize, enum GetMinFe
     // Base fee is either nMinTxFee or nMinRelayTxFee
     int64_t nBaseFee = (mode == GMF_RELAY) ? nMinRelayTxFee : nMinTxFee;
 
-    unsigned int nNewBlockSize = nBlockSize + nBytes;
     int64_t nMinFee = (1 + (int64_t)nBytes / 1000) * nBaseFee;
-
-    // Raise the price as the block approaches full
-    if (nBlockSize != 1 && nNewBlockSize >= DEFAULT_BLOCK_MAX_SIZE/2)
-    {
-        if (nNewBlockSize >= DEFAULT_BLOCK_MAX_SIZE)
-            return MAX_MONEY;
-        nMinFee *= DEFAULT_BLOCK_MAX_SIZE / (DEFAULT_BLOCK_MAX_SIZE - nNewBlockSize);
-    }
 
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
@@ -1018,7 +1009,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         unsigned int nSize = entry.GetTxSize();
 
         // Don't accept it if it can't get into a block
-        int64_t txMinFee = GetMinFee(tx, 1000, GMF_RELAY, nSize);
+        int64_t txMinFee = GetMinFee(tx, GMF_RELAY, nSize);
         if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",
@@ -1163,7 +1154,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
 
         // Don't accept it if it can't get into a block
         // MBK: Support the tx fee increase at blockheight
-        int64_t txMinFee = GetMinFee(tx, 1000, GMF_RELAY, nSize);
+        int64_t txMinFee = GetMinFee(tx, GMF_RELAY, nSize);
         if (fLimitFree && nFees < txMinFee)
             return state.DoS(0, error("AcceptableInputs : not enough fees %s, %d < %d",
                 hash.ToString(), nFees, txMinFee),

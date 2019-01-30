@@ -347,7 +347,7 @@ enum GetMinFee_mode
     GMF_SEND,
 };
 
-int64_t GetMinFee(const CTransaction& tx, unsigned int nBlockSize = 1, enum GetMinFee_mode mode = GMF_BLOCK, unsigned int nBytes = 0);
+int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode = GMF_BLOCK, unsigned int nBytes = 0);
 
 
 
