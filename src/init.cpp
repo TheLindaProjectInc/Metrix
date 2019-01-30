@@ -41,6 +41,7 @@ using namespace std;
 using namespace boost;
 
 #ifdef ENABLE_WALLET
+std::string strWalletFile;
 CWallet* pwalletMain = NULL;
 #endif
 
@@ -280,7 +281,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -salvagewallet         " + _("Attempt to recover private keys from a corrupt wallet.dat") + "\n";
     strUsage += "  -spendzeroconfchange   " + _("Spend unconfirmed change when sending transactions (default: 1)") + "\n";
     strUsage += "  -upgradewallet         " + _("Upgrade wallet to latest format") + "\n";
-    strUsage += "  -wallet=<dir>          " + _("Specify wallet file (within data directory)") + "\n";
+    strUsage += "  -wallet=<file>          " + _("Specify wallet file (within data directory)") + "\n";
     strUsage += "  -walletnotify=<cmd>    " + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n";
     strUsage += "  -zapwallettxes=<mode>  " + _("Delete all wallet transactions and only recover those part of the blockchain through -rescan on startup") + "\n";
     strUsage += "                         " + _("(default: 1, 1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)") + "\n";
@@ -648,6 +649,8 @@ bool AppInit2(boost::thread_group& threadGroup)
             InitWarning(_("Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction."));
     }
     bSpendZeroConfChange = GetArg("-spendzeroconfchange", true);
+
+    strWalletFile = GetArg("-wallet", "wallet.dat");
 #endif
 
     fConfChange = GetBoolArg("-confchange", false);
@@ -669,11 +672,9 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     std::string strDataDir = GetDataDir().string();
 #ifdef ENABLE_WALLET
-    std::string strWalletFileName = GetArg("-wallet", "wallet.dat");
-
-    // strWalletFileName must be a plain filename without a directory
-    if (strWalletFileName != boost::filesystem::basename(strWalletFileName) + boost::filesystem::extension(strWalletFileName))
-        return InitError(strprintf(_("Wallet %s resides outside data directory %s."), strWalletFileName, strDataDir));
+    // Wallet file must be a plain filename without a directory
+    if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
+        return InitError(strprintf(_("Wallet %s resides outside data directory %s"), strWalletFile, strDataDir));
 #endif
     // Make sure only a single Lindacoin process is using the data directory.
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
@@ -732,7 +733,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     // ********************************************************* Step 5: verify wallet database integrity
 #ifdef ENABLE_WALLET
     if (!fDisableWallet) {
-        LogPrintf("Using wallet %s\n", strWalletFileName);
+        LogPrintf("Using wallet %s\n", strWalletFile);
         uiInterface.InitMessage(_("Verifying wallet..."));
 
         if (!bitdb.Open(GetDataDir()))
@@ -758,13 +759,13 @@ bool AppInit2(boost::thread_group& threadGroup)
         if (GetBoolArg("-salvagewallet", false))
         {
             // Recover readable keypairs:
-            if (!CWalletDB::Recover(bitdb, strWalletFileName, true))
+            if (!CWalletDB::Recover(bitdb, strWalletFile, true))
                 return false;
         }
 
-        if (filesystem::exists(GetDataDir() / strWalletFileName))
+        if (filesystem::exists(GetDataDir() / strWalletFile))
         {
-            CDBEnv::VerifyResult r = bitdb.Verify(strWalletFileName, CWalletDB::Recover);
+            CDBEnv::VerifyResult r = bitdb.Verify(strWalletFile, CWalletDB::Recover);
             if (r == CDBEnv::RECOVER_OK)
             {
                 string msg = strprintf(_("Warning: wallet.dat corrupt, data salvaged!"
@@ -1064,7 +1065,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 	     if (GetBoolArg("-zapwallettxes", false)) {
             uiInterface.InitMessage(_("Zapping all transactions from wallet..."));
 		     
-            pwalletMain = new CWallet(strWalletFileName);
+            pwalletMain = new CWallet(strWalletFile);
             DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
             if (nZapWalletRet != DB_LOAD_OK) {
                 uiInterface.InitMessage(_("Error loading wallet.dat: Wallet corrupted"));
@@ -1079,7 +1080,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         nStart = GetTimeMillis();
         bool fFirstRun = true;
-        pwalletMain = new CWallet(strWalletFileName);
+        pwalletMain = new CWallet(strWalletFile);
         DBErrors nLoadWalletRet = pwalletMain->LoadWallet(fFirstRun);
         if (nLoadWalletRet != DB_LOAD_OK)
         {
@@ -1144,7 +1145,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             pindexRescan = chainActive.Genesis();
         else
         {
-            CWalletDB walletdb(strWalletFileName);
+            CWalletDB walletdb(strWalletFile);
             CBlockLocator locator;
             if (walletdb.ReadBestBlock(locator))
                 pindexRescan = chainActive.FindFork(locator);
@@ -1166,7 +1167,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             // Restore wallet transaction metadata after -zapwallettxes=1
             if (GetBoolArg("-zapwallettxes", false) && GetArg("-zapwallettxes", "1") != "2")
             {
-                CWalletDB walletdb(strWalletFileName);
+                CWalletDB walletdb(strWalletFile);
 
                 BOOST_FOREACH(const CWalletTx& wtxOld, vWtx)
                 {
