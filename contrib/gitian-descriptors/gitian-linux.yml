@@ -20,7 +20,7 @@ packages:
 - "binutils-gold"
 reference_datetime: "2013-06-01 00:00:00"
 remotes:
-- "url": "https://github.com/nibbles83/linda.git"
+- "url": "https://github.com/TheLindaProjectInc/linda.git"
   "dir": "linda"
 files: []
 script: |

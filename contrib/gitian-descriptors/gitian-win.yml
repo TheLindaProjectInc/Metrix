@@ -22,13 +22,13 @@ packages:
 - "binutils-gold"
 reference_datetime: "2013-06-01 00:00:00"
 remotes:
-- "url": "https://github.com/nibbles83/linda.git"
+- "url": "https://github.com/TheLindaProjectInc/linda.git"
   "dir": "linda"
 files: []
 script: |
   WRAP_DIR=$HOME/wrapped
   HOSTS="i686-w64-mingw32 x86_64-w64-mingw32"
-  CONFIGFLAGS='--with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" --with-miniupnpc CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB" LDFLAGS="-static-libgcc -static-libstdc++"'
+  CONFIGFLAGS="--with-incompatible-bdb BDB_LIBS='-ldb_cxx-5.0' --with-miniupnpc CPPFLAGS='-DSTATICLIB -DMINIUPNP_STATICLIB' LDFLAGS='-static-libgcc -static-libstdc++'"
   FAKETIME_HOST_PROGS=""
   FAKETIME_PROGS="date ar ranlib nm strip"
 

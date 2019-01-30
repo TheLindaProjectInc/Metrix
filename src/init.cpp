@@ -129,6 +129,10 @@ void Shutdown()
     UnregisterNodeSignals(GetNodeSignals());
     {
         LOCK(cs_main);
+#ifdef ENABLE_WALLET
+        if (pwalletMain)
+            pwalletMain->SetBestChain(chainActive.GetLocator());
+#endif
         if (pblocktree)
             pblocktree->Flush();
         if (pcoinsTip)
@@ -137,20 +141,18 @@ void Shutdown()
         delete pcoinsdbview;
         delete pblocktree;
     }
-    #ifdef ENABLE_WALLET
-    {
-        LOCK(cs_main);
-        if (pwalletMain)
-            pwalletMain->SetBestChain(chainActive.GetLocator());
-    }
+#ifdef ENABLE_WALLET
     if (pwalletMain)
         bitdb.Flush(true);
 #endif
     boost::filesystem::remove(GetPidFile());
     UnregisterAllWallets();
 #ifdef ENABLE_WALLET
-    delete pwalletMain;
-    pwalletMain = NULL;
+    if (pwalletMain)
+    {
+        delete pwalletMain;
+        pwalletMain = NULL;
+    }
 #endif
     LogPrintf("Shutdown : done\n");
 }
@@ -481,9 +483,9 @@ bool AppInit2(boost::thread_group& threadGroup)
     // Initialize Windows Sockets
     WSADATA wsadata;
     int ret = WSAStartup(MAKEWORD(2, 2), &wsadata);
-    if (ret != NO_ERROR)
+    if (ret != NO_ERROR || LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wVersion) != 2)
     {
-        return InitError(strprintf("Error: TCP/IP socket library failed to start (WSAStartup returned error %d)", ret));
+        return InitError(strprintf("Error: Winsock library failed to start (WSAStartup returned error %d)", ret));
     }
 #endif
 #ifndef WIN32
