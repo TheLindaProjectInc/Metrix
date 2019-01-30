@@ -1003,6 +1003,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                     fReindex = true;
                     fRequestShutdown = false;
                 } else {
+                    LogPrintf("Aborted block database rebuild. Exiting.\n");
                     return false;
                 }
             } else {
