@@ -7,11 +7,9 @@
 #include "bitcoin-config.h"
 #endif
 
-#include "init.h"
 #include "chainparams.h"
 #include "db.h"
 #include "net.h"
-#include "main.h"
 #include "addrman.h"
 #include "ui_interface.h"
 #include "darksend.h"

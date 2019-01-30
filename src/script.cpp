@@ -7,7 +7,7 @@
 #include "keystore.h"
 #include "bignum.h"
 #include "key.h"
-#include "main.h"
+#include "core.h"
 #include "sync.h"
 #include "util.h"
 #include "crypto/ripemd160.h"

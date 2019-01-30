@@ -9,7 +9,6 @@
 #include "rpcserver.h"
 #include "txdb.h"
 #include "init.h"
-#include "main.h"
 #include "net.h"
 #include "keystore.h"
 #ifdef ENABLE_WALLET
