@@ -578,6 +578,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         nMaxConnections = nFD - MIN_CORE_FILEDESCRIPTORS;
     // ********************************************************* Step 3: parameter-to-internal-flags
 
+    
     fDebug = !mapMultiArgs["-debug"].empty();
     // Special-case: if -debug=0/-nodebug is set, turn off debugging messages
     const vector<string>& categories = mapMultiArgs["-debug"];
@@ -585,7 +586,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         fDebug = false;
 
     mempool.setSanityCheck(GetBoolArg("-checkmempool", RegTest()));
-
+    Checkpoints::fEnabled = GetBoolArg("-checkpoints", true);
     // -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency
     nScriptCheckThreads = GetArg("-par", DEFAULT_SCRIPTCHECK_THREADS);
     if (nScriptCheckThreads <= 0)
