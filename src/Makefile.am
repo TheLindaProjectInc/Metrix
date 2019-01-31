@@ -52,6 +52,7 @@ BITCOIN_CORE_H = \
   miner.h \
   mruset.h \
   net.h \
+  noui.h \
   netbase.h \
   pbkdf2.h \
   protocol.h \

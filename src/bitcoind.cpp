@@ -7,6 +7,7 @@
 #include "init.h"
 #include "util.h"
 #include "main.h"
+#include "noui.h"
 #include "rpcserver.h"
 #include "rpcclient.h"
 #include <boost/algorithm/string/predicate.hpp>
@@ -143,7 +144,6 @@ bool AppInit(int argc, char* argv[])
     return fRet;
 }
 
-extern void noui_connect();
 int main(int argc, char* argv[])
 {
     bool fRet = false;

@@ -14,6 +14,13 @@
 #include <stdio.h>
 #include <string.h>
 
+extern const signed char p_util_hexdigit[256]; // defined in util.cpp
+
+inline signed char HexDigit(char c)
+{
+    return p_util_hexdigit[(unsigned char)c];
+}
+
 inline int Testuint256AdHoc(std::vector<std::string> vArg);
 
 
