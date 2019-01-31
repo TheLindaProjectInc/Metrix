@@ -1626,7 +1626,7 @@ Value listsinceblock(const Array& params, bool fHelp)
     if (fHelp)
         throw runtime_error(
             "listsinceblock ( \"blockhash\" target-confirmations )\n"
-            "\nGet all transactions in blocks since block [blockhash], or all transactions if omitted\n"
+            "\nGet all wallet transactions in blocks since block [blockhash], or all wallet transactions if omitted\n"
             "\nArguments:\n"
             "1. \"blockhash\"   (string, optional) The block hash to list transactions since\n"
             "2. target-confirmations:    (numeric, optional) The confirmations required, must be 1 or more\n"
