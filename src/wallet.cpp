@@ -192,12 +192,12 @@ bool CWallet::Lock()
             // -- CStealthAddress are only sorted on spend_pubkey
             CStealthAddress &sxAddr = const_cast<CStealthAddress&>(*it);
             if (fDebug)
-                LogPrintf("Recrypting stealth key %s\n", sxAddr.Encoded().c_str());
+                LogPrintf("Recrypting stealth key %s\n", sxAddr.Encoded());
             
             sxAddrTemp.scan_pubkey = sxAddr.scan_pubkey;
             if (!wdb.ReadStealthAddress(sxAddrTemp))
             {
-                LogPrintf("Error: Failed to read stealth key from db %s\n", sxAddr.Encoded().c_str());
+                LogPrintf("Error: Failed to read stealth key from db %s\n", sxAddr.Encoded());
                 continue;
             }
             sxAddr.spend_secret = sxAddrTemp.spend_secret;
@@ -511,7 +511,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
             CStealthAddress &sxAddr = const_cast<CStealthAddress&>(*it);
             
             if (fDebug)
-                LogPrintf("Encrypting stealth key %s\n", sxAddr.Encoded().c_str());
+                LogPrintf("Encrypting stealth key %s\n", sxAddr.Encoded());
             
             std::vector<unsigned char> vchCryptedSecret;
             
@@ -522,7 +522,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
             uint256 iv = Hash(sxAddr.spend_pubkey.begin(), sxAddr.spend_pubkey.end());
             if (!EncryptSecret(vMasterKey, vchSecret, iv, vchCryptedSecret))
             {
-                LogPrintf("Error: Failed encrypting stealth key %s\n", sxAddr.Encoded().c_str());
+                LogPrintf("Error: Failed encrypting stealth key %s\n", sxAddr.Encoded());
                 continue;
             };
             
@@ -2721,7 +2721,7 @@ bool CWallet::NewStealthAddress(std::string& sError, std::string& sLabel, CSteal
         || GenerateRandomSecret(spend_secret) != 0)
     {
         sError = "GenerateRandomSecret failed.";
-        LogPrintf("Error CWallet::NewStealthAddress - %s\n", sError.c_str());
+        LogPrintf("Error CWallet::NewStealthAddress - %s\n", sError);
         return false;
     };
     
@@ -2729,14 +2729,14 @@ bool CWallet::NewStealthAddress(std::string& sError, std::string& sLabel, CSteal
     if (SecretToPublicKey(scan_secret, scan_pubkey) != 0)
     {
         sError = "Could not get scan public key.";
-        LogPrintf("Error CWallet::NewStealthAddress - %s\n", sError.c_str());
+        LogPrintf("Error CWallet::NewStealthAddress - %s\n", sError);
         return false;
     };
     
     if (SecretToPublicKey(spend_secret, spend_pubkey) != 0)
     {
         sError = "Could not get spend public key.";
-        LogPrintf("Error CWallet::NewStealthAddress - %s\n", sError.c_str());
+        LogPrintf("Error CWallet::NewStealthAddress - %s\n", sError);
         return false;
     };
     
@@ -2798,7 +2798,7 @@ bool CWallet::AddStealthAddress(CStealthAddress& sxAddr)
             uint256 iv = Hash(sxAddr.spend_pubkey.begin(), sxAddr.spend_pubkey.end());
             if (!EncryptSecret(vMasterKey, vchSecret, iv, vchCryptedSecret))
             {
-                LogPrintf("Error: Failed encrypting stealth key %s\n", sxAddr.Encoded().c_str());
+                LogPrintf("Error: Failed encrypting stealth key %s\n", sxAddr.Encoded());
                 stealthAddresses.erase(sxAddr);
                 return false;
             };
@@ -2828,14 +2828,14 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         CStealthAddress &sxAddr = const_cast<CStealthAddress&>(*it);
         
         if (fDebug)
-            LogPrintf("Decrypting stealth key %s\n", sxAddr.Encoded().c_str());
+            LogPrintf("Decrypting stealth key %s\n", sxAddr.Encoded());
         
         CSecret vchSecret;
         uint256 iv = Hash(sxAddr.spend_pubkey.begin(), sxAddr.spend_pubkey.end());
         if(!DecryptSecret(vMasterKeyIn, sxAddr.spend_secret, iv, vchSecret)
             || vchSecret.size() != 32)
         {
-            LogPrintf("Error: Failed decrypting stealth key %s\n", sxAddr.Encoded().c_str());
+            LogPrintf("Error: Failed decrypting stealth key %s\n", sxAddr.Encoded());
             continue;
         };
         
@@ -2846,7 +2846,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         if (SecretToPublicKey(testSecret, pkSpendTest) != 0
             || pkSpendTest != sxAddr.spend_pubkey)
         {
-            LogPrintf("Error: Failed decrypting stealth key, public key mismatch %s\n", sxAddr.Encoded().c_str());
+            LogPrintf("Error: Failed decrypting stealth key, public key mismatch %s\n", sxAddr.Encoded());
             continue;
         };
         
@@ -2868,7 +2868,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         StealthKeyMetaMap::iterator mi = mapStealthKeyMeta.find(ckid);
         if (mi == mapStealthKeyMeta.end())
         {
-            LogPrintf("Error: No metadata found to add secret for %s\n", addr.ToString().c_str());
+            LogPrintf("Error: No metadata found to add secret for %s\n", addr.ToString());
             continue;
         };
         
@@ -2880,12 +2880,12 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         std::set<CStealthAddress>::iterator si = stealthAddresses.find(sxFind);
         if (si == stealthAddresses.end())
         {
-            LogPrintf("No stealth key found to add secret for %s\n", addr.ToString().c_str());
+            LogPrintf("No stealth key found to add secret for %s\n", addr.ToString());
             continue;
         };
         
         if (fDebug)
-            LogPrintf("Expanding secret for %s\n", addr.ToString().c_str());
+            LogPrintf("Expanding secret for %s\n", addr.ToString());
         
         ec_secret sSpendR;
         ec_secret sSpend;
@@ -2894,7 +2894,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         if (si->spend_secret.size() != ec_secret_size
             || si->scan_secret.size() != ec_secret_size)
         {
-            LogPrintf("Stealth address has no secret key for %s\n", addr.ToString().c_str());
+            LogPrintf("Stealth address has no secret key for %s\n", addr.ToString());
             continue;
         }
         memcpy(&sScan.e[0], &si->scan_secret[0], ec_secret_size);
@@ -2952,7 +2952,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         {
             CKeyID keyID = cpkT.GetID();
             CBitcoinAddress coinAddress(keyID);
-            LogPrintf("Adding secret to key %s.\n", coinAddress.ToString().c_str());
+            LogPrintf("Adding secret to key %s.\n", coinAddress.ToString());
         };
         
         if (!AddKey(ckey))
@@ -2962,7 +2962,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         };
         
         if (!CWalletDB(strWalletFile).EraseStealthKeyMeta(ckid))
-            LogPrintf("EraseStealthKeyMeta failed for %s\n", addr.ToString().c_str());
+            LogPrintf("EraseStealthKeyMeta failed for %s\n", addr.ToString());
     };
     return true;
 }
@@ -2970,7 +2970,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
 bool CWallet::UpdateStealthAddress(std::string &addr, std::string &label, bool addIfNotExist)
 {
     if (fDebug)
-        LogPrintf("UpdateStealthAddress %s\n", addr.c_str());
+        LogPrintf("UpdateStealthAddress %s\n", addr);
     
     
     CStealthAddress sxAddr;
@@ -2993,7 +2993,7 @@ bool CWallet::UpdateStealthAddress(std::string &addr, std::string &label, bool a
             nMode = CT_NEW;
         } else
         {
-            LogPrintf("UpdateStealthAddress %s, not in set\n", addr.c_str());
+            LogPrintf("UpdateStealthAddress %s, not in set\n", addr);
             return false;
         };
     } else
@@ -3019,7 +3019,7 @@ bool CWallet::UpdateStealthAddress(std::string &addr, std::string &label, bool a
     
     if (!CWalletDB(strWalletFile).WriteStealthAddress(sxFound))
     {
-        LogPrintf("UpdateStealthAddress(%s) Write to db failed.\n", addr.c_str());
+        LogPrintf("UpdateStealthAddress(%s) Write to db failed.\n", addr);
         return false;
     };
     
@@ -3078,23 +3078,23 @@ string CWallet::SendStealthMoney(CScript scriptPubKey, int64_t nValue, std::vect
     if (IsLocked())
     {
         string strError = _("Error: Wallet locked, unable to create transaction  ");
-        LogPrintf("SendStealthMoney() : %s", strError.c_str());
+        LogPrintf("SendStealthMoney() : %s", strError);
         return strError;
     }
     if (fWalletUnlockStakingOnly)
     {
         string strError = _("Error: Wallet unlocked for staking only, unable to create transaction.");
-        LogPrintf("SendStealthMoney() : %s", strError.c_str());
+        LogPrintf("SendStealthMoney() : %s", strError);
         return strError;
     }
     if (!CreateStealthTransaction(scriptPubKey, nValue, P, narr, sNarr, wtxNew, reservekey, nFeeRequired))
     {
         string strError;
         if (nValue + nFeeRequired > GetBalance())
-            strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds  "), FormatMoney(nFeeRequired).c_str());
+            strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds  "), FormatMoney(nFeeRequired));
         else
             strError = _("Error: Transaction creation failed  ");
-        LogPrintf("SendStealthMoney() : %s", strError.c_str());
+        LogPrintf("SendStealthMoney() : %s", strError);
         return strError;
     }
 
@@ -3159,9 +3159,9 @@ bool CWallet::SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t 
     
     if (fDebug)
     {
-        LogPrintf("Stealth send to generated pubkey %"PRIszu": %s\n", pkSendTo.size(), HexStr(pkSendTo).c_str());
-        LogPrintf("hash %s\n", addrTo.ToString().c_str());
-        LogPrintf("ephem_pubkey %"PRIszu": %s\n", ephem_pubkey.size(), HexStr(ephem_pubkey).c_str());
+        LogPrintf("Stealth send to generated pubkey %"PRIszu": %s\n", pkSendTo.size(), HexStr(pkSendTo));
+        LogPrintf("hash %s\n", addrTo.ToString());
+        LogPrintf("ephem_pubkey %"PRIszu": %s\n", ephem_pubkey.size(), HexStr(ephem_pubkey));
     };
     
     std::vector<unsigned char> vchNarr;
@@ -3197,7 +3197,7 @@ bool CWallet::SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t 
 bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNarr)
 {
     if (fDebug)
-        LogPrintf("FindStealthTransactions() tx: %s\n", tx.GetHash().GetHex().c_str());
+        LogPrintf("FindStealthTransactions() tx: %s\n", tx.GetHash().GetHex());
     
     mapNarr.clear();
     
@@ -3221,7 +3221,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
         nOutputIdOuter++;
         // -- for each OP_RETURN need to check all other valid outputs
         
-        //LogPrintf("txout scriptPubKey %s\n",  txout.scriptPubKey.ToString().c_str());
+        //LogPrintf("txout scriptPubKey %s\n",  txout.scriptPubKey.ToString());
         CScript::const_iterator itTxA = txout.scriptPubKey.begin();
         
         if (!txout.scriptPubKey.GetOp(itTxA, opCode, vchEphemPK)
@@ -3247,7 +3247,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     mapNarr[cbuf] = sNarr;
                 } else
                 {
-                    LogPrintf("Warning: FindStealthTransactions() tx: %s, Could not extract plaintext narration.\n", tx.GetHash().GetHex().c_str());
+                    LogPrintf("Warning: FindStealthTransactions() tx: %s, Could not extract plaintext narration.\n", tx.GetHash().GetHex());
                 };
             }
             
@@ -3264,7 +3264,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                 continue;
             
             bool txnMatch = false; // only 1 txn will match an ephem pk
-            //LogPrintf("txoutB scriptPubKey %s\n",  txoutB.scriptPubKey.ToString().c_str());
+            //LogPrintf("txoutB scriptPubKey %s\n",  txoutB.scriptPubKey.ToString());
             
             CTxDestination address;
             if (!ExtractDestination(txoutB.scriptPubKey, address))
@@ -3284,7 +3284,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                 if (it->scan_secret.size() != ec_secret_size)
                     continue; // stealth address is not owned
                 
-                //LogPrintf("it->Encodeded() %s\n",  it->Encoded().c_str());
+                //LogPrintf("it->Encodeded() %s\n",  it->Encoded());
                 memcpy(&sScan.e[0], &it->scan_secret[0], ec_secret_size);
                 
                 if (StealthSecret(sScan, vchEphemPK, it->spend_pubkey, sShared, pkExtracted) != 0)
@@ -3292,7 +3292,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     LogPrintf("StealthSecret failed.\n");
                     continue;
                 };
-                //LogPrintf("pkExtracted %"PRIszu": %s\n", pkExtracted.size(), HexStr(pkExtracted).c_str());
+                //LogPrintf("pkExtracted %"PRIszu": %s\n", pkExtracted.size(), HexStr(pkExtracted));
                 
                 CPubKey cpkE(pkExtracted);
                 
@@ -3304,7 +3304,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     continue;
                 
                 if (fDebug)
-                    LogPrintf("Found stealth txn to address %s\n", it->Encoded().c_str());
+                    LogPrintf("Found stealth txn to address %s\n", it->Encoded());
                 
                 if (IsLocked())
                 {
@@ -3324,7 +3324,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     CStealthKeyMetadata lockedSkMeta(cpkEphem, cpkScan);
                     
                     if (!CWalletDB(strWalletFile).WriteStealthKeyMeta(keyId, lockedSkMeta))
-                        LogPrintf("WriteStealthKeyMeta failed for %s\n", coinAddress.ToString().c_str());
+                        LogPrintf("WriteStealthKeyMeta failed for %s\n", coinAddress.ToString());
                     
                     mapStealthKeyMeta[keyId] = lockedSkMeta;
                     nFoundStealth++;
@@ -3379,7 +3379,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     if (fDebug)
                     {
                         CBitcoinAddress coinAddress(keyID);
-                        LogPrintf("Adding key %s.\n", coinAddress.ToString().c_str());
+                        LogPrintf("Adding key %s.\n", coinAddress.ToString());
                     };
                     
                     if (!AddKey(ckey))
@@ -3662,7 +3662,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         ExtractDestination(payee, address1);
         CBitcoinAddress address2(address1);
 
-        LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
+        LogPrintf("Masternode payment to %s\n", address2.ToString());
     }
 
     int64_t blockValue = nCredit;
@@ -4420,7 +4420,7 @@ void CWallet::FixSpentCoins(int& nMismatchFound, int64_t& nBalanceInQuestion, bo
             if (IsMine(pcoin->vout[n]) && pcoin->IsSpent(n) && coins.IsAvailable(n))
             {
                 LogPrint("FixSpentCoins found lost coin %slinda %s[%d], %s\n",
-                    FormatMoney(pcoin->vout[n].nValue).c_str(), pcoin->GetHash().ToString().c_str(), n, fCheckOnly? "repair not attempted" : "repairing");
+                FormatMoney(pcoin->vout[n].nValue).c_str(), pcoin->GetHash().ToString().c_str(), n, fCheckOnly? "repair not attempted" : "repairing");
                 nMismatchFound++;
                 nBalanceInQuestion += pcoin->vout[n].nValue;
                 if (!fCheckOnly)
@@ -4432,7 +4432,7 @@ void CWallet::FixSpentCoins(int& nMismatchFound, int64_t& nBalanceInQuestion, bo
             else if (IsMine(pcoin->vout[n]) && !pcoin->IsSpent(n) && !coins.IsAvailable(n))
             {
                 LogPrint("FixSpentCoins found spent coin %slinda %s[%d], %s\n",
-                    FormatMoney(pcoin->vout[n].nValue).c_str(), pcoin->GetHash().ToString().c_str(), n, fCheckOnly? "repair not attempted" : "repairing");
+                FormatMoney(pcoin->vout[n].nValue).c_str(), pcoin->GetHash().ToString().c_str(), n, fCheckOnly? "repair not attempted" : "repairing");
                 nMismatchFound++;
                 nBalanceInQuestion += pcoin->vout[n].nValue;
                 if (!fCheckOnly)

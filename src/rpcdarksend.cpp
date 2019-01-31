@@ -290,9 +290,9 @@ Value masternode(const Array& params, bool fHelp)
             mn.Check();
 
             if(strCommand == "active"){
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)mn.IsEnabled()));
+                obj.push_back(Pair(mn.addr.ToString(),       (int)mn.IsEnabled()));
             } else if (strCommand == "vin") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       mn.vin.prevout.hash.ToString().c_str()));
+                obj.push_back(Pair(mn.addr.ToString(),       mn.vin.prevout.hash.ToString()));
             } else if (strCommand == "pubkey") {
                 CScript pubkey;
                 pubkey =GetScriptForDestination(mn.pubkey.GetID());
@@ -300,15 +300,15 @@ Value masternode(const Array& params, bool fHelp)
                 ExtractDestination(pubkey, address1);
                 CBitcoinAddress address2(address1);
 
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       address2.ToString().c_str()));
+                obj.push_back(Pair(mn.addr.ToString(),       address2.ToString()));
             } else if (strCommand == "protocol") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.protocolVersion));
+                obj.push_back(Pair(mn.addr.ToString(),       (int64_t)mn.protocolVersion));
             } else if (strCommand == "lastseen") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)mn.lastTimeSeen));
+                obj.push_back(Pair(mn.addr.ToString(),       (int64_t)mn.lastTimeSeen));
             } else if (strCommand == "activeseconds") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int64_t)(mn.lastTimeSeen - mn.now)));
+                obj.push_back(Pair(mn.addr.ToString(),       (int64_t)(mn.lastTimeSeen - mn.now)));
             } else if (strCommand == "rank") {
-                obj.push_back(Pair(mn.addr.ToString().c_str(),       (int)(GetMasternodeRank(mn.vin, chainActive.Height()))));
+                obj.push_back(Pair(mn.addr.ToString(),       (int)(GetMasternodeRank(mn.vin, chainActive.Height()))));
             }
         }
         return obj;
@@ -520,7 +520,7 @@ Value masternode(const Array& params, bool fHelp)
     {
         int winner = GetCurrentMasterNode();
         if(winner >= 0) {
-            return vecMasternodes[winner].addr.ToString().c_str();
+            return vecMasternodes[winner].addr.ToString();
         }
 
         return "unknown";
@@ -545,7 +545,7 @@ Value masternode(const Array& params, bool fHelp)
                 CTxDestination address1;
                 ExtractDestination(payee, address1);
                 CBitcoinAddress address2(address1);
-                obj.push_back(Pair(boost::lexical_cast<std::string>(nHeight),       address2.ToString().c_str()));
+                obj.push_back(Pair(boost::lexical_cast<std::string>(nHeight),       address2.ToString()));
             } else {
                 obj.push_back(Pair(boost::lexical_cast<std::string>(nHeight),       ""));
             }
@@ -563,7 +563,7 @@ Value masternode(const Array& params, bool fHelp)
     {
         std::string strAddress = "";
         if (params.size() == 2){
-            strAddress = params[1].get_str().c_str();
+            strAddress = params[1].get_str();
         } else {
             throw runtime_error(
                 "Masternode address required\n");
@@ -605,7 +605,7 @@ Value masternode(const Array& params, bool fHelp)
 
         Object obj;
         BOOST_FOREACH(COutput& out, possibleCoins) {
-            obj.push_back(Pair(out.tx->GetHash().ToString().c_str(), boost::lexical_cast<std::string>(out.i)));
+            obj.push_back(Pair(out.tx->GetHash().ToString(), boost::lexical_cast<std::string>(out.i)));
         }
 
         return obj;
@@ -630,8 +630,8 @@ Value masternode(const Array& params, bool fHelp)
                 CBitcoinAddress address2(address1);
 
                 mnObj.push_back(Pair("minProtoVersion", mn.minProtoVersion));
-                mnObj.push_back(Pair("address", mn.addr.ToString().c_str()));
-                mnObj.push_back(Pair("pubkey", address2.ToString().c_str()));
+                mnObj.push_back(Pair("address", mn.addr.ToString()));
+                mnObj.push_back(Pair("pubkey", address2.ToString()));
                 mnObj.push_back(Pair("vin", mn.vin.ToString()));
                 mnObj.push_back(Pair("lastTimeSeen", mn.lastTimeSeen));            
                 mnObj.push_back(Pair("activeseconds",  mn.lastTimeSeen - mn.now));   
@@ -656,8 +656,8 @@ Value masternode(const Array& params, bool fHelp)
     if (strCommand == "init")
     {
         if (params.size() == 3){
-            strMasterNodePrivKey = params[1].get_str().c_str();
-            strMasterNodeAddr = params[2].get_str().c_str();            
+            strMasterNodePrivKey = params[1].get_str();
+            strMasterNodeAddr = params[2].get_str();            
         } else {
             throw runtime_error(
                 "missing args <MasterNodePrivKey> <MasterNodeAddr>\n");
