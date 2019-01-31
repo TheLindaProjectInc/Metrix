@@ -106,6 +106,7 @@ version.o: obj/build.h
 libbitcoin_server_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
+  allocators.cpp \
   alert.cpp \
   bitcoin-cli.cpp \
   bitcoind.cpp \
@@ -146,6 +147,7 @@ libbitcoin_server_a_SOURCES = \
 
 libbitcoin_common_a_SOURCES = \
   base58.cpp \
+  allocators.cpp \
   chainparams.cpp \
   core.cpp \
   darksend.cpp \

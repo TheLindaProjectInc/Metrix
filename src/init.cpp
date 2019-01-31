@@ -5,6 +5,7 @@
 
 #include "init.h"
 #include "main.h"
+#include "checkpoints.h"
 #include "key.h"
 #include "db.h"
 #include "chainparams.h"
