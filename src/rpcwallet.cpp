@@ -1070,7 +1070,7 @@ Value createmultisig(const Array& params, bool fHelp)
             "\nCreate a multisig address from 2 addresses\n"
             + HelpExampleCli("createmultisig", "2 \"[\\\"LeuaKA9DmsLNExw14vLMSk1MBBJ4vyrgVG\\\",\\\"LdJQamK9utuhc8trqzgiB21zeMpzS1onMk\\\"]\"") +
             "\nAs a json rpc call\n"
-            + HelpExampleRpc("icreatemultisig", "2, \"[\\\"LeuaKA9DmsLNExw14vLMSk1MBBJ4vyrgVG\\\",\\\"LdJQamK9utuhc8trqzgiB21zeMpzS1onMk\\\"]\"")
+            + HelpExampleRpc("createmultisig", "2, \"[\\\"LeuaKA9DmsLNExw14vLMSk1MBBJ4vyrgVG\\\",\\\"LdJQamK9utuhc8trqzgiB21zeMpzS1onMk\\\"]\"")
         ;
         throw runtime_error(msg);
     }
