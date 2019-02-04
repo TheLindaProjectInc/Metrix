@@ -5,7 +5,6 @@
 
 #include "rpcserver.h"
 #include "chainparams.h"
-#include "main.h"
 #include "db.h"
 #include "txdb.h"
 #include "init.h"
@@ -286,7 +285,7 @@ Value getworkex(const Array& params, bool fHelp)
             // Create new block
             pblocktemplate = CreateNewBlock(*pMiningKey);
             if (!pblocktemplate)
-                throw JSONRPCError(-7, "Out of memory");
+                throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
             vNewBlockTemplate.push_back(pblocktemplate);
         }
         CBlock* pblock = &pblocktemplate->block; // pointer for convenience
@@ -342,7 +341,7 @@ Value getworkex(const Array& params, bool fHelp)
             coinbase = ParseHex(params[1].get_str());
 
         if (vchData.size() != 128)
-            throw JSONRPCError(-8, "Invalid parameter");
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");
 
         CBlock* pdata = (CBlock*)&vchData[0];
 

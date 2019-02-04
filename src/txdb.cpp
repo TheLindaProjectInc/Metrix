@@ -5,6 +5,7 @@
 
 #include "txdb.h"
 #include "main.h"
+#include "hash.h"
 
 using namespace std;
 
@@ -147,7 +148,7 @@ bool CCoinsViewDB::GetStats(CCoinsStats &stats) {
             }
             pcursor->Next();
         } catch (std::exception &e) {
-            return error("%s() : deserialize error", __func__);
+            return error("%s : Deserialize or I/O error - %s", __func__, e.what());
         }
     }
     delete pcursor;
@@ -227,7 +228,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->hashProof      = diskindex.hashProof;
 
                 if (!pindexNew->CheckIndex())
-                    return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString().c_str());
+                    return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString());
 
                 // ppcoin: build setStakeSeen
                 if (pindexNew->IsProofOfStake())
@@ -238,7 +239,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 break; // if shutdown requested or finished loading block index
             }
         } catch (std::exception &e) {
-            return error("%s() : deserialize error", __func__);
+            return error("%s : Deserialize or I/O error - %s", __func__, e.what());
         }
     }
     delete pcursor;

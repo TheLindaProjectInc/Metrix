@@ -64,13 +64,6 @@ AC_ARG_ENABLE([upnp-default],
   [use_upnp_default=$enableval],
   [use_upnp_default=no])
 
-dnl enable ipv6 support
-AC_ARG_ENABLE([ipv6],
-  [AS_HELP_STRING([--enable-ipv6],
-  [enable ipv6 (default is yes)])],
-  [use_ipv6=$enableval],
-  [use_ipv6=yes])
-
 dnl enable qt support
 AC_ARG_WITH([qt],
   [AS_HELP_STRING([--with-qt],
@@ -539,26 +532,6 @@ else
   fi
 fi
 
-if test x$use_ipv6 = xyes; then
-  dnl Check for ipv6 build requirements
-  AC_MSG_CHECKING(for IPV6 build support)
-  AC_TRY_LINK([
-  #if defined(_WINDOWS)
-  #include <winsock2.h>
-  #else
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #endif
-  ],[
-  #if !defined(_WINDOWS)
-  struct in6_addr ipv6Addr;
-  struct sockaddr_in6 addr;
-  #endif
-  int temp = socket(AF_INET6, SOCK_STREAM, 0);],
-  [AC_MSG_RESULT(yes); have_ipv6=yes; AC_DEFINE(HAVE_IPV6, 1, [Define this symbol if you have ipv6 build support])],
-  [AC_MSG_RESULT(no)]; have_ipv6=no)
-fi
 AC_LANG_POP
 
 if test "x$use_ccache" != "xno"; then
@@ -576,22 +549,6 @@ if test "x$use_ccache" != "xno"; then
     CXX="$ac_cv_path_CCACHE $CXX"
   fi
   AC_MSG_RESULT($use_ccache)
-fi
-
-dnl enable ipv6 support
-AC_MSG_CHECKING([if ipv6 should be enabled])
-if test x$have_ipv6 = xno; then
-  if test x$use_ipv6 = xyes; then
-     AC_MSG_ERROR("ipv6 requested but cannot be built. use --disable-ipv6")
-  fi
-  AC_MSG_RESULT(no)
-else
-  if test x$use_ipv6 = xyes; then
-      AC_MSG_RESULT(yes)
-      AC_DEFINE([USE_IPV6],[1],[Define if ipv6 support should be compiled in])
-  else
-      AC_MSG_RESULT(no)
-  fi
 fi
 
 dnl enable wallet
@@ -735,7 +692,6 @@ AC_SUBST(BITCOIN_CLI_NAME)
 
 AC_SUBST(USE_UPNP)
 AC_SUBST(USE_QRCODE)
-AC_SUBST(USE_IPV6)
 AC_SUBST(INCLUDES)
 AC_SUBST(BOOST_LIBS)
 AC_SUBST(MOC_DEFS)

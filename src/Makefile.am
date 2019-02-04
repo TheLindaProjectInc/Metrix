@@ -12,8 +12,8 @@ endif
 
 bin_PROGRAMS = Lindad Linda-cli
 
-SUBDIRS = . $(BUILD_TEST)
-DIST_SUBDIRS = . test
+SUBDIRS = .
+DIST_SUBDIRS = .
 .PHONY: FORCE
 # Linda core #
 BITCOIN_CORE_H = \
@@ -52,6 +52,7 @@ BITCOIN_CORE_H = \
   miner.h \
   mruset.h \
   net.h \
+  noui.h \
   netbase.h \
   pbkdf2.h \
   protocol.h \
@@ -76,6 +77,7 @@ BITCOIN_CORE_H = \
   version.h \
   wallet.h \
   walletdb.h \
+  crypto/common.h \
   crypto/sha1.h \
   crypto/sha256.h \
   crypto/sha512.h \
@@ -105,6 +107,7 @@ version.o: obj/build.h
 libbitcoin_server_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
+  allocators.cpp \
   alert.cpp \
   bitcoin-cli.cpp \
   bitcoind.cpp \
@@ -145,6 +148,7 @@ libbitcoin_server_a_SOURCES = \
 
 libbitcoin_common_a_SOURCES = \
   base58.cpp \
+  allocators.cpp \
   chainparams.cpp \
   core.cpp \
   darksend.cpp \
