@@ -714,9 +714,10 @@ public:
             return nAvailableCreditCached;
 
         int64_t nCredit = 0;
+        uint256 hashTx = GetHash();
         for (unsigned int i = 0; i < vout.size(); i++)
         {
-            if (!pwallet->IsSpent(GetHash(), i))
+            if (!pwallet->IsSpent(hashTx, i))
             {
                 const CTxOut &txout = vout[i];
                 nCredit += pwallet->GetCredit(txout);
@@ -769,8 +770,10 @@ public:
         {
             // Transactions not sent by us: not trusted
             const CWalletTx* parent = pwallet->GetWalletTx(txin.prevout.hash);
+            if (parent == NULL)
+                return false;
             const CTxOut& parentOut = parent->vout[txin.prevout.n];
-            if (parent == NULL || !pwallet->IsMine(parentOut))
+            if (!pwallet->IsMine(parentOut))
                 return false;
         }
 

@@ -96,8 +96,9 @@ class CWallet;
 static const unsigned int MAX_BLOCK_SIZE = 4000000;
 /** The maximum size for transactions we're willing to relay/mine **/
 static const unsigned int MAX_STANDARD_TX_SIZE = 100000;
-/** Default for -blockmaxsize, maximum size for mined blocks **/
+/** Default for -blockmaxsize  and -blockminsize, which control the range of sizes the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 1000000;
+static const unsigned int DEFAULT_BLOCK_MIN_SIZE = 0;
 /** Default for -blockprioritysize, maximum space for zero/low-fee transactions **/
 static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 30000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
@@ -106,7 +107,7 @@ static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50;
 static const unsigned int MAX_P2SH_SIGOPS = 15;
 /** The maximum number of sigops we're willing to relay/mine in a single tx */
 static const unsigned int MAX_TX_SIGOPS = MAX_BLOCK_SIGOPS/5;
-/** The maximum number of orphan transactions kept in memory */
+/** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
 /** Default for -maxorphanblocks, maximum number of orphan blocks kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_BLOCKS = 750;
