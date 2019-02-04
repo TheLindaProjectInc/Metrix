@@ -205,7 +205,6 @@ public:
         nMasterKeyMaxID = 0;
         pwalletdbEncryption = NULL;
         nOrderPosNext = 0;
-        nTimeFirstKey = 0;
         nLastFilteredHeight = 0;
         fWalletUnlockAnonymizeOnly = false;
         nNextResend = 0;
