@@ -3008,9 +3008,9 @@ bool CWallet::SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t 
     
     if (fDebug)
     {
-        LogPrintf("Stealth send to generated pubkey %"PRIszu": %s\n", pkSendTo.size(), HexStr(pkSendTo));
+        LogPrintf("Stealth send to generated pubkey %u: %s\n", pkSendTo.size(), HexStr(pkSendTo));
         LogPrintf("hash %s\n", addrTo.ToString());
-        LogPrintf("ephem_pubkey %"PRIszu": %s\n", ephem_pubkey.size(), HexStr(ephem_pubkey));
+        LogPrintf("ephem_pubkey %u: %s\n", ephem_pubkey.size(), HexStr(ephem_pubkey));
     };
     
     std::vector<unsigned char> vchNarr;
@@ -3141,7 +3141,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     LogPrintf("StealthSecret failed.\n");
                     continue;
                 };
-                //LogPrintf("pkExtracted %"PRIszu": %s\n", pkExtracted.size(), HexStr(pkExtracted));
+                //LogPrintf("pkExtracted %u: %s\n", pkExtracted.size(), HexStr(pkExtracted));
                 
                 CPubKey cpkE(pkExtracted);
                 

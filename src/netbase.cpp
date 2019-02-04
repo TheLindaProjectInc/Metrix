@@ -85,11 +85,7 @@ bool static LookupIntern(const char *pszName, std::vector<CNetAddr>& vIP, unsign
 
     aiHint.ai_socktype = SOCK_STREAM;
     aiHint.ai_protocol = IPPROTO_TCP;
-#ifdef USE_IPV6
     aiHint.ai_family = AF_UNSPEC;
-#else
-    aiHint.ai_family = AF_INET;
-#endif
 #ifdef WIN32
     aiHint.ai_flags = fAllowLookup ? 0 : AI_NUMERICHOST;
 #else
