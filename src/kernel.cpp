@@ -290,10 +290,10 @@ bool CheckProofOfStake(CValidationState &state, CBlockIndex* pindexPrev, const C
             fseek(file, postx.nTxOffset, SEEK_CUR);
             file >> txPrev;
         } catch (std::exception &e) {
-            return error("%s() : deserialize or I/O error in CheckProofOfStake()", __PRETTY_FUNCTION__);
+            return error("%s() : deserialize or I/O error in CheckProofOfStake()", __func__);
         }
         if (txPrev.GetHash() != txin.prevout.hash)
-            return error("%s() : txid mismatch in CheckProofOfStake()", __PRETTY_FUNCTION__);
+            return error("%s() : txid mismatch in CheckProofOfStake()", __func__);
     }
 
     // Verify signature
