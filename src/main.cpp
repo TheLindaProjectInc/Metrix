@@ -4012,7 +4012,7 @@ void static ProcessGetData(CNode* pfrom)
                 if (mi != mapBlockIndex.end())
                 {
                     // If the requested block is at a height below our last
-// checkpoint, only serve it if it's in the checkpointed chain
+                    // checkpoint, only serve it if it's in the checkpointed chain
                     int nHeight = mi->second->nHeight;
                     CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
                     if (pcheckpoint && nHeight < pcheckpoint->nHeight) {

@@ -502,6 +502,7 @@ class CMerkleTx : public CTransaction
 {
 private:
     int GetDepthInMainChainINTERNAL(CBlockIndex* &pindexRet) const;
+
 public:
     uint256 hashBlock;
     std::vector<uint256> vMerkleBranch;

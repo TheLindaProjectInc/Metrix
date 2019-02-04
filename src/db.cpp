@@ -70,7 +70,7 @@ bool CDBEnv::Open(boost::filesystem::path pathEnv_)
     filesystem::path pathDataDir = pathEnv;
     strPath = pathDataDir.string();
     filesystem::path pathLogDir = pathDataDir / "database";
-    filesystem::create_directory(pathLogDir);
+    TryCreateDirectory(pathLogDir);
     filesystem::path pathErrorFile = pathDataDir / "db.log";
     LogPrintf("CDBEnv::Open : LogDir=%s ErrorFile=%s\n", pathLogDir.string(), pathErrorFile.string());
 

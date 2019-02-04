@@ -787,7 +787,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFromLoadWallet)
 bool CWallet::AddToWalletIfInvolvingMe(const uint256 &hash, const CTransaction& tx, const CBlock* pblock, bool fUpdate)
 {
     {
-        LOCK(cs_wallet);
+        AssertLockHeld(cs_wallet);
         bool fExisted = mapWallet.count(hash);
         if (fExisted && !fUpdate) return false;
 

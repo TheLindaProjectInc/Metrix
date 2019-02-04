@@ -31,7 +31,8 @@ distcleancheck:
 $(BITCOIN_WIN_INSTALLER): $(BITCOIND_BIN)
 	$(MAKE) distdir
 	$(MKDIR_P) $(top_builddir)/release
-	$(INSTALL_STRIP_PROGRAM) $(top_builddir)/src/Lindad$(EXEEXT) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(top_builddir)/src/Lindad$(EXEEXT) $(top_builddir)/release
+    STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(top_builddir)/src/Linda-cli$(EXEEXT) $(top_builddir)/release
 	@test -f $(MAKENSIS) && $(MAKENSIS) $(top_builddir)/share/setup.nsi || \
 	  echo error: could not build $@
 
