@@ -199,7 +199,7 @@ void UnregisterWallet(CWalletInterface* pwalletIn);
 /** Unregister all wallets from core */
 void UnregisterAllWallets();
 /** Push an updated transaction to all registered wallets */
-void SyncWithWallets(const uint256 &hash, const CTransaction& tx, const CBlock* pblock = NULL, bool fConnect = true);
+void SyncWithWallets(const uint256 &hash, const CTransaction& tx, const CBlock* pblock = NULL);
 /** Ask wallets to resend their transactions */
 void ResendWalletTransactions(bool fForce = false);
 
@@ -1173,7 +1173,7 @@ public:
 
 class CWalletInterface {
 protected:
-    virtual void SyncTransaction(const uint256 &hash, const CTransaction &tx, const CBlock *pblock, bool fConnect) =0;
+    virtual void SyncTransaction(const uint256 &hash, const CTransaction &tx, const CBlock *pblock) =0;
     virtual void EraseFromWallet(const uint256 &hash) =0;
     virtual void SetBestChain(const CBlockLocator &locator) =0;
     virtual void UpdatedTransaction(const uint256 &hash) =0;

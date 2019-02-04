@@ -169,7 +169,6 @@ Value importprivkey(const Array& params, bool fHelp)
 
         if (fRescan) {
             pwalletMain->ScanForWalletTransactions(chainActive.Genesis(), true);
-            pwalletMain->ReacceptWalletTransactions();
         }
     }
 
@@ -260,7 +259,6 @@ Value importwallet(const Array& params, bool fHelp)
 
     LogPrintf("Rescanning last %i blocks\n", chainActive.Height() - pindex->nHeight + 1);
     pwalletMain->ScanForWalletTransactions(pindex);
-    pwalletMain->ReacceptWalletTransactions();
     pwalletMain->MarkDirty();
 
     if (!fGood)

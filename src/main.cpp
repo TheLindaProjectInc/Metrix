@@ -65,7 +65,7 @@ unsigned int nCoinCacheSize = 5000;
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64_t CTransaction::nMinTxFee = 100000;  // Override with -mintxfee
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-int64_t CTransaction::nMinRelayTxFee = 100000;
+int64_t CTransaction::nMinRelayTxFee = 10000;
 
 struct COrphanTx {
     CTransaction tx;
@@ -148,7 +148,7 @@ map<uint256, pair<NodeId, list<uint256>::iterator> > mapBlocksToDownload;
 namespace {
 struct CMainSignals {
     // Notifies listeners of updated transaction data (passing hash, transaction, and optionally the block it is found in.
-    boost::signals2::signal<void (const uint256 &, const CTransaction &, const CBlock *, bool)> SyncTransaction;
+    boost::signals2::signal<void (const uint256 &, const CTransaction &, const CBlock *)> SyncTransaction;
     // Notifies listeners of an erased transaction (currently disabled, requires transaction replacement).
     boost::signals2::signal<void (const uint256 &)> EraseTransaction;
     // Notifies listeners of an updated transaction without new data (for now: a coinbase potentially becoming visible).
@@ -163,7 +163,7 @@ struct CMainSignals {
 }
 
 void RegisterWallet(CWalletInterface* pwalletIn) {
-    g_signals.SyncTransaction.connect(boost::bind(&CWalletInterface::SyncTransaction, pwalletIn, _1, _2, _3, _4));
+    g_signals.SyncTransaction.connect(boost::bind(&CWalletInterface::SyncTransaction, pwalletIn, _1, _2, _3));
     g_signals.EraseTransaction.connect(boost::bind(&CWalletInterface::EraseFromWallet, pwalletIn, _1));
     g_signals.UpdatedTransaction.connect(boost::bind(&CWalletInterface::UpdatedTransaction, pwalletIn, _1));
     g_signals.SetBestChain.connect(boost::bind(&CWalletInterface::SetBestChain, pwalletIn, _1));
@@ -177,7 +177,7 @@ void UnregisterWallet(CWalletInterface* pwalletIn) {
     g_signals.SetBestChain.disconnect(boost::bind(&CWalletInterface::SetBestChain, pwalletIn, _1));
     g_signals.UpdatedTransaction.disconnect(boost::bind(&CWalletInterface::UpdatedTransaction, pwalletIn, _1));
     g_signals.EraseTransaction.disconnect(boost::bind(&CWalletInterface::EraseFromWallet, pwalletIn, _1));
-    g_signals.SyncTransaction.disconnect(boost::bind(&CWalletInterface::SyncTransaction, pwalletIn, _1, _2, _3, _4));
+    g_signals.SyncTransaction.disconnect(boost::bind(&CWalletInterface::SyncTransaction, pwalletIn, _1, _2, _3));
 }
 
 void UnregisterAllWallets() {
@@ -189,8 +189,8 @@ void UnregisterAllWallets() {
     g_signals.SyncTransaction.disconnect_all_slots();
 }
 
-void SyncWithWallets(const uint256 &hash, const CTransaction &tx, const CBlock *pblock, bool fConnect) {
-    g_signals.SyncTransaction(hash, tx, pblock, fConnect);
+void SyncWithWallets(const uint256 &hash, const CTransaction &tx, const CBlock *pblock) {
+    g_signals.SyncTransaction(hash, tx, pblock);
 }
 
 void ResendWalletTransactions(bool fForce) {
@@ -2154,7 +2154,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     assert(ret);
 
     for (unsigned int i = 0; i < block.vtx.size(); i++){
-        SyncWithWallets(block.GetTxHash(i), block.vtx[i], &block, true);
+        SyncWithWallets(block.GetTxHash(i), block.vtx[i], &block);
     }
     
     // Watch for changes to the previous coinbase transaction.
@@ -2273,17 +2273,23 @@ bool static DisconnectTip(CValidationState &state)
     // Write the chain state to disk, if necessary.
     if (!WriteChainState(state))
         return false;
-    // Ressurect mempool transactions from the disconnected block.
+    // Resurrect mempool transactions from the disconnected block.
     BOOST_FOREACH(const CTransaction &tx, block.vtx) {
         // ignore validation errors in resurrected transactions
+        list<CTransaction> removed;
         CValidationState stateDummy;
         if (!tx.IsCoinBase())
             if (!AcceptToMemoryPool(mempool, stateDummy, tx, false, NULL))
-                mempool.remove(tx, true);
+                mempool.remove(tx, removed, true);
     }
     mempool.check(pcoinsTip);
     // Update chainActive and related variables.
     UpdateTip(pindexDelete->pprev);
+    // Let wallets know transactions went from 1-confirmed to
+    // 0-confirmed or conflicted:
+    BOOST_FOREACH(const CTransaction &tx, block.vtx) {
+        SyncWithWallets(tx.GetHash(), tx, NULL);
+    }
     return true;
 }
 
@@ -2319,13 +2325,24 @@ bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew)
     if (!WriteChainState(state))
         return false;
     // Remove conflicting transactions from the mempool.
+    list<CTransaction> txConflicted;
     BOOST_FOREACH(const CTransaction &tx, block.vtx) {
-        mempool.remove(tx);
-        mempool.removeConflicts(tx);
+        list<CTransaction> unused;
+        mempool.remove(tx, unused);
+        mempool.removeConflicts(tx, txConflicted);
     }
     mempool.check(pcoinsTip);
     // Update chainActive & related variables.
     UpdateTip(pindexNew);
+    // Tell wallet about transactions that went from mempool
+    // to conflicted:
+    BOOST_FOREACH(const CTransaction &tx, txConflicted) {
+        SyncWithWallets(tx.GetHash(), tx, NULL);
+    }
+    // ... and about transactions that got confirmed:
+    BOOST_FOREACH(const CTransaction &tx, block.vtx) {
+        SyncWithWallets(tx.GetHash(), tx, &block);
+    }
     return true;
 }
 
