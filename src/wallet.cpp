@@ -1150,8 +1150,7 @@ void CWallet::ResendWalletTransactions(bool fForce)
     // that these are our transactions.
     if (!fForce)
     {
-        static int64_t nNextTime;
-        if (GetTime() < nNextTime)
+        if (GetTime() < nNextResend)
             return;
         bool fFirst = (nNextResend == 0);
         nNextResend = GetTime() + GetRand(30 * 60);
@@ -1159,10 +1158,9 @@ void CWallet::ResendWalletTransactions(bool fForce)
             return;
 
         // Only do it if there's been a new block since last time
-        static int64_t nLastTime;
-        if (nTimeBestReceived < nLastTime)
+        if (nTimeBestReceived < nLastResend)
             return;
-        nNextResend = GetTime();
+        nLastResend = GetTime();
     }
 
     // Rebroadcast any of our txes that aren't in a block yet
