@@ -444,7 +444,6 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
     int count = vecMasternodes.size();
     count = std::max(count, 960);
     count = std::min(count, 1500); // limit so we don't cause wallet lockups
-    int iCount = count;
     std::vector<CScript> vecPaidMasternodes;
     CBlockIndex* pblockindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
     for (int n = 0; n < count; n++) {
