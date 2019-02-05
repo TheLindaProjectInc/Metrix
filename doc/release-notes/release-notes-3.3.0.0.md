@@ -71,6 +71,11 @@ The wallet code still uses a default fee for low-priority transactions of 0.01Li
 - Don’t create empty transactions when reading a corrupted wallet
 - Fix rescan to start from beginning after importprivkey
 - Only create signatures with low S values
+- Make GetAvailableCredit run GetHash() only once per transaction (performance improvement)
+- Fix `importwallet` nTimeFirstKey (trigger necessary rescans)
+- CWallet init fix
+- Check redeemScript size does not exceed 520 byte limit
+- Ignore (and warn about) too-long redeemScripts while loading wallet
 
 #### Protocol and network:
 - Drop the fee required to relay a transaction to 0.001Linda per kilobyte
@@ -84,6 +89,8 @@ Process received messages one at a time without sleeping between messages
 - Improve logging of failed connections
 - Bump protocol version to 70002
 - Add some additional logging to give extra network insight
+- Prevent socket leak in ThreadSocketHandler and correct some proxy related socket leaks
+- Use pnode->nLastRecv as sync score (was the wrong way around)
 
 #### Validation:
 - Log reason for non-standard transaction rejection
@@ -94,6 +101,11 @@ Process received messages one at a time without sleeping between messages
 - Reject non-canonically-encoded serialization sizes
 - Reject dust amounts during validation
 - Accept nLockTime transactions that finalize in the next block
+- Add a way to limit deserialized string lengths and use it
+- Increase IsStandard() scriptSig length
+- Remove a useless millisleep in socket handler
+- Stricter memory limits on CNode
+- Better orphan transaction handling
 
 #### RPC commands
 - New notion of 'conflicted' transactions, reported as confirmations: -1
@@ -117,6 +129,14 @@ Process received messages one at a time without sleeping between messages
 - Add rpc command `getunconfirmedbalance` to obtain total unconfirmed balance
 - Explicitly ensure that wallet is unlocked in `importprivkey`
 - Add check for valid keys in `importprivkey`
+- Add `getwalletinfo`, `getblockchaininfo` and `getnetworkinfo` calls (will replace hodge-podge getinfo at some point)
+- Add a relayfee field to `getnetworkinfo`
+- Fix RPC related shutdown hangs and leaks
+- Always show syncnode in `getpeerinfo`
+- `sendrawtransaction`: report the reject code and reason, and make it possible to re-send transactions that are already in the mempool
+- `getmininginfo` show right genproclimit
+- Avoid a segfault on getblock if it can’t read a block from disk
+- Add paranoid return value checks in base58
 
 #### Startup commands
 - whitebind: Bind to given address and whitelist peers connecting to it
@@ -130,5 +150,13 @@ Process received messages one at a time without sleeping between messages
 - RPC client option: -rpcwait, to wait for server start
 - Remove -logtodebugger
 - Allow -noserver with bitcoind
+- Fix -printblocktree output
+- Show error message if ReadConfigFile fails
+
+#### Miscellaneous:
+- Replace non-threadsafe C functions (gmtime, strerror and setlocale)
+- Add missing cs_main and wallet locks
+- key.cpp: fail with a friendlier message on missing ssl EC support
+- Remove bignum dependency for scripts
 
 ### Bug Fixes
