@@ -17,7 +17,7 @@ Running the old release with the -reindex option will rebuild the chainstate dat
 Also, the first time you run a 3.2 release on a 3.3 wallet it will rescan the blockchain for missing spent coins, which will take a long time (tens of minutes on a typical machine).
 
 ## Linda-cli
-We are moving away from the Lindad executable functioning both as a server and as a RPC client. The RPC client functionality ("tell the running bitcoin daemon to do THIS") was split into a separate executable, 'Linda-cli'. The RPC client code will eventually be removed from Lindad, but will be kept for backwards compatibility for a release or two.
+We are moving away from the Lindad executable functioning both as a server and as a RPC client. The RPC client functionality ("tell the running Lindacoin daemon to do THIS") was split into a separate executable, 'Linda-cli'. The RPC client code will eventually be removed from Lindad, but will be kept for backwards compatibility for a release or two.
 
 ## RPC
 `walletpassphrase` 
@@ -144,12 +144,12 @@ Process received messages one at a time without sleeping between messages
 - stopafterblockimport: Stop running after importing blocks from disk
 - New option: -nospendzeroconfchange to never spend unconfirmed change outputs
 - Rename option -tor to -onion to better reflect what it does
-- Add -disablewallet mode to let bitcoind run entirely without wallet (when built with wallet)
+- Add -disablewallet mode to let Lindad run entirely without wallet (when built with wallet)
 - Update default -rpcsslciphers to include TLSv1.2
 - Make -logtimestamps default on and rework help-message
 - RPC client option: -rpcwait, to wait for server start
 - Remove -logtodebugger
-- Allow -noserver with bitcoind
+- Allow -noserver with Lindad
 - Fix -printblocktree output
 - Show error message if ReadConfigFile fails
 
