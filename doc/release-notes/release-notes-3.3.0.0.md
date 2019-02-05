@@ -87,7 +87,7 @@ The wallet code still uses a default fee for low-priority transactions of 0.01Li
 - Do not treat fFromMe transaction differently when broadcasting
 Process received messages one at a time without sleeping between messages
 - Improve logging of failed connections
-- Bump protocol version to 70002
+- Bump protocol version to 70003
 - Add some additional logging to give extra network insight
 - Prevent socket leak in ThreadSocketHandler and correct some proxy related socket leaks
 - Use pnode->nLastRecv as sync score (was the wrong way around)
