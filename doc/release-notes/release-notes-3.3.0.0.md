@@ -111,10 +111,10 @@ Process received messages one at a time without sleeping between messages
 - New notion of 'conflicted' transactions, reported as confirmations: -1
 - `listreceivedbyaddress` now provides tx ids
 - Add raw transaction hex to gettransaction output
-- Updated help and tests for getreceivedby(account|address)
+- Updated help and tests for `getreceivedby(account|address)`
 - In `getblock`, accept 2nd verbose parameter, similar to `getrawtransaction`, but defaulting to 1 for backward compatibility
 - Add `verifychain`, to verify chain database at runtime
-- Add `dumpwallet` and importwallet RPCs
+- Add `dumpwallet` and `importwallet` RPCs
 - `keypoolrefill` gains optional size parameter
 - Add `getbestblockhash`, to return tip of best chain
 - Make RPC password resistant to timing attacks
