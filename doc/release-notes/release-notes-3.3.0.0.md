@@ -67,8 +67,8 @@ The wallet code still uses a default fee for low-priority transactions of 0.01Li
 - Optimize rescan to skip blocks prior to birthday
 - Let user select wallet file with -wallet=foo.dat
 - Improve wallet load time
-- Don’t count txins for priority to encourage sweeping
-- Don’t create empty transactions when reading a corrupted wallet
+- Don't count txins for priority to encourage sweeping
+- Don't create empty transactions when reading a corrupted wallet
 - Fix rescan to start from beginning after importprivkey
 - Only create signatures with low S values
 - Make GetAvailableCredit run GetHash() only once per transaction (performance improvement)
@@ -85,7 +85,7 @@ The wallet code still uses a default fee for low-priority transactions of 0.01Li
 - Remove CENT-output free transaction rule when relaying
 - Send multiple inv messages if mempool.size > MAX_INV_SZ
 - Do not treat fFromMe transaction differently when broadcasting
-Process received messages one at a time without sleeping between messages
+- Process received messages one at a time without sleeping between messages
 - Improve logging of failed connections
 - Bump protocol version to 70002
 - Add some additional logging to give extra network insight
@@ -135,7 +135,7 @@ Process received messages one at a time without sleeping between messages
 - Always show syncnode in `getpeerinfo`
 - `sendrawtransaction`: report the reject code and reason, and make it possible to re-send transactions that are already in the mempool
 - `getmininginfo` show right genproclimit
-- Avoid a segfault on getblock if it can’t read a block from disk
+- Avoid a segfault on getblock if it can't read a block from disk
 - Add paranoid return value checks in base58
 
 #### Startup commands
