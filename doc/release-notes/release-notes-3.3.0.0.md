@@ -134,7 +134,6 @@ Process received messages one at a time without sleeping between messages
 - Fix RPC related shutdown hangs and leaks
 - Always show syncnode in `getpeerinfo`
 - `sendrawtransaction`: report the reject code and reason, and make it possible to re-send transactions that are already in the mempool
-- `getmininginfo` show right genproclimit
 - Avoid a segfault on getblock if it can’t read a block from disk
 - Add paranoid return value checks in base58
 
