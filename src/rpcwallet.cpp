@@ -1394,9 +1394,9 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                         entry.push_back(Pair("category", "orphan"));
                     else if (wtx.GetBlocksToMaturity() > 0)
                         entry.push_back(Pair("category", "immature"));
-                    else
+                    else if
                         entry.push_back(Pair("category", "minted"));
-		    else if (block.HasMasternodePayment() = true)
+		    if (bHasMasternodePayment)
 			entry.push_back(Pair("category", "masternode reward"));    
                 }
                 else
