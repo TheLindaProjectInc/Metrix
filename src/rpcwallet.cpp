@@ -1397,9 +1397,9 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                     else
                         entry.push_back(Pair("category", "generate"));
 	            if (wtx.IsCoinStake)
-		        entry.push_back(Pair("category", "minted"));
+		        entry.push_back(Pair("subcategory", "minted"));
 		    else if (bHasMaternodePayment)
-		        entry.push_back(Pair("category", "masternode reward"));
+		        entry.push_back(Pair("subcategory", "masternode reward"));
 		}	
                 else
                 {
