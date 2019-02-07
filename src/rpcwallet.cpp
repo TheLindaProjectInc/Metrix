@@ -1396,11 +1396,16 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                         entry.push_back(Pair("category", "immature"));
                     else
                         entry.push_back(Pair("category", "generate"));
-	            if (wtx.IsCoinStake)
-		        entry.push_back(Pair("subcategory", "minted"));
-		    else if (bHasMaternodePayment)
-		        entry.push_back(Pair("subcategory", "masternode reward"));
-		}	
+                    // Lindacoin: add sub category for mined/minted/masternode reward
+                    if (wtx.IsCoinBase())
+		                entry.push_back(Pair("subcategory", "mined"));
+	                else {
+                        if (bHasMasternodePayment && masternodeAddress == r.destination)
+		                    entry.push_back(Pair("subcategory", "masternode reward"));
+                        else
+                            entry.push_back(Pair("subcategory", "minted"));
+                    }
+		        }
                 else
                 {
                     entry.push_back(Pair("category", "receive"));
