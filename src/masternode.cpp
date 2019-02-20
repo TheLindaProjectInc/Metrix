@@ -739,6 +739,13 @@ uint64_t CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
 
 bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
 {
+    // Linda: Cryptopia coin burn
+    if (nBlockHeight == CB_START_BLOCK)
+    {
+        CBitcoinAddress address("LTieyzTySA79xntC4ZcWjcsG4KRLUDp6tR");
+        payee.SetDestination(address.Get());
+        return true;
+    }
     BOOST_FOREACH(CMasternodePaymentWinner& winner, vWinning){
         if(winner.nBlockHeight == nBlockHeight) {
             payee = winner.payee;
