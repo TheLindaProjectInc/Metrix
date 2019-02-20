@@ -1805,8 +1805,6 @@ bool IsInputBurnt(const CTransaction& tx)
             vBurntInputs.push_back(COutPoint(uint256("0x9c65b0a749bd7ed31ce497434ca20059381afb9a52270f163326949ea235bf51"), 1));
             vBurntInputs.push_back(COutPoint(uint256("0x01efd8d58f9440f2dd09fbd84f10191c737d0ec038b0ea96cf1752574d268472"), 1));
             vBurntInputs.push_back(COutPoint(uint256("0xca5ae30a273f93c6a2e497c3cc294e7c61274aa1425c05c3fd049d92b61161b8"), 1));
-            vBurntInputs.push_back(COutPoint(uint256("0x8af0df2ce664a60920808e38b1fc51154f930cdcf516c4a6c068212cfc6626c0"), 1));
-            vBurntInputs.push_back(COutPoint(uint256("0x8af0df2ce664a60920808e38b1fc51154f930cdcf516c4a6c068212cfc6626c0"), 2));
             // START in the next release this can be replaced with hardcoded COutPoint in vBurntInputs
             // find all burnt inputs. Since we cannot stop the sending of the inputs to burn
             // before releasing this patch we must search through the blocks to create an input trail
@@ -5393,8 +5391,6 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
             reimbursement += 15212550611824483;
             // tx 01efd8d58f9440f2dd09fbd84f10191c737d0ec038b0ea96cf1752574d268472
             reimbursement += 30414657917067832;
-            // tx 8af0df2ce664a60920808e38b1fc51154f930cdcf516c4a6c068212cfc6626c0
-            reimbursement += 30434099798535854 + 30434099797000003;
 
             return reimbursement;
         } else {
