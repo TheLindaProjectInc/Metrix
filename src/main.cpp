@@ -5350,22 +5350,6 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
         if (nHeight < V3_START_BLOCK){
             // MBK: Set masternode reward phase
             return static_cast<int64_t>(blockValue * 0.677777777777777777); // ~2/3 masternode stake reward
-        } else if (nHeight == CB_START_BLOCK) {
-            // Linda: Cryptopia coin burn
-            // at block 720 000 a masternode reward will be payed to a known address to serve as the 
-            // reinbursement for the loss of funds to Cryptopia which have been marked as burnt
-            // due to a failure to safely transfer their funds as well as to cover the losses from
-            // the 4 accounts that had their staking inputs burnt as a result of burning the 
-            // high Cryptopia fee transactions
-            int64_t reimbursement = 0;
-            // tx 9c65b0a749bd7ed31ce497434ca20059381afb9a52270f163326949ea235bf51
-            reimbursement += 45624456187248254;
-            // tx ca5ae30a273f93c6a2e497c3cc294e7c61274aa1425c05c3fd049d92b61161b8
-            reimbursement += 15212550611824483;
-            // tx 01efd8d58f9440f2dd09fbd84f10191c737d0ec038b0ea96cf1752574d268472
-            reimbursement += 30414657917067832;
-
-            return reimbursement;
         } else {
             // starting V3 masternodes will earn a constant block reward ~60% over the year
             return MASTERNODE_REWARD_V3;
