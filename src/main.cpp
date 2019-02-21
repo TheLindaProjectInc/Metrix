@@ -2888,49 +2888,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
     // ----------- masternode payments -----------
 
-    // Linda: Cryptopia coin burn
-    // enforce masternode winner selection matches our selected address on our fund recovery mint block
-    CBlockIndex *pindex = chainActive.Tip();
-    if (pindex != NULL &&  pindex->GetBlockHash() == block.hashPrevBlock && pindex->nHeight+1 == CB_START_BLOCK)
-    {
-        // check we have a payment
-        if (!block.HasMasternodePayment())
-            return state.DoS(100, error("CheckBlock() : masternode payment was invalid for this block"),
-                REJECT_INVALID, "invalid masternode payment");
-
-        CScript payee;
-        // check we have a payee
-        if (!masternodePayments.GetBlockPayee(pindex->nHeight+1, payee))
-            return state.DoS(100, error("CheckBlock() : masternode payee was invalid for this block"),
-                REJECT_INVALID, "invalid masternode payee");
-
-        // check the payee matches the selected address and the reward matches the desired mint
-        CScript blockPayee;
-        CAmount blockPaymentAmount;
-        CAmount masternodePaymentAmount = GetMasternodePayment(pindex->nHeight+1, block.vtx[0].GetValueOut());
-
-        if (block.vtx[1].vout.size() == 3) {
-            blockPayee = block.vtx[1].vout[2].scriptPubKey;
-            blockPaymentAmount = block.vtx[1].vout[2].nValue;
-        } else if (block.vtx[1].vout.size() == 4) {
-            blockPayee = block.vtx[1].vout[3].scriptPubKey;
-            blockPaymentAmount = block.vtx[1].vout[3].nValue;
-        }
-
-        CTxDestination address1;
-        ExtractDestination(blockPayee, address1);
-        CBitcoinAddress address2(address1);
-        CTxDestination address3;
-        ExtractDestination(payee, address3);
-        CBitcoinAddress address4(address3);
-
-        LogPrintf("blockPayee %s payee %s blockPaymentAmount %i masternodePaymentAmount %i\n", address2.ToString(), address4.ToString(),blockPaymentAmount,masternodePaymentAmount );
-
-        if (blockPayee != payee || blockPaymentAmount != masternodePaymentAmount)
-            return state.DoS(100, error("CheckBlock() : masternode payee or payment was invalid for this block"),
-                REJECT_INVALID, "invalid masternode payee or payment");
-    }
-
     bool MasternodePayments = false;
 
     if(block.nTime > START_MASTERNODE_PAYMENTS) MasternodePayments = true;
