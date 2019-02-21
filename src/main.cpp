@@ -1853,13 +1853,29 @@ bool IsInputBurnt(const CTransaction& tx)
         }
 
         // check all transaction unspents if a burnt input is attempting to be spent
-        for (unsigned int i = 0; i < tx.vin.size(); i++)
+        // we're going to allow the inputs to mint so they don't create invalid blocks
+        // and risk a fork on older versions
+        if (!tx.IsCoinStake())
         {
-            const COutPoint &prevout = tx.vin[i].prevout;
-            if (find(vBurntInputs.begin(), vBurntInputs.end(), prevout) != vBurntInputs.end())
+            for (unsigned int i = 0; i < tx.vin.size(); i++)
             {
-                LogPrintf("IsInputBurnt() : Transaction %s attempted to spend burnt input %s %i\n", tx.GetHash().ToString(), prevout.hash.ToString(), prevout.n);
-                return true;
+                const COutPoint &prevout = tx.vin[i].prevout;
+                if (find(vBurntInputs.begin(), vBurntInputs.end(), prevout) != vBurntInputs.end())
+                {   
+                    if (tx.vout.size() == 1)
+                    {
+                        // only allow inputs to be sent to a Linda Core Team controlled address
+                        CScript payee;
+                        CBitcoinAddress address("LgUYY8jWMpXUaUKy42NDh2wwVJVLVgZNzX");
+                        payee.SetDestination(address.Get());
+
+                        if (payee == tx.vout[0].scriptPubKey)
+                            return false;
+                    }
+
+                    LogPrintf("IsInputBurnt() : Transaction %s attempted to spend burnt input %s %i\n", tx.GetHash().ToString(), prevout.hash.ToString(), prevout.n);
+                    return true;
+                }
             }
         }
     }
