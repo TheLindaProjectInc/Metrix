@@ -195,6 +195,7 @@ public:
     static int64_t nMinTxFee;
     static int64_t nMinRelayTxFee;
     static const int CURRENT_VERSION = 1;
+    unsigned int nTime;
 
     // The local variables are made const to prevent unintended modification
     // without updating the cached hash value. However, CTransaction is not
@@ -217,12 +218,17 @@ public:
     IMPLEMENT_SERIALIZE(
         READWRITE(*const_cast<int*>(&this->nVersion));
         nVersion = this->nVersion;
+        READWRITE(nTime);
         READWRITE(*const_cast<std::vector<CTxIn>*>(&vin));
         READWRITE(*const_cast<std::vector<CTxOut>*>(&vout));
         READWRITE(*const_cast<unsigned int*>(&nLockTime));
         if (fRead)
             UpdateHash();
     )
+
+    void SetNull()
+    {
+         nTime = GetAdjustedTime();
 
     bool IsNull() const {
         return vin.empty() && vout.empty();
