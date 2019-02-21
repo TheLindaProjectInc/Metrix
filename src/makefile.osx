@@ -72,8 +72,10 @@ CFLAGS += -Wall -Wextra -Wformat -Wno-ignored-qualifiers -Wformat-security -Wno-
 OBJS= \
     leveldb/libleveldb.a \
     obj/alert.o \
+    obj/allocators.o \
     obj/version.o \
     obj/checkpoints.o \
+    obj/base58.o \
     obj/netbase.o \
     obj/addrman.o \
     obj/crypter.o \
@@ -82,6 +84,7 @@ OBJS= \
     obj/bitcoind.o \
     obj/keystore.o \
     obj/core.o \
+    obj/coins.o \
     obj/main.o \
     obj/net.o \
     obj/protocol.o \
