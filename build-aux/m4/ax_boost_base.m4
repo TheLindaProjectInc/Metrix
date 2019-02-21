@@ -91,9 +91,20 @@ if test "x$want_boost" = "xyes"; then
     dnl are found, e.g. when only header-only libraries are installed!
     libsubdirs="lib"
     ax_arch=`uname -m`
-    if test $ax_arch = x86_64 -o $ax_arch = ppc64 -o $ax_arch = s390x -o $ax_arch = sparc64; then
+    case $ax_arch in
+      x86_64)
+        libsubdirs="lib64 libx32 lib lib64"
+        ;;
+      ppc64|s390x|sparc64|aarch64)
         libsubdirs="lib64 lib lib64"
-    fi
+        ;;
+    esac
+
+    dnl some arches may advertise a cpu type that doesn't line up with their
+    dnl prefix's cpu type. For example, uname may report armv7l while libs are
+    dnl installed to /usr/lib/arm-linux-gnueabihf. Try getting the compiler's
+    dnl value for an extra chance of finding the correct path.
+    libsubdirs="lib/`$CXX -dumpmachine 2>/dev/null` $libsubdirs"
 
     dnl first we check the system location for boost libraries
     dnl this location ist chosen if boost libraries are installed with the --layout=system option

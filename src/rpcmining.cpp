@@ -5,7 +5,6 @@
 
 #include "rpcserver.h"
 #include "chainparams.h"
-#include "main.h"
 #include "db.h"
 #include "txdb.h"
 #include "init.h"
@@ -74,10 +73,10 @@ Value getstakesubsidy(const Array& params, bool fHelp)
     uint64_t nCoinAge;
     CCoinsViewCache view(*pcoinsTip, true);
     CValidationState state;
-    if (!tx.GetCoinAge(state, view, nCoinAge, pindexBest->nHeight))
+    if (!GetCoinAge(tx, state, view, nCoinAge, chainActive.Height()))
         throw JSONRPCError(RPC_MISC_ERROR, "GetCoinAge failed");
 
-    uint64_t nStakeReward = GetProofOfStakeReward(nCoinAge, 0, pindexBest->nHeight);
+    uint64_t nStakeReward = GetProofOfStakeReward(nCoinAge, 0, chainActive.Height());
 
     return (uint64_t)nStakeReward;
 }
@@ -94,12 +93,12 @@ Value getmininginfo(const Array& params, bool fHelp)
         nWeight = pwalletMain->GetStakeWeight();
 
     Object obj, diff, weight;
-    obj.push_back(Pair("blocks",        (int)nBestHeight));
+    obj.push_back(Pair("blocks",        (int)chainActive.Height()));
     obj.push_back(Pair("currentblocksize",(uint64_t)nLastBlockSize));
     obj.push_back(Pair("currentblocktx",(uint64_t)nLastBlockTx));
 
     diff.push_back(Pair("proof-of-work",        GetDifficulty()));
-    diff.push_back(Pair("proof-of-stake",       GetDifficulty(GetLastBlockIndex(pindexBest, true))));
+    diff.push_back(Pair("proof-of-stake",       GetDifficulty(GetLastBlockIndex(chainActive.Tip(), true))));
     diff.push_back(Pair("search-interval",      (int)nLastCoinStakeSearchInterval));
     obj.push_back(Pair("difficulty",    diff));
     obj.push_back(Pair("blockvalue",    (uint64_t)GetProofOfWorkReward(0)));
@@ -143,7 +142,7 @@ Value getstakinginfo(const Array& params, bool fHelp)
     obj.push_back(Pair("currentblocktx", (uint64_t)nLastBlockTx));
     obj.push_back(Pair("pooledtx", (uint64_t)mempool.size()));
 
-    obj.push_back(Pair("difficulty", GetDifficulty(GetLastBlockIndex(pindexBest, true))));
+    obj.push_back(Pair("difficulty", GetDifficulty(GetLastBlockIndex(chainActive.Tip(), true))));
     obj.push_back(Pair("search-interval", (int)nLastCoinStakeSearchInterval));
 
     obj.push_back(Pair("weight", (uint64_t)nWeight));
@@ -174,7 +173,7 @@ Value checkkernel(const Array& params, bool fHelp)
         throw JSONRPCError(-10, "Linda is downloading blocks...");
 
     COutPoint kernel;
-    CBlockIndex* pindexPrev = pindexBest;
+    CBlockIndex* pindexPrev = chainActive.Tip();
     unsigned int nBits = GetNextTargetRequired(pindexPrev, true);
     int64_t nTime = GetAdjustedTime();
     nTime &= ~STAKE_TIMESTAMP_MASK;
@@ -254,7 +253,7 @@ Value getworkex(const Array& params, bool fHelp)
     if (IsInitialBlockDownload())
         throw JSONRPCError(-10, "Linda is downloading blocks...");
 
-    if (pindexBest->nHeight >= Params().LastPOWBlock())
+    if (chainActive.Height() >= Params().LastPOWBlock())
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
@@ -268,10 +267,10 @@ Value getworkex(const Array& params, bool fHelp)
         static CBlockIndex* pindexPrev;
         static int64_t nStart;
         static CBlockTemplate* pblocktemplate;
-        if (pindexPrev != pindexBest ||
+        if (pindexPrev != chainActive.Tip() ||
             (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60))
         {
-            if (pindexPrev != pindexBest)
+            if (pindexPrev != chainActive.Tip())
             {
                 // Deallocate old blocks since they're obsolete now
                 mapNewBlock.clear();
@@ -280,13 +279,13 @@ Value getworkex(const Array& params, bool fHelp)
                 vNewBlockTemplate.clear();
             }
             nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-            pindexPrev = pindexBest;
+            pindexPrev = chainActive.Tip();
             nStart = GetTime();
 
             // Create new block
             pblocktemplate = CreateNewBlock(*pMiningKey);
             if (!pblocktemplate)
-                throw JSONRPCError(-7, "Out of memory");
+                throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
             vNewBlockTemplate.push_back(pblocktemplate);
         }
         CBlock* pblock = &pblocktemplate->block; // pointer for convenience
@@ -342,7 +341,7 @@ Value getworkex(const Array& params, bool fHelp)
             coinbase = ParseHex(params[1].get_str());
 
         if (vchData.size() != 128)
-            throw JSONRPCError(-8, "Invalid parameter");
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");
 
         CBlock* pdata = (CBlock*)&vchData[0];
 
@@ -389,7 +388,7 @@ Value getwork(const Array& params, bool fHelp)
     if (IsInitialBlockDownload())
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Linda is downloading blocks...");
 
-    if (pindexBest->nHeight >= Params().LastPOWBlock())
+    if (chainActive.Height() >= Params().LastPOWBlock())
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
@@ -403,10 +402,10 @@ Value getwork(const Array& params, bool fHelp)
         static CBlockIndex* pindexPrev;
         static int64_t nStart;
         static CBlockTemplate* pblocktemplate;
-        if (pindexPrev != pindexBest ||
+        if (pindexPrev != chainActive.Tip() ||
             (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60))
         {
-            if (pindexPrev != pindexBest)
+            if (pindexPrev != chainActive.Tip())
             {
                 // Deallocate old blocks since they're obsolete now
                 mapNewBlock.clear();
@@ -418,9 +417,9 @@ Value getwork(const Array& params, bool fHelp)
             // Clear pindexPrev so future getworks make a new block, despite any failures from here on
             pindexPrev = NULL;
 
-            // Store the pindexBest used before CreateNewBlock, to avoid races
+            // Store the chainActive.Tip() used before CreateNewBlock, to avoid races
             nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-            CBlockIndex* pindexPrevNew = pindexBest;
+            CBlockIndex* pindexPrevNew = chainActive.Tip();
             nStart = GetTime();
 
             // Create new block
@@ -435,7 +434,7 @@ Value getwork(const Array& params, bool fHelp)
         CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
         // Update nTime
-        pblock->UpdateTime(pindexPrev);
+        UpdateTime(*pblock, pindexPrev);
         pblock->nNonce = 0;
 
         // Update nExtraNonce
@@ -534,7 +533,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     //if (IsInitialBlockDownload())
     //    throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Linda is downloading blocks...");
 
-    if (pindexBest->nHeight >= Params().LastPOWBlock())
+    if (chainActive.Height() >= Params().LastPOWBlock())
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
 
     // Update block
@@ -542,15 +541,15 @@ Value getblocktemplate(const Array& params, bool fHelp)
     static CBlockIndex* pindexPrev;
     static int64_t nStart;
     static CBlockTemplate* pblocktemplate;
-    if (pindexPrev != pindexBest ||
+    if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5))
     {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
         pindexPrev = NULL;
 
-        // Store the pindexBest used before CreateNewBlock, to avoid races
+        // Store the chainActive.Tip() used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-        CBlockIndex* pindexPrevNew = pindexBest;
+        CBlockIndex* pindexPrevNew = chainActive.Tip();
         nStart = GetTime();
 
         // Create new block
@@ -569,7 +568,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
     // Update nTime
-    pblock->UpdateTime(pindexPrev);
+    UpdateTime(*pblock, pindexPrev);
     pblock->nNonce = 0;
 
     Array transactions;
@@ -641,10 +640,22 @@ Value submitblock(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "submitblock <hex data> [optional-params-obj]\n"
-            "[optional-params-obj] parameter is currently ignored.\n"
-            "Attempts to submit new block to network.\n"
-            "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
+            "submitblock \"hexdata\" ( \"jsonparametersobject\" )\n"
+            "\nAttempts to submit new block to network.\n"
+            "The 'jsonparametersobject' parameter is currently ignored.\n"
+            "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.\n"
+
+            "\nArguments\n"
+            "1. \"hexdata\"    (string, required) the hex-encoded block data to submit\n"
+            "2. \"jsonparametersobject\"     (string, optional) object of optional parameters\n"
+            "    {\n"
+            "      \"workid\" : \"id\"    (string, optional) if the server provided a workid, it MUST be included with submissions\n"
+            "    }\n"
+            "\nResult:\n"
+            "\nExamples:\n"
+            + HelpExampleCli("submitblock", "\"mydata\"")
+            + HelpExampleRpc("submitblock", "\"mydata\"")
+        );
 
     vector<unsigned char> blockData(ParseHex(params[0].get_str()));
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);

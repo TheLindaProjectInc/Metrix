@@ -1,10 +1,10 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 3)
-define(_CLIENT_VERSION_MINOR, 2)
-define(_CLIENT_VERSION_REVISION, 1)
+define(_CLIENT_VERSION_MINOR, 3)
+define(_CLIENT_VERSION_REVISION, 0)
 define(_CLIENT_VERSION_BUILD, 0)
-define(_CLIENT_VERSION_IS_RELEASE, true)
+define(_CLIENT_VERSION_IS_RELEASE, false)
 define(_COPYRIGHT_YEAR, 2018)
 AC_INIT([Lindacoin],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[support@lindacoin.com],[lindacoin])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -63,13 +63,6 @@ AC_ARG_ENABLE([upnp-default],
   [if UPNP is enabled, turn it on at startup (default is no)])],
   [use_upnp_default=$enableval],
   [use_upnp_default=no])
-
-dnl enable ipv6 support
-AC_ARG_ENABLE([ipv6],
-  [AS_HELP_STRING([--enable-ipv6],
-  [enable ipv6 (default is yes)])],
-  [use_ipv6=$enableval],
-  [use_ipv6=yes])
 
 dnl enable qt support
 AC_ARG_WITH([qt],
@@ -197,6 +190,10 @@ case $host in
      AC_CHECK_LIB([mswsock],      [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([shlwapi],      [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([iphlpapi],      [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([crypt32],      [main],, AC_MSG_ERROR(lib missing))
+
+     AX_CHECK_LINK_FLAG([[-static-libgcc]],[LDFLAGS="$LDFLAGS -static-libgcc"])
+     AX_CHECK_LINK_FLAG([[-static-libstdc++]],[LDFLAGS="$LDFLAGS -static-libstdc++"])
 
      AC_PATH_PROG([MAKENSIS], [makensis], none)
      if test x$MAKENSIS = xnone; then
@@ -250,9 +247,6 @@ case $host in
        AX_CHECK_LINK_FLAG([[$base_frameworks]],[LIBS="$LIBS $base_frameworks"],[AC_MSG_ERROR(could not find base frameworks)])
      fi
 
-     AX_CHECK_COMPILE_FLAG([-mmacosx-version-min=10.5],[RELEASE_CXXFLAGS="$RELEASE_CXXFLAGS -mmacosx-version-min=10.5"])
-     AX_CHECK_COMPILE_FLAG([-arch i386],[RELEASE_CXXFLAGS="$RELEASE_CXXFLAGS -arch i386"])
-     RELEASE_CXXFLAGS="$RELEASE_CXXFLAGS -O3"
      CPPFLAGS="$CPPFLAGS -DMAC_OSX"
      TESTDEFS="-DBOOST_TEST_DYN_LINK"
      ;;
@@ -538,26 +532,6 @@ else
   fi
 fi
 
-if test x$use_ipv6 = xyes; then
-  dnl Check for ipv6 build requirements
-  AC_MSG_CHECKING(for IPV6 build support)
-  AC_TRY_LINK([
-  #if defined(_WINDOWS)
-  #include <winsock2.h>
-  #else
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #endif
-  ],[
-  #if !defined(_WINDOWS)
-  struct in6_addr ipv6Addr;
-  struct sockaddr_in6 addr;
-  #endif
-  int temp = socket(AF_INET6, SOCK_STREAM, 0);],
-  [AC_MSG_RESULT(yes); have_ipv6=yes; AC_DEFINE(HAVE_IPV6, 1, [Define this symbol if you have ipv6 build support])],
-  [AC_MSG_RESULT(no)]; have_ipv6=no)
-fi
 AC_LANG_POP
 
 if test "x$use_ccache" != "xno"; then
@@ -575,22 +549,6 @@ if test "x$use_ccache" != "xno"; then
     CXX="$ac_cv_path_CCACHE $CXX"
   fi
   AC_MSG_RESULT($use_ccache)
-fi
-
-dnl enable ipv6 support
-AC_MSG_CHECKING([if ipv6 should be enabled])
-if test x$have_ipv6 = xno; then
-  if test x$use_ipv6 = xyes; then
-     AC_MSG_ERROR("ipv6 requested but cannot be built. use --disable-ipv6")
-  fi
-  AC_MSG_RESULT(no)
-else
-  if test x$use_ipv6 = xyes; then
-      AC_MSG_RESULT(yes)
-      AC_DEFINE([USE_IPV6],[1],[Define if ipv6 support should be compiled in])
-  else
-      AC_MSG_RESULT(no)
-  fi
 fi
 
 dnl enable wallet
@@ -734,7 +692,6 @@ AC_SUBST(BITCOIN_CLI_NAME)
 
 AC_SUBST(USE_UPNP)
 AC_SUBST(USE_QRCODE)
-AC_SUBST(USE_IPV6)
 AC_SUBST(INCLUDES)
 AC_SUBST(BOOST_LIBS)
 AC_SUBST(MOC_DEFS)

@@ -9,6 +9,13 @@
 #include "leveldbwrapper.h"
 #include "init.h"
 
+// -dbcache default (MiB)
+static const int64_t nDefaultDbCache = 100;
+// max. -dbcache in (MiB)
+static const int64_t nMaxDbCache = sizeof(void*) > 4 ? 4096 : 1024;
+// min. -dbcache in (MiB)
+static const int64_t nMinDbCache = 4;
+
 /** CCoinsView backed by the LevelDB coin database (chainstate/) */
 class CCoinsViewDB : public CCoinsView
 {
@@ -20,9 +27,9 @@ public:
     bool GetCoins(const uint256 &txid, CCoins &coins);
     bool SetCoins(const uint256 &txid, const CCoins &coins);
     bool HaveCoins(const uint256 &txid);
-    CBlockIndex *GetBestBlock();
-    bool SetBestBlock(CBlockIndex *pindex);
-    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, CBlockIndex *pindex);
+    uint256 GetBestBlock();
+    bool SetBestBlock(const uint256 &hashBlock);
+    bool BatchWrite(const std::map<uint256, CCoins> &mapCoins, const uint256 &hashBlock);
     bool GetStats(CCoinsStats &stats);
 };
 
@@ -36,7 +43,6 @@ private:
     void operator=(const CBlockTreeDB&);
 public:
     bool WriteBlockIndex(const CDiskBlockIndex& blockindex);
-    bool ReadBestInvalidTrust(CBigNum& bnBestInvalidTrust);
     bool WriteBestInvalidTrust(const CBigNum& bnBestInvalidTrust);
     bool ReadBlockFileInfo(int nFile, CBlockFileInfo &fileinfo);
     bool WriteBlockFileInfo(int nFile, const CBlockFileInfo &fileinfo);

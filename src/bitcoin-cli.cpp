@@ -7,6 +7,7 @@
 #include "rpcclient.h"
 #include "rpcprotocol.h"
 #include "ui_interface.h" /* for _(...) */
+#include "chainparams.h"
  //////////////////////////////////////////////////////////////////////////////
 //
 // Start
@@ -22,7 +23,20 @@ static bool AppInitRPC(int argc, char* argv[])
         fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
         return false;
     }
-    ReadConfigFile(mapArgs, mapMultiArgs);
+    try {
+        ReadConfigFile(mapArgs, mapMultiArgs);
+    }
+    catch (std::exception &e) {
+        fprintf(stderr, "Error reading configuration file: %s\n", e.what());
+        return false;
+    }
+
+    // Check for -testnet or -regtest parameter (TestNet() calls are only valid after this clause)
+    if (!SelectParamsFromCommandLine()) {
+        fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
+        return false;
+    }
+
     if (argc < 2 || mapArgs.count("-?") || mapArgs.count("--help"))
     {
         // First part of help message is specific to RPC client
@@ -31,7 +45,7 @@ static bool AppInitRPC(int argc, char* argv[])
             "  Linda-cli [options] <command> [params]  " + _("Send command to Linda server") + "\n" +
             "  Linda-cli [options] help                " + _("List commands") + "\n" +
             "  Linda-cli [options] help <command>      " + _("Get help for a command") + "\n";
-        strUsage += "\n" + HelpMessage();
+        strUsage += "\n" + HelpMessageCli(true);
         fprintf(stdout, "%s", strUsage.c_str());
         return false;
     }
@@ -42,18 +56,20 @@ int main(int argc, char* argv[])
     try
     {
         if (!AppInitRPC(argc, argv))
-            return 1;
+            return abs(RPC_MISC_ERROR);
     }
     catch (std::exception& e) {
         PrintExceptionContinue(&e, "AppInitRPC()");
+        return abs(RPC_MISC_ERROR);
     }
     catch (...) {
         PrintExceptionContinue(NULL, "AppInitRPC()");
+        return abs(RPC_MISC_ERROR);
     }
+    int ret = abs(RPC_MISC_ERROR);
     try
     {
-        if (!CommandLineRPC(argc, argv))
-            return 1;
+        ret = CommandLineRPC(argc, argv);
     }
     catch (std::exception& e) {
         PrintExceptionContinue(&e, "CommandLineRPC()");
@@ -61,5 +77,5 @@ int main(int argc, char* argv[])
     catch (...) {
         PrintExceptionContinue(NULL, "CommandLineRPC()");
     }
-    return 0;
+    return ret;
 }

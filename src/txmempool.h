@@ -5,7 +5,40 @@
 #ifndef BITCOIN_TXMEMPOOL_H
 #define BITCOIN_TXMEMPOOL_H
 
+#include <list>
+
+#include "coins.h"
 #include "core.h"
+
+/** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
+static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
+
+/*
+ * CTxMemPool stores these:
+ */
+class CTxMemPoolEntry
+{
+private:
+    CTransaction tx;
+    int64_t nFee; // Cached to avoid expensive parent-transaction lookups
+    size_t nTxSize; // ... and avoid recomputing tx size
+    int64_t nTime; // Local time when entering the mempool
+    double dPriority; // Priority when entering the mempool
+    unsigned int nHeight; // Chain height when entering the mempool
+
+public:
+    CTxMemPoolEntry(const CTransaction& _tx, int64_t _nFee,
+                    int64_t _nTime, double _dPriority, unsigned int _nHeight);
+    CTxMemPoolEntry();
+    CTxMemPoolEntry(const CTxMemPoolEntry& other);
+
+    const CTransaction& GetTx() const { return this->tx; }
+    double GetPriority(unsigned int currentHeight) const;
+    int64_t GetFee() const { return nFee; }
+    size_t GetTxSize() const { return nTxSize; }
+    int64_t GetTime() const { return nTime; }
+    unsigned int GetHeight() const { return nHeight; }
+};
 
 class CCoins;
 
@@ -22,18 +55,29 @@ class CCoins;
 class CTxMemPool
 {
 private:
+    bool fSanityCheck; // Normally false, true if -checkmempool or -regtest
     unsigned int nTransactionsUpdated;
 
 public:
     mutable CCriticalSection cs;
-    std::map<uint256, CTransaction> mapTx;
+     std::map<uint256, CTxMemPoolEntry> mapTx;
     std::map<COutPoint, CInPoint> mapNextTx;
 
     CTxMemPool();
 
-    bool addUnchecked(const uint256& hash, const CTransaction &tx);
-    bool remove(const CTransaction &tx, bool fRecursive = false);
-    bool removeConflicts(const CTransaction &tx);
+    /*
+     * If sanity-checking is turned on, check makes sure the pool is
+     * consistent (does not contain two transactions that spend the same inputs,
+     * all inputs are in the mapNextTx array). If sanity-checking is turned off,
+     * check does nothing.
+     */
+    typedef CCoins& (*CoinLookupFunc)(const uint256&);
+    void check(CCoinsViewCache *pcoins) const;
+    void setSanityCheck(bool _fSanityCheck) { fSanityCheck = _fSanityCheck; }
+
+    bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry);
+    void remove(const CTransaction &tx, std::list<CTransaction>& removed, bool fRecursive = false);
+    void removeConflicts(const CTransaction &tx, std::list<CTransaction>& removed);
     void clear();
     void queryHashes(std::vector<uint256>& vtxid);
     void pruneSpent(const uint256& hash, CCoins &coins);
@@ -52,7 +96,20 @@ public:
         return (mapTx.count(hash) != 0);
     }
 
-    CTransaction lookup(uint256 hash) const;
+    bool lookup(uint256 hash, CTransaction& result) const;
+};
+
+/** CCoinsView that brings transactions from a memorypool into view.
+    It does not check for spendings by memory pool transactions. */
+class CCoinsViewMemPool : public CCoinsViewBacked
+{
+protected:
+    CTxMemPool &mempool;
+
+public:
+    CCoinsViewMemPool(CCoinsView &baseIn, CTxMemPool &mempoolIn);
+    bool GetCoins(const uint256 &txid, CCoins &coins);
+    bool HaveCoins(const uint256 &txid);
 };
 
 #endif /* BITCOIN_TXMEMPOOL_H */

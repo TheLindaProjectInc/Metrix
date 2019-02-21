@@ -55,26 +55,6 @@ typedef int64_t CAmount;
 #define UINTBEGIN(a)        ((uint32_t*)&(a))
 #define CUINTBEGIN(a)        ((const uint32_t*)&(a))
 
-/* Format characters for (s)size_t and ptrdiff_t */
-#if defined(_MSC_VER) || defined(__MSVCRT__)
-  /* (s)size_t and ptrdiff_t have the same size specifier in MSVC:
-     http://msdn.microsoft.com/en-us/library/tcxf1dw6%28v=vs.100%29.aspx
-   */
-  #define PRIszx    "Ix"
-  #define PRIszu    "Iu"
-  #define PRIszd    "Id"
-  #define PRIpdx    "Ix"
-  #define PRIpdu    "Iu"
-  #define PRIpdd    "Id"
-#else /* C99 standard */
-  #define PRIszx    "zx"
-  #define PRIszu    "zu"
-  #define PRIszd    "zd"
-  #define PRIpdx    "tx"
-  #define PRIpdu    "tu"
-  #define PRIpdd    "td"
-#endif
-
 // This is needed because the foreach macro can't get over the comma in pair<t1, t2>
 #define PAIRTYPE(t1, t2)    std::pair<t1, t2>
 
@@ -139,7 +119,6 @@ extern std::map<std::string, std::vector<std::string> > mapMultiArgs;
 extern bool fDebug;
 extern bool fPrintToConsole;
 extern bool fPrintToDebugLog;
-extern bool fDaemon;
 extern bool fServer;
 extern bool fCommandLine;
 extern std::string strMiscWarning;
@@ -195,9 +174,7 @@ static inline bool error(const char* format)
 }
 
 
-void PrintException(std::exception* pex, const char* pszThread);
 void PrintExceptionContinue(std::exception* pex, const char* pszThread);
-void ParseString(const std::string& str, char c, std::vector<std::string>& v);
 std::string FormatMoney(int64_t n, bool fPlus=false);
 bool ParseMoney(const std::string& str, int64_t& nRet);
 bool ParseMoney(const char* pszIn, int64_t& nRet);
@@ -216,10 +193,9 @@ std::string DecodeBase32(const std::string& str);
 std::string EncodeBase32(const unsigned char* pch, size_t len);
 std::string EncodeBase32(const std::string& str);
 void ParseParameters(int argc, const char*const argv[]);
-bool WildcardMatch(const char* psz, const char* mask);
-bool WildcardMatch(const std::string& str, const std::string& mask);
 void FileCommit(FILE *fileout);
 bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest);
+bool TryCreateDirectory(const boost::filesystem::path& p);
 bool TruncateFile(FILE *file, unsigned int length);
 int RaiseFileDescriptorLimit(int nMinFD);
 void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length);
@@ -380,13 +356,6 @@ inline std::string DateTimeStrFormat(int64_t nTime)
     return DateTimeStrFormat(strTimestampFormat.c_str(), nTime);
 }
 
-
-template<typename T>
-void skipspaces(T& it)
-{
-    while (isspace(*it))
-        ++it;
-}
 
 inline bool IsSwitchChar(char c)
 {
@@ -593,10 +562,12 @@ template <typename Callable> void LoopForever(const char* name,  Callable func, 
         throw;
     }
     catch (std::exception& e) {
-        PrintException(&e, name);
+        PrintExceptionContinue(&e, name);
+        throw;
     }
     catch (...) {
-        PrintException(NULL, name);
+        PrintExceptionContinue(NULL, name);
+        throw;
     }
 }
 // .. and a wrapper that just calls func once
@@ -616,10 +587,12 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
         throw;
     }
     catch (std::exception& e) {
-        PrintException(&e, name);
+        PrintExceptionContinue(&e, name);
+        throw;
     }
     catch (...) {
-        PrintException(NULL, name);
+        PrintExceptionContinue(NULL, name);
+        throw;
     }
 }
 

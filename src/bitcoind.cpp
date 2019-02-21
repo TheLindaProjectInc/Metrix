@@ -3,10 +3,16 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "ui_interface.h"
+#include "init.h"
+#include "util.h"
+#include "main.h"
+#include "noui.h"
 #include "rpcserver.h"
 #include "rpcclient.h"
-#include "init.h"
 #include <boost/algorithm/string/predicate.hpp>
+
+static bool fDaemon;
 
 void WaitForShutdown(boost::thread_group* threadGroup)
 {
@@ -42,10 +48,22 @@ bool AppInit(int argc, char* argv[])
         ParseParameters(argc, argv);
         if (!boost::filesystem::is_directory(GetDataDir(false)))
         {
-            fprintf(stderr, "Error: Specified directory does not exist\n");
-            Shutdown();
+            fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
+            return false;
         }
-        ReadConfigFile(mapArgs, mapMultiArgs);
+        try
+        {
+            ReadConfigFile(mapArgs, mapMultiArgs);
+        }
+        catch (std::exception &e) {
+            fprintf(stderr, "Error reading configuration file: %s\n", e.what());
+            return false;
+        }
+        // Check for -testnet or -regtest parameter (TestNet() calls are only valid after this clause)
+        if (!SelectParamsFromCommandLine()) {
+            fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
+            return false;
+        }
 
         if (mapArgs.count("-?") || mapArgs.count("--help"))
         {
@@ -58,7 +76,8 @@ bool AppInit(int argc, char* argv[])
                   "  Lindad [options] help                " + _("List commands") + "\n" +
                   "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
 
-            strUsage += "\n" + HelpMessage();
+            strUsage += "\n" + HelpMessage(HMM_BITCOIND);
+            strUsage += "\n" + HelpMessageCli(false);
 
             fprintf(stdout, "%s", strUsage.c_str());
             return false;
@@ -71,17 +90,15 @@ bool AppInit(int argc, char* argv[])
 
         if (fCommandLine)
         {
-            if (!SelectParamsFromCommandLine()) {
-                fprintf(stderr, "Error: invalid combination of -regtest and -testnet.\n");
-                return false;
-            }
             int ret = CommandLineRPC(argc, argv);
             exit(ret);
         }
-#if !defined(WIN32)
+#ifndef WIN32
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon)
         {
+            fprintf(stdout, "Linda server starting\n");
+
             // Daemonize
             pid_t pid = fork();
             if (pid < 0)
@@ -101,13 +118,16 @@ bool AppInit(int argc, char* argv[])
                 fprintf(stderr, "Error: setsid() returned %d errno %d\n", sid, errno);
         }
 #endif
+        SoftSetBoolArg("-server", true);
 
         fRet = AppInit2(threadGroup);
     }
     catch (std::exception& e) {
-        PrintException(&e, "AppInit()");
+        PrintExceptionContinue(&e, "AppInit()");
+        throw;
     } catch (...) {
-        PrintException(NULL, "AppInit()");
+        PrintExceptionContinue(NULL, "AppInit()");
+        throw;
     }
 
     if (!fRet)
@@ -124,11 +144,9 @@ bool AppInit(int argc, char* argv[])
     return fRet;
 }
 
-extern void noui_connect();
 int main(int argc, char* argv[])
 {
     bool fRet = false;
-    fHaveGUI = false;
 
     // Connect bitcoind signal handlers
     noui_connect();

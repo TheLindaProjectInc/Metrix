@@ -10,6 +10,8 @@
 #include "util.h"
 #include "ui_interface.h"
 #include "chainparams.h" // for Params().RPCPort()
+#include "main.h"
+#include "wallet.h"
 
 #include <stdint.h>
 
@@ -21,7 +23,6 @@
 #include <boost/foreach.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include "json/json_spirit_writer_template.h"
 
@@ -152,6 +153,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "signrawtransaction", 2 },
     { "gettxout", 1 },
     { "gettxout", 2 },
+    { "verifychain", 0 },
+    { "verifychain", 1 },
     { "keypoolrefill", 0 },
     { "importprivkey", 2 },
     { "checkkernel", 0 },
@@ -266,10 +269,11 @@ int CommandLineRPC(int argc, char *argv[])
     }
     catch (std::exception& e) {
         strPrint = string("error: ") + e.what();
-        nRet = 87;
+        nRet = abs(RPC_MISC_ERROR);
     }
     catch (...) {
-        PrintException(NULL, "CommandLineRPC()");
+        PrintExceptionContinue(NULL, "CommandLineRPC()");
+        throw;
     }
 
     if (strPrint != "")
@@ -277,4 +281,37 @@ int CommandLineRPC(int argc, char *argv[])
         fprintf((nRet == 0 ? stdout : stderr), "%s\n", strPrint.c_str());
     }
     return nRet;
+}
+
+std::string HelpMessageCli(bool mainProgram)
+{
+    string strUsage;
+    if (mainProgram)
+    {
+        strUsage += _("Options:") + "\n";
+        strUsage += "  -?                     " + _("This help message") + "\n";
+        strUsage += "  -conf=<file>           " + _("Specify configuration file (default: Linda.conf)") + "\n";
+        strUsage += "  -datadir=<dir>         " + _("Specify data directory") + "\n";
+        strUsage += "  -testnet               " + _("Use the test network") + "\n";
+        strUsage += "  -regtest               " + _("Enter regression test mode, which uses a special chain in which blocks can be "
+            "solved instantly. This is intended for regression testing tools and app development.") + "\n";
+    }
+    else {
+        strUsage += _("RPC client options:") + "\n";
+    }
+
+    strUsage += "  -rpcconnect=<ip>       " + _("Send commands to node running on <ip> (default: 127.0.0.1)") + "\n";
+    strUsage += "  -rpcport=<port>        " + _("Connect to JSON-RPC on <port> (default: 33820)") + "\n";
+    strUsage += "  -rpcwait               " + _("Wait for RPC server to start") + "\n";
+
+    if (mainProgram)
+    {
+        strUsage += "  -rpcuser=<user>        " + _("Username for JSON-RPC connections") + "\n";
+        strUsage += "  -rpcpassword=<pw>      " + _("Password for JSON-RPC connections") + "\n";
+
+        strUsage += "\n" + _("SSL options: (see the Bitcoin Wiki for SSL setup instructions)") + "\n";
+        strUsage += "  -rpcssl                " + _("Use OpenSSL (https) for JSON-RPC connections") + "\n";
+    }
+
+    return strUsage;
 }

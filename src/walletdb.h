@@ -16,7 +16,7 @@
 
 class CAccount;
 class CAccountingEntry;
-class CBlockLocator;
+struct CBlockLocator;
 class CKeyPool;
 class CMasterKey;
 class CScript;
@@ -106,6 +106,9 @@ public:
 
     bool EraseName(const std::string& strAddress);
 
+    bool WritePurpose(const std::string& strAddress, const std::string& purpose);
+    bool ErasePurpose(const std::string& strAddress);
+    
     bool WriteTx(uint256 hash, const CWalletTx& wtx);
     bool EraseTx(uint256 hash);
 
@@ -135,6 +138,11 @@ public:
 
     bool ReadAccount(const std::string& strAccount, CAccount& account);
     bool WriteAccount(const std::string& strAccount, const CAccount& account);
+
+    // Write destination data key,value tuple to database
+    bool WriteDestData(const std::string &address, const std::string &key, const std::string &value);
+    // Erase destination data tuple from wallet database
+    bool EraseDestData(const std::string &address, const std::string &key);
 private:
     bool WriteAccountingEntry(const uint64_t nAccEntryNum, const CAccountingEntry& acentry);
 public:

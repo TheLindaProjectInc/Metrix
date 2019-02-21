@@ -8,7 +8,6 @@
 
 #include "bignum.h"
 #include "uint256.h"
-#include "util.h"
 
 #include <vector>
 
@@ -103,6 +102,10 @@ bool SelectParamsFromCommandLine();
 inline bool TestNet() {
     // Note: it's deliberate that this returns "false" for regression test mode.
     return Params().NetworkID() == CChainParams::TESTNET;
+}
+
+inline bool RegTest() {
+    return Params().NetworkID() == CChainParams::REGTEST;
 }
 
 #endif
