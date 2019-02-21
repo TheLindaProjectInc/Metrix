@@ -1789,6 +1789,51 @@ bool VerifySignature(const CCoins& txFrom, const CTransaction& txTo, unsigned in
     return CScriptCheck(txFrom, txTo, nIn, flags, nHashType)();
 }
 
+bool DoBurnVout(const CTransaction& tx, unsigned int nVout)
+{
+    // if it's not a coin stake then mark it as burnt
+    if (!tx.IsCoinStake()) 
+        return false;
+    // if it is a coin stake don't burn the coinstake marker or masternode payment
+    if (nVout == 0)
+        return false;
+    if (tx.vout.size() == 4 && nVout == 3)
+        return false;
+    if (tx.vout.size() == 3 && tx.vout[1].scriptPubKey != tx.vout[2].scriptPubKey && nVout == 2)
+        return false;
+
+    return true;
+}
+
+void CheckBlockForBurntInputs(const uint256 bHash)
+{
+    AssertLockHeld(cs_main);
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[bHash];
+    ReadBlockFromDisk(block, pblockindex);
+    BOOST_FOREACH(CTransaction transaction, block.vtx)
+    {
+        BOOST_FOREACH(CTxIn input, transaction.vin)
+        {
+            if (find(vBurntInputs.begin(), vBurntInputs.end(), input.prevout) != vBurntInputs.end())
+            {
+                // inputs are burnt and cannot be spent
+                for (unsigned int i = 0; i < transaction.vout.size(); i++)
+                {
+                    if (DoBurnVout(transaction, i))
+                    {
+                        const COutPoint burnt = COutPoint(transaction.GetHash(), i);
+                        if (find(vBurntInputs.begin(), vBurntInputs.end(), burnt) == vBurntInputs.end())
+                        {
+                            vBurntInputs.push_back(burnt);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Linda: Cryptopia coin burn
 bool IsInputBurnt(const CTransaction& tx)
 {
@@ -1817,11 +1862,8 @@ bool IsInputBurnt(const CTransaction& tx)
             CBlockIndex* pblockindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
             while (nHeight >= nMinBlockHeight)
             {
-                if (nHeight < CB_START_BLOCK)
-                {
-                    if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
-                        vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
-                }
+                if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
+                    vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
                 pblockindex = pblockindex->pprev;
                 nHeight--;
             }
@@ -1829,27 +1871,22 @@ bool IsInputBurnt(const CTransaction& tx)
             // scan through new blocks to get burnt inputs
             BOOST_FOREACH(const uint256 bHash, vBurntScanBlockHash)
             {
-                CBlock block;
-                pblockindex = mapBlockIndex[bHash];
-                ReadBlockFromDisk(block, pblockindex);
-                BOOST_FOREACH(CTransaction transaction, block.vtx)
-                {
-                    BOOST_FOREACH(CTxIn input, transaction.vin)
-                    {
-                        if (find(vBurntInputs.begin(), vBurntInputs.end(), input.prevout) != vBurntInputs.end())
-                        {
-                            // inputs are burnt and cannot be spent
-                            for (unsigned int i = 0; i < transaction.vout.size(); i++)
-                            {
-                                const COutPoint burnt = COutPoint(transaction.GetHash(), i);
-                                if (find(vBurntInputs.begin(), vBurntInputs.end(), burnt) == vBurntInputs.end())
-                                    vBurntInputs.push_back(burnt);
-                            }
-                        }
-                    }
-                }
+                CheckBlockForBurntInputs(bHash);
             }
             // END in the next release this can be replaced with hardcoded COutPoint in vBurntInputs
+        }
+        else
+        {
+            // we need to check every new block incase the burnt coins have made a stake
+            const uint256 bHash = chainActive.Tip()->GetBlockHash();
+            CBlockIndex* pblockindex = mapBlockIndex[bHash];
+            if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
+            {
+                vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
+            
+                LOCK(cs_main);
+                CheckBlockForBurntInputs(bHash);
+            }
         }
 
         // check all transaction unspents if a burnt input is attempting to be spent
