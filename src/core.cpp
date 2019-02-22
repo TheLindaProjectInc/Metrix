@@ -61,9 +61,11 @@ bool CTxOut::IsDust(int64_t nMinRelayTxFee) const
     // to spend something, then we consider it dust.
     // A typical txout is 34 bytes big, and will
     // need a CTxIn of at least 148 bytes to spend,
-    // so dust is a txout less than 546 satoshis
+    // so dust is a txout less than 5460 satoshis
     // with default nMinRelayTxFee
-    return ((nValue * 1000) / (3 * ((int)GetSerializeSize(SER_DISK, 0) + 148)) < nMinRelayTxFee);
+    int64_t nSize = GetSerializeSize(SER_DISK, 0) + 148;
+    int64_t dustLimit = 3 * nSize * (nMinRelayTxFee / 1000);
+    return nValue < dustLimit;
 }
 
 std::string CTxOut::ToString() const

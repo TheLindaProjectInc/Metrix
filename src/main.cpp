@@ -1789,6 +1789,51 @@ bool VerifySignature(const CCoins& txFrom, const CTransaction& txTo, unsigned in
     return CScriptCheck(txFrom, txTo, nIn, flags, nHashType)();
 }
 
+bool DoBurnVout(const CTransaction& tx, unsigned int nVout)
+{
+    // if it's not a coin stake then mark it as burnt
+    if (!tx.IsCoinStake()) 
+        return false;
+    // if it is a coin stake don't burn the coinstake marker or masternode payment
+    if (nVout == 0)
+        return false;
+    if (tx.vout.size() == 4 && nVout == 3)
+        return false;
+    if (tx.vout.size() == 3 && tx.vout[1].scriptPubKey != tx.vout[2].scriptPubKey && nVout == 2)
+        return false;
+
+    return true;
+}
+
+void CheckBlockForBurntInputs(const uint256 bHash)
+{
+    AssertLockHeld(cs_main);
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[bHash];
+    ReadBlockFromDisk(block, pblockindex);
+    BOOST_FOREACH(CTransaction transaction, block.vtx)
+    {
+        BOOST_FOREACH(CTxIn input, transaction.vin)
+        {
+            if (find(vBurntInputs.begin(), vBurntInputs.end(), input.prevout) != vBurntInputs.end())
+            {
+                // inputs are burnt and cannot be spent
+                for (unsigned int i = 0; i < transaction.vout.size(); i++)
+                {
+                    if (DoBurnVout(transaction, i))
+                    {
+                        const COutPoint burnt = COutPoint(transaction.GetHash(), i);
+                        if (find(vBurntInputs.begin(), vBurntInputs.end(), burnt) == vBurntInputs.end())
+                        {
+                            vBurntInputs.push_back(burnt);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Linda: Cryptopia coin burn
 bool IsInputBurnt(const CTransaction& tx)
 {
@@ -1805,8 +1850,6 @@ bool IsInputBurnt(const CTransaction& tx)
             vBurntInputs.push_back(COutPoint(uint256("0x9c65b0a749bd7ed31ce497434ca20059381afb9a52270f163326949ea235bf51"), 1));
             vBurntInputs.push_back(COutPoint(uint256("0x01efd8d58f9440f2dd09fbd84f10191c737d0ec038b0ea96cf1752574d268472"), 1));
             vBurntInputs.push_back(COutPoint(uint256("0xca5ae30a273f93c6a2e497c3cc294e7c61274aa1425c05c3fd049d92b61161b8"), 1));
-            vBurntInputs.push_back(COutPoint(uint256("0x8af0df2ce664a60920808e38b1fc51154f930cdcf516c4a6c068212cfc6626c0"), 1));
-            vBurntInputs.push_back(COutPoint(uint256("0x8af0df2ce664a60920808e38b1fc51154f930cdcf516c4a6c068212cfc6626c0"), 2));
             // START in the next release this can be replaced with hardcoded COutPoint in vBurntInputs
             // find all burnt inputs. Since we cannot stop the sending of the inputs to burn
             // before releasing this patch we must search through the blocks to create an input trail
@@ -1819,11 +1862,8 @@ bool IsInputBurnt(const CTransaction& tx)
             CBlockIndex* pblockindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
             while (nHeight >= nMinBlockHeight)
             {
-                if (nHeight < CB_START_BLOCK)
-                {
-                    if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
-                        vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
-                }
+                if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
+                    vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
                 pblockindex = pblockindex->pprev;
                 nHeight--;
             }
@@ -1831,37 +1871,48 @@ bool IsInputBurnt(const CTransaction& tx)
             // scan through new blocks to get burnt inputs
             BOOST_FOREACH(const uint256 bHash, vBurntScanBlockHash)
             {
-                CBlock block;
-                pblockindex = mapBlockIndex[bHash];
-                ReadBlockFromDisk(block, pblockindex);
-                BOOST_FOREACH(CTransaction transaction, block.vtx)
-                {
-                    BOOST_FOREACH(CTxIn input, transaction.vin)
-                    {
-                        if (find(vBurntInputs.begin(), vBurntInputs.end(), input.prevout) != vBurntInputs.end())
-                        {
-                            // inputs are burnt and cannot be spent
-                            for (unsigned int i = 0; i < transaction.vout.size(); i++)
-                            {
-                                const COutPoint burnt = COutPoint(transaction.GetHash(), i);
-                                if (find(vBurntInputs.begin(), vBurntInputs.end(), burnt) == vBurntInputs.end())
-                                    vBurntInputs.push_back(burnt);
-                            }
-                        }
-                    }
-                }
+                CheckBlockForBurntInputs(bHash);
             }
             // END in the next release this can be replaced with hardcoded COutPoint in vBurntInputs
         }
+        else
+        {
+            // we need to check every new block incase the burnt coins have made a stake
+            const uint256 bHash = chainActive.Tip()->GetBlockHash();
+            CBlockIndex* pblockindex = mapBlockIndex[bHash];
+            if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
+            {
+                vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
+            
+                LOCK(cs_main);
+                CheckBlockForBurntInputs(bHash);
+            }
+        }
 
         // check all transaction unspents if a burnt input is attempting to be spent
-        for (unsigned int i = 0; i < tx.vin.size(); i++)
+        // we're going to allow the inputs to mint so they don't create invalid blocks
+        // and risk a fork on older versions
+        if (!tx.IsCoinStake())
         {
-            const COutPoint &prevout = tx.vin[i].prevout;
-            if (find(vBurntInputs.begin(), vBurntInputs.end(), prevout) != vBurntInputs.end())
+            for (unsigned int i = 0; i < tx.vin.size(); i++)
             {
-                LogPrintf("IsInputBurnt() : Transaction %s attempted to spend burnt input %s %i\n", tx.GetHash().ToString(), prevout.hash.ToString(), prevout.n);
-                return true;
+                const COutPoint &prevout = tx.vin[i].prevout;
+                if (find(vBurntInputs.begin(), vBurntInputs.end(), prevout) != vBurntInputs.end())
+                {   
+                    if (tx.vout.size() == 1)
+                    {
+                        // only allow inputs to be sent to a Linda Core Team controlled address
+                        CScript payee;
+                        CBitcoinAddress address("LgUYY8jWMpXUaUKy42NDh2wwVJVLVgZNzX");
+                        payee.SetDestination(address.Get());
+
+                        if (payee == tx.vout[0].scriptPubKey)
+                            return false;
+                    }
+
+                    LogPrintf("IsInputBurnt() : Transaction %s attempted to spend burnt input %s %i\n", tx.GetHash().ToString(), prevout.hash.ToString(), prevout.n);
+                    return true;
+                }
             }
         }
     }
@@ -2889,49 +2940,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
 
     // ----------- masternode payments -----------
-
-    // Linda: Cryptopia coin burn
-    // enforce masternode winner selection matches our selected address on our fund recovery mint block
-    CBlockIndex *pindex = chainActive.Tip();
-    if (pindex != NULL &&  pindex->GetBlockHash() == block.hashPrevBlock && pindex->nHeight+1 == CB_START_BLOCK)
-    {
-        // check we have a payment
-        if (!block.HasMasternodePayment())
-            return state.DoS(100, error("CheckBlock() : masternode payment was invalid for this block"),
-                REJECT_INVALID, "invalid masternode payment");
-
-        CScript payee;
-        // check we have a payee
-        if (!masternodePayments.GetBlockPayee(pindex->nHeight+1, payee))
-            return state.DoS(100, error("CheckBlock() : masternode payee was invalid for this block"),
-                REJECT_INVALID, "invalid masternode payee");
-
-        // check the payee matches the selected address and the reward matches the desired mint
-        CScript blockPayee;
-        CAmount blockPaymentAmount;
-        CAmount masternodePaymentAmount = GetMasternodePayment(pindex->nHeight+1, block.vtx[0].GetValueOut());
-
-        if (block.vtx[1].vout.size() == 3) {
-            blockPayee = block.vtx[1].vout[2].scriptPubKey;
-            blockPaymentAmount = block.vtx[1].vout[2].nValue;
-        } else if (block.vtx[1].vout.size() == 4) {
-            blockPayee = block.vtx[1].vout[3].scriptPubKey;
-            blockPaymentAmount = block.vtx[1].vout[3].nValue;
-        }
-
-        CTxDestination address1;
-        ExtractDestination(blockPayee, address1);
-        CBitcoinAddress address2(address1);
-        CTxDestination address3;
-        ExtractDestination(payee, address3);
-        CBitcoinAddress address4(address3);
-
-        LogPrintf("blockPayee %s payee %s blockPaymentAmount %i masternodePaymentAmount %i\n", address2.ToString(), address4.ToString(),blockPaymentAmount,masternodePaymentAmount );
-
-        if (blockPayee != payee || blockPaymentAmount != masternodePaymentAmount)
-            return state.DoS(100, error("CheckBlock() : masternode payee or payment was invalid for this block"),
-                REJECT_INVALID, "invalid masternode payee or payment");
-    }
 
     bool MasternodePayments = false;
 
@@ -5379,24 +5387,6 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
         if (nHeight < V3_START_BLOCK){
             // MBK: Set masternode reward phase
             return static_cast<int64_t>(blockValue * 0.677777777777777777); // ~2/3 masternode stake reward
-        } else if (nHeight == CB_START_BLOCK) {
-            // Linda: Cryptopia coin burn
-            // at block 720 000 a masternode reward will be payed to a known address to serve as the 
-            // reinbursement for the loss of funds to Cryptopia which have been marked as burnt
-            // due to a failure to safely transfer their funds as well as to cover the losses from
-            // the 4 accounts that had their staking inputs burnt as a result of burning the 
-            // high Cryptopia fee transactions
-            int64_t reimbursement = 0;
-            // tx 9c65b0a749bd7ed31ce497434ca20059381afb9a52270f163326949ea235bf51
-            reimbursement += 45624456187248254;
-            // tx ca5ae30a273f93c6a2e497c3cc294e7c61274aa1425c05c3fd049d92b61161b8
-            reimbursement += 15212550611824483;
-            // tx 01efd8d58f9440f2dd09fbd84f10191c737d0ec038b0ea96cf1752574d268472
-            reimbursement += 30414657917067832;
-            // tx 8af0df2ce664a60920808e38b1fc51154f930cdcf516c4a6c068212cfc6626c0
-            reimbursement += 30434099798535854 + 30434099797000003;
-
-            return reimbursement;
         } else {
             // starting V3 masternodes will earn a constant block reward ~60% over the year
             return MASTERNODE_REWARD_V3;

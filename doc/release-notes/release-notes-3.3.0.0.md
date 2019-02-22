@@ -57,6 +57,10 @@ The wallet code still uses a default fee for low-priority transactions of 0.01Li
 ## About this Release
 
 ### What's New
+
+#### Cryptopia Coin Burn
+Please see [https://drive.google.com/open?id=1jsxqPrBg7Qrm6CFJbvAMgGs6uIvHpeFu](https://drive.google.com/open?id=1jsxqPrBg7Qrm6CFJbvAMgGs6uIvHpeFu) for full details.
+
 #### Block-chain handling and storage:
 - Check for correct genesis (prevent cases where a datadir from the wrong network is accidentally loaded)
 - Log aborted block database rebuilds
@@ -159,3 +163,4 @@ The wallet code still uses a default fee for low-priority transactions of 0.01Li
 - Remove bignum dependency for scripts
 
 ### Bug Fixes
+- Fixed a bug that caused an overflow that sent the transaction change as fees
