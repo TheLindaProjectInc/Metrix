@@ -189,7 +189,6 @@ extern bool fMinimizeCoinAge;
 static const uint64_t nMinDiskSpace = 52428800;
 
 class CReserveKey;
-class CCoinsDB;
 class CBlockTreeDB;
 struct CDiskBlockPos;
 class CCoins;
