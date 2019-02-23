@@ -96,6 +96,10 @@ public:
 
     /** A wallet has been loaded. */
     boost::signals2::signal<void(CWallet* wallet)> LoadWallet;
+
+    
+    /** Show progress e.g. for verifychain */
+    boost::signals2::signal<void (const std::string &title, int nProgress)> ShowProgress;
 };
 
 extern CClientUIInterface uiInterface;
