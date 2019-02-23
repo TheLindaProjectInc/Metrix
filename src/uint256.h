@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <assert.h>
-
+#include <stdexcept>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,8 +21,12 @@ inline signed char HexDigit(char c)
     return p_util_hexdigit[(unsigned char)c];
 }
 
-inline int Testuint256AdHoc(std::vector<std::string> vArg);
+class uint_error : public std::runtime_error {
+public:
+    explicit uint_error(const std::string& str) : std::runtime_error(str) {}
+};
 
+inline int Testuint256AdHoc(std::vector<std::string> vArg);
 
 /** Base class without constructors for uint256 and uint160.
  * This makes the compiler let u use it in a union.
@@ -535,11 +539,9 @@ public:
 
     explicit uint160(const std::vector<unsigned char>& vch)
     {
-        if (vch.size() == sizeof(pn))
-            memcpy(pn, &vch[0], sizeof(pn));
-        else
-            *this = 0;
-    }
+        if (vch.size() != sizeof(pn))
+            throw uint_error("Converting vector of wrong size to base_uint");
+        memcpy(pn, &vch[0], sizeof(pn));
 };
 
 inline bool operator==(const uint160& a, uint64_t b)                         { return (base_uint160)a == b; }
