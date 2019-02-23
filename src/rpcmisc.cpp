@@ -80,7 +80,7 @@ Value getinfo(const Array& params, bool fHelp)
     }
 #endif
     obj.push_back(Pair("blocks",        (int)chainActive.Height()));
-    obj.push_back(Pair("timeoffset",    (int64_t)GetTimeOffset()));
+    obj.push_back(Pair("timeoffset",    GetTimeOffset()));
     obj.push_back(Pair("moneysupply",   ValueFromAmount(chainActive.Tip()->nMoneySupply)));
     obj.push_back(Pair("connections",   (int)vNodes.size()));
     obj.push_back(Pair("proxy",         (proxy.IsValid() ? proxy.ToStringIPPort() : string())));
@@ -93,14 +93,14 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("testnet",       TestNet()));
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
-        obj.push_back(Pair("keypoololdest", (int64_t)pwalletMain->GetOldestKeyPoolTime()));
+        obj.push_back(Pair("keypoololdest", pwalletMain->GetOldestKeyPoolTime()));
         obj.push_back(Pair("keypoolsize",   (int)pwalletMain->GetKeyPoolSize()));
     }
     obj.push_back(Pair("mininput",      ValueFromAmount(nMinimumInputValue)));
     // get lock/encryption status
     if (pwalletMain) {
         if (pwalletMain->IsCrypted())
-            obj.push_back(Pair("unlocked_until", (int64_t)nWalletUnlockTime));
+            obj.push_back(Pair("unlocked_until", nWalletUnlockTime));
 
         if(!pwalletMain->IsCrypted())
             obj.push_back(Pair("encryption_status", "Unencrypted"));
