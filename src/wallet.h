@@ -339,7 +339,6 @@ public:
 
     bool NewKeyPool();
     bool TopUpKeyPool(unsigned int nSize = 0);
-    int64_t AddReserveKey(const CKeyPool& keypool);
     void ReserveKeyFromKeyPool(int64_t& nIndex, CKeyPool& keypool);
     void KeepKey(int64_t nIndex);
     void ReturnKey(int64_t nIndex);
