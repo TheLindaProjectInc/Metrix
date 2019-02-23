@@ -42,7 +42,6 @@ using namespace std;
 using namespace boost;
 
 #ifdef ENABLE_WALLET
-std::string strWalletFile;
 CWallet* pwalletMain = NULL;
 #endif
 
@@ -653,7 +652,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
     bSpendZeroConfChange = GetArg("-spendzeroconfchange", true);
 
-    strWalletFile = GetArg("-wallet", "wallet.dat");
+    std::string strWalletFile = GetArg("-wallet", "wallet.dat");
 #endif
 
     fConfChange = GetBoolArg("-confchange", false);
