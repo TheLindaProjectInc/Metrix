@@ -31,7 +31,7 @@
 using namespace std;
 
 // Settings
-int64_t nTransactionFee = DEFAULT_TRANSACTION_FEE;
+CFeeRate payTxFee(DEFAULT_TRANSACTION_FEE);
 int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
 bool bSpendZeroConfChange = true;
@@ -2382,7 +2382,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
     {
         LOCK2(cs_main, cs_wallet);
         {
-            nFeeRet = nTransactionFee;
+            nFeeRet = payTxFee.GetFeePerK();
             while (true)
             {
                 wtxNew.vin.clear();
@@ -2395,7 +2395,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                 BOOST_FOREACH (const PAIRTYPE(CScript, int64_t)& s, vecSend)
                 {
                     CTxOut txout(s.second, s.first);
-                    if (txout.IsDust(CTransaction::nMinRelayTxFee))
+                    if (txout.IsDust(CTransaction::minRelayTxFee))
                     {
                         strFailReason = _("Transaction amount too small");
                         return false;
@@ -2462,7 +2462,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                     CTxOut newTxOut(nChange, scriptChange);
                     // Never create dust outputs; if we would, just
                     // add the dust to the fee.
-                    if (newTxOut.IsDust(CTransaction::nMinRelayTxFee))
+                    if (newTxOut.IsDust(CTransaction::minRelayTxFee))
                     {
                         nFeeRet += nChange;
                         reservekey.ReturnKey();
@@ -2508,7 +2508,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                 dPriority = wtxNew.ComputePriority(dPriority, nBytes);
 
                 // Check that enough fee is included
-                int64_t nPayFee = nTransactionFee * (1 + (int64_t)nBytes / 1000);
+                int64_t nPayFee = payTxFee.GetFee(nBytes);
                 int64_t nMinFee = GetMinFee(wtxNew, GMF_SEND, nBytes);
 
                 LogPrintf("CWallet::CreateTransaction() -> nPayFee=%d  nMinFee=%d", nPayFee, nMinFee);
@@ -3655,7 +3655,7 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64_t nV
     // Check amount
     if (nValue <= 0)
         return _("Invalid amount");
-    if (nValue + nTransactionFee > GetBalance())
+    if (nValue > GetBalance())
         return _("Insufficient funds");
 
     if (sNarr.length() > 24)
