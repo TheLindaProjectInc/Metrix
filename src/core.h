@@ -112,6 +112,8 @@ public:
     }
 
     std::string ToString() const;
+
+    IMPLEMENT_SERIALIZE( READWRITE(nSatoshisPerK); )
 };
 
 /** Type-safe wrapper class to for fee rates
@@ -122,6 +124,7 @@ class CFeeRate
 private:
     int64_t nSatoshisPerK; // unit is satoshis-per-1,000-bytes
 public:
+    CFeeRate() : nSatoshisPerK(0) { }
     explicit CFeeRate(int64_t _nSatoshisPerK): nSatoshisPerK(_nSatoshisPerK) { }
     CFeeRate(int64_t nFeePaid, size_t nSize);
     CFeeRate(const CFeeRate& other) { nSatoshisPerK = other.nSatoshisPerK; }
