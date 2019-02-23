@@ -312,8 +312,8 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -help-debug            " + _("Show all debugging options (usage: --help -help-debug)") + "\n";
     strUsage += "  -logtimestamps         " + _("Prepend debug output with timestamp") + "\n";
     strUsage += "  -shrinkdebugfile       " + _("Shrink debug.log file on client startup (default: 1 when no -debug)") + "\n";
-    strUsage += "  -mintxfee=<amt>        " + _("Fees smaller than this are considered zero fee (for transaction creation) (default:") + " " + FormatMoney(CTransaction::nMinTxFee) + ")" + "\n";
-    strUsage += "  -printtoconsole        " + _("Send trace/debug info to console instead of debug.log file") + "\n";
+    strUsage += "  -mintxfee=<amt>        " + _("Fees smaller than this are considered zero fee (for transaction creation) (default:") + " " + FormatMoney(CTransaction::minTxFee.GetFeePerK()) + ")" + "\n";
+    strUsage += "  -minrelaytxfee=<amt>   " + _("Fees smaller than this are considered zero fee (for relaying) (default:") + " " + FormatMoney(CTransaction::minRelayTxFee.GetFeePerK()) + ")" + "\n";    strUsage += "  -printtoconsole        " + _("Send trace/debug info to console instead of debug.log file") + "\n";
     strUsage += "  -testnet               " + _("Use the test network") + "\n";
 
     strUsage += "\n" + _("Block creation options:") + "\n";
@@ -629,7 +629,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     {
         int64_t n = 0;
         if (ParseMoney(mapArgs["-mintxfee"], n) && n > 0)
-            CTransaction::nMinTxFee = n;
+            CTransaction::minTxFee = CFeeRate(n);
         else
             return InitError(strprintf(_("Invalid amount for -mintxfee=<amount>: '%s'"), mapArgs["-mintxfee"].c_str()));
     }
@@ -637,7 +637,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     {
         int64_t n = 0;
         if (ParseMoney(mapArgs["-minrelaytxfee"], n) && n > 0)
-            CTransaction::nMinRelayTxFee = n;
+            CTransaction::minRelayTxFee = CFeeRate(n);
         else
             return InitError(strprintf(_("Invalid amount for -minrelaytxfee=<amount>: '%s'"), mapArgs["-minrelaytxfee"].c_str()));
     }
@@ -645,10 +645,13 @@ bool AppInit2(boost::thread_group& threadGroup)
 #ifdef ENABLE_WALLET
     if (mapArgs.count("-paytxfee"))
     {
-        if (!ParseMoney(mapArgs["-paytxfee"], nTransactionFee))
+        int64_t nFeePerK = 0;
+        if (!ParseMoney(mapArgs["-paytxfee"], nFeePerK)
             return InitError(strprintf(_("Invalid amount for -paytxfee=<amount>: '%s'"), mapArgs["-paytxfee"]));
-        if (nTransactionFee > nHighTransactionFeeWarning)
+        if (nFeePerK > nHighTransactionFeeWarning)
             InitWarning(_("Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction."));
+        payTxFee = CFeeRate(nFeePerK, 10000);
+
     }
     bSpendZeroConfChange = GetArg("-spendzeroconfchange", true);
 

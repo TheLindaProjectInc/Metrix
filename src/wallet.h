@@ -22,7 +22,7 @@
 #include "stealth.h"
 
 // Settings
-extern int64_t nTransactionFee;
+extern CFeeRate payTxFee;
 extern int64_t nReserveBalance;
 extern int64_t nMinimumInputValue;
 extern bool fWalletUnlockStakingOnly;
