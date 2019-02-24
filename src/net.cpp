@@ -1405,18 +1405,18 @@ bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant *grantOu
     // Initiate outbound network connection
     //
     boost::this_thread::interruption_point();
-    if (!strDest)
+    if (!strDest) {
         if (IsLocal(addrConnect) ||
             FindNode((CNetAddr)addrConnect) || CNode::IsBanned(addrConnect) ||
             FindNode(addrConnect.ToStringIPPort().c_str()))
             return false;
-    if (strDest && FindNode(strDest))
+    } else if (strDest && FindNode(strDest))
         return false;
 
     CNode* pnode = ConnectNode(addrConnect, strDest);
     boost::this_thread::interruption_point();
 
-    if (!pnode)
+    if (!pnode) 
         return false;
     if (grantOutbound)
         grantOutbound->MoveTo(pnode->grantOutbound);
