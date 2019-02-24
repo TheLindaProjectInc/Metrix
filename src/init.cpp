@@ -305,6 +305,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -minimizecoinage       " + _("Minimize weight consumption (experimental) (default: 0)") + "\n";
     strUsage += "  -regtest               " + _("Enter regression test mode, which uses a special chain in which blocks can be ");
     strUsage += _("solved instantly. This is intended for regression testing tools and app development.") + "\n";
+    strUsage += "  -stopafterblockimport  " + _("Stop running after importing blocks from disk (default: 0)") + "\n";
     }
     strUsage += "  -debug=<category>      " + _("Output debugging information (default: 0, supplying <category> is optional)") + "\n";
     strUsage += _("If <category> is not supplied, output all debugging information.") + "\n";
