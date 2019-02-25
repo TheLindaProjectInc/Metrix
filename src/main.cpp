@@ -855,6 +855,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int nBytes)
 {
     
+    int64_t nMinFee;
+
     if(chainActive.Height() < TX_FEE_V2_INCREASE_BLOCK) {
         nMinFee = MIN_TX_FEE_V1;
     }
@@ -862,11 +864,10 @@ int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int
     {
         // Base fee is either minTxFee or minRelayTxFee
         CFeeRate baseFeeRate = (mode == GMF_RELAY) ? tx.minRelayTxFee : tx.minTxFee;
-        int64_t nMinFee = baseFeeRate.GetFee(nBytes);
-
-        if (!MoneyRange(nMinFee))
-            nMinFee = MAX_MONEY;
-    }
+        nMinFee = baseFeeRate.GetFee(nBytes);
+    }        
+    if (!MoneyRange(nMinFee))
+        nMinFee = MAX_MONEY;
     return nMinFee;
 }
 
