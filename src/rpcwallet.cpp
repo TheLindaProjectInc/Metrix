@@ -2132,7 +2132,7 @@ Value makekeypair(const Array& params, bool fHelp)
 
 Value settxfee(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 1 || AmountFromValue(params[0]) < CTransaction::nMinTxFee)
+    if (fHelp || params.size() < 1 || params.size() > 1 || AmountFromValue(params[0]) < CTransaction::minTxFee)
         throw runtime_error(
             "settxfee <linda/kb>\n"
             "<amount> is a real and is rounded to the nearest 0.01 linda per kb");
