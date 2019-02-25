@@ -591,7 +591,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             return false;
         }
     }
-
+    
     unsigned int nDataOut = 0;
     txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, tx.vout) {
@@ -601,7 +601,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         }
         if (whichType == TX_NULL_DATA)
             nDataOut++;
-        if (txout.IsDust(CTransaction::MinRelayTxFee)) {
+        if (txout.IsDust(CTransaction::minRelayTxFee)) {
             reason = "dust";
             return false;
         }
@@ -855,7 +855,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int nBytes)
 {
     int64_t nMinTxFee = CTransaction::MinTxFee;
-    int64_t nMinRelayTxFee = CTransaction::MinRelayTxFee;
+    int64_t nMinRelayTxFee = CTransaction::minRelayTxFee;
     if(chainActive.Height() < TX_FEE_V2_INCREASE_BLOCK) {
         nMinTxFee = MIN_TX_FEE_V1;
         nMinRelayTxFee = MIN_RELAY_TX_FEE_V1;
@@ -1166,7 +1166,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
         // MBK: Support the tx fee increase at blockheight
-        if (fLimitFree && nFees < CTransaction::MinRelayTxFee)
+        if (fLimitFree && nFees < CTransaction::minRelayTxFee)
         {
             static CCriticalSection csFreeLimiter;
             static double dFreeCount;

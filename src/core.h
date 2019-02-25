@@ -124,7 +124,7 @@ private:
     int64_t nSatoshisPerK; // unit is satoshis-per-1,000-bytes
 public:
     CFeeRate() : nSatoshisPerK(0) { }
-    explicit CFeeRate(int64_t _nSatoshisPerK): nSatoshisPerK(_nSatoshisPerK) { }
+    explicit CFeeRate(int64_t _nSatoshisPerK) : nSatoshisPerK(_nSatoshisPerK) { }
     CFeeRate(int64_t nFeePaid, size_t nSize);
     CFeeRate(const CFeeRate& other) { nSatoshisPerK = other.nSatoshisPerK; }
 
@@ -138,7 +138,6 @@ public:
     std::string ToString() const;
 
     IMPLEMENT_SERIALIZE(READWRITE(nSatoshisPerK); )
-
 };
 
 
@@ -201,6 +200,7 @@ public:
         return (nValue < 3*minRelayTxFee.GetFee(nSize));
 
     }
+
     friend bool operator==(const CTxOut& a, const CTxOut& b)
     {
         return (a.nValue       == b.nValue &&
