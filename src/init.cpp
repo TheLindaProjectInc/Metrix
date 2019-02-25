@@ -657,7 +657,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (mapArgs.count("-paytxfee"))
     {
         int64_t nFeePerK = 0;
-        if (!ParseMoney(mapArgs["-paytxfee"], nFeePerK)
+        if (!ParseMoney(mapArgs["-paytxfee"], nFeePerK))
             return InitError(strprintf(_("Invalid amount for -paytxfee=<amount>: '%s'"), mapArgs["-paytxfee"]));
         if (nFeePerK > nHighTransactionFeeWarning)
             InitWarning(_("Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction."));
