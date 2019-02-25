@@ -216,7 +216,7 @@ bool IsPeerAddrLocalGood(CNode *pnode)
 // pushes our own address to a peer
 void AdvertizeLocal(CNode *pnode)
 {
-    if (!fNoListen && pnode->fSuccessfullyConnected)
+    if (fListen && pnode->fSuccessfullyConnected)
     {
         CAddress addrLocal = GetLocalAddress(&pnode->addr);
         // If discovery is enabled, sometimes give our peer the address it
