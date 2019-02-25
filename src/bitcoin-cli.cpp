@@ -74,7 +74,8 @@ int main(int argc, char* argv[])
         PrintExceptionContinue(NULL, "AppInitRPC()");
         return EXIT_FAILURE;
     }
-        return EXIT_FAILURE;
+
+    int ret = EXIT_FAILURE;
     try
     {
         ret = CommandLineRPC(argc, argv);
