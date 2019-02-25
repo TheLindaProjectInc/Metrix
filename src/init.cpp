@@ -597,7 +597,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (GetBoolArg("-nodebug", false) || find(categories.begin(), categories.end(), string("0")) != categories.end())
         fDebug = false;
 
-    mempool.setSanityCheck(GetBoolArg("-checkmempool", RegTest()));
+    mempool.setSanityCheck(GetBoolArg("-checkmempool", Params().DefaultCheckMemPool()));
     Checkpoints::fEnabled = GetBoolArg("-checkpoints", true);
     // -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency
     nScriptCheckThreads = GetArg("-par", DEFAULT_SCRIPTCHECK_THREADS);
@@ -867,7 +867,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     fNameLookup = GetBoolArg("-dns", true);
 
     bool fBound = false;
-    if (fListen) {
+    if (fListen)
     {
         if (mapArgs.count("-bind") || mapArgs.count("-whitebind")) {
             BOOST_FOREACH(std::string strBind, mapMultiArgs["-bind"]) {
