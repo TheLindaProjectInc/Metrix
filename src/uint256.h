@@ -473,6 +473,7 @@ public:
         if (vch.size() != sizeof(pn))
             throw uint_error("Converting vector of wrong size to base_uint");
         memcpy(pn, &vch[0], sizeof(pn));
+    }
 };
 
 inline bool operator==(const uint160& a, uint64_t b)                         { return (base_uint160)a == b; }
