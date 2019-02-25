@@ -331,7 +331,6 @@ CTxMemPool::CTxMemPool()
     // accepting transactions becomes O(N^2) where N is the number
     // of transactions in the pool
     fSanityCheck = false;
-}
 
     // 25 blocks is a compromise between using a lot of disk/memory and
     // trying to give accurate estimates to people who might be willing
