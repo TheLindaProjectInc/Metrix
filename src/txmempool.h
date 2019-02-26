@@ -10,6 +10,13 @@
 #include "coins.h"
 #include "core.h"
 
+inline bool AllowFree(double dPriority)
+{
+    // Large (in bytes) low-priority (new, small-coin) transactions
+    // need a fee.
+    return dPriority > COIN * 144 / 250;
+}
+
 /** Fake height value used in CCoins to signify they are only in the memory pool (since 0.8) */
 static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
 
@@ -40,6 +47,8 @@ public:
     unsigned int GetHeight() const { return nHeight; }
 };
 
+class CMinerPolicyEstimator;
+
 class CCoins;
 
 /*
@@ -57,6 +66,8 @@ class CTxMemPool
 private:
     bool fSanityCheck; // Normally false, true if -checkmempool or -regtest
     unsigned int nTransactionsUpdated;
+    CMinerPolicyEstimator* minerPolicyEstimator;
+
 
 public:
     mutable CCriticalSection cs;
@@ -64,6 +75,8 @@ public:
     std::map<COutPoint, CInPoint> mapNextTx;
 
     CTxMemPool();
+    ~CTxMemPool();
+
 
     /*
      * If sanity-checking is turned on, check makes sure the pool is
@@ -78,6 +91,8 @@ public:
     bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry);
     void remove(const CTransaction &tx, std::list<CTransaction>& removed, bool fRecursive = false);
     void removeConflicts(const CTransaction &tx, std::list<CTransaction>& removed);
+    void removeForBlock(const std::vector<CTransaction>& vtx, unsigned int nBlockHeight,
+                        std::list<CTransaction>& conflicts);
     void clear();
     void queryHashes(std::vector<uint256>& vtxid);
     void pruneSpent(const uint256& hash, CCoins &coins);
@@ -97,6 +112,16 @@ public:
     }
 
     bool lookup(uint256 hash, CTransaction& result) const;
+    
+    // Estimate fee rate needed to get into the next
+    // nBlocks
+    CFeeRate estimateFee(int nBlocks) const;
+    // Estimate priority needed to get into the next
+    // nBlocks
+    double estimatePriority(int nBlocks) const;
+    // Write/Read estimates to disk
+    bool WriteFeeEstimates(CAutoFile& fileout) const;
+    bool ReadFeeEstimates(CAutoFile& filein);
 };
 
 /** CCoinsView that brings transactions from a memorypool into view.

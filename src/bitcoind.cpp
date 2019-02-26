@@ -65,20 +65,22 @@ bool AppInit(int argc, char* argv[])
             return false;
         }
 
-        if (mapArgs.count("-?") || mapArgs.count("--help"))
+        if (mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version"))
         {
-            // First part of help message is specific to bitcoind / RPC client
-            std::string strUsage = _("Linda version") + " " + FormatFullVersion() + "\n\n" +
-                _("Usage:") + "\n" +
-                  "  Lindad [options]                     " + _("Start Lindad server") + "\n" +
-                  _("Usage (deprecated, use Lindad-cli):") + "\n" +
-                  "  Lindad [options] <command> [params]  " + _("Send command to Lindad server") + "\n" +
-                  "  Lindad [options] help                " + _("List commands") + "\n" +
-                  "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
+        std::string strUsage = _("Linda Version") + " " + _("version") + " " + FormatFullVersion() + "\n";
 
-            strUsage += "\n" + HelpMessage(HMM_BITCOIND);
-            strUsage += "\n" + HelpMessageCli(false);
+            if (!mapArgs.count("-version"))
+            {
+                strUsage += "\n" + _("Usage:") + "\n" +
+                      "  Lindad [options]                     " + _("Start Lindad Server") + "\n" +
+                    _("Usage (deprecated, use bitcoin-cli):") + "\n" +
+                      "  Lindad [options] <command> [params]  " + _("Send command to Lindad Server") + "\n" +
+                      "  Lindad [options] help                " + _("List commands") + "\n" +
+                      "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
 
+                strUsage += "\n" + HelpMessage(HMM_BITCOIND);
+                strUsage += "\n" + HelpMessageCli(false);
+            }
             fprintf(stdout, "%s", strUsage.c_str());
             return false;
         }
@@ -146,15 +148,10 @@ bool AppInit(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-    bool fRet = false;
+    SetupEnvironment();
 
     // Connect bitcoind signal handlers
     noui_connect();
 
-    fRet = AppInit(argc, argv);
-
-    if (fRet && fDaemon)
-        return 0;
-
-    return (fRet ? 0 : 1);
+    return (AppInit(argc, argv) ? 0 : 1);
 }

@@ -22,7 +22,7 @@
 #include "stealth.h"
 
 // Settings
-extern int64_t nTransactionFee;
+extern CFeeRate payTxFee;
 extern int64_t nReserveBalance;
 extern int64_t nMinimumInputValue;
 extern bool fWalletUnlockStakingOnly;
@@ -339,7 +339,6 @@ public:
 
     bool NewKeyPool();
     bool TopUpKeyPool(unsigned int nSize = 0);
-    int64_t AddReserveKey(const CKeyPool& keypool);
     void ReserveKeyFromKeyPool(int64_t& nIndex, CKeyPool& keypool);
     void KeepKey(int64_t nIndex);
     void ReturnKey(int64_t nIndex);

@@ -189,7 +189,6 @@ extern bool fMinimizeCoinAge;
 static const uint64_t nMinDiskSpace = 52428800;
 
 class CReserveKey;
-class CCoinsDB;
 class CBlockTreeDB;
 struct CDiskBlockPos;
 class CCoins;
@@ -233,8 +232,6 @@ bool InitBlockIndex();
 bool LoadBlockIndex();
 /** Unload database information */
 void UnloadBlockIndex();
-/** Verify consistency of the block and coin databases */
-bool VerifyDB(int nCheckLevel, int nCheckDepth);
 /** Print the loaded block tree */
 void PrintBlockTree();
 /** Process protocol messages received from a given node */
@@ -959,8 +956,6 @@ public:
         return pbegin[(pend - pbegin)/2];
     }
 
-    int64_t GetMedianTime() const;
-
     /**
      * Returns true if there are nRequired or more blocks of minVersion or above
      * in the last nToCheck blocks, starting at pstart and going backwards.
@@ -1179,6 +1174,14 @@ public:
     std::string GetRejectReason() const { return strRejectReason; }
 };
 
+/** RAII wrapper for VerifyDB: Verify consistency of the block and coin databases */
+class CVerifyDB {
+public:
+
+    CVerifyDB();
+    ~CVerifyDB();
+    bool VerifyDB(int nCheckLevel, int nCheckDepth);
+};
 
 class CWalletInterface {
 protected:

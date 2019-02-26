@@ -37,36 +37,44 @@ static bool AppInitRPC(int argc, char* argv[])
         return false;
     }
 
-    if (argc < 2 || mapArgs.count("-?") || mapArgs.count("--help"))
+    if (argc<2 || mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version"))
     {
         // First part of help message is specific to RPC client
-        std::string strUsage = _("Linda RPC client version") + " " + FormatFullVersion() + "\n\n" +
-            _("Usage:") + "\n" +
-            "  Linda-cli [options] <command> [params]  " + _("Send command to Linda server") + "\n" +
-            "  Linda-cli [options] help                " + _("List commands") + "\n" +
-            "  Linda-cli [options] help <command>      " + _("Get help for a command") + "\n";
-        strUsage += "\n" + HelpMessageCli(true);
-        fprintf(stdout, "%s", strUsage.c_str());
-        return false;
+        std::string strUsage = _("Linda RPC client version") + " " + FormatFullVersion() + "\n";
+        if (!mapArgs.count("-version"))
+        {
+            strUsage += "\n" + _("Usage:") + "\n" +
+                  "  bitcoin-cli [options] <command> [params]  " + _("Send command to Lindacoin Core") + "\n" +
+                  "  bitcoin-cli [options] help                " + _("List commands") + "\n" +
+                  "  bitcoin-cli [options] help <command>      " + _("Get help for a command") + "\n";
+
+            strUsage += "\n" + HelpMessageCli(true);
+        }  
+
+            fprintf(stdout, "%s", strUsage.c_str());
+            return false;
     }
     return true;
 }
+
 int main(int argc, char* argv[])
 {
+    SetupEnvironment();
+
     try
     {
         if (!AppInitRPC(argc, argv))
-            return abs(RPC_MISC_ERROR);
+            return EXIT_FAILURE;
     }
     catch (std::exception& e) {
         PrintExceptionContinue(&e, "AppInitRPC()");
-        return abs(RPC_MISC_ERROR);
+        return EXIT_FAILURE;
     }
     catch (...) {
         PrintExceptionContinue(NULL, "AppInitRPC()");
-        return abs(RPC_MISC_ERROR);
+        return EXIT_FAILURE;
     }
-    int ret = abs(RPC_MISC_ERROR);
+        return EXIT_FAILURE;
     try
     {
         ret = CommandLineRPC(argc, argv);

@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <assert.h>
-
+#include <stdexcept>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,8 +21,12 @@ inline signed char HexDigit(char c)
     return p_util_hexdigit[(unsigned char)c];
 }
 
-inline int Testuint256AdHoc(std::vector<std::string> vArg);
+class uint_error : public std::runtime_error {
+public:
+    explicit uint_error(const std::string& str) : std::runtime_error(str) {}
+};
 
+inline int Testuint256AdHoc(std::vector<std::string> vArg);
 
 /** Base class without constructors for uint256 and uint160.
  * This makes the compiler let u use it in a union.
@@ -183,6 +187,57 @@ public:
         return *this;
     }
 
+    base_uint& operator*=(uint32_t b32)
+    {
+        uint64_t carry = 0;
+        for (int i = 0; i < WIDTH; i++)
+        {
+            uint64_t n = carry + (uint64_t)b32 * pn[i];
+            pn[i] = n & 0xffffffff;
+            carry = n >> 32;
+        }
+        return *this;
+    }
+
+    base_uint& operator*=(const base_uint& b)
+    {
+        base_uint a = *this;
+        *this = 0;
+        for (int j = 0; j < WIDTH; j++) {
+            uint64_t carry = 0;
+            for (int i = 0; i + j < WIDTH; i++) {
+                uint64_t n = carry + pn[i + j] + (uint64_t)a.pn[j] * b.pn[i];
+                pn[i + j] = n & 0xffffffff;
+                carry = n >> 32;
+            }
+        }
+        return *this;
+    }
+
+    base_uint& operator/=(const base_uint& b)
+    {
+        base_uint div = b; // make a copy, so we can shift.
+        base_uint num = *this; // make a copy, so we can subtract.
+        *this = 0; // the quotient.
+        int num_bits = num.bits();
+        int div_bits = div.bits();
+        if (div_bits == 0)
+            throw uint_error("Division by zero");
+        if (div_bits > num_bits) // the result is certainly 0.
+            return *this;
+        int shift = num_bits - div_bits;
+        div <<= shift; // shift so that div and nun align.
+        while (shift >= 0) {
+            if (num >= div) {
+                num -= div;
+                pn[shift / 32] |= (1 << (shift & 31)); // set a bit of the result.
+            }
+            div >>= 1; // shift back.
+            shift--;
+        }
+        // num now contains the remainder of the division.
+        return *this;
+    }
 
     base_uint& operator++()
     {
@@ -297,7 +352,9 @@ public:
         return (!(a == b));
     }
 
-
+    friend inline const base_uint operator*(const base_uint& a, const base_uint& b) { return base_uint(a) *= b; }
+    friend inline const base_uint operator/(const base_uint& a, const base_uint& b) { return base_uint(a) /= b; }
+    friend inline const base_uint operator*(const base_uint& a, uint32_t b) { return base_uint(a) *= b; }
 
     std::string GetHex() const
     {
@@ -372,6 +429,22 @@ public:
     unsigned int size()
     {
         return sizeof(pn);
+    }
+
+    // Returns the position of the highest bit set plus one, or zero if the
+    // value is zero.
+    unsigned int bits() const
+    {
+        for (int pos = WIDTH-1; pos >= 0; pos--) {
+            if (pn[pos]) {
+                for (int bits = 31; bits > 0; bits--) {
+                    if (pn[pos] & 1<<bits)
+                        return 32*pos + bits + 1;
+                }
+                return 32*pos + 1;
+            }
+        }
+        return 0;
     }
 
     uint64_t GetLow64() const
@@ -466,11 +539,9 @@ public:
 
     explicit uint160(const std::vector<unsigned char>& vch)
     {
-        if (vch.size() == sizeof(pn))
-            memcpy(pn, &vch[0], sizeof(pn));
-        else
-            *this = 0;
-    }
+        if (vch.size() != sizeof(pn))
+            throw uint_error("Converting vector of wrong size to base_uint");
+        memcpy(pn, &vch[0], sizeof(pn));
 };
 
 inline bool operator==(const uint160& a, uint64_t b)                         { return (base_uint160)a == b; }
