@@ -53,21 +53,6 @@ uint256 CTxOut::GetHash() const
     return SerializeHash(*this);
 }
 
-bool CTxOut::IsDust(int64_t nMinRelayTxFee) const
-{
-    // "Dust" is defined in terms of CTransaction::nMinRelayTxFee,
-    // which has units satoshis-per-kilobyte.
-    // If you'd pay more than 1/3 in fees
-    // to spend something, then we consider it dust.
-    // A typical txout is 34 bytes big, and will
-    // need a CTxIn of at least 148 bytes to spend,
-    // so dust is a txout less than 5460 satoshis
-    // with default nMinRelayTxFee
-    int64_t nSize = GetSerializeSize(SER_DISK, 0) + 148;
-    int64_t dustLimit = 3 * nSize * (nMinRelayTxFee / 1000);
-    return nValue < dustLimit;
-}
-
 std::string CTxOut::ToString() const
 {
     if (IsEmpty()) return "CTxOut(empty)";

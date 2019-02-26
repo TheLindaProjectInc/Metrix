@@ -2960,7 +2960,7 @@ bool CWallet::SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t 
         return false;
     };
 
-    if (nValue + nTransactionFee + (1) > GetBalance())
+    if (nValue > GetBalance())
     {
         sError = "Insufficient funds";
         return false;

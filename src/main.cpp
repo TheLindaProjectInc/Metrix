@@ -591,7 +591,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             return false;
         }
     }
-
+    
     unsigned int nDataOut = 0;
     txnouttype whichType;
     BOOST_FOREACH(const CTxOut& txout, tx.vout) {
@@ -601,7 +601,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         }
         if (whichType == TX_NULL_DATA)
             nDataOut++;
-        if (txout.IsDust(CTransaction::nMinRelayTxFee)) {
+        if (txout.IsDust(CTransaction::minRelayTxFee)) {
             reason = "dust";
             return false;
         }
@@ -854,18 +854,18 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 
 int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int nBytes)
 {
-    int64_t nMinTxFee = CTransaction::nMinTxFee;
-    int64_t nMinRelayTxFee = CTransaction::nMinRelayTxFee;
+    
+    int64_t nMinFee;
+
     if(chainActive.Height() < TX_FEE_V2_INCREASE_BLOCK) {
-        nMinTxFee = MIN_TX_FEE_V1;
-        nMinRelayTxFee = MIN_RELAY_TX_FEE_V1;
+        nMinFee = MIN_TX_FEE_V1;
     }
-
- // Base fee is either minTxFee or minRelayTxFee
-    CFeeRate baseFeeRate = (mode == GMF_RELAY) ? tx.minRelayTxFee : tx.minTxFee;
-
-    int64_t nMinFee = baseFeeRate.GetFee(nBytes);
-
+    else
+    {
+        // Base fee is either minTxFee or minRelayTxFee
+        CFeeRate baseFeeRate = (mode == GMF_RELAY) ? tx.minRelayTxFee : tx.minTxFee;
+        nMinFee = baseFeeRate.GetFee(nBytes);
+    }        
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
     return nMinFee;
@@ -1166,7 +1166,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
         // MBK: Support the tx fee increase at blockheight
-        if (fLimitFree && nFees < CTransaction::nMinRelayTxFee)
+        if (fLimitFree && nFees < CTransaction::minRelayTxFee.GetFee(nSize))
         {
             static CCriticalSection csFreeLimiter;
             static double dFreeCount;
