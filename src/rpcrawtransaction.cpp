@@ -777,7 +777,7 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     catch (std::exception &e) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
-    uint256 hashTx = tx.GetHash();
+    const uint256 &hashTx = tx.GetHash();
 
     CCoinsViewCache &view = *pcoinsTip;
     CCoins existingCoins;
@@ -787,7 +787,7 @@ Value sendrawtransaction(const Array& params, bool fHelp)
         // push to local node and sync with wallets
         CValidationState state;
         if (AcceptToMemoryPool(mempool, state, tx, false, NULL, !fOverrideFees))
-            SyncWithWallets(hashTx, tx, NULL);
+            SyncWithWallets(tx, NULL);
         else {
             if(state.IsInvalid())
                 throw JSONRPCError(RPC_TRANSACTION_REJECTED, strprintf("%i: %s", state.GetRejectCode(), state.GetRejectReason()));
