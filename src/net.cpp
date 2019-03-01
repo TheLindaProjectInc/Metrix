@@ -1802,7 +1802,7 @@ void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
     BOOST_FOREACH(CNode* pnode, vNodes)
     if (pnode->pfilter)
     {
-        if (pnode->pfilter->IsRelevantAndUpdate(tx, tx.GetHash()))
+        if (pnode->pfilter->IsRelevantAndUpdate(tx)
             pnode->PushInventory(inv);
     } else
         pnode->PushInventory(inv);
