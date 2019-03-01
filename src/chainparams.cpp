@@ -153,6 +153,7 @@ public:
 
         nLastPOWBlock = 0x7fffffff;
     }
+    virtual bool DefaultCheckMemPool() const { return true; }
     virtual Network NetworkID() const { return CChainParams::TESTNET; }
 };
 static CTestNetParams testNetParams;

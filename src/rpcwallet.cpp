@@ -2132,14 +2132,23 @@ Value makekeypair(const Array& params, bool fHelp)
 
 Value settxfee(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 1 || AmountFromValue(params[0]) < CTransaction::nMinTxFee)
+    if (fHelp || params.size() < 1 || params.size() > 1)
         throw runtime_error(
-            "settxfee <linda/kb>\n"
-            "<amount> is a real and is rounded to the nearest 0.01 linda per kb");
-
-    nTransactionFee = AmountFromValue(params[0]);
-    nTransactionFee = (nTransactionFee / CENT) * CENT;  // round to cent
-
+            "settxfee amount\n"
+            "\nSet the transaction fee per kB.\n"
+            "\nArguments:\n"
+            "1. amount         (numeric, required) The transaction fee in BTC/kB rounded to the nearest 0.00000001\n"
+            "\nResult\n"
+            "true|false        (boolean) Returns true if successful\n"
+            "\nExamples:\n"
+            + HelpExampleCli("settxfee", "0.00001")
+            + HelpExampleRpc("settxfee", "0.00001")
+        );
+    // Amount
+    int64_t nAmount = 0;
+    if (params[0].get_real() != 0.0)
+        nAmount = AmountFromValue(params[0]);
+    payTxFee = CFeeRate(nAmount, 1000);
     return true;
 }
 
