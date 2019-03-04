@@ -1803,8 +1803,11 @@ void RelayTransaction(const CTransaction& tx, const CDataStream& ss)
     {
         if (pnode->pfilter->IsRelevantAndUpdate(tx)
             pnode->PushInventory(inv);
-    } else
-        pnode->PushInventory(inv);
+    } 
+	else
+	{
+		pnode->PushInventory(inv);
+	}
 }
 
 void RelayTransactionLockReq(const CTransaction& tx, bool relayToAll)
