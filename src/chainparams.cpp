@@ -3,11 +3,9 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "assert.h"
-
 #include "chainparams.h"
-#include "core.h"
-#include "protocol.h"
+
+#include "assert.h"
 #include "util.h"
 
 #include <boost/assign/list_of.hpp>
@@ -46,6 +44,7 @@ static void convertSeed6(std::vector<CAddress> &vSeedsOut, const SeedSpec6 *data
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
+		networkID = CChainParams::MAIN;
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
         // a large 4-byte int at any alignment.
@@ -97,17 +96,12 @@ public:
         convertSeed6(vFixedSeeds, pnSeed6_main, ARRAYLEN(pnSeed6_main));
 
         nLastPOWBlock = 580000;
-    }
 
-    virtual const CBlock& GenesisBlock() const { return genesis; }
-    virtual Network NetworkID() const { return CChainParams::MAIN; }
-
-    virtual const vector<CAddress>& FixedSeeds() const {
-        return vFixedSeeds;
-    }
-protected:
-    CBlock genesis;
-    vector<CAddress> vFixedSeeds;
+		fRequireRPCPassword = true;
+		fDefaultCheckMemPool = false;
+		fRequireStandard = true;
+		fRPCisTestNet = false;
+	}
 };
 static CMainParams mainParams;
 
@@ -119,6 +113,7 @@ static CMainParams mainParams;
 class CTestNetParams : public CMainParams {
 public:
     CTestNetParams() {
+		networkID = CChainParams::TESTNET;
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
         // a large 4-byte int at any alignment.
@@ -152,11 +147,12 @@ public:
         convertSeed6(vFixedSeeds, pnSeed6_test, ARRAYLEN(pnSeed6_test));
 
         nLastPOWBlock = 0x7fffffff;
-    }
-    virtual bool DefaultCheckMemPool() const { return true; }
-	virtual bool RequireStandard() const { return false; }
-	virtual bool RPCisTestNet() const { return true; }
-    virtual Network NetworkID() const { return CChainParams::TESTNET; }
+
+		fRequireRPCPassword = true;
+		fDefaultCheckMemPool = false;
+		fRequireStandard = false;
+		fRPCisTestNet = true;
+	}
 };
 static CTestNetParams testNetParams;
 
