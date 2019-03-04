@@ -13,6 +13,8 @@
 
 #include "key.h"
 
+#include "crypto/hmac_sha512.h"
+
 #ifdef USE_SECP256K1
 #include <secp256k1.h>
 #endif
