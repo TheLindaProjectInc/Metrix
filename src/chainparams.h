@@ -62,6 +62,8 @@ public:
     virtual bool RequireRPCPassword() const { return true; }
     /* Default value for -checkmempool argument */
     virtual bool DefaultCheckMemPool() const { return false; }
+	/* Make standard checks */
+	virtual bool RequireStandard() const { return true; }
     const string& DataDir() const { return strDataDir; }
     virtual Network NetworkID() const = 0;
     const vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
