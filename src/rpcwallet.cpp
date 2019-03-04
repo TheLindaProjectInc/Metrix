@@ -2505,7 +2505,7 @@ Value scanforstealthtxns(const Array& params, bool fHelp)
             
             nTransactions++;
             
-            pwalletMain->AddToWalletIfInvolvingMe(tx.GetHash(), tx, &block, fUpdate);
+            pwalletMain->AddToWalletIfInvolvingMe(tx, &block, fUpdate);
         };
         
         pindex = chainActive.Next(pindex);
