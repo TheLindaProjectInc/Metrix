@@ -60,7 +60,6 @@ BITCOIN_CORE_H = \
   rpcprotocol.h \
   rpcserver.h \
   script.h \
-  sha2.h \
   scrypt.h \
   serialize.h \
   spork.h \
@@ -164,7 +163,6 @@ libbitcoin_common_a_SOURCES = \
   pbkdf2.cpp \
   rpcprotocol.cpp \
   script.cpp \
-  sha2.cpp \
   scrypt.cpp \
   stealth.cpp \
   sync.cpp \
