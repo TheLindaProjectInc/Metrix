@@ -286,6 +286,7 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue);
 
 struct CNodeStateStats {
     int nMisbehavior;
+    int nSyncHeight;
 };
 
 /** Position on disk for a particular transaction. */

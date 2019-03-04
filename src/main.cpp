@@ -223,7 +223,10 @@ struct CNodeState {
     std::string name;
     // List of asynchronously-determined block rejections to notify this peer about.
     std::vector<CBlockReject> rejects;
-
+    // The best known block we know this peer has announced.
+    CBlockIndex *pindexBestKnownBlock;
+    // The hash of the last unknown block this peer has announced.
+    uint256 hashLastUnknownBlock;
     list<QueuedBlock> vBlocksInFlight;
     int nBlocksInFlight;
     list<uint256> vBlocksToDownload;
@@ -233,6 +236,8 @@ struct CNodeState {
     CNodeState() {
         nMisbehavior = 0;
         fShouldBan = false;
+        pindexBestKnownBlock = NULL;
+        hashLastUnknownBlock = uint256(0);
         nBlocksToDownload = 0;
         nBlocksInFlight = 0;
         nLastBlockReceive = 0;
@@ -276,6 +281,7 @@ bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats) {
     if (state == NULL)
         return false;
     stats.nMisbehavior = state->nMisbehavior;
+    stats.nSyncHeight = state->pindexBestKnownBlock ? state->pindexBestKnownBlock->nHeight : -1;
     return true;
 }
 
@@ -397,6 +403,39 @@ void MarkBlockAsInFlight(NodeId nodeid, const uint256 &hash) {
     list<QueuedBlock>::iterator it = state->vBlocksInFlight.insert(state->vBlocksInFlight.end(), newentry);
     state->nBlocksInFlight++;
     mapBlocksInFlight[hash] = std::make_pair(nodeid, it);
+}
+
+/** Check whether the last unknown block a peer advertized is not yet known. */
+void ProcessBlockAvailability(NodeId nodeid) {
+    CNodeState *state = State(nodeid);
+    assert(state != NULL);
+
+    if (state->hashLastUnknownBlock != 0) {
+        map<uint256, CBlockIndex*>::iterator itOld = mapBlockIndex.find(state->hashLastUnknownBlock);
+        if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0) {
+            if (state->pindexBestKnownBlock == NULL || itOld->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
+                state->pindexBestKnownBlock = itOld->second;
+            state->hashLastUnknownBlock = uint256(0);
+        }
+    }
+}
+
+/** Update tracking information about which blocks a peer is assumed to have. */
+void UpdateBlockAvailability(NodeId nodeid, const uint256 &hash) {
+    CNodeState *state = State(nodeid);
+    assert(state != NULL);
+
+    ProcessBlockAvailability(nodeid);
+
+    map<uint256, CBlockIndex*>::iterator it = mapBlockIndex.find(hash);
+    if (it != mapBlockIndex.end() && it->second->nChainWork > 0) {
+        // An actually better block was announced.
+        if (state->pindexBestKnownBlock == NULL || it->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
+            state->pindexBestKnownBlock = it->second;
+    } else {
+        // An unknown block was announced; just assume that the latest one is the best one.
+        state->hashLastUnknownBlock = hash;
+    }
 }
 
 int static GetHeight()
@@ -4563,8 +4602,12 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                     else
                         pfrom->AskFor(inv);
                 }
-            } else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash))
+            } else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash)) {
                 PushGetBlocks(pfrom, chainActive.Tip(), GetOrphanRoot(inv.hash));
+            }
+
+            if (inv.type == MSG_BLOCK)
+                UpdateBlockAvailability(pfrom->GetId(), inv.hash);
 
             // Track requests for our stuff
             g_signals.Inventory(inv.hash);
@@ -5358,6 +5401,11 @@ bool SendMessages(CNode* pto)
                 pto->fDisconnect = true;
             }
         }
+
+        
+        // Update knowledge of peer's block availability.
+        ProcessBlockAvailability(pto->GetId());
+
         //
         // Message: getdata (blocks)
         //
