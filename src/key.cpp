@@ -13,8 +13,6 @@
 
 #include "key.h"
 
-#include "sha2.h"
-
 #ifdef USE_SECP256K1
 #include <secp256k1.h>
 #endif
