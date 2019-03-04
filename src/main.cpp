@@ -1099,7 +1099,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
 
     setValidatedTx.insert(hash);
 
-    SyncWithWallets(hash, tx, NULL);
+    SyncWithWallets(tx, NULL);
     return true;
 }
 
@@ -2162,7 +2162,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
 
     // ppcoin: clean up wallet after disconnecting coinstake
     BOOST_FOREACH(CTransaction& tx, block.vtx)
-        SyncWithWallets(tx.GetHash(), tx, NULL);
+        SyncWithWallets(tx, NULL);
 
     if (pfClean) {
         *pfClean = fClean;
