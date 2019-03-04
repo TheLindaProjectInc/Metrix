@@ -862,8 +862,7 @@ bool AppInit2(boost::thread_group& threadGroup)
        if (!(mapArgs.count("-onion") && mapArgs["-onion"] == "0") &&
           (fProxy || mapArgs.count("-onion"))) {
         CService addrOnion;
-        if (    strUsage += "  -proxy=<ip:port>       " + _("Connect through SOCKS proxy") + "\n";
-!mapArgs.count("-onion"))
+        if (!mapArgs.count("-onion"))
             addrOnion = addrProxy;
         else
             addrOnion = CService(mapArgs["-onion"], 9050);
