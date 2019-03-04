@@ -310,8 +310,9 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
             if (!CheckInputs(tx, state, view, true, SCRIPT_VERIFY_P2SH))
                 continue;
             CTxUndo txundo;
-            uint256 hash = tx.GetHash();
-            UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1, hash);
+            const uint256& hash = tx.GetHash();
+            UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1);
+
 
             // Added
             pblock->vtx.push_back(tx);

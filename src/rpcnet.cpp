@@ -83,7 +83,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
             "  {\n"
             "    \"addr\":\"host:port\",      (string) The ip address and port of the peer\n"
             "    \"addrlocal\":\"ip:port\",   (string) local address\n"
-            "    \"services\":\"00000001\",   (string) The services\n"
+            "    \"services\":\"xxxxxxxxxxxxxxxx\",   (string) The services offered\n"
             "    \"lastsend\": ttt,           (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last send\n"
             "    \"lastrecv\": ttt,           (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last receive\n"
             "    \"bytessent\": n,            (numeric) The total bytes sent\n"
@@ -119,7 +119,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
         obj.push_back(Pair("addr", stats.addrName));
         if (!(stats.addrLocal.empty()))
             obj.push_back(Pair("addrlocal", stats.addrLocal));
-        obj.push_back(Pair("services", strprintf("%08x", stats.nServices)));
+        obj.push_back(Pair("services", strprintf("%016x", stats.nServices)));
         obj.push_back(Pair("lastsend", stats.nLastSend));
         obj.push_back(Pair("lastrecv", stats.nLastRecv));
         obj.push_back(Pair("bytessent", stats.nSendBytes));
@@ -134,6 +134,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
         obj.push_back(Pair("startingheight", stats.nStartingHeight));
         if (fStateStats) {
             obj.push_back(Pair("banscore", statestats.nMisbehavior));
+            obj.push_back(Pair("syncheight", statestats.nSyncHeight));
         }
         obj.push_back(Pair("syncnode", stats.fSyncNode));
         obj.push_back(Pair("whitelisted", stats.fWhitelisted));

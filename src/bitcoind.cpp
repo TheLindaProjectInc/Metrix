@@ -71,6 +71,10 @@ bool AppInit(int argc, char* argv[])
 
             if (!mapArgs.count("-version"))
             {
+                strUsage += LicenseInfo();
+            }
+            else
+            {
                 strUsage += "\n" + _("Usage:") + "\n" +
                       "  Lindad [options]                     " + _("Start Lindad Server") + "\n" +
                     _("Usage (deprecated, use bitcoin-cli):") + "\n" +
