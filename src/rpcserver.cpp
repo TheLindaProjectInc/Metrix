@@ -901,35 +901,34 @@ static bool HTTPReq_JSONRPC(AcceptedConnection *conn,
 void ServiceConnection(AcceptedConnection *conn)
 {
     bool fRun = true;
-    while (fRun)
-    {
-        int nProto = 0;
-        map<string, string> mapHeaders;
-        string strRequest, strMethod, strURI;
+	while (fRun)
+	{
+		int nProto = 0;
+		map<string, string> mapHeaders;
+		string strRequest, strMethod, strURI;
 
-        // Read HTTP request line
-        if (!ReadHTTPRequestLine(conn->stream(), nProto, strMethod, strURI))
-            break;
+		// Read HTTP request line
+		if (!ReadHTTPRequestLine(conn->stream(), nProto, strMethod, strURI))
+			break;
 
-        // Read HTTP message headers and body
-        ReadHTTPMessage(conn->stream(), mapHeaders, strRequest, nProto, MAX_SIZE);
+		// Read HTTP message headers and body
+		ReadHTTPMessage(conn->stream(), mapHeaders, strRequest, nProto, MAX_SIZE);
 
-        // HTTP Keep-Alive is false; close connection immediately
-        if (mapHeaders["connection"] == "close")
-            fRun = false;
+		// HTTP Keep-Alive is false; close connection immediately
+		if (mapHeaders["connection"] == "close")
+			fRun = false;
 
-    if (strURI == "/") {
-            if (!HTTPReq_JSONRPC(conn, strRequest, mapHeaders, fRun))
-                break;
-    }
-    {
-                        conn->stream()
-
-    else {
-            conn->stream() << HTTPReply(HTTP_NOT_FOUND, "", false) << std::flush;
-            break;
-        }
-    }
+		if (strURI == "/")
+		{
+			if (!HTTPReq_JSONRPC(conn, strRequest, mapHeaders, fRun))
+				break;
+		}
+		else
+		{
+			conn->stream() << HTTPReply(HTTP_NOT_FOUND, "", false) << std::flush;
+			break;
+		}
+	}
 }
 
 json_spirit::Value CRPCTable::execute(const std::string &strMethod, const json_spirit::Array &params) const
