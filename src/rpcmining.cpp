@@ -113,7 +113,7 @@ Value getmininginfo(const Array& params, bool fHelp)
     weight.push_back(Pair("combined",  (uint64_t)nWeight));
     obj.push_back(Pair("stakeweight", weight));
 
-    obj.push_back(Pair("testnet",       TestNet()));
+    obj.push_back(Pair("testnet",       Params().RPCisTestNet()));
     return obj;
 }
 
