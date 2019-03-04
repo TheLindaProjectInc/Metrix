@@ -2200,8 +2200,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     }
 
     // BIP30
-    for (unsigned int i = 0; i < block.vtx.size(); i++) {
-        uint256 hash = block.GetTxHash(i);
+	BOOST_FOREACH(const CTransaction& tx, block.vtx) {
+		const uint256& hash = tx.GetHash();
         if (view.HaveCoins(hash) && !view.GetCoins(hash).IsPruned())
             return state.DoS(100, error("ConnectBlock() : tried to overwrite transaction"),
                 REJECT_INVALID, "bad-txns-BIP30");
@@ -2344,12 +2344,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
         SyncWithWallets(tx, &block);
-    }
     
     // Watch for changes to the previous coinbase transaction.
     static uint256 hashPrevBestCoinBase;
     g_signals.UpdatedTransaction(hashPrevBestCoinBase);
     hashPrevBestCoinBase = block.vtx[0].GetHash();
+
     return true;
 }
 
