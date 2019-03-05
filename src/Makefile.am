@@ -227,14 +227,14 @@ Lindad_SOURCES += bitcoind-res.rc
 endif
 
 Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
-bitcoind_CPPFLAGS = $(BITCOIN_INCLUDES)
+Lindad_CPPFLAGS = $(BITCOIN_INCLUDES)
 
 # Linda-cli binary #
 Linda_cli_LDADD = \
   libbitcoin_cli.a libbitcoin_common.a \
   $(BOOST_LIBS)
 Linda_cli_SOURCES = bitcoin-cli.cpp
-bitcoin_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
+Linda_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
 
 if TARGET_WINDOWS
@@ -257,7 +257,7 @@ clean-local:
 
 .mm.o:
 	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	  $(CPPFLAGS) $(AM_CXXFLAGS) $(QT_INCLUDES) $(CXXFLAGS)  -c -o $@ $<
+	  $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)  -c -o $@ $<
 
 %.pb.cc %.pb.h: %.proto
 	test -f $(PROTOC) && $(PROTOC) --cpp_out=$(@D) --proto_path=$(abspath $(<D) $<)  || \
