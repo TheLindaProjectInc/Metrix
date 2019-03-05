@@ -12,8 +12,12 @@
 
 #include "serialize.h"
 #include "netbase.h"
-#include <string>
+#include "serialize.h"
 #include "uint256.h"
+#include "version.h"
+
+#include <stdint.h>
+#include <string>
 
 #define MESSAGE_START_SIZE 4
 

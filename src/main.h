@@ -9,16 +9,24 @@
 #include "bitcoin-config.h"
 #endif
 
+#include "chainparams.h"
 #include "coins.h"
 #include "core.h"
 #include "bignum.h"
-#include "sync.h"
-
 #include "net.h"
 #include "script.h"
 #include "scrypt.h"
+#include "sync.h"
 #include "txmempool.h"
-#include <list>
+
+#include <algorithm>
+#include <exception>
+#include <map>
+#include <set>
+#include <stdint.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 
 #define START_MASTERNODE_PAYMENTS_TESTNET 1429738064

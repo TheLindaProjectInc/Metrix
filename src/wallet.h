@@ -5,21 +5,25 @@
 #ifndef BITCOIN_WALLET_H
 #define BITCOIN_WALLET_H
 
-#include "walletdb.h"
-
-#include <string>
-#include <vector>
-
-#include <stdlib.h>
-
+#include "core.h"
 #include "crypter.h"
-#include "main.h"
 #include "key.h"
 #include "keystore.h"
+#include "main.h"
 #include "script.h"
+#include "stealth.h"
 #include "ui_interface.h"
 #include "util.h"
-#include "stealth.h"
+#include "walletdb.h"
+
+#include <algorithm>
+#include <map>
+#include <set>
+#include <stdexcept>
+#include <stdint.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 // Settings
 extern CFeeRate payTxFee;
