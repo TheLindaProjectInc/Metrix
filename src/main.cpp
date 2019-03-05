@@ -1126,7 +1126,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
     // Rather not work on nonstandard transactions (unless -testnet)
     //alot of Linda transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
-    if (false && !TestNet() && !IsStandardTx(tx, reason))
+    if (false && !Params().RPCisTestNet() && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
                      reason);
 
@@ -3841,7 +3841,7 @@ bool LoadBlockIndex()
 {
     LOCK(cs_main);
 
-    if (TestNet())
+    if (Params().RPCisTestNet())
     {
         nStakeMinAge = 1 * 60 * 60; // test net min age is 1 hour
         nCoinbaseMaturity = 10; // test maturity is 10 blocks
