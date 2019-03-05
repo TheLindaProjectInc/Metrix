@@ -21,8 +21,13 @@ We are moving away from the Lindad executable functioning both as a server and a
 
 ## About this Release
 
+### What's New
+
 #### Protocol and network:
 - Bump protocol version to 70004
+
+#### RPC commands
+- New command 'createpreciserawtransaction' works the same as 'createrawtransaction' but allows output amounts as strings in Satoshis for languages using the RPC that are limited to smaller numbers than C++.
 
 ### Bug Fixes
 - Increased efficiency when checking if a UTXO has been rewarded as a Masternode and prevent it from staking. This was causing a lockup for wallets that control multiple Masternodes. **Note**: If your UTXO has received a Masternode reward you will need to coin control your it if you wish to earn stake it. This prevents the earning of Masternode and POS rewards on the same UTXO.
