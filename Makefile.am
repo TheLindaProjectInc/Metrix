@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I build-aux/m4
 SUBDIRS = src
-.PHONY: deploy
+.PHONY: deploy FORCE
 
 GZIP_ENV="-9n"
 
@@ -36,8 +36,8 @@ $(BITCOIN_WIN_INSTALLER): $(BITCOIND_BIN)
 	@test -f $(MAKENSIS) && $(MAKENSIS) $(top_builddir)/share/setup.nsi || \
 	  echo error: could not build $@
 
-$(BITCOIND_BIN):
-	make -C $(top_srcdir)/src Lindad$(EXEEXT)
+$(if $(findstring src/,$(MAKECMDGOALS)),$(MAKECMDGOALS), none): FORCE
+	$(MAKE) -C src $(patsubst src/%,%,$@)
 
 if TARGET_WINDOWS
 deploy: $(BITCOIN_WIN_INSTALLER)
