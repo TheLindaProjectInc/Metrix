@@ -2,10 +2,10 @@ AM_CPPFLAGS =  $(INCLUDES)
 AM_LDFLAGS = $(PTHREAD_CFLAGS)
 
 if EMBEDDED_LEVELDB
-LEVELDB_CPPFLAGS += -I$(top_srcdir)/src/leveldb/include
-LEVELDB_CPPFLAGS += -I$(top_srcdir)/src/leveldb/helpers/memenv
-LIBLEVELDB += $(top_builddir)/src/leveldb/libleveldb.a
-LIBMEMENV  += $(top_builddir)/src/leveldb/libmemenv.a
+LEVELDB_CPPFLAGS += -I$(srcdir)/leveldb/include
+LEVELDB_CPPFLAGS += -I$(srcdir)/leveldb/helpers/memenv
+LIBLEVELDB += $(builddir)/leveldb/libleveldb.a
+LIBMEMENV  += $(builddir)/leveldb/libmemenv.a
 
 # NOTE: This dependency is not strictly necessary, but without it make may try to build both in parallel, which breaks the LevelDB build system in a race
 $(LIBLEVELDB): $(LIBMEMENV)
@@ -117,7 +117,7 @@ JSON_H = \
   json/json_spirit_writer_template.h
 
 obj/build.h: FORCE
-	@$(MKDIR_P) $(abs_top_builddir)/src/obj
+	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh $(abs_top_builddir)/src/obj/build.h \
 	  $(abs_top_srcdir)
 libbitcoin_common_a-version.$(OBJEXT): obj/build.h
@@ -208,7 +208,7 @@ libbitcoin_common_a_SOURCES += compat/glibc_compat.cpp
 libbitcoin_common_a_SOURCES += compat/glibcxx_compat.cpp
 endif
 
-nodist_libbitcoin_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
+nodist_libbitcoin_common_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # Lindad binary #
