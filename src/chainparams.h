@@ -7,9 +7,9 @@
 #define BITCOIN_CHAIN_PARAMS_H
 
 #include "bignum.h"
-#include "uint256.h"
 #include "core.h"
 #include "protocol.h"
+#include "uint256.h"
 
 #include <vector>
 
@@ -57,7 +57,7 @@ public:
     int GetDefaultPort() const { return nDefaultPort; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
     int SubsidyHalvingInterval() const { return nSubsidyHalvingInterval; }
-	const CBlock& GenesisBlock() const { return genesis; };
+	const CBlock& GenesisBlock() const { return genesis; }
 	bool RequireRPCPassword() const { return fRequireRPCPassword; }
     /* Default value for -checkmempool argument */
 	bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
