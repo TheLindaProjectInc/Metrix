@@ -5,17 +5,6 @@
 #ifndef BITCOIN_NET_H
 #define BITCOIN_NET_H
 
-#include <deque>
-#include <boost/array.hpp>
-#include <boost/foreach.hpp>
-#include <boost/signals2/signal.hpp>
-#include <openssl/rand.h>
-
-
-#ifndef WIN32
-#include <arpa/inet.h>
-#endif
-
 #include "mruset.h"
 #include "limitedmap.h"
 #include "netbase.h"
@@ -25,9 +14,20 @@
 #include "core.h"
 #include "bloom.h"
 
+#include <deque>
+#include <stdint.h>
+
+#ifndef WIN32
+#include <arpa/inet.h>
+#endif
+
+#include <boost/array.hpp>
+#include <boost/foreach.hpp>
+#include <boost/signals2/signal.hpp>
+#include <openssl/rand.h>
+
 class CNode;
 class CBlockIndex;
-
 
 /** Time between pings automatically sent out for latency probing and keepalive (in seconds). */
 static const int PING_INTERVAL = 2 * 60;
