@@ -5,14 +5,17 @@
 #ifndef BITCOIN_NET_H
 #define BITCOIN_NET_H
 
-#include "mruset.h"
+#include "addrman.h"
+#include "bloom.h"
+#include "core.h"
+#include "hash.h"
 #include "limitedmap.h"
+#include "mruset.h"
 #include "netbase.h"
 #include "protocol.h"
-#include "addrman.h"
-#include "hash.h"
-#include "core.h"
-#include "bloom.h"
+#include "sync.h"
+#include "uint256.h"
+#include "util.h"
 
 #include <deque>
 #include <stdint.h>
@@ -26,6 +29,7 @@
 #include <boost/signals2/signal.hpp>
 #include <openssl/rand.h>
 
+class CAddrMan;
 class CNode;
 class CBlockIndex;
 
