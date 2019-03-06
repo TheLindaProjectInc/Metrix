@@ -862,8 +862,7 @@ bool AppInit2(boost::thread_group& threadGroup)
        if (!(mapArgs.count("-onion") && mapArgs["-onion"] == "0") &&
           (fProxy || mapArgs.count("-onion"))) {
         CService addrOnion;
-        if (    strUsage += "  -proxy=<ip:port>       " + _("Connect through SOCKS proxy") + "\n";
-!mapArgs.count("-onion"))
+        if (!mapArgs.count("-onion"))
             addrOnion = addrProxy;
         else
             addrOnion = CService(mapArgs["-onion"], 9050);
@@ -1072,7 +1071,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         for (map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.begin(); mi != mapBlockIndex.end(); ++mi)
         {
             uint256 hash = (*mi).first;
-            if (strncmp(hash.ToString().c_str(), strMatch.c_str(), strMatch.size()) == 0)
+			if (boost::algorithm::starts_with(hash.ToString(), strMatch))
             {
                 CBlockIndex* pindex = (*mi).second;
                 CBlock block;

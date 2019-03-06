@@ -13,7 +13,7 @@
 
 #include "key.h"
 
-#include "sha2.h"
+#include "crypto/hmac_sha512.h"
 
 #ifdef USE_SECP256K1
 #include <secp256k1.h>
@@ -606,30 +606,6 @@ bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned cha
     //key.GetPubKey(*this, (vchSig[0] - 27) & 4);
     key.GetPubKey(*this, fComp);
 //#endif
-    return true;
-}
-
-bool CPubKey::VerifyCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) const {
-    if (!IsValid())
-        return false;
-    if (vchSig.size() != 65)
-        return false;
-    int recid = (vchSig[0] - 27) & 3;
-    CPubKey pubkeyRec;
-/*#ifdef USE_SECP256K1
-    bool fComp = IsCompressed();
-    int pubkeylen = 65;
-    if (!secp256k1_ecdsa_recover_compact(hash.begin(), 32, &vchSig[1], pubkeyRec.begin(), &pubkeylen, fComp, recid))
-        return false;
-    assert((int)pubkeyRec.size() == pubkeylen);
-#else*/
-    CECKey key;
-    if (!key.Recover(hash, &vchSig[1], recid))
-        return false;
-    key.GetPubKey(pubkeyRec, IsCompressed());
-//#endif
-    if (*this != pubkeyRec)
-        return false;
     return true;
 }
 
