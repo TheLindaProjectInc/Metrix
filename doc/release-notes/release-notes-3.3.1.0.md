@@ -23,6 +23,9 @@ We are moving away from the Lindad executable functioning both as a server and a
 
 ### What's New
 
+#### Cryptopia Coin Burn
+All code changes in relation to the Cryptopia coin burn have been removed from this version. Ensure you update as version 3.3.0 will be removed from the network to ensure no fork is created when the Cryptopia funds need to be transferred. 
+
 #### Protocol and network:
 - Bump protocol version to 70004
 
