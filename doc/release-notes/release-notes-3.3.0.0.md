@@ -1,6 +1,6 @@
 # Linda 3.3.0.0
 
-This is a new major version release, bringing both new features and bug fixes.
+This is a new minor version release, bringing both new features and bug fixes.
 
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/linda/issues
 
