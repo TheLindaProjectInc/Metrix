@@ -7,17 +7,16 @@
 #define BITCOIN_CHAIN_PARAMS_H
 
 #include "bignum.h"
+#include "core.h"
+#include "protocol.h"
 #include "uint256.h"
 
 #include <vector>
 
 using namespace std;
 
-#define MESSAGE_START_SIZE 4
 typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
 
-class CAddress;
-class CBlock;
 
 struct CDNSSeedData {
     string name, host;
@@ -58,15 +57,19 @@ public:
     int GetDefaultPort() const { return nDefaultPort; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
     int SubsidyHalvingInterval() const { return nSubsidyHalvingInterval; }
-    virtual const CBlock& GenesisBlock() const = 0;
-    virtual bool RequireRPCPassword() const { return true; }
+	const CBlock& GenesisBlock() const { return genesis; }
+	bool RequireRPCPassword() const { return fRequireRPCPassword; }
     /* Default value for -checkmempool argument */
-    virtual bool DefaultCheckMemPool() const { return false; }
+	bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
+	/* Make standard checks */
+	bool RequireStandard() const { return fRequireStandard; }
+	/* Make standard checks */
+	bool RPCisTestNet() const { return fRPCisTestNet; }
     const string& DataDir() const { return strDataDir; }
-    virtual Network NetworkID() const = 0;
+	Network NetworkID() const { return networkID; }
     const vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
-    const std::vector<unsigned char> &Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
-    virtual const vector<CAddress>& FixedSeeds() const = 0;
+	const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
+	const vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
     int RPCPort() const { return nRPCPort; }
     int LastPOWBlock() const { return nLastPOWBlock; }
 protected:
@@ -84,6 +87,13 @@ protected:
     vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     int nLastPOWBlock;
+	Network networkID;
+	CBlock genesis;
+	vector<CAddress> vFixedSeeds;
+	bool fRequireRPCPassword;
+	bool fDefaultCheckMemPool;
+	bool fRequireStandard;
+	bool fRPCisTestNet;
 };
 
 /**
@@ -100,10 +110,5 @@ void SelectParams(CChainParams::Network network);
  * Returns false if an invalid combination is given.
  */
 bool SelectParamsFromCommandLine();
-
-inline bool TestNet() {
-    // Note: it's deliberate that this returns "false" for regression test mode.
-    return Params().NetworkID() == CChainParams::TESTNET;
-}
 
 #endif

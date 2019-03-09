@@ -61,7 +61,7 @@ namespace Checkpoints
     };
 
     const CCheckpointData &Checkpoints() {
-        if (TestNet())
+        if (Params().RPCisTestNet())
             return dataTestnet;
         else
             return data;
@@ -72,7 +72,7 @@ namespace Checkpoints
         if (!fEnabled)
             return true;
 
-        MapCheckpoints& checkpoints = (TestNet() ? mapCheckpointsTestnet : mapCheckpoints);
+        MapCheckpoints& checkpoints = (Params().RPCisTestNet() ? mapCheckpointsTestnet : mapCheckpoints);
 
         MapCheckpoints::const_iterator i = checkpoints.find(nHeight);
         if (i == checkpoints.end()) return true;
@@ -110,7 +110,7 @@ namespace Checkpoints
         if (!fEnabled)
             return 0;
 
-        MapCheckpoints& checkpoints = (TestNet() ? mapCheckpointsTestnet : mapCheckpoints);
+        MapCheckpoints& checkpoints = (Params().RPCisTestNet() ? mapCheckpointsTestnet : mapCheckpoints);
 
         return checkpoints.rbegin()->first;
     }
@@ -120,7 +120,7 @@ namespace Checkpoints
         if (!fEnabled)
             return NULL;
 
-        MapCheckpoints& checkpoints = (TestNet() ? mapCheckpointsTestnet : mapCheckpoints);
+        MapCheckpoints& checkpoints = (Params().RPCisTestNet() ? mapCheckpointsTestnet : mapCheckpoints);
 
         BOOST_REVERSE_FOREACH(const MapCheckpoints::value_type& i, checkpoints)
         {

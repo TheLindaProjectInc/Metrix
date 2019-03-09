@@ -1,12 +1,30 @@
-include Makefile.include
-AM_CPPFLAGS =  $(INCLUDES) -I$(top_builddir)/src/obj \
-  -I$(top_srcdir)/src/leveldb/include -I$(top_srcdir)/src/leveldb/helpers \
-  -I$(builddir) $(BOOST_INCLUDES) $(BDB_CPPFLAGS)
+AM_CPPFLAGS =  $(INCLUDES)
 AM_LDFLAGS = $(PTHREAD_CFLAGS)
 
-noinst_LIBRARIES = libbitcoin_server.a libbitcoin_common.a libbitcoin_cli.a
+if EMBEDDED_LEVELDB
+LEVELDB_CPPFLAGS = -I$(srcdir)/leveldb/include
+LEVELDB_CPPFLAGS += -I$(srcdir)/leveldb/helpers/memenv
+LIBLEVELDB = $(builddir)/leveldb/libleveldb.a
+LIBMEMENV  = $(builddir)/leveldb/libmemenv.a
+
+# NOTE: This dependency is not strictly necessary, but without it make may try to build both in parallel, which breaks the LevelDB build system in a race
+$(LIBLEVELDB): $(LIBMEMENV)
+
+$(LIBLEVELDB) $(LIBMEMENV):
+	@echo "Building LevelDB ..." && $(MAKE) -C $(@D) $(@F) CXX="$(CXX)" \
+	  CC="$(CC)" PLATFORM=$(TARGET_OS) AR="$(AR)" $(LEVELDB_TARGET_FLAGS) \
+          OPT="$(CXXFLAGS) $(CPPFLAGS)"
+endif
+
+BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
+
+noinst_LIBRARIES = \
+  libbitcoin_server.a \
+  libbitcoin_common.a \
+  libbitcoin_cli.a
 
 if ENABLE_WALLET
+BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
@@ -60,7 +78,6 @@ BITCOIN_CORE_H = \
   rpcprotocol.h \
   rpcserver.h \
   script.h \
-  sha2.h \
   scrypt.h \
   serialize.h \
   spork.h \
@@ -100,11 +117,12 @@ JSON_H = \
   json/json_spirit_writer_template.h
 
 obj/build.h: FORCE
-	@$(MKDIR_P) $(abs_top_builddir)/src/obj
+	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh $(abs_top_builddir)/src/obj/build.h \
 	  $(abs_top_srcdir)
-version.o: obj/build.h
+libbitcoin_common_a-version.$(OBJEXT): obj/build.h
 
+libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_server_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
@@ -136,7 +154,8 @@ libbitcoin_server_a_SOURCES = \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
 
-  libbitcoin_wallet_a_SOURCES = \
+libbitcoin_wallet_a_CPPFLAGS = $(BITCOIN_INCLUDES)
+libbitcoin_wallet_a_SOURCES = \
   db.cpp \
   keepass.cpp \
   crypter.cpp \
@@ -147,6 +166,7 @@ libbitcoin_server_a_SOURCES = \
   walletdb.cpp \
   $(BITCOIN_CORE_H)
 
+libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   base58.cpp \
   allocators.cpp \
@@ -164,7 +184,6 @@ libbitcoin_common_a_SOURCES = \
   pbkdf2.cpp \
   rpcprotocol.cpp \
   script.cpp \
-  sha2.cpp \
   scrypt.cpp \
   stealth.cpp \
   sync.cpp \
@@ -189,7 +208,7 @@ libbitcoin_common_a_SOURCES += compat/glibc_compat.cpp
 libbitcoin_common_a_SOURCES += compat/glibcxx_compat.cpp
 endif
 
-nodist_libbitcoin_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
+nodist_libbitcoin_common_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # Lindad binary #
@@ -207,34 +226,44 @@ if TARGET_WINDOWS
 Lindad_SOURCES += bitcoind-res.rc
 endif
 
-AM_CPPFLAGS += $(BDB_CPPFLAGS)
 Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
+Lindad_CPPFLAGS = $(BITCOIN_INCLUDES)
 
 # Linda-cli binary #
 Linda_cli_LDADD = \
   libbitcoin_cli.a libbitcoin_common.a \
   $(BOOST_LIBS)
 Linda_cli_SOURCES = bitcoin-cli.cpp
+Linda_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
 
 if TARGET_WINDOWS
 Linda_cli_SOURCES += bitcoin-cli-res.rc
 endif
 
-# NOTE: This dependency is not strictly necessary, but without it make may try to build both in parallel, which breaks the LevelDB build system in a race
-leveldb/libleveldb.a: leveldb/libmemenv.a
-
-leveldb/%.a:
-	@echo "Building LevelDB ..." && $(MAKE) -C $(@D) $(@F) CXX="$(CXX)" \
-	  CC="$(CC)" PLATFORM=$(TARGET_OS) AR="$(AR)" $(LEVELDB_TARGET_FLAGS) \
-	  OPT="$(CXXFLAGS) $(CPPFLAGS)"
-
 CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
 
 DISTCLEANFILES = obj/build.h
 
-EXTRA_DIST = leveldb Makefile.include 
+EXTRA_DIST = leveldb
 
 clean-local:
 	-$(MAKE) -C leveldb clean
 	rm -f leveldb/*/*.gcno leveldb/helpers/memenv/*.gcno
+
+.rc.o:
+	@test -f $(WINDRES) && $(WINDRES) -i $< -o $@ || \
+	  echo error: could not build $@
+
+.mm.o:
+	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	  $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)  -c -o $@ $<
+
+%.pb.cc %.pb.h: %.proto
+	test -f $(PROTOC) && $(PROTOC) --cpp_out=$(@D) --proto_path=$(abspath $(<D) $<)  || \
+	  echo error: could not build $@
+
+LIBBITCOIN_SERVER=libbitcoin_server.a
+LIBBITCOIN_WALLET=libbitcoin_wallet.a
+LIBBITCOIN_COMMON=libbitcoin_common.a
+LIBBITCOIN_CLI=libbitcoin_cli.a

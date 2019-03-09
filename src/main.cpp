@@ -412,8 +412,8 @@ void ProcessBlockAvailability(NodeId nodeid) {
 
     if (state->hashLastUnknownBlock != 0) {
         map<uint256, CBlockIndex*>::iterator itOld = mapBlockIndex.find(state->hashLastUnknownBlock);
-        if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0) {
-            if (state->pindexBestKnownBlock == NULL || itOld->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
+        if (itOld != mapBlockIndex.end() && itOld->second->nChainTrust > 0) {
+            if (state->pindexBestKnownBlock == NULL || itOld->second->nChainTrust >= state->pindexBestKnownBlock->nChainTrust)
                 state->pindexBestKnownBlock = itOld->second;
             state->hashLastUnknownBlock = uint256(0);
         }
@@ -428,9 +428,9 @@ void UpdateBlockAvailability(NodeId nodeid, const uint256 &hash) {
     ProcessBlockAvailability(nodeid);
 
     map<uint256, CBlockIndex*>::iterator it = mapBlockIndex.find(hash);
-    if (it != mapBlockIndex.end() && it->second->nChainWork > 0) {
+    if (it != mapBlockIndex.end() && it->second->nChainTrust > 0) {
         // An actually better block was announced.
-        if (state->pindexBestKnownBlock == NULL || it->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
+        if (state->pindexBestKnownBlock == NULL || it->second->nChainTrust >= state->pindexBestKnownBlock->nChainTrust)
             state->pindexBestKnownBlock = it->second;
     } else {
         // An unknown block was announced; just assume that the latest one is the best one.
@@ -949,7 +949,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
 
     // Rather not work on nonstandard transactions (unless -testnet)
     string reason;
-    if (!TestNet() && !IsStandardTx(tx, reason)) {
+    if (Params().RequireStandard() && !IsStandardTx(tx, reason)) {
         errorMessage = "nonstandard transaction: " + reason;
         return state.DoS(0,
             error("AcceptToMemoryPool : nonstandard transaction: %s", reason),
@@ -1019,7 +1019,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         }
 
         // Check for non-standard pay-to-script-hash in inputs
-        if (!TestNet() && !AreInputsStandard(tx, view)) {
+        if (Params().RequireStandard() && !AreInputsStandard(tx, view)) {
             errorMessage = "nonstandard transaction input";
             return error("AcceptToMemoryPool : nonstandard transaction input");
         }
@@ -1099,7 +1099,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
 
     setValidatedTx.insert(hash);
 
-    SyncWithWallets(hash, tx, NULL);
+    SyncWithWallets(tx, NULL);
     return true;
 }
 
@@ -1126,7 +1126,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
     // Rather not work on nonstandard transactions (unless -testnet)
     //alot of Linda transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
-    if (false && !TestNet() && !IsStandardTx(tx, reason))
+    if (false && !Params().RPCisTestNet() && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
                      reason);
 
@@ -2162,7 +2162,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
 
     // ppcoin: clean up wallet after disconnecting coinstake
     BOOST_FOREACH(CTransaction& tx, block.vtx)
-        SyncWithWallets(tx.GetHash(), tx, NULL);
+        SyncWithWallets(tx, NULL);
 
     if (pfClean) {
         *pfClean = fClean;
@@ -2200,8 +2200,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     }
 
     // BIP30
-    for (unsigned int i = 0; i < block.vtx.size(); i++) {
-        uint256 hash = block.GetTxHash(i);
+	BOOST_FOREACH(const CTransaction& tx, block.vtx) {
+		const uint256& hash = tx.GetHash();
         if (view.HaveCoins(hash) && !view.GetCoins(hash).IsPruned())
             return state.DoS(100, error("ConnectBlock() : tried to overwrite transaction"),
                 REJECT_INVALID, "bad-txns-BIP30");
@@ -2344,12 +2344,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
         SyncWithWallets(tx, &block);
-    }
     
     // Watch for changes to the previous coinbase transaction.
     static uint256 hashPrevBestCoinBase;
     g_signals.UpdatedTransaction(hashPrevBestCoinBase);
     hashPrevBestCoinBase = block.vtx[0].GetHash();
+
     return true;
 }
 
@@ -3841,7 +3841,7 @@ bool LoadBlockIndex()
 {
     LOCK(cs_main);
 
-    if (TestNet())
+    if (Params().RPCisTestNet())
     {
         nStakeMinAge = 1 * 60 * 60; // test net min age is 1 hour
         nCoinbaseMaturity = 10; // test maturity is 10 blocks
