@@ -313,6 +313,7 @@ static const CRPCCommand vRPCCommands[] =
     { "importprivkey",          &importprivkey,          false,     false,     true },
     { "importstealthaddress",   &importstealthaddress,   false,     false,     true },
     { "importwallet",           &importwallet,           false,     false,     true },
+    { "importaddress",          &importaddress,          false,     false,      true },
     { "keypoolrefill",          &keypoolrefill,          true,      false,     true },
     { "listaccounts",           &listaccounts,           false,     false,     true },
     { "listaddressbook",        &listaddressbook,        false,     false,     true },
