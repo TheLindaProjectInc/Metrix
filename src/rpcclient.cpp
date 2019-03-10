@@ -152,6 +152,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "listunspent", 0 },
     { "listunspent", 1 },
     { "listunspent", 2 },
+    { "gettransaction", 1},
     { "getrawtransaction", 1 },
     { "createrawtransaction", 0 },
     { "createrawtransaction", 1 },
