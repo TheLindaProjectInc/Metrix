@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <boost/assign/list_of.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "base58.h"
 #include "rpcserver.h"
@@ -447,7 +448,7 @@ Value createpreciserawtransaction(const Array& params, bool fHelp)
         string sAmount = s.value_.get_str();
         int64_t nAmount = 0;
         try {
-            nAmount = stoll(sAmount);
+            nAmount = boost::lexical_cast<long long>(sAmount);
         } catch (std::exception &e) {
             throw JSONRPCError(RPC_TYPE_ERROR, "Amount parse failed");
         }
