@@ -112,9 +112,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "getreceivedbyaccount", 1 },
     { "listreceivedbyaddress", 0 },
     { "listreceivedbyaddress", 1 },
+    { "listreceivedbyaddress", 2 },
     { "listreceivedbyaccount", 0 },
     { "listreceivedbyaccount", 1 },
+    { "listreceivedbyaccount", 2 },
     { "getbalance", 1 },
+    { "getbalance", 2 },
     { "getblock", 1 },
     { "getblockbynumber", 0 },
     { "getblockbynumber", 1 },
@@ -125,11 +128,14 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendfrom", 3 },
     { "listtransactions", 1 },
     { "listtransactions", 2 },
+    { "listtransactions", 3 },
     { "listaccounts", 0 },
+    { "listaccounts", 1 },
     { "walletpassphrase", 1 },
     { "walletpassphrase", 2 },
     { "getblocktemplate", 0 },
     { "listsinceblock", 1 },
+    { "listsinceblock", 2 },
     { "sendalert", 2 },
     { "sendalert", 3 },
     { "sendalert", 4 },
@@ -146,6 +152,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "listunspent", 0 },
     { "listunspent", 1 },
     { "listunspent", 2 },
+    { "gettransaction", 1},
     { "getrawtransaction", 1 },
     { "createrawtransaction", 0 },
     { "createrawtransaction", 1 },
@@ -157,6 +164,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "verifychain", 1 },
     { "keypoolrefill", 0 },
     { "importprivkey", 2 },
+    { "importaddress", 2 },
     { "checkkernel", 0 },
     { "checkkernel", 1 },
     { "sendtostealthaddress", 1 },
@@ -211,7 +219,6 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
                 throw runtime_error(string("Error parsing JSON:")+strVal);
             params.push_back(jVal);
         }
-
     }
 
     return params;
