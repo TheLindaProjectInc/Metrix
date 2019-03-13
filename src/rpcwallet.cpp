@@ -1371,8 +1371,8 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
 {
     int64_t nFee;
     string strSentAccount;
-    list<COutputEntry> listReceived;
-    list<COutputEntry> listSent;
+	list<pair<CTxDestination, int64_t> > listReceived;
+	list<pair<CTxDestination, int64_t> > listSent;
 
 
     wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount, filter);
@@ -1383,7 +1383,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
     // Sent
     if ((!wtx.IsCoinStake()) && (!listSent.empty() || nFee != 0) && (fAllAccounts || strAccount == strSentAccount))
     {
-        BOOST_FOREACH(const COutputEntry& s, listSent)
+        BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& s, listSent)
         {
             Object entry;
             if(involvesWatchonly || (::IsMine(*pwalletMain, s.first) & MINE_WATCH_ONLY))
@@ -1416,7 +1416,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             nFee += wtx.vout[2].nValue;
         } 
         bool stop = false;
-        BOOST_FOREACH(const COutputEntry& r, listReceived)
+        BOOST_FOREACH(const PAIRTYPE(CTxDestination, int64_t)& r, listReceived)
         {
             string account;
             if (pwalletMain->mapAddressBook.count(r.destination))
