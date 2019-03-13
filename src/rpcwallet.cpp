@@ -1386,7 +1386,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
         BOOST_FOREACH(const COutputEntry& s, listSent)
         {
             Object entry;
-            if(involvesWatchonly || (::IsMine(*pwalletMain, s.first) & MINE_WATCH_ONLY))
+            if(involvesWatchonly || (::IsMine(*pwalletMain, s.destination) & MINE_WATCH_ONLY))
                 entry.push_back(Pair("involvesWatchonly", true));
             entry.push_back(Pair("account", strSentAccount));
             MaybePushAddress(entry, s.destination);
@@ -1424,7 +1424,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             if (fAllAccounts || (account == strAccount))
             {
                 Object entry;
-                if(involvesWatchonly || (::IsMine(*pwalletMain, r.first) & MINE_WATCH_ONLY))
+                if(involvesWatchonly || (::IsMine(*pwalletMain, r.destination) & MINE_WATCH_ONLY))
                     entry.push_back(Pair("involvesWatchonly", true));
                 entry.push_back(Pair("account", account));
                 MaybePushAddress(entry, r.destination);
