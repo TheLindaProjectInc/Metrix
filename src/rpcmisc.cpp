@@ -231,10 +231,11 @@ Value validatepubkey(const Array& params, bool fHelp)
         ret.push_back(Pair("address", currentAddress));
         ret.push_back(Pair("iscompressed", isCompressed));
 #ifdef ENABLE_WALLET
-        bool fMine = pwalletMain ? IsMine(*pwalletMain, dest) : false;
-        ret.push_back(Pair("ismine", fMine));
-        if (fMine) {
-            Object detail = boost::apply_visitor(DescribeAddressVisitor(), dest);
+		isminetype mine = pwalletMain ? IsMine(*pwalletMain, dest) : MINE_NO;
+		ret.push_back(Pair("ismine", mine != MINE_NO));
+		if (mine != MINE_NO) {
+			ret.push_back(Pair("watchonly", mine == MINE_WATCH_ONLY));
+			Object detail = boost::apply_visitor(DescribeAddressVisitor(mine), dest);
             ret.insert(ret.end(), detail.begin(), detail.end());
         }
         if (pwalletMain && pwalletMain->mapAddressBook.count(dest))
