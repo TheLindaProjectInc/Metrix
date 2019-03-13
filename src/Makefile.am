@@ -74,6 +74,7 @@ BITCOIN_CORE_H = \
   netbase.h \
   pbkdf2.h \
   protocol.h \
+  random.h \
   rpcclient.h \
   rpcprotocol.h \
   rpcserver.h \
@@ -182,6 +183,7 @@ libbitcoin_common_a_SOURCES = \
   netbase.cpp \
   protocol.cpp \
   pbkdf2.cpp \
+  random.cpp \
   rpcprotocol.cpp \
   script.cpp \
   scrypt.cpp \

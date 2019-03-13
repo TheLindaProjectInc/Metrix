@@ -4,14 +4,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "script.h"
-#include "keystore.h"
-#include "key.h"
-#include "core.h"
-#include "sync.h"
-#include "util.h"
+
 #include "crypto/ripemd160.h"
 #include "crypto/sha1.h"
 #include "crypto/sha256.h"
+#include "core.h"
+#include "key.h"
+#include "keystore.h"
+#include "random.h"
+#include "sync.h"
+#include "util.h"
+
 #include "eccryptoverify.h"
 
 #include <boost/foreach.hpp>
