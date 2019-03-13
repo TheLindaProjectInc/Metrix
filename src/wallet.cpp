@@ -866,8 +866,9 @@ isminetype CWallet::IsMine(const CTxIn &txin) const
             if (txin.prevout.n < prev.vout.size())
                 return IsMine(prev.vout[txin.prevout.n]);if (IsMine(prev.vout[txin.prevout.n]))
 
-    }
+        }
     return MINE_NO;
+    }
 }
 
 int64_t CWallet::GetDebit(const CTxIn &txin, const isminefilter& filter) const
