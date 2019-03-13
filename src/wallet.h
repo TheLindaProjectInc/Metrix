@@ -68,16 +68,6 @@ enum AvailableCoinsType
     ONLY_NONDENOMINATED_NOTMN = 4 // ONLY_NONDENOMINATED and not 1000 Linda at the same time
 };
 
-/** IsMine() return codes */
-enum isminetype
-{
-    ISMINE_NO = 0,
-    ISMINE_WATCH_ONLY = 1,
-    ISMINE_SPENDABLE = 2,
-    ISMINE_ALL = ISMINE_WATCH_ONLY | ISMINE_SPENDABLE
-};
-
-
 /** A key pool entry */
 class CKeyPool
 {
