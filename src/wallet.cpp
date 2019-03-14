@@ -1401,7 +1401,7 @@ int64_t CWallet::GetImmatureBalance() const
         LOCK2(cs_main, cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
-            const CWalletTx& pcoin = (*it).second;
+            const CWalletTx* pcoin = &(*it).second;
             nTotal += pcoin->GetImmatureCredit();
         }
     }
@@ -1454,7 +1454,15 @@ int64_t CWallet::GetImmatureWatchOnlyBalance() const
 }
 
 // populate vCoins with vector of available COutputs.
-void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const CCoinControl *coinControl, AvailableCoinsType coin_type, bool useIX, bool includeLocked) const
+void CWallet::AvailableCoins(
+    vector<COutput>& vCoins, 
+    bool fOnlyConfirmed, 
+    const CCoinControl *coinControl,
+    bool fIncludeZeroValue,
+    AvailableCoinsType coin_type, 
+    bool useIX, 
+    int nWatchonlyConfig,
+    bool includeLocked) const
 {
     vCoins.clear();
 
@@ -1498,8 +1506,6 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 }
                 if(!found) continue;
 
-                bool mine = IsMine(pcoin->vout[i]);
-
                 isminetype mine = IsMine(pcoin->vout[i]);
                 if (IsSpent(wtxid, i))
                     continue;
@@ -1512,7 +1518,7 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 if (mine == ISMINE_WATCH_ONLY && nWatchonlyConfig == 1)
                     continue;
 
-                if (IsLockedCoin((*it).first, i) && nCoinType != ONLY_10000)
+                if (IsLockedCoin((*it).first, i))
                     continue;
                 if (pcoin->vout[i].nValue <= 0 && !fIncludeZeroValue)
                     continue;
@@ -2045,7 +2051,7 @@ bool CWallet::SelectCoinsMinConf(int64_t nTargetValue, unsigned int nSpendTime, 
 bool CWallet::SelectCoins(int64_t nTargetValue, unsigned int nSpendTime, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64_t& nValueRet, const CCoinControl* coinControl, AvailableCoinsType coin_type, bool useIX) const
 {
     vector<COutput> vCoins;
-    AvailableCoins(vCoins, true, coinControl);
+    AvailableCoins(vCoins, true, coinControl, false, coin_type);
 
     //if we're doing only denominated, we need to round up to the nearest .1Linda
     if(coin_type == ONLY_DENOMINATED){

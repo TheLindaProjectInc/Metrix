@@ -193,7 +193,7 @@ Value getrawtransaction(const Array& params, bool fHelp)
 #ifdef ENABLE_WALLET
 Value listunspent(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() > 4)
+    if (fHelp || params.size() > 5)
         throw runtime_error(
             "listunspent ( minconf maxconf  [\"address\",...] )\n"
             "\nReturns array of unspent transaction outputs\n"
@@ -209,6 +209,8 @@ Value listunspent(const Array& params, bool fHelp)
             "      \"address\"   (string) Lindacoin address\n"
             "      ,...\n"
             "    ]\n"
+            "4. watchonlyconfig  (numeric, optional, default=1) 1 = list regular unspent transactions, 2 = list only watchonly transactions,  3 = list all unspent transactions (including watchonly)\n"
+            "5. IncludeLocked   (boolean, optional, default=false)  list coins locked into masternode\n"
             "\nResult\n"
             "[                   (array of json object)\n"
             "  {\n"
@@ -229,7 +231,7 @@ Value listunspent(const Array& params, bool fHelp)
             + HelpExampleRpc("listunspent", "6, 9999999 \"[\\\"LeuaKA9DmsLNExw14vLMSk1MBBJ4vyrgVG\\\",\\\"LdJQamK9utuhc8trqzgiB21zeMpzS1onMk\\\"]\"")
         );
 
-    RPCTypeCheck(params, list_of(int_type)(int_type)(array_type));
+    RPCTypeCheck(params, list_of(int_type)(int_type)(array_type)(int_type));
 
     int nMinDepth = 1;
     if (params.size() > 0)
@@ -254,14 +256,21 @@ Value listunspent(const Array& params, bool fHelp)
         }
     }
 
+    int nWatchonlyConfig = 1;
+    if (params.size() > 3) {
+        nWatchonlyConfig = params[3].get_int();
+        if (nWatchonlyConfig > 3 || nWatchonlyConfig < 1)
+            nWatchonlyConfig = 1;
+    }
+
     bool bIncludeLocked = false;
-    if (params.size() > 3)
-        bIncludeLocked = params[3].get_bool();
+    if (params.size() > 4)
+        bIncludeLocked = params[4].get_bool();
 
     Array results;
     vector<COutput> vecOutputs;
     assert(pwalletMain != NULL);
-    pwalletMain->AvailableCoins(vecOutputs, false, NULL, ALL_COINS, false, bIncludeLocked);
+    pwalletMain->AvailableCoins(vecOutputs, false, NULL, ALL_COINS, false, nWatchonlyConfig, bIncludeLocked);
     BOOST_FOREACH(const COutput& out, vecOutputs)
     {
         if (out.nDepth < nMinDepth || out.nDepth > nMaxDepth)
