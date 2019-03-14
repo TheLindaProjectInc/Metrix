@@ -1174,7 +1174,7 @@ Value ListReceived(const Array& params, bool fByAccounts)
 
             isminefilter mine = IsMine(*pwalletMain, address);
             if(!(mine & filter))
-                continue;                continue;
+                continue;
 
             tallyitem& item = mapTally[address];
             item.nAmount += txout.nValue;
