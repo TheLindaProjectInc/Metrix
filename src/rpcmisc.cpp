@@ -136,6 +136,7 @@ public:
         CPubKey vchPubKey;
         obj.push_back(Pair("isscript", false));
         if (mine == ISMINE_SPENDABLE) {
+
             pwalletMain->GetPubKey(keyID, vchPubKey);
             obj.push_back(Pair("pubkey", HexStr(vchPubKey)));
             obj.push_back(Pair("iscompressed", vchPubKey.IsCompressed()));

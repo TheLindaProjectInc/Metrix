@@ -863,8 +863,8 @@ isminetype CWallet::IsMine(const CTxIn &txin) const
         if (mi != mapWallet.end())
         {
             const CWalletTx& prev = (*mi).second;
-			if (txin.prevout.n < prev.vout.size())
-				return IsMine(prev.vout[txin.prevout.n]);
+			      if (txin.prevout.n < prev.vout.size())
+				        return IsMine(prev.vout[txin.prevout.n]);
 
         }
     return ISMINE_NO;
@@ -1420,7 +1420,6 @@ int64_t CWallet::GetWatchOnlyBalance() const
                 nTotal += pcoin->GetAvailableWatchOnlyCredit();
         }
     }
-
     return nTotal;
 }
 

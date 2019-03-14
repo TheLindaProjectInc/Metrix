@@ -1171,7 +1171,7 @@ Value ListReceived(const Array& params, bool fByAccounts)
             CTxDestination address;
             if (!ExtractDestination(txout.scriptPubKey, address))
                 continue;
-
+          
             isminefilter mine = IsMine(*pwalletMain, address);
             if(!(mine & filter))
                 continue;
@@ -1556,7 +1556,6 @@ Value listtransactions(const Array& params, bool fHelp)
 	if (params.size() > 3)
 		if (params[3].get_bool())
 			filter = filter | ISMINE_WATCH_ONLY;
-
     if (nCount < 0)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative count");
     if (nFrom < 0)
@@ -1625,8 +1624,14 @@ Value listaccounts(const Array& params, bool fHelp)
     accountingDeprecationCheck();
 
     int nMinDepth = 1;
+    isminefilter includeWatchonly = MINE_SPENDABLE;
     if (params.size() > 0)
+    {
         nMinDepth = params[0].get_int();
+        if(params.size() > 1)
+            if(params[1].get_bool())
+                includeWatchonly = includeWatchonly | MINE_WATCH_ONLY;
+    }
 
 	isminefilter includeWatchonly = ISMINE_SPENDABLE;
 	if (params.size() > 1)
