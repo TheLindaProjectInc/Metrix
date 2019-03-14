@@ -2368,7 +2368,7 @@ bool CWallet::SelectCoinsWithoutDenomination(int64_t nTargetValue, set<pair<cons
     CCoinControl *coinControl=NULL;
 
     vector<COutput> vCoins;
-    AvailableCoins(vCoins, true, coinControl, ONLY_NONDENOMINATED);
+    AvailableCoins(vCoins, true, coinControl, false ,ONLY_NONDENOMINATED);
 
     BOOST_FOREACH(const COutput& out, vCoins)
     {
