@@ -370,7 +370,7 @@ public:
 
 
     isminetype IsMine(const CTxIn& txin) const;
-    int64_t GetDebit(const CTxIn& txin, const isminefilter& filter)) const;
+    int64_t GetDebit(const CTxIn& txin, const isminefilter& filter) const;
     isminetype IsMine(const CTxOut& txout) const
     {
         return ::IsMine(*this, txout.scriptPubKey);
