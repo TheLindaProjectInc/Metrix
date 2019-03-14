@@ -1529,7 +1529,7 @@ void CWallet::AvailableCoins(
                 if ((mine & ISMINE_SPENDABLE) != ISMINE_NO)
                     fIsSpendable = true;
 
-                vCoins.emplace_back(COutput(pcoin, i, nDepth, fIsSpendable));
+                vCoins.push_back(COutput(pcoin, i, nDepth, fIsSpendable));
             }
         }
     }
@@ -1649,7 +1649,7 @@ int64_t CWallet::GetStake() const
     {
         const CWalletTx* pcoin = &(*it).second;
         if (pcoin->IsCoinStake() && pcoin->GetBlocksToMaturity() > 0 && pcoin->GetDepthInMainChain() > 0)
-            nTotal += CWallet::GetCredit(*pcoin);
+            nTotal += CWallet::GetCredit(*pcoin, ISMINE_SPENDABLE);
     }
     return nTotal;
 }
@@ -1662,7 +1662,7 @@ int64_t CWallet::GetNewMint() const
     {
         const CWalletTx* pcoin = &(*it).second;
         if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0 && pcoin->GetDepthInMainChain() > 0)
-            nTotal += CWallet::GetCredit(*pcoin);
+            nTotal += CWallet::GetCredit(*pcoin, ISMINE_SPENDABLE);
     }
     return nTotal;
 }
@@ -1697,7 +1697,7 @@ bool CWallet::SelectCoinsMinConfByCoinAge(int64_t nTargetValue, unsigned int nSp
     {
         const CWalletTx *pcoin = output.first.tx;
 
-        if (output.first.nDepth < (pcoin->IsFromMe() ? nConfMine : nConfTheirs))
+        if (output.first.nDepth < (pcoin->IsFromMe(ISMINE_ALL) ? nConfMine : nConfTheirs))
             continue;
 
         int i = output.first.i;
