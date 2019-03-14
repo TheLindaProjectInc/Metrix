@@ -863,8 +863,8 @@ isminetype CWallet::IsMine(const CTxIn &txin) const
         if (mi != mapWallet.end())
         {
             const CWalletTx& prev = (*mi).second;
-            if (txin.prevout.n < prev.vout.size())
-                return IsMine(prev.vout[txin.prevout.n]);if (IsMine(prev.vout[txin.prevout.n]))
+			if (txin.prevout.n < prev.vout.size())
+				return IsMine(prev.vout[txin.prevout.n]);
 
         }
     return MINE_NO;
@@ -978,8 +978,7 @@ int CWalletTx::GetRequestCount() const
     return nRequests;
 }
 
-void CWalletTx::GetAmounts(list<COutputEntry>& listReceived,
-                           list<COutputEntry>& listSent, int64_t& nFee, string& strSentAccount) const
+void CWalletTx::GetAmounts(list<COutputEntry>& listReceived, list<COutputEntry>& listSent, int64_t& nFee, string& strSentAccount, const isminefilter& filter) const
 {
     LOCK(pwallet->cs_wallet);
     nFee = 0;
@@ -1040,8 +1039,7 @@ void CWalletTx::GetAmounts(list<COutputEntry>& listReceived,
 
 }
 
-void CWalletTx::GetAccountAmounts(const string& strAccount, int64_t& nReceived,
-                                  int64_t& nSent, int64_t& nFee, const isminefilter& filter) const
+void CWalletTx::GetAccountAmounts(const string& strAccount, int64_t& nReceived, int64_t& nSent, int64_t& nFee, const isminefilter& filter) const
 {
     LOCK(pwallet->cs_wallet);
     nReceived = nSent = nFee = 0;

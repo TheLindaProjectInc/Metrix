@@ -768,11 +768,9 @@ public:
         return nChangeCached;
     }
 
-    void GetAmounts(std::list<COutputEntry>& listReceived,
-                    std::list<COutputEntry>& listSent, int64_t& nFee, std::string& strSentAccount, const isminefilter& filter = (MINE_SPENDABLE | MINE_WATCH_ONLY)) const;
+    void GetAmounts(std::list<COutputEntry>& listReceived, std::list<COutputEntry>& listSent, int64_t& nFee, std::string& strSentAccount, const isminefilter& filter = (MINE_SPENDABLE | MINE_WATCH_ONLY)) const;
 
-    void GetAccountAmounts(const std::string& strAccount, int64_t& nReceived,
-                           int64_t& nSent, int64_t& nFee, const isminefilter& filter=(MINE_SPENDABLE|MINE_WATCH_ONLY)) const;
+    void GetAccountAmounts(const std::string& strAccount, int64_t& nReceived, int64_t& nSent, int64_t& nFee, const isminefilter& filter=(MINE_SPENDABLE|MINE_WATCH_ONLY)) const;
 
     bool IsFromMe(const isminefilter& filter=(MINE_SPENDABLE|MINE_WATCH_ONLY)) const
     {
