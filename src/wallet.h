@@ -303,6 +303,9 @@ public:
     int64_t GetBalanceNoLocks() const;
     int64_t GetUnconfirmedBalance() const;
     int64_t GetImmatureBalance() const;
+    int64_t GetWatchOnlyBalance() const;
+    int64_t GetUnconfirmedWatchOnlyBalance() const;
+    int64_t GetImmatureWatchOnlyBalance() const;
     int64_t GetStake() const;
     int64_t GetNewMint() const;
 
@@ -559,6 +562,7 @@ public:
     // memory only
     mutable bool fDebitCached;
     mutable bool fCreditCached;
+    mutable bool fImmatureCreditCached;
     mutable bool fAvailableCreditCached;
     mutable bool fWatchDebitCached;
     mutable bool fWatchCreditCached;
@@ -567,6 +571,7 @@ public:
     mutable bool fChangeCached;
     mutable int64_t nDebitCached;
     mutable int64_t nCreditCached;
+    mutable int64_t nImmatureCreditCached;
     mutable int64_t nAvailableCreditCached;
     mutable int64_t nWatchDebitCached;
     mutable int64_t nWatchCreditCached;
@@ -606,6 +611,7 @@ public:
         strFromAccount.clear();
         fDebitCached = false;
         fCreditCached = false;
+        fImmatureCreditCached = false;
         fAvailableCreditCached = false;
         fWatchDebitCached = false;
         fWatchCreditCached = false;
@@ -614,6 +620,7 @@ public:
         fChangeCached = false;
         nDebitCached = 0;
         nCreditCached = 0;
+        nImmatureCreditCached = 0;
         nAvailableCreditCached = 0;
         nWatchDebitCached = 0;
         nWatchCreditCached = 0;
@@ -737,6 +744,20 @@ public:
         nCreditCached = pwallet->GetCredit(*this, ISMINE_ALL);
         fCreditCached = true;
         return nCreditCached;
+    }
+
+    int64_t GetImmatureCredit(bool fUseCache = true) const
+    {
+        if (IsCoinBase() && GetBlocksToMaturity() > 0 && IsInMainChain())
+        {
+            if (fUseCache && fImmatureCreditCached)
+                return nImmatureCreditCached;
+            nImmatureCreditCached = pwallet->GetCredit(*this, ISMINE_SPENDABLE);
+            fImmatureCreditCached = true;
+            return nImmatureCreditCached;
+        }
+
+        return 0;
     }
 
     int64_t GetAvailableCredit(bool fUseCache=true) const
