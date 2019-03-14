@@ -397,7 +397,7 @@ public:
     }
     bool IsFromMe(const CTransaction& tx) const // should probably be renamed to IsRelevantToMe
     {
-        return (GetDebit(tx, ISMINE_SPENDABLE | ISMINE_WATCH_ONLY) > 0);
+        return (GetDebit(tx, ISMINE_ALL) > 0);
     }
     int64_t GetDebit(const CTransaction& tx, const isminefilter& filter) const
     {
@@ -724,7 +724,7 @@ public:
         // GetBalance can assume transactions in mapWallet won't change
         if (fUseCache && fCreditCached)
             return nCreditCached;
-        nCreditCached = pwallet->GetCredit(*this, ISMINE_SPENDABLE | ISMINE_WATCH_ONLY);
+        nCreditCached = pwallet->GetCredit(*this, ISMINE_ALL);
         fCreditCached = true;
         return nCreditCached;
     }
@@ -788,7 +788,7 @@ public:
             return true;
         if (nDepth < 0)
             return false;
-        if (fConfChange || !IsFromMe(ISMINE_SPENDABLE | ISMINE_WATCH_ONLY)) // using wtx's cached debit
+        if (fConfChange || !IsFromMe(ISMINE_ALL)) // using wtx's cached debit
             return false;
 
         // Trusted if all inputs are from us and are in the mempool:
