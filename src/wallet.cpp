@@ -1002,19 +1002,17 @@ void CWalletTx::GetAmounts(list<COutputEntry>& listReceived, list<COutputEntry>&
         if (txout.scriptPubKey.empty())
             continue;
 
-        bool fIsMine;
+        isminetype fIsMine = pwallet->IsMine(txout);
         // Only need to handle txouts if AT LEAST one of these is true:
         //   1) they debit from us (sent)
         //   2) the output is to us (received)
         if (nDebit > 0)
         {
             // Don't report 'change' txouts
-	    // LindaNOTE: CoinControl possible fix related... with HD wallet we need to report change?
-            //if (pwallet->IsChange(txout))
-            //    continue;
-            fIsMine = pwallet->IsMine(txout);
+            if (pwallet->IsChange(txout))
+                continue;
         }
-        else if (!(fIsMine = pwallet->IsMine(txout)))
+        else if (!(fIsMine & filter))
             continue;
 
         // In either case, we need to get the destination address

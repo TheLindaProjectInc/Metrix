@@ -192,9 +192,9 @@ Value validateaddress(const Array& params, bool fHelp)
         ret.push_back(Pair("address", currentAddress));
 #ifdef ENABLE_WALLET
         isminetype mine = pwalletMain ? IsMine(*pwalletMain, dest) : ISMINE_NO;
-        ret.push_back(Pair("ismine", mine != ISMINE_NO));
+        ret.push_back(Pair("ismine", (mine & ISMINE_SPENDABLE) ? true: false));
         if (mine != ISMINE_NO) {
-            ret.push_back(Pair("watchonly", mine == ISMINE_WATCH_ONLY));
+            ret.push_back(Pair("iswatchonly", (mine & ISMINE_WATCH_ONLY) ? true: false));
             Object detail = boost::apply_visitor(DescribeAddressVisitor(mine), dest);
             ret.insert(ret.end(), detail.begin(), detail.end());
         }
