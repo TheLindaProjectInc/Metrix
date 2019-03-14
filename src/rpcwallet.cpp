@@ -608,7 +608,7 @@ Value getreceivedbyaccount(const Array& params, bool fHelp)
 }
 
 
-int64_t GetAccountBalance(CWalletDB& walletdb, const string& strAccount, int nMinDepth, const isminefilter& filter = MINE_SPENDABLE)
+int64_t GetAccountBalance(CWalletDB& walletdb, const string& strAccount, int nMinDepth, const isminefilter& filter = ISMINE_SPENDABLE)
 {
     int64_t nBalance = 0;
 
@@ -633,7 +633,7 @@ int64_t GetAccountBalance(CWalletDB& walletdb, const string& strAccount, int nMi
     return nBalance;
 }
 
-int64_t GetAccountBalance(const string& strAccount, int nMinDepth, const isminefilter& filter = MINE_SPENDABLE)
+int64_t GetAccountBalance(const string& strAccount, int nMinDepth, const isminefilter& filter = ISMINE_SPENDABLE)
 {
     CWalletDB walletdb(pwalletMain->strWalletFile);
     return GetAccountBalance(walletdb, strAccount, nMinDepth, filter);
@@ -670,13 +670,13 @@ Value getbalance(const Array& params, bool fHelp)
         return  ValueFromAmount(pwalletMain->GetBalance());
 
     int nMinDepth = 1;
-    isminefilter filter = MINE_SPENDABLE;
+    isminefilter filter = ISMINE_SPENDABLE;
     if (params.size() > 1)
     {
         nMinDepth = params[1].get_int();
         if(params.size() > 2)
             if(params[2].get_bool())
-                filter = filter | MINE_WATCH_ONLY;
+                filter = filter | ISMINE_WATCH_ONLY;
     }
 
     if (params[0].get_str() == "*") {
@@ -1150,10 +1150,10 @@ Value ListReceived(const Array& params, bool fByAccounts)
     bool fIncludeEmpty = false;
     if (params.size() > 1)
         fIncludeEmpty = params[1].get_bool();
-    isminefilter filter = MINE_SPENDABLE;
+    isminefilter filter = ISMINE_SPENDABLE;
     if(params.size() > 2)
         if(params[2].get_bool())
-            filter = filter | MINE_WATCH_ONLY;
+            filter = filter | ISMINE_WATCH_ONLY;
 
     // Tally
     map<CBitcoinAddress, tallyitem> mapTally;
@@ -1182,7 +1182,7 @@ Value ListReceived(const Array& params, bool fByAccounts)
             item.nAmount += txout.nValue;
             item.nConf = min(item.nConf, nDepth);
             item.txids.push_back(wtx.GetHash());
-            if (mine & MINE_WATCH_ONLY)
+            if (mine & ISMINE_WATCH_ONLY)
                 item.fIsWatchonly = true;
         }
     }
@@ -1367,7 +1367,7 @@ static void MaybePushAddress(Object & entry, const CTxDestination &dest)
         entry.push_back(Pair("address", addr.ToString()));
 }
 
-void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDepth, bool fLong, Array& ret, const isminefilter& filter=MINE_SPENDABLE)
+void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDepth, bool fLong, Array& ret, const isminefilter& filter=ISMINE_SPENDABLE)
 {
     int64_t nFee;
     string strSentAccount;
@@ -1378,7 +1378,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
     wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount, filter);
 
     bool fAllAccounts = (strAccount == string("*"));
-    bool involvesWatchonly = wtx.IsFromMe(MINE_WATCH_ONLY);
+    bool involvesWatchonly = wtx.IsFromMe(ISMINE_WATCH_ONLY);
 
     // Sent
     if ((!wtx.IsCoinStake()) && (!listSent.empty() || nFee != 0) && (fAllAccounts || strAccount == strSentAccount))
@@ -1386,7 +1386,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
         BOOST_FOREACH(const COutputEntry& s, listSent)
         {
             Object entry;
-            if(involvesWatchonly || (::IsMine(*pwalletMain, s.destination) & MINE_WATCH_ONLY))
+            if(involvesWatchonly || (::IsMine(*pwalletMain, s.destination) & ISMINE_WATCH_ONLY))
                 entry.push_back(Pair("involvesWatchonly", true));
             entry.push_back(Pair("account", strSentAccount));
             MaybePushAddress(entry, s.destination);
@@ -1424,7 +1424,7 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             if (fAllAccounts || (account == strAccount))
             {
                 Object entry;
-                if(involvesWatchonly || (::IsMine(*pwalletMain, r.destination) & MINE_WATCH_ONLY))
+                if(involvesWatchonly || (::IsMine(*pwalletMain, r.destination) & ISMINE_WATCH_ONLY))
                     entry.push_back(Pair("involvesWatchonly", true));
                 entry.push_back(Pair("account", account));
                 MaybePushAddress(entry, r.destination);
@@ -1548,7 +1548,7 @@ Value listtransactions(const Array& params, bool fHelp)
     string strAccount = "*";
     int nCount = 10;
     int nFrom = 0;
-    isminefilter filter = MINE_SPENDABLE;
+    isminefilter filter = ISMINE_SPENDABLE;
     if (params.size() > 0)
     {
         strAccount = params[0].get_str();
@@ -1561,7 +1561,7 @@ Value listtransactions(const Array& params, bool fHelp)
                 if(params.size() > 3)
                 {
                     if(params[3].get_bool())
-                        filter = filter | MINE_WATCH_ONLY;
+                        filter = filter | ISMINE_WATCH_ONLY;
                 }
             }
         }
@@ -1634,13 +1634,13 @@ Value listaccounts(const Array& params, bool fHelp)
     accountingDeprecationCheck();
 
     int nMinDepth = 1;
-    isminefilter includeWatchonly = MINE_SPENDABLE;
+    isminefilter includeWatchonly = ISMINE_SPENDABLE;
     if (params.size() > 0)
     {
         nMinDepth = params[0].get_int();
         if(params.size() > 1)
             if(params[1].get_bool())
-                includeWatchonly = includeWatchonly | MINE_WATCH_ONLY;
+                includeWatchonly = includeWatchonly | ISMINE_WATCH_ONLY;
     }
 
     map<string, int64_t> mapAccountBalances;
@@ -1725,7 +1725,7 @@ Value listsinceblock(const Array& params, bool fHelp)
 
     CBlockIndex *pindex = NULL;
     int target_confirms = 1;
-    isminefilter filter = MINE_SPENDABLE;
+    isminefilter filter = ISMINE_SPENDABLE;
     if (params.size() > 0)
     {
         uint256 blockId = 0;
@@ -1745,7 +1745,7 @@ Value listsinceblock(const Array& params, bool fHelp)
             if(params.size() > 2)
             {
                 if(params[2].get_bool())
-                    filter = filter | MINE_WATCH_ONLY;
+                    filter = filter | ISMINE_WATCH_ONLY;
             }
         }
     }
@@ -1811,10 +1811,10 @@ Value gettransaction(const Array& params, bool fHelp)
     uint256 hash;
     hash.SetHex(params[0].get_str());
 
-    isminefilter filter = MINE_SPENDABLE;
+    isminefilter filter = ISMINE_SPENDABLE;
     if(params.size() > 1)
         if(params[1].get_bool())
-            filter = filter | MINE_WATCH_ONLY;
+            filter = filter | ISMINE_WATCH_ONLY;
 
     Object entry;
 

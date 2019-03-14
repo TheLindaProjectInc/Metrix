@@ -867,7 +867,7 @@ isminetype CWallet::IsMine(const CTxIn &txin) const
 				return IsMine(prev.vout[txin.prevout.n]);
 
         }
-    return MINE_NO;
+    return ISMINE_NO;
     }
 }
 
