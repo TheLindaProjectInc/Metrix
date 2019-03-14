@@ -1624,16 +1624,16 @@ Value listaccounts(const Array& params, bool fHelp)
     accountingDeprecationCheck();
 
     int nMinDepth = 1;
-    isminefilter includeWatchonly = MINE_SPENDABLE;
+    isminefilter includeWatchonly = ISMINE_SPENDABLE;
     if (params.size() > 0)
     {
         nMinDepth = params[0].get_int();
         if(params.size() > 1)
             if(params[1].get_bool())
-                includeWatchonly = includeWatchonly | MINE_WATCH_ONLY;
+                includeWatchonly = includeWatchonly | ISMINE_WATCH_ONLY;
     }
 
-	isminefilter includeWatchonly = ISMINE_SPENDABLE;
+
 	if (params.size() > 1)
         if (params[1].get_bool())
         includeWatchonly = includeWatchonly | ISMINE_WATCH_ONLY;
