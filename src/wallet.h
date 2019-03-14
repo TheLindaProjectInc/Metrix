@@ -370,16 +370,16 @@ public:
 
 
     isminetype IsMine(const CTxIn& txin) const;
-    int64_t GetDebit(const CTxIn& txin, const isminefilter& filter=(ISMINE_SPENDABLE|ISMINE_WATCH_ONLY)) const;
+    int64_t GetDebit(const CTxIn& txin, const isminefilter& filter)) const;
     isminetype IsMine(const CTxOut& txout) const
     {
         return ::IsMine(*this, txout.scriptPubKey);
     }
-    int64_t GetCredit(const CTxOut& txout, const isminefilter& filter=(ISMINE_WATCH_ONLY|ISMINE_SPENDABLE)) const
+    int64_t GetCredit(const CTxOut& txout, const isminefilter& filter) const
     {
         if (!MoneyRange(txout.nValue))
             throw std::runtime_error("CWallet::GetCredit() : value out of range");
-        return (IsMine(txout) ? txout.nValue : 0);
+        return ((IsMine(txout) & filter) ? txout.nValue : 0);
     }
     bool IsChange(const CTxOut& txout) const;
     int64_t GetChange(const CTxOut& txout) const
@@ -395,11 +395,11 @@ public:
                 return true;
         return false;
     }
-    bool IsFromMe(const CTransaction& tx) const
+    bool IsFromMe(const CTransaction& tx) const // should probably be renamed to IsRelevantToMe
     {
-        return (GetDebit(tx) > 0);
+        return (GetDebit(tx, ISMINE_SPENDABLE | ISMINE_WATCH_ONLY) > 0);
     }
-    int64_t GetDebit(const CTransaction& tx, const isminefilter& filter=(ISMINE_SPENDABLE|ISMINE_WATCH_ONLY)) const
+    int64_t GetDebit(const CTransaction& tx, const isminefilter& filter) const
     {
         int64_t nDebit = 0;
         BOOST_FOREACH(const CTxIn& txin, tx.vin)
@@ -410,12 +410,12 @@ public:
         }
         return nDebit;
     }
-    int64_t GetCredit(const CTransaction& tx) const
+    int64_t GetCredit(const CTransaction& tx, const isminefilter& filter) const
     {
         int64_t nCredit = 0;
         BOOST_FOREACH(const CTxOut& txout, tx.vout)
         {
-            nCredit += GetCredit(txout);
+            nCredit += GetCredit(txout, filter);
             if (!MoneyRange(nCredit))
                 throw std::runtime_error("CWallet::GetCredit() : value out of range");
         }
@@ -683,7 +683,8 @@ public:
         return pwallet->IsDenominated(*this);
     }
 
-    int64_t GetDebit(const isminefilter& filter=(ISMINE_SPENDABLE|ISMINE_WATCH_ONLY)) const
+	// filter decides which addresses will count towards the debit
+    int64_t GetDebit(const isminefilter& filter) const
     {
         if (vin.empty())
             return 0;
@@ -723,7 +724,7 @@ public:
         // GetBalance can assume transactions in mapWallet won't change
         if (fUseCache && fCreditCached)
             return nCreditCached;
-        nCreditCached = pwallet->GetCredit(*this);
+        nCreditCached = pwallet->GetCredit(*this, ISMINE_SPENDABLE | ISMINE_WATCH_ONLY);
         fCreditCached = true;
         return nCreditCached;
     }
@@ -768,11 +769,11 @@ public:
         return nChangeCached;
     }
 
-    void GetAmounts(std::list<COutputEntry>& listReceived, std::list<COutputEntry>& listSent, int64_t& nFee, std::string& strSentAccount, const isminefilter& filter = (ISMINE_SPENDABLE | ISMINE_WATCH_ONLY)) const;
+    void GetAmounts(std::list<COutputEntry>& listReceived, std::list<COutputEntry>& listSent, int64_t& nFee, std::string& strSentAccount, const isminefilter& filter) const;
 
-    void GetAccountAmounts(const std::string& strAccount, int64_t& nReceived, int64_t& nSent, int64_t& nFee, const isminefilter& filter=(ISMINE_SPENDABLE|ISMINE_WATCH_ONLY)) const;
+    void GetAccountAmounts(const std::string& strAccount, int64_t& nReceived, int64_t& nSent, int64_t& nFee, const isminefilter& filter) const;
 
-    bool IsFromMe(const isminefilter& filter=(ISMINE_SPENDABLE|ISMINE_WATCH_ONLY)) const
+    bool IsFromMe(const isminefilter& filter) const
     {
         return (GetDebit(filter) > 0);
     }
@@ -787,7 +788,7 @@ public:
             return true;
         if (nDepth < 0)
             return false;
-        if (fConfChange || !IsFromMe()) // using wtx's cached debit
+        if (fConfChange || !IsFromMe(ISMINE_SPENDABLE | ISMINE_WATCH_ONLY)) // using wtx's cached debit
             return false;
 
         // Trusted if all inputs are from us and are in the mempool:
