@@ -386,7 +386,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
     // Linda - start-many and start-alias should include locked coins as nodes in
     // the masternode.conf file coins are looked on startup. otherwise it wouldn't
     // be possible to start the node remotely as it would alywas fail to find vin
-    pwalletMain->AvailableCoins(vCoins, true, NULL, ALL_COINS, false, includeLocked);
+    pwalletMain->AvailableCoins(vCoins, true, NULL, false ,ALL_COINS, false, (int)1, includeLocked);
 
     // Filter
     BOOST_FOREACH(const COutput& out, vCoins)
