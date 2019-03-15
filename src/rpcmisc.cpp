@@ -79,12 +79,13 @@ Value getinfo(const Array& params, bool fHelp)
         obj.push_back(Pair("stake",         ValueFromAmount(pwalletMain->GetStake())));
     }
 #endif
-    obj.push_back(Pair("blocks",        (int)chainActive.Height()));
-    obj.push_back(Pair("timeoffset",    (int64_t)GetTimeOffset()));
-    obj.push_back(Pair("moneysupply",   ValueFromAmount(chainActive.Tip()->nMoneySupply)));
-    obj.push_back(Pair("connections",   (int)vNodes.size()));
-    obj.push_back(Pair("proxy",         (proxy.IsValid() ? proxy.ToStringIPPort() : string())));
-    obj.push_back(Pair("ip",            GetLocalAddress(NULL).ToStringIP()));
+    obj.push_back(Pair("blocks",            (int)chainActive.Height()));
+    obj.push_back(Pair("timeoffset",        (int64_t)GetTimeOffset()));
+    obj.push_back(Pair("moneysupply",       ValueFromAmount(chainActive.Tip()->nMoneySupply)));
+    obj.push_back(Pair("rawmoneysupply",    chainActive.Tip()->nMoneySupply));
+    obj.push_back(Pair("connections",       (int)vNodes.size()));
+    obj.push_back(Pair("proxy",             (proxy.IsValid() ? proxy.ToStringIPPort() : string())));
+    obj.push_back(Pair("ip",                GetLocalAddress(NULL).ToStringIP()));
 
     diff.push_back(Pair("proof-of-work",  GetDifficulty()));
     diff.push_back(Pair("proof-of-stake", GetDifficulty(GetLastBlockIndex(chainActive.Tip(), true))));

@@ -77,6 +77,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
         const CTxOut& txout = tx.vout[i];
         Object out;
         out.push_back(Pair("value", ValueFromAmount(txout.nValue)));
+        out.push_back(Pair("rawvalue", txout.nValue));
         out.push_back(Pair("n", (int64_t)i));
         Object o;
         ScriptPubKeyToJSON(txout.scriptPubKey, o, true);
@@ -303,6 +304,7 @@ Value listunspent(const Array& params, bool fHelp)
             }
         }
         entry.push_back(Pair("amount",ValueFromAmount(nValue)));
+        entry.push_back(Pair("rawamount",nValue));
         entry.push_back(Pair("confirmations",out.nDepth));
         entry.push_back(Pair("time",out.tx->GetTxTime()));
         if (bIncludeLocked) {
