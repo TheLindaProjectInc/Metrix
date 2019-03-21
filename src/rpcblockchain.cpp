@@ -551,10 +551,7 @@ Value getblockchaininfo(const Array& params, bool fHelp)
         );
 
     Object obj;
-    std::string chain = Params().DataDir();
-    if (chain.empty())
-        chain = "main";
-    obj.push_back(Pair("chain", chain));
+    obj.push_back(Pair("chain", Params().NetworkIDString()));
     obj.push_back(Pair("blocks", (int)chainActive.Height()));
     obj.push_back(Pair("bestblockhash", chainActive.Tip()->GetBlockHash().GetHex()));
     obj.push_back(Pair("difficulty", (double)GetDifficulty()));
