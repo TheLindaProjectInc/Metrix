@@ -59,6 +59,9 @@ public:
         nDefaultPort = 33820;
         nRPCPort = 33821;
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 20);
+        nEnforceBlockUpgradeMajority = 750;
+        nRejectBlockOutdatedMajority = 950;
+        nToCheckBlockUpgradeMajority = 1000;
 
         // Build the genesis block. Note that the output of the genesis coinbase cannot
         // be spent as it did not originally exist in the database.
@@ -129,6 +132,9 @@ public:
         nDefaultPort = 28888;
         nRPCPort = 28889;
         strDataDir = "testnet";
+        nEnforceBlockUpgradeMajority = 51;
+        nRejectBlockOutdatedMajority = 75;
+        nToCheckBlockUpgradeMajority = 100;
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.
         genesis.nBits  = bnProofOfWorkLimit.GetCompact();
