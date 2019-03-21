@@ -3174,8 +3174,8 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             hashProof = block.GetPoWHash();
 
         // Enforce rule that the coinbase starts with serialized block height
-            // Enforce block.nVersion=2 rule that the coinbase starts with serialized block height
-        if (nVersion < 2 && 
+        // Enforce block.nVersion=2 rule that the coinbase starts with serialized block height
+        if (block.nVersion >= 2 && 
             CBlockIndex::IsSuperMajority(2, pindexPrev, Params().EnforceBlockUpgradeMajority()))
         {
             {
