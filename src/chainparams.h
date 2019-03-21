@@ -69,8 +69,6 @@ public:
 	bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
 	/* Make standard checks */
 	bool RequireStandard() const { return fRequireStandard; }
-	/* Make standard checks */
-	bool RPCisTestNet() const { return fRPCisTestNet; }
     const string& DataDir() const { return strDataDir; }
 	Network NetworkID() const { return networkID; }
     /* Return the BIP70 network string (main, test or regtest) */
@@ -105,7 +103,6 @@ protected:
 	bool fRequireRPCPassword;
 	bool fDefaultCheckMemPool;
 	bool fRequireStandard;
-	bool fRPCisTestNet;
 };
 
 /**

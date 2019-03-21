@@ -105,7 +105,6 @@ public:
 		fRequireRPCPassword = true;
 		fDefaultCheckMemPool = false;
 		fRequireStandard = true;
-		fRPCisTestNet = false;
 	}
 };
 static CMainParams mainParams;
@@ -160,7 +159,6 @@ public:
 		fRequireRPCPassword = true;
 		fDefaultCheckMemPool = false;
 		fRequireStandard = false;
-		fRPCisTestNet = true;
 	}
 };
 static CTestNetParams testNetParams;
