@@ -227,8 +227,9 @@ bool static Bind(const CService &addr, unsigned int flags) {
 }
 
 // Core-specific options shared between daemon and RPC client
-std::string HelpMessage(HelpMessageMode hmm)
+std::string HelpMessage(HelpMessageMode mode)
 {
+    // When adding new options to the categories, please keep and ensure alphabetical ordering.
     string strUsage = _("Options:") + "\n";
     strUsage += "  -?                     " + _("This help message") + "\n";
     strUsage += "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)") + "\n";
@@ -237,7 +238,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -checklevel=<n>        " + _("How thorough the block verification is (0-6, default: 1)") + "\n";
     strUsage += "  -conf=<file>           " + _("Specify configuration file (default: Linda.conf)") + "\n";
 
-    if (hmm == HMM_BITCOIND)
+    if (mode == HMM_BITCOIND)
     {
 #if !defined(WIN32)
         strUsage += "  -daemon                " + _("Run in the background as a daemon and accept commands") + "\n";
@@ -312,7 +313,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += _("<category> can be:");
     strUsage += " addrman, alert, db, lock, rand, rpc, selectcoins, mempool, net,";
     strUsage += " coinage, coinstake, creation, stakemodifier";
-    if (hmm == HMM_BITCOIN_QT)
+    if (mode == HMM_BITCOIN_QT)
     {
         strUsage += ", qt.\n";
     }
