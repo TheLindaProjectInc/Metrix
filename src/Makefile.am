@@ -104,7 +104,8 @@ BITCOIN_CORE_H = \
   crypto/rfc6979_hmac_sha256.h \
   crypto/hmac_sha512.h \
   crypto/sha1.h \
-  crypto/ripemd160.h
+  crypto/ripemd160.h \
+  compat/sanity.h
 
 JSON_H = \
   json/json_spirit.h \
@@ -199,6 +200,8 @@ libbitcoin_common_a_SOURCES = \
   crypto/rfc6979_hmac_sha256.cpp \
   crypto/hmac_sha512.cpp \
   crypto/ripemd160.cpp \
+  compat/glibc_sanity.cpp \
+  compat/glibcxx_sanity.cpp \
   $(BITCOIN_CORE_H)
 
 libbitcoin_cli_a_SOURCES = \
