@@ -44,3 +44,4 @@ depends/SDKs/*
 share/setup.nsi
 src/stamp-h1
 src/bitcoin-config.*
+!src/config/.empty
