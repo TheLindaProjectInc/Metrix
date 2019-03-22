@@ -19,8 +19,8 @@ typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
 
 
 struct CDNSSeedData {
-    string name, host;
-    CDNSSeedData(const string &strName, const string &strHost) : name(strName), host(strHost) {}
+    std::string name, host;
+    CDNSSeedData(const std::string &strName, const std::string &strHost) : name(strName), host(strHost) {}
 };
 
 /**
@@ -53,7 +53,7 @@ public:
 
     const uint256& HashGenesisBlock() const { return hashGenesisBlock; }
     const MessageStartChars& MessageStart() const { return pchMessageStart; }
-    const vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
+    const std::vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
     int GetDefaultPort() const { return nDefaultPort; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
     int SubsidyHalvingInterval() const { return nSubsidyHalvingInterval; }
@@ -69,13 +69,13 @@ public:
 	bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
 	/* Make standard checks */
 	bool RequireStandard() const { return fRequireStandard; }
-    const string& DataDir() const { return strDataDir; }
+    const std::string& DataDir() const { return strDataDir; }
 	Network NetworkID() const { return networkID; }
     /* Return the BIP70 network string (main, test or regtest) */
     std::string NetworkIDString() const { return strNetworkID; }
-    const vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
+    const std::vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
 	const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
-	const vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
+	const std::vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
     int RPCPort() const { return nRPCPort; }
     int LastPOWBlock() const { return nLastPOWBlock; }
 protected:
@@ -84,7 +84,7 @@ protected:
     uint256 hashGenesisBlock;
     MessageStartChars pchMessageStart;
     // Raw pub key bytes for the broadcast alert signing key.
-    vector<unsigned char> vAlertPubKey;
+    std::vector<unsigned char> vAlertPubKey;
     int nDefaultPort;
     int nRPCPort;
     CBigNum bnProofOfWorkLimit;
@@ -93,13 +93,13 @@ protected:
     int nRejectBlockOutdatedMajority;
     int nToCheckBlockUpgradeMajority;
     string strDataDir;
-    vector<CDNSSeedData> vSeeds;
+    std::vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     int nLastPOWBlock;
 	Network networkID;
     std::string strNetworkID;
 	CBlock genesis;
-	vector<CAddress> vFixedSeeds;
+	std::vector<CAddress> vFixedSeeds;
 	bool fRequireRPCPassword;
 	bool fDefaultCheckMemPool;
 	bool fRequireStandard;

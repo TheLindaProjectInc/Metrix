@@ -8,6 +8,8 @@
 #include "rpcprotocol.h"
 #include "ui_interface.h" /* for _(...) */
 #include "chainparams.h"
+
+using namespace std;
  //////////////////////////////////////////////////////////////////////////////
 //
 // Start
