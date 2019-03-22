@@ -308,8 +308,6 @@ static const CRPCCommand vRPCCommands[] =
     { "getsubsidy",             &getsubsidy,             true,      true,      false },
     { "gettransaction",         &gettransaction,         false,     false,     true },
     { "getwalletinfo",          &getwalletinfo,          true,      false,      true },
-    { "getwork",                &getwork,                true,      false,     true },
-    { "getworkex",              &getworkex,              true,      false,     true },
     { "importprivkey",          &importprivkey,          false,     false,     true },
     { "importstealthaddress",   &importstealthaddress,   false,     false,     true },
     { "importwallet",           &importwallet,           false,     false,     true },
@@ -787,7 +785,7 @@ void JSONRequest::parse(const Value& valRequest)
     if (valMethod.type() != str_type)
         throw JSONRPCError(RPC_INVALID_REQUEST, "Method must be a string");
     strMethod = valMethod.get_str();
-    if (strMethod != "getwork" && strMethod != "getblocktemplate")
+    if (strMethod != "getblocktemplate")
         LogPrint("rpc", "ThreadRPCServer method=%s\n", strMethod);
 
     // Parse params

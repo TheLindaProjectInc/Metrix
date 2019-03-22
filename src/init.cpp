@@ -125,7 +125,6 @@ void Shutdown()
     mempool.AddTransactionsUpdated(1);
     StopRPCThreads();
 #ifdef ENABLE_WALLET
-    ShutdownRPCMining();
     if (pwalletMain)
         bitdb.Flush(false);
 #endif
@@ -1406,10 +1405,6 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
 
     StartNode(threadGroup);
-#ifdef ENABLE_WALLET
-    // InitRPCMining is needed here so getwork/getblocktemplate in the GUI debug console works properly.
-    InitRPCMining();
-#endif
 
 #ifdef ENABLE_WALLET
     // Mine proof-of-stake blocks in the background

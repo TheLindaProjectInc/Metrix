@@ -155,16 +155,6 @@ elif cmd == "gettransaction":
     except:
         print "\n---An error occurred---\n"
 
-elif cmd == "getwork":
-    try:
-        data = raw_input("Data (optional): ")
-        try:
-            print access.gettransaction(data)
-        except:
-            print access.gettransaction()
-    except:
-        print "\n---An error occurred---\n"
-
 elif cmd == "help":
     try:
         cmd = raw_input("Command (optional): ")
