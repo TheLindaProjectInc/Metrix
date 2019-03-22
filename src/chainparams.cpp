@@ -73,7 +73,7 @@ public:
         //    CTxOut(empty)
         //  vMerkleTree: 12630d16a9
         const char* pszTimestamp = "Laptop ban on Etihad flights from Abu Dhabi lifted";
-        CTransaction txNew;
+        CMutableTransaction txNew;
         txNew.nTime = 1499037408;
         txNew.vin.resize(1);
         txNew.vout.resize(1);

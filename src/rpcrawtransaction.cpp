@@ -365,7 +365,7 @@ Value createrawtransaction(const Array& params, bool fHelp)
     Array inputs = params[0].get_array();
     Object sendTo = params[1].get_obj();
 
-    CTransaction rawTx;
+    CMutableTransaction rawTx;
 
     BOOST_FOREACH(const Value& input, inputs)
     {
@@ -571,11 +571,11 @@ Value signrawtransaction(const Array& params, bool fHelp)
 
     vector<unsigned char> txData(ParseHexV(params[0], "argument 1"));
     CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
-    vector<CTransaction> txVariants;
+    vector<CMutableTransaction> txVariants;
     while (!ssData.empty())
     {
         try {
-            CTransaction tx;
+            CMutableTransaction tx;
             ssData >> tx;
             txVariants.push_back(tx);
         }
@@ -728,7 +728,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
             SignSignature(keystore, prevPubKey, mergedTx, i, nHashType);
 
         // ... and merge in other signatures:
-        BOOST_FOREACH(const CTransaction& txv, txVariants)
+        BOOST_FOREACH(const CMutableTransaction& txv, txVariants)
         {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
         }

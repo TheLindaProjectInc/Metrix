@@ -1280,7 +1280,7 @@ uint256 SignatureHash(CScript scriptCode, const CTransaction& txTo, unsigned int
 }
 
 
-bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CTransaction& txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
@@ -1315,7 +1315,7 @@ bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CTransa
     return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0);
 }
 
-bool SignSignature(const CKeyStore &keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const CKeyStore &keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
@@ -1958,7 +1958,7 @@ static CScript PushAll(const vector<valtype>& values)
     return result;
 }
 
-static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn,
+static CScript CombineMultisig(CScript scriptPubKey, const CMutableTransaction& txTo, unsigned int nIn,
                                const vector<valtype>& vSolutions,
                                vector<valtype>& sigs1, vector<valtype>& sigs2)
 {

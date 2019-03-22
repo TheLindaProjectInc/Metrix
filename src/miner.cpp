@@ -122,7 +122,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
     int nHeight = pindexPrev->nHeight + 1;
 
     // Create coinbase tx
-    CTransaction txNew;
+    CMutableTransaction txNew;
     txNew.vin.resize(1);
     txNew.vin[0].prevout.SetNull();
     txNew.vout.resize(1);
@@ -143,8 +143,8 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
         txNew.vout[0].SetEmpty();
     }
 
-    // Add our coinbase tx as first transaction
-    pblock->vtx.push_back(txNew);
+    // Add dummy coinbase tx as first transaction
+    pblock->vtx.push_back(CTransaction());
     pblocktemplate->vTxFees.push_back(-1); // updated at end
     pblocktemplate->vTxSigOps.push_back(-1); // updated at end
 
@@ -354,9 +354,12 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
         if (fDebug && GetBoolArg("-printpriority", false))
             LogPrintf("CreateNewBlock(): total size %u\n", nBlockSize);
 // >Linda<
+        // Compute final coinbase transaction.
+        pblock->vtx[0].vin[0].scriptSig = CScript() << nHeight << OP_0;
         if (!fProofOfStake)
         {
             int64_t nReward = GetProofOfWorkReward(nFees);
+            pblock->vtx[0] = txNew;
             pblock->vtx[0].vout[0].nValue = nReward;
         }
 
@@ -399,9 +402,11 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
     ++nExtraNonce;
 
     unsigned int nHeight = pindexPrev->nHeight+1; // Height first in coinbase required for block.version=2
-    pblock->vtx[0].vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
-    assert(pblock->vtx[0].vin[0].scriptSig.size() <= 100);
+    CMutableTransaction txCoinbase(pblock->vtx[0]);
+    txCoinbase.vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
+    assert(txCoinbase.vin[0].scriptSig.size() <= 100);
 
+    pblock->vtx[0] = txCoinbase;
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 }
 
