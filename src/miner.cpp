@@ -107,7 +107,7 @@ public:
 };
 
 // CreateNewBlock: create new block (without proof-of-work/proof-of-stake)
-CBlockTemplate* CreateNewBlock(CScript& scriptPubKeyIn, CWallet* pwallet, bool fProofOfStake)
+CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, bool fProofOfStake)
 {
 
     CReserveKey reservekey(pwallet);
@@ -363,9 +363,6 @@ CBlockTemplate* CreateNewBlock(CScript& scriptPubKeyIn, CWallet* pwallet, bool f
             pblock->vtx[0].vout[0].nValue = nReward;
         }
 
-        if (pFees)
-            *pFees = nFees;
-
         // Fill in header
         pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
         pblock->nTime          = max(pindexPrev->GetPastTimeLimit()+1, pblock->GetMaxTransactionTime());
@@ -389,14 +386,14 @@ CBlockTemplate* CreateNewBlock(CScript& scriptPubKeyIn, CWallet* pwallet, bool f
     return pblocktemplate.release();
 }
 
-CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFees)
+CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake)
 {
     CPubKey pubkey;
     if (!reservekey.GetReservedKey(pubkey))
         return NULL;
 
     CScript scriptPubKey = CScript() << pubkey << OP_CHECKSIG;
-    return CreateNewBlock(scriptPubKey);
+    return CreateNewBlock(scriptPubKey, pwallet, fProofOfStake);
 }
 
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce)

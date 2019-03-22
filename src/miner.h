@@ -11,8 +11,8 @@
 #include "wallet.h"
 
 /* Generate a new block, without valid proof-of-work */
-CBlockTemplate* CreateNewBlock(CScript& scriptPubKeyIn, CWallet* pwallet, bool fProofOfStake=false);
-CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, bool fProofOfStake = false, int64_t* pFees = 0);
+CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, bool fProofOfStake=false);
+CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake=false);
 
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
