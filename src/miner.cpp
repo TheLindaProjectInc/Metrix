@@ -9,6 +9,7 @@
 #include "kernel.h"
 #include "masternode.h"
 
+#include <openssl/sha.h>
 
 using namespace std;
 
