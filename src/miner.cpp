@@ -107,8 +107,11 @@ public:
 };
 
 // CreateNewBlock: create new block (without proof-of-work/proof-of-stake)
-CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFees)
+CBlockTemplate* CreateNewBlock(CScript& scriptPubKeyIn, CWallet* pwallet, bool fProofOfStake)
 {
+
+    CReserveKey reservekey(pwallet);
+
     // Create new block
     auto_ptr<CBlockTemplate> pblocktemplate(new CBlockTemplate());
     if(!pblocktemplate.get())
@@ -129,10 +132,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
 
     if (!fProofOfStake)
     {
-        CPubKey pubkey;
-        if (!reservekey.GetReservedKey(pubkey))
-            return NULL;
-        txNew.vout[0].scriptPubKey.SetDestination(pubkey.GetID());
+        txNew.vout[0].scriptPubKey = scriptPubKeyIn;
     }
     else
     {
@@ -389,6 +389,15 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
     return pblocktemplate.release();
 }
 
+CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFees)
+{
+    CPubKey pubkey;
+    if (!reservekey.GetReservedKey(pubkey))
+        return NULL;
+
+    CScript scriptPubKey = CScript() << pubkey << OP_CHECKSIG;
+    return CreateNewBlock(scriptPubKey);
+}
 
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce)
 {
@@ -577,7 +586,7 @@ void ThreadStakeMiner(CWallet *pwallet)
         // Create new block
         //
         int64_t nFees;
-        auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlock(reservekey, true, &nFees));
+        auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, true, &nFees));
         if (!pblocktemplate.get())
             return;
 

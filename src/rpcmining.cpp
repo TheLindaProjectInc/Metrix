@@ -200,7 +200,7 @@ Value checkkernel(const Array& params, bool fHelp)
         return result;
     CReserveKey reservekey(pwalletMain);
     int64_t nFees;
-    auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlock(reservekey, true, &nFees));
+    auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, true, &nFees));
     CBlock* pblock = &pblocktemplate->block; // pointer for convenience
     pblock->nTime = pblock->vtx[0].nTime = nTime;
 
@@ -288,7 +288,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
             pblocktemplate = NULL;
         }
         CScript scriptDummy = CScript() << OP_TRUE;
-        pblocktemplate = CreateNewBlock(scriptDummy);
+        pblocktemplate = CreateNewBlock(scriptDummy, pwalletMain, false);
         if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 
