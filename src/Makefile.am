@@ -264,6 +264,7 @@ EXTRA_DIST = leveldb
 clean-local:
 	-$(MAKE) -C leveldb clean
 	rm -f leveldb/*/*.gcno leveldb/helpers/memenv/*.gcno
+	-rm -f config.h
 
 .rc.o:
 	@test -f $(WINDRES) && $(WINDRES) -i $< -o $@ || \
