@@ -1126,7 +1126,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
     // Rather not work on nonstandard transactions (unless -testnet)
     //alot of Linda transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
-    if (false && !Params().NetworkID() == CChainParams::TESTNET && !IsStandardTx(tx, reason))
+    if (false && !(Params().NetworkID() == CChainParams::TESTNET) && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
                      reason);
 
