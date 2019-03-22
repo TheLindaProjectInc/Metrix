@@ -200,7 +200,7 @@ Value checkkernel(const Array& params, bool fHelp)
         return result;
     CReserveKey reservekey(pwalletMain);
     int64_t nFees;
-    auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, true, &nFees));
+    auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwalletMain, true));
     CBlock* pblock = &pblocktemplate->block; // pointer for convenience
     pblock->nTime = pblock->vtx[0].nTime = nTime;
 
