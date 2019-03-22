@@ -37,6 +37,7 @@
 #include <signal.h>
 #endif
 
+#include "compat/sanity.h"
 
 using namespace std;
 using namespace boost;
@@ -407,7 +408,8 @@ bool InitSanityCheck(void)
         return false;
     }
 
-    // TODO: remaining sanity checks, see #4081
+    if (!glibc_sanity_test() || !glibcxx_sanity_test())
+        return false;
 
     return true;
 }
