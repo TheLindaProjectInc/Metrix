@@ -218,7 +218,8 @@ nodist_libbitcoin_common_a_SOURCES = $(srcdir)/obj/build.h
 
 # Lindad binary #
 Lindad_LDADD = \
-  libbitcoin_server.a libbitcoin_cli.a libbitcoin_common.a \
+  libbitcoin_server.a \
+  libbitcoin_common.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
 if ENABLE_WALLET
