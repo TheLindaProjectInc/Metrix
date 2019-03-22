@@ -16,12 +16,14 @@ $(LIBLEVELDB) $(LIBMEMENV):
           OPT="$(CXXFLAGS) $(CPPFLAGS)"
 endif
 
-BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
+BITCOIN_CONFIG_INCLUDES = -I$(builddir)/config
+BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BITCOIN_CONFIG_INCLUDES) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
 
 noinst_LIBRARIES = \
   libbitcoin_server.a \
   libbitcoin_common.a \
-  libbitcoin_cli.a
+  libbitcoin_cli.a \
+  crypto/libbitcoin_crypto.a
 
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
@@ -96,15 +98,6 @@ BITCOIN_CORE_H = \
   version.h \
   wallet.h \
   walletdb.h \
-  crypto/common.h \
-  crypto/sha1.h \
-  crypto/sha256.h \
-  crypto/sha512.h \
-  crypto/hmac_sha256.h \
-  crypto/rfc6979_hmac_sha256.h \
-  crypto/hmac_sha512.h \
-  crypto/sha1.h \
-  crypto/ripemd160.h \
   compat/sanity.h
 
 JSON_H = \
@@ -168,6 +161,25 @@ libbitcoin_wallet_a_SOURCES = \
   walletdb.cpp \
   $(BITCOIN_CORE_H)
 
+crypto_libbitcoin_crypto_a_CPPFLAGS = $(BITCOIN_CONFIG_INCLUDES)
+crypto_libbitcoin_crypto_a_SOURCES = \
+  crypto/sha1.cpp \
+  crypto/sha256.cpp \
+  crypto/sha512.cpp \
+  crypto/hmac_sha256.cpp \
+  crypto/rfc6979_hmac_sha256.cpp \
+  crypto/hmac_sha512.cpp \
+  crypto/ripemd160.cpp \
+  crypto/common.h \
+  crypto/sha1.h \
+  crypto/sha256.h \
+  crypto/sha512.h \
+  crypto/hmac_sha256.h \
+  crypto/rfc6979_hmac_sha256.h \
+  crypto/hmac_sha512.h \
+  crypto/sha1.h \
+  crypto/ripemd160.h
+
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   base58.cpp \
@@ -193,13 +205,6 @@ libbitcoin_common_a_SOURCES = \
   timedata.cpp \
   util.cpp \
   version.cpp \
-  crypto/sha1.cpp \
-  crypto/sha256.cpp \
-  crypto/sha512.cpp \
-  crypto/hmac_sha256.cpp \
-  crypto/rfc6979_hmac_sha256.cpp \
-  crypto/hmac_sha512.cpp \
-  crypto/ripemd160.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
   $(BITCOIN_CORE_H)
@@ -220,6 +225,7 @@ nodist_libbitcoin_common_a_SOURCES = $(srcdir)/obj/build.h
 Lindad_LDADD = \
   libbitcoin_server.a \
   libbitcoin_common.a \
+  crypto/libbitcoin_crypto.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
 if ENABLE_WALLET
@@ -237,7 +243,9 @@ Lindad_CPPFLAGS = $(BITCOIN_INCLUDES)
 
 # Linda-cli binary #
 Linda_cli_LDADD = \
-  libbitcoin_cli.a libbitcoin_common.a \
+  libbitcoin_cli.a \
+  libbitcoin_common.a \
+  crypto/libbitcoin_crypto.a \
   $(BOOST_LIBS)
 Linda_cli_SOURCES = bitcoin-cli.cpp
 Linda_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
@@ -273,3 +281,4 @@ LIBBITCOIN_SERVER=libbitcoin_server.a
 LIBBITCOIN_WALLET=libbitcoin_wallet.a
 LIBBITCOIN_COMMON=libbitcoin_common.a
 LIBBITCOIN_CLI=libbitcoin_cli.a
+LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
