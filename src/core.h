@@ -265,6 +265,10 @@ public:
         return (vin.empty() && vout.empty());
     }
 
+    const uint256& GetHash() const {
+        return hash;
+    }
+
     // Return sum of txouts.
     int64_t GetValueOut() const;
     
@@ -317,10 +321,10 @@ struct CMutableTransaction
     READWRITE(nLockTime);
     )
 
-        /** Compute the hash of this CMutableTransaction. This is computed on the
-         * fly, as opposed to GetHash() in CTransaction, which uses a cached result.
-         */
-        uint256 GetHash() const;
+    /** Compute the hash of this CMutableTransaction. This is computed on the
+        * fly, as opposed to GetHash() in CTransaction, which uses a cached result.
+        */
+    uint256 GetHash() const;
 };
 
 /** wrapper for CTxOut that provides a more compact serialization */
