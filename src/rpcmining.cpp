@@ -198,9 +198,9 @@ Value checkkernel(const Array& params, bool fHelp)
 
     if (!fCreateBlockTemplate)
         return result;
-
+    CReserveKey reservekey(pwalletMain);
     int64_t nFees;
-    auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlock(*pMiningKey, true, &nFees));
+    auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlock(reservekey, true, &nFees));
     CBlock* pblock = &pblocktemplate->block; // pointer for convenience
     pblock->nTime = pblock->vtx[0].nTime = nTime;
 
@@ -211,9 +211,6 @@ Value checkkernel(const Array& params, bool fHelp)
     result.push_back(Pair("blocktemplatefees", nFees));
 
     CPubKey pubkey;
-    if (!pMiningKey->GetReservedKey(pubkey))
-        throw JSONRPCError(RPC_MISC_ERROR, "GetReservedKey failed");
-
     result.push_back(Pair("blocktemplatesignkey", HexStr(pubkey)));
 
     return result;
@@ -290,7 +287,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
             delete pblocktemplate;
             pblocktemplate = NULL;
         }
-        pblocktemplate = CreateNewBlock(*pMiningKey);
+        CScript scriptDummy = CScript() << OP_TRUE;
+        pblocktemplate = CreateNewBlock(scriptDummy);
         if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 

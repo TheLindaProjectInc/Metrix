@@ -3545,7 +3545,7 @@ bool AbortNode(const std::string &strMessage) {
     return false;
 }
 
-#ifdef ENABLE_WALLET
+//#ifdef ENABLE_WALLET
 // Linda: attempt to generate suitable proof-of-stake
 bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 {
@@ -3561,7 +3561,8 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 
     static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // startup timestamp
     CKey key;
-    CTransaction txCoinStake;
+    CMutableTransaction txCoinStake;
+    CTransaction txNew;
     txCoinStake.nTime &= ~STAKE_TIMESTAMP_MASK;
 
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
@@ -3582,6 +3583,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
                 for (vector<CTransaction>::iterator it = block.vtx.begin(); it != block.vtx.end();)
                     if (it->nTime > block.nTime) { it = block.vtx.erase(it); } else { ++it; }
 
+                *static_cast<CTransaction*>(&txNew) = CTransaction(txCoinStake);
                 block.vtx.insert(block.vtx.begin() + 1, txCoinStake);
                 block.hashMerkleRoot = block.BuildMerkleTree();
 
@@ -3595,7 +3597,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 
     return false;
 }
-#endif
+//#endif
 
 bool CheckBlockSignature(const CBlock& block)
 {

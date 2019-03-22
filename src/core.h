@@ -237,9 +237,9 @@ public:
     // and bypass the constness. This is safe, as they update the entire
     // structure, including the hash.
     const int nVersion;
-    const unsigned int nTime;
-    const std::vector<CTxIn> vin;
-    const std::vector<CTxOut> vout;
+    unsigned int nTime;
+    std::vector<CTxIn> vin;
+    std::vector<CTxOut> vout;
     const unsigned int nLockTime;
 
     /** Construct a CTransaction that qualifies as IsNull() */
