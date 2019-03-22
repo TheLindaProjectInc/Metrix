@@ -63,7 +63,10 @@ struct CompareValueOnly
 
 
 
-
+std::string COutput::ToString() const
+{
+    return strprintf("COutput(%s, %d, %d) [%s]", tx->GetHash().ToString(), i, nDepth, FormatMoney(tx->vout[i].nValue));
+}
 
 const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
 {
@@ -1208,6 +1211,64 @@ void CWallet::ResendWalletTransactions(bool fForce)
 // Actions
 //
 
+int64_t GetAvailableCredit(bool fUseCache) const
+{
+    if (pwallet == 0)
+        return 0;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if ((IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0)
+        return 0;
+
+    if (fUseCache && fAvailableCreditCached)
+        return nAvailableCreditCached;
+
+    int64_t nCredit = 0;
+    uint256 hashTx = GetHash();
+    for (unsigned int i = 0; i < vout.size(); i++)
+    {
+        if (!pwallet->IsSpent(hashTx, i))
+        {
+            const CTxOut &txout = vout[i];
+            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
+            if (!MoneyRange(nCredit))
+                throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
+        }
+    }
+
+    nAvailableCreditCached = nCredit;
+    fAvailableCreditCached = true;
+    return nCredit;
+}
+
+int64_t GetAvailableWatchOnlyCredit(const bool& fUseCache) const
+{
+    if (pwallet == 0)
+        return 0;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if (IsCoinBase() && GetBlocksToMaturity() > 0)
+        return 0;
+
+    if (fUseCache && fAvailableWatchCreditCached)
+        return nAvailableWatchCreditCached;
+
+    int64_t nCredit = 0;
+    for (unsigned int i = 0; i < vout.size(); i++)
+    {
+        if (!pwallet->IsSpent(GetHash(), i))
+        {
+            const CTxOut &txout = vout[i];
+            nCredit += pwallet->GetCredit(txout, ISMINE_WATCH_ONLY);
+            if (!MoneyRange(nCredit))
+                throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
+        }
+    }
+
+    nAvailableWatchCreditCached = nCredit;
+    fAvailableWatchCreditCached = true;
+    return nCredit;
+}
 
 int64_t CWallet::GetBalance() const
 {

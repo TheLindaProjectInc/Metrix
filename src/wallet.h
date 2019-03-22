@@ -760,35 +760,7 @@ public:
         return 0;
     }
 
-    int64_t GetAvailableCredit(bool fUseCache=true) const
-    {
-        if (pwallet == 0)
-            return 0;
-        
-        // Must wait until coinbase is safely deep enough in the chain before valuing it
-        if ((IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0)
-            return 0;
-
-        if (fUseCache && fAvailableCreditCached)
-            return nAvailableCreditCached;
-
-        int64_t nCredit = 0;
-        uint256 hashTx = GetHash();
-        for (unsigned int i = 0; i < vout.size(); i++)
-        {
-            if (!pwallet->IsSpent(hashTx, i))
-            {
-                const CTxOut &txout = vout[i];
-                nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
-                if (!MoneyRange(nCredit))
-                    throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
-            }
-        }
-
-        nAvailableCreditCached = nCredit;
-        fAvailableCreditCached = true;
-        return nCredit;
-    }
+    int64_t GetAvailableCredit(bool fUseCache = true) const;
 
     int64_t GetImmatureWatchOnlyCredit(const bool& fUseCache = true) const
     {
@@ -804,34 +776,7 @@ public:
         return 0;
     }
 
-    int64_t GetAvailableWatchOnlyCredit(const bool& fUseCache = true) const
-    {
-        if (pwallet == 0)
-            return 0;
-
-        // Must wait until coinbase is safely deep enough in the chain before valuing it
-        if (IsCoinBase() && GetBlocksToMaturity() > 0)
-            return 0;
-
-        if (fUseCache && fAvailableWatchCreditCached)
-            return nAvailableWatchCreditCached;
-
-        int64_t nCredit = 0;
-        for (unsigned int i = 0; i < vout.size(); i++)
-        {
-            if (!pwallet->IsSpent(GetHash(), i))
-            {
-                const CTxOut &txout = vout[i];
-                nCredit += pwallet->GetCredit(txout, ISMINE_WATCH_ONLY);
-                if (!MoneyRange(nCredit))
-                    throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
-            }
-        }
-
-        nAvailableWatchCreditCached = nCredit;
-        fAvailableWatchCreditCached = true;
-        return nCredit;
-    }
+    int64_t GetAvailableWatchOnlyCredit(const bool& fUseCache = true) const;
 
     int64_t GetChange() const
     {
@@ -905,10 +850,7 @@ public:
         tx = txIn; i = iIn; nDepth = nDepthIn; fSpendable = fSpendableIn;
     }
 
-    std::string ToString() const
-    {
-        return strprintf("COutput(%s, %d, %d) [%s]", tx->GetHash().ToString(), i, nDepth, FormatMoney(tx->vout[i].nValue));
-    }
+    std::string ToString() const;
 
     //Used with Darksend. Will return fees, then denominations, everything else, then very small inputs that aren't fees
     int Priority() const
