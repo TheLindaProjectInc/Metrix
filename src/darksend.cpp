@@ -64,7 +64,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
         }
 
         int sessionID;
-        CTransaction txNew;
+        CMutableTransaction txNew;
         vRecv >> sessionID >> txNew;
 
         if(darkSendPool.sessionID != sessionID){
@@ -524,7 +524,7 @@ void CDarkSendPool::Check()
 
         if (fMasterNode) {
             // make our new transaction
-            CTransaction txNew;
+            CMutableTransaction txNew;
             for(unsigned int i = 0; i < entries.size(); i++){
                 BOOST_FOREACH(const CTxOut v, entries[i].vout)
                     txNew.vout.push_back(v);
@@ -1220,7 +1220,7 @@ bool CDarkSendPool::StatusUpdate(int newState, int newEntriesCount, int newAccep
 // check it to make sure it's what we want, then sign it if we agree.
 // If we refuse to sign, it's possible we'll be charged collateral
 //
-bool CDarkSendPool::SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node){
+bool CDarkSendPool::SignFinalTransaction(CMutableTransaction& finalTransactionNew, CNode* node){
     if(fDebug) LogPrintf("CDarkSendPool::AddFinalTransaction - Got Finalized Transaction\n");
 
     if(!finalTransaction.vin.empty()){

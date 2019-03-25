@@ -232,7 +232,7 @@ public:
     // masternode entries
     std::vector<CDarkSendEntry> entries;
     // the finalized transaction ready for signing
-    CTransaction finalTransaction;
+    CMutableTransaction finalTransaction;
 
     int64_t lastTimeChanged;
     int64_t lastAutoDenomination;
@@ -402,7 +402,7 @@ public:
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID=0);
 
     // as a client, check and sign the final transaction
-    bool SignFinalTransaction(CTransaction& finalTransactionNew, CNode* node);
+    bool SignFinalTransaction(CMutableTransaction& finalTransactionNew, CNode* node);
 
     // get the last valid block hash for a given modulus
     bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);

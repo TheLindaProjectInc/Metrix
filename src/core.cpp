@@ -141,6 +141,24 @@ double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSiz
     return dPriorityInputs / nTxSize;
 }
 
+std::string CMutableTransaction::ToString() const
+{
+    std::string str;
+    str += CTransaction::IsCoinBase() ? "Coinbase" : (CTransaction::IsCoinStake() ? "Coinstake" : "CTransaction");
+    str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%u, vout.size=%u, nLockTime=%d)\n",
+        GetHash().ToString(),
+        nTime,
+        nVersion,
+        vin.size(),
+        vout.size(),
+        nLockTime);
+    for (unsigned int i = 0; i < vin.size(); i++)
+        str += "    " + vin[i].ToString() + "\n";
+    for (unsigned int i = 0; i < vout.size(); i++)
+        str += "    " + vout[i].ToString() + "\n";
+    return str;
+}
+
 std::string CTransaction::ToString() const
 {
     std::string str;
