@@ -582,7 +582,7 @@ void ThreadStakeMiner(CWallet *pwallet, bool fProofOfStake)
         //
         // Create new block
         //
-        int64_t nFees;
+        int64_t nFees = 0;
         auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwallet, fProofOfStake));
         if (!pblocktemplate.get())
             return;
