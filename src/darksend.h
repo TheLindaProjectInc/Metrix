@@ -264,7 +264,7 @@ public:
     int cachedLastSuccess;
     int cachedNumBlocks; //used for the overview screen
     int minBlockSpacing; //required blocks between mixes
-    CTransaction txCollateral;
+    CMutableTransaction txCollateral;
 
     int64_t lastNewBlock;
 
@@ -282,7 +282,7 @@ public:
         cachedLastSuccess = 0;
         cachedNumBlocks = 0;
         unitTest = false;
-        txCollateral = CTransaction();
+        txCollateral = CMutableTransaction();
         minBlockSpacing = 1;
         nDsqCount = 0;
         lastNewBlock = 0;

@@ -247,7 +247,7 @@ void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& 
             bool missingTx = false;
 
             CValidationState state;
-            CTransaction tx;
+            CMutableTransaction tx;
 
             BOOST_FOREACH(CTxOut o, out){
                 nValueOut += o.nValue;
@@ -440,6 +440,7 @@ int GetInputDarksendRounds(CTxIn in, int rounds)
 void CDarkSendPool::Reset(){
     cachedLastSuccess = 0;
     vecMasternodesUsed.clear();
+    txCollateral = CMutableTransaction();
     UnlockCoins();
     SetNull();
 }
@@ -890,7 +891,7 @@ void CDarkSendPool::CheckTimeout(){
 
 // check to see if the signature is valid
 bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
-    CTransaction txNew;
+    CMutableTransaction txNew;
     txNew.vin.clear();
     txNew.vout.clear();
 
@@ -1095,7 +1096,7 @@ bool CDarkSendPool::SignaturesComplete(){
 // This is only ran from clients
 //
 void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64_t amount){
-    if(darkSendPool.txCollateral == CTransaction()){
+    if(darkSendPool.txCollateral == CMutableTransaction()){
         LogPrintf ("CDarksendPool:SendDarksendDenominate() - Darksend collateral not set");
         return;
     }
@@ -1138,7 +1139,7 @@ void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<
         int64_t nValueOut = 0;
 
         CValidationState state;
-        CTransaction tx;
+        CMutableTransaction tx;
 
         BOOST_FOREACH(const CTxOut o, vout){
             nValueOut += o.nValue;
@@ -1508,7 +1509,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     	if((CNetAddr)pnode->addr != (CNetAddr)submittedToMasternode) continue;
 
                         std::string strReason;
-                        if(txCollateral == CTransaction()){
+                        if(txCollateral == CMutableTransaction()){
                             if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
                                 LogPrintf("DoAutomaticDenominating -- dsa error:%s\n", strReason);
                                 return false;
@@ -1569,7 +1570,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
                     if((CNetAddr)pnode->addr != (CNetAddr)vecMasternodes[i].addr) continue;
 
                     std::string strReason;
-                    if(txCollateral == CTransaction()){
+
+                     if(txCollateral == CMutableTransaction()){
                         if(!pwalletMain->CreateCollateralTransaction(txCollateral, strReason)){
                             LogPrintf("DoAutomaticDenominating -- create collateral error:%s\n", strReason);
                             return false;
