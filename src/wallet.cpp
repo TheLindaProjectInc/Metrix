@@ -1211,7 +1211,7 @@ void CWallet::ResendWalletTransactions(bool fForce)
 // Actions
 //
 
-int64_t GetAvailableCredit(bool fUseCache) const
+int64_t CWalletTx::GetAvailableCredit(bool fUseCache) const
 {
     if (pwallet == 0)
         return 0;
@@ -1241,7 +1241,7 @@ int64_t GetAvailableCredit(bool fUseCache) const
     return nCredit;
 }
 
-int64_t GetAvailableWatchOnlyCredit(const bool& fUseCache) const
+int64_t CWalletTx::GetAvailableWatchOnlyCredit(const bool& fUseCache) const
 {
     if (pwallet == 0)
         return 0;
