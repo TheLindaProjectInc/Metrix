@@ -339,6 +339,16 @@ struct CMutableTransaction
 
     std::string ToString() const;
 
+    friend bool operator==(const CMutableTransaction& a, const CMutableTransaction& b)
+    {
+        return a.GetHash() == b.GetHash();
+    }
+
+    friend bool operator!=(const CMutableTransaction& a, const CMutableTransaction& b)
+    {
+        return !(a == b);
+    }
+
 };
 
 /** wrapper for CTxOut that provides a more compact serialization */

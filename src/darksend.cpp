@@ -1096,7 +1096,7 @@ bool CDarkSendPool::SignaturesComplete(){
 // This is only ran from clients
 //
 void CDarkSendPool::SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64_t amount){
-    if(darkSendPool.txCollateral == CMutableTransaction()){
+    if(txCollateral == CMutableTransaction()){
         LogPrintf ("CDarksendPool:SendDarksendDenominate() - Darksend collateral not set");
         return;
     }
