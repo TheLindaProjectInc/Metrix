@@ -335,7 +335,7 @@ public:
     bool FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNarr);
 
     std::string PrepareDarksendDenominate(int minRounds, int maxRounds);
-    bool CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason);
+    bool CreateCollateralTransaction(CMutableTransaction& txCollateral, std::string strReason);
     bool ConvertList(std::vector<CTxIn> vCoins, std::vector<int64_t>& vecAmounts);
 
     bool NewKeyPool();

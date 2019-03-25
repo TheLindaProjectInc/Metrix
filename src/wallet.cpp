@@ -2438,7 +2438,7 @@ bool CWallet::SelectCoinsWithoutDenomination(int64_t nTargetValue, set<pair<cons
     return (nValueRet >= nTargetValue);
 }
 
-bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason)
+bool CWallet::CreateCollateralTransaction(CMutableTransaction& txCollateral, std::string strReason)
 {
     /*
         To doublespend a collateral transaction, it will require a fee higher than this. So there's
