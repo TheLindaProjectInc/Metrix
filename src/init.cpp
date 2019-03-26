@@ -37,6 +37,7 @@
 #include <signal.h>
 #endif
 
+#include "compat/sanity.h"
 
 using namespace std;
 using namespace boost;
@@ -124,7 +125,6 @@ void Shutdown()
     mempool.AddTransactionsUpdated(1);
     StopRPCThreads();
 #ifdef ENABLE_WALLET
-    ShutdownRPCMining();
     if (pwalletMain)
         bitdb.Flush(false);
 #endif
@@ -227,8 +227,9 @@ bool static Bind(const CService &addr, unsigned int flags) {
 }
 
 // Core-specific options shared between daemon and RPC client
-std::string HelpMessage(HelpMessageMode hmm)
+std::string HelpMessage(HelpMessageMode mode)
 {
+    // When adding new options to the categories, please keep and ensure alphabetical ordering.
     string strUsage = _("Options:") + "\n";
     strUsage += "  -?                     " + _("This help message") + "\n";
     strUsage += "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)") + "\n";
@@ -237,7 +238,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -checklevel=<n>        " + _("How thorough the block verification is (0-6, default: 1)") + "\n";
     strUsage += "  -conf=<file>           " + _("Specify configuration file (default: Linda.conf)") + "\n";
 
-    if (hmm == HMM_BITCOIND)
+    if (mode == HMM_BITCOIND)
     {
 #if !defined(WIN32)
         strUsage += "  -daemon                " + _("Run in the background as a daemon and accept commands") + "\n";
@@ -312,7 +313,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += _("<category> can be:");
     strUsage += " addrman, alert, db, lock, rand, rpc, selectcoins, mempool, net,";
     strUsage += " coinage, coinstake, creation, stakemodifier";
-    if (hmm == HMM_BITCOIN_QT)
+    if (mode == HMM_BITCOIN_QT)
     {
         strUsage += ", qt.\n";
     }
@@ -341,7 +342,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -rpcuser=<user>        " + _("Username for JSON-RPC connections") + "\n";
     strUsage += "  -rpcpassword=<pw>      " + _("Password for JSON-RPC connections") + "\n";
     strUsage += "  -rpcport=<port>        " + _("Listen for JSON-RPC connections on <port> (default: 33821)") + "\n";
-    strUsage += "  -rpcallowip=<ip>       " + _("Allow JSON-RPC connections from specified IP address. This option can be specified multiple times") + "\n";
+    strUsage += "  -rpcallowip=<ip>       " + _("Allow JSON-RPC connections from specified source. Valid for <ip> are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times") + "\n";
     strUsage += "  -rpcconnect=<ip>       " + _("Send commands to node running on <ip> (default: 127.0.0.1)") + "\n";
     strUsage += "  -rpcthreads=<n>        " + _("Set the number of threads to service RPC calls (default: 4)") + "\n";
     strUsage += "  -rpcwait               " + _("Wait for RPC server to start") + "\n";
@@ -406,7 +407,8 @@ bool InitSanityCheck(void)
         return false;
     }
 
-    // TODO: remaining sanity checks, see #4081
+    if (!glibc_sanity_test() || !glibcxx_sanity_test())
+        return false;
 
     return true;
 }
@@ -1403,17 +1405,13 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
 
     StartNode(threadGroup);
-#ifdef ENABLE_WALLET
-    // InitRPCMining is needed here so getwork/getblocktemplate in the GUI debug console works properly.
-    InitRPCMining();
-#endif
 
 #ifdef ENABLE_WALLET
     // Mine proof-of-stake blocks in the background
     if (!GetBoolArg("-staking", true))
         LogPrintf("Staking disabled\n");
     else if (pwalletMain)
-        threadGroup.create_thread(boost::bind(&ThreadStakeMiner, pwalletMain));
+        threadGroup.create_thread(boost::bind(&ThreadStakeMiner, pwalletMain, true));
 #endif
     
 

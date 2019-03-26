@@ -264,7 +264,7 @@ std::string GetWarnings(std::string strFor);
 bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock, bool fAllowSlow);
 uint256 WantedByOrphan(const COrphanBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
-void ThreadStakeMiner(CWallet *pwallet);
+void ThreadStakeMiner(CWallet *pwallet, bool fProofOfStake);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState &state);
 /** Create a new block index entry for a given block hash */
@@ -967,12 +967,11 @@ public:
 
     /**
      * Returns true if there are nRequired or more blocks of minVersion or above
-     * in the last nToCheck blocks, starting at pstart and going backwards.
+     * in the last Params().ToCheckBlockUpgradeMajority() blocks, starting at pstart 
+     * and going backwards.
      */
-    static bool IsSuperMajority(int minVersion, const CBlockIndex* pstart,
-                                unsigned int nRequired, unsigned int nToCheck);
-
-
+    static bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired);
+    
     bool IsProofOfWork() const
     {
         return !(nFlags & BLOCK_PROOF_OF_STAKE);

@@ -13,6 +13,7 @@
 #include "mruset.h"
 #include "netbase.h"
 #include "protocol.h"
+#include "random.h"
 #include "sync.h"
 #include "uint256.h"
 #include "util.h"
@@ -27,7 +28,6 @@
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/signals2/signal.hpp>
-#include <openssl/rand.h>
 
 class CAddrMan;
 class CNode;
@@ -57,7 +57,7 @@ void AddressCurrentlyConnected(const CService& addr);
 CNode* FindNode(const CNetAddr& ip);
 CNode* FindNode(const std::string& addrName);
 CNode* FindNode(const CService& ip);
-CNode* ConnectNode(CAddress addrConnect, const char *strDest = NULL, bool darkSendMaster=false);
+CNode* ConnectNode(CAddress addrConnect, const char *pszDest = NULL, bool darkSendMaster=false);
 void MapPort(bool fUseUPnP);
 unsigned short GetListenPort();
 bool BindListenPort(const CService &bindAddr, std::string& strError, bool fWhitelisted = false);

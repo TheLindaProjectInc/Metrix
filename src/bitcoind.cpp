@@ -9,7 +9,6 @@
 #include "main.h"
 #include "noui.h"
 #include "rpcserver.h"
-#include "rpcclient.h"
 #include <boost/algorithm/string/predicate.hpp>
 
 static bool fDaemon;
@@ -76,14 +75,9 @@ bool AppInit(int argc, char* argv[])
             else
             {
                 strUsage += "\n" + _("Usage:") + "\n" +
-                      "  Lindad [options]                     " + _("Start Lindad Server") + "\n" +
-                    _("Usage (deprecated, use bitcoin-cli):") + "\n" +
-                      "  Lindad [options] <command> [params]  " + _("Send command to Lindad Server") + "\n" +
-                      "  Lindad [options] help                " + _("List commands") + "\n" +
-                      "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
+                    "  Lindad [options]                     " + _("Start Linda Core Daemon") + "\n";
 
                 strUsage += "\n" + HelpMessage(HMM_BITCOIND);
-                strUsage += "\n" + HelpMessageCli(false);
             }
             fprintf(stdout, "%s", strUsage.c_str());
             return false;
@@ -96,8 +90,8 @@ bool AppInit(int argc, char* argv[])
 
         if (fCommandLine)
         {
-            int ret = CommandLineRPC(argc, argv);
-            exit(ret);
+            fprintf(stderr, "Error: There is no RPC client functionality in Lindad anymore. Use the Linda-cli utility instead.\n");
+            exit(1);
         }
 #ifndef WIN32
         fDaemon = GetBoolArg("-daemon", false);

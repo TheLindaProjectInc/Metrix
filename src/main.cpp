@@ -1126,7 +1126,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
     // Rather not work on nonstandard transactions (unless -testnet)
     //alot of Linda transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
-    if (false && !Params().RPCisTestNet() && !IsStandardTx(tx, reason))
+    if (false && !(Params().NetworkID() == CChainParams::TESTNET) && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
                      reason);
 
@@ -3174,11 +3174,20 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             hashProof = block.GetPoWHash();
 
         // Enforce rule that the coinbase starts with serialized block height
-        CScript expect = CScript() << nHeight;
-        if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
-            !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin()))
-            return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"),
-                REJECT_INVALID, "bad-cb-height");
+        // Enforce block.nVersion=2 rule that the coinbase starts with serialized block height
+        if (block.nVersion >= 2 && 
+            CBlockIndex::IsSuperMajority(2, pindexPrev, Params().EnforceBlockUpgradeMajority()))
+        {
+            {
+                CScript expect = CScript() << nHeight;
+                if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
+                    !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin()))
+                {
+                    return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"), REJECT_INVALID, "bad-cb-height");
+                }
+                    
+            }
+        }
 
     }
     // Write block to history file
@@ -3187,7 +3196,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         CDiskBlockPos blockPos;
         if (dbp != NULL)
             blockPos = *dbp;
-        if (!FindBlockPos(state, blockPos, nBlockSize+8, nHeight, block.nTime, dbp != NULL))
+        if (!FindBlockPos(state, blockPos, nBlockSize+8, nHeight, block.GetBlockTime(), dbp != NULL))
             return error("AcceptBlock() : FindBlockPos failed");
         if (dbp == NULL)
             if (!WriteBlockToDisk(block, blockPos))
@@ -3212,8 +3221,9 @@ uint256 CBlockIndex::GetBlockTrust() const
     return ((CBigNum(1)<<256) / (bnTarget+1)).getuint256();
 }
 
-bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired, unsigned int nToCheck)
+bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired)
 {
+    unsigned int nToCheck = Params().ToCheckBlockUpgradeMajority();
     unsigned int nFound = 0;
     for (unsigned int i = 0; i < nToCheck && nFound < nRequired && pstart != NULL; i++)
     {
@@ -3535,7 +3545,7 @@ bool AbortNode(const std::string &strMessage) {
     return false;
 }
 
-#ifdef ENABLE_WALLET
+//#ifdef ENABLE_WALLET
 // Linda: attempt to generate suitable proof-of-stake
 bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 {
@@ -3551,7 +3561,8 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 
     static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // startup timestamp
     CKey key;
-    CTransaction txCoinStake;
+    CMutableTransaction txCoinStake;
+    CTransaction txNew;
     txCoinStake.nTime &= ~STAKE_TIMESTAMP_MASK;
 
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
@@ -3572,6 +3583,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
                 for (vector<CTransaction>::iterator it = block.vtx.begin(); it != block.vtx.end();)
                     if (it->nTime > block.nTime) { it = block.vtx.erase(it); } else { ++it; }
 
+                *static_cast<CTransaction*>(&txNew) = CTransaction(txCoinStake);
                 block.vtx.insert(block.vtx.begin() + 1, txCoinStake);
                 block.hashMerkleRoot = block.BuildMerkleTree();
 
@@ -3585,7 +3597,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 
     return false;
 }
-#endif
+//#endif
 
 bool CheckBlockSignature(const CBlock& block)
 {
@@ -3841,7 +3853,7 @@ bool LoadBlockIndex()
 {
     LOCK(cs_main);
 
-    if (Params().RPCisTestNet())
+    if (Params().NetworkID() == CChainParams::TESTNET)
     {
         nStakeMinAge = 1 * 60 * 60; // test net min age is 1 hour
         nCoinbaseMaturity = 10; // test maturity is 10 blocks
@@ -3875,7 +3887,7 @@ bool InitBlockIndex()
             unsigned int nBlockSize = ::GetSerializeSize(block, SER_DISK, CLIENT_VERSION);
             CDiskBlockPos blockPos;
             CValidationState state;
-            if (!FindBlockPos(state, blockPos, nBlockSize+8, 0, block.nTime))
+            if (!FindBlockPos(state, blockPos, nBlockSize+8, 0, block.GetBlockTime()))
                 return error("AcceptBlock() : FindBlockPos failed");
             if (!WriteBlockToDisk(block, blockPos))
                 return error("LoadBlockIndex() : writing genesis block to disk failed");
@@ -4836,6 +4848,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
         CValidationState state;
         ProcessBlock(state, pfrom, &block);
+        int nDoS;
+        if (state.IsInvalid(nDoS)) {
+            pfrom->PushMessage("reject", strCommand, state.GetRejectCode(),
+                               state.GetRejectReason(), inv.hash);
+            if (nDoS > 0) {
+                LOCK(cs_main);
+                Misbehaving(pfrom->GetId(), nDoS);
+            }
+        }
     }
 
 

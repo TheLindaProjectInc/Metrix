@@ -61,7 +61,7 @@ namespace Checkpoints
     };
 
     const CCheckpointData &Checkpoints() {
-        if (Params().RPCisTestNet())
+        if (Params().NetworkID() == CChainParams::TESTNET)
             return dataTestnet;
         else
             return data;
@@ -72,7 +72,7 @@ namespace Checkpoints
         if (!fEnabled)
             return true;
 
-        MapCheckpoints& checkpoints = (Params().RPCisTestNet() ? mapCheckpointsTestnet : mapCheckpoints);
+        MapCheckpoints& checkpoints = (Params().NetworkID() == CChainParams::TESTNET ? mapCheckpointsTestnet : mapCheckpoints);
 
         MapCheckpoints::const_iterator i = checkpoints.find(nHeight);
         if (i == checkpoints.end()) return true;
@@ -98,7 +98,7 @@ namespace Checkpoints
         } else {
             double nCheapBefore = data.nTransactionsLastCheckpoint;
             double nExpensiveBefore = pindex->nChainTx - data.nTransactionsLastCheckpoint;
-            double nExpensiveAfter = (nNow - pindex->nTime)/86400.0*data.fTransactionsPerDay;
+            double nExpensiveAfter = (nNow - pindex->GetBlockTime())/86400.0*data.fTransactionsPerDay;
             fWorkBefore = nCheapBefore + nExpensiveBefore*fSigcheckVerificationFactor;
             fWorkAfter = nExpensiveAfter*fSigcheckVerificationFactor;
         }
@@ -110,7 +110,7 @@ namespace Checkpoints
         if (!fEnabled)
             return 0;
 
-        MapCheckpoints& checkpoints = (Params().RPCisTestNet() ? mapCheckpointsTestnet : mapCheckpoints);
+        MapCheckpoints& checkpoints = (Params().NetworkID() == CChainParams::TESTNET ? mapCheckpointsTestnet : mapCheckpoints);
 
         return checkpoints.rbegin()->first;
     }
@@ -120,7 +120,7 @@ namespace Checkpoints
         if (!fEnabled)
             return NULL;
 
-        MapCheckpoints& checkpoints = (Params().RPCisTestNet() ? mapCheckpointsTestnet : mapCheckpoints);
+        MapCheckpoints& checkpoints = (Params().NetworkID() == CChainParams::TESTNET ? mapCheckpointsTestnet : mapCheckpoints);
 
         BOOST_REVERSE_FOREACH(const MapCheckpoints::value_type& i, checkpoints)
         {

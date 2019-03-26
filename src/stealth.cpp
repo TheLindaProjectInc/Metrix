@@ -10,6 +10,7 @@
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/obj_mac.h>
+#include <openssl/sha.h>
 
 const uint8_t stealth_version_byte = 0x1c;
 
@@ -91,9 +92,9 @@ uint32_t BitcoinChecksum(uint8_t* p, uint32_t nBytes)
         return 0;
     
     uint8_t hash1[32];
-    SHA256(p, nBytes, (uint8_t*)hash1);
+    CSHA256().Write(p, nBytes).Finalize((uint8_t*)hash1);
     uint8_t hash2[32];
-    SHA256((uint8_t*)hash1, sizeof(hash1), (uint8_t*)hash2);
+    CSHA256().Write((uint8_t*)hash1, sizeof(hash1)).Finalize((uint8_t*)hash2);
     
     // -- checksum is the 1st 4 bytes of the hash
     uint32_t checksum = from_little_endian<uint32_t>(&hash2[0]);
@@ -321,7 +322,7 @@ int StealthSecret(ec_secret& secret, ec_point& pubkey, const ec_point& pkSpend, 
         goto End;
     };
     
-    SHA256(&vchOutQ[0], vchOutQ.size(), &sharedSOut.e[0]);
+    CSHA256().Write(&vchOutQ[0], vchOutQ.size()).Finalize(&sharedSOut.e[0]);
     
     if (!(bnc = BN_bin2bn(&sharedSOut.e[0], ec_secret_size, BN_new())))
     {
@@ -500,7 +501,7 @@ int StealthSecretSpend(ec_secret& scanSecret, ec_point& ephemPubkey, ec_secret& 
     };
     
     uint8_t hash1[32];
-    SHA256(&vchOutP[0], vchOutP.size(), (uint8_t*)hash1);
+    CSHA256().Write(&vchOutP[0], vchOutP.size()).Finalize((uint8_t*)hash1);
     
     
     if (!(bnc = BN_bin2bn(&hash1[0], 32, BN_new())))

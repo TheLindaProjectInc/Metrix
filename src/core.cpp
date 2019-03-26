@@ -78,9 +78,33 @@ std::string CFeeRate::ToString() const
     return result;
 }
 
-uint256 CTransaction::GetHash() const
+CMutableTransaction::CMutableTransaction() : nVersion(CTransaction::CURRENT_VERSION), nTime(0), nLockTime(0) {}
+CMutableTransaction::CMutableTransaction(const CTransaction& tx) : nVersion(tx.nVersion), nTime(tx.nTime), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime) {}
+
+uint256 CMutableTransaction::GetHash() const
 {
     return SerializeHash(*this);
+}
+
+void CTransaction::UpdateHash() const
+{
+    *const_cast<uint256*>(&hash) = SerializeHash(*this);
+}
+
+CTransaction::CTransaction() : hash(0), nVersion(CTransaction::CURRENT_VERSION), nTime(0), vin(), vout(), nLockTime(0) { }
+
+CTransaction::CTransaction(const CMutableTransaction &tx) : nVersion(tx.nVersion), nTime(tx.nTime), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime) {
+    UpdateHash();
+}
+
+CTransaction& CTransaction::operator=(const CTransaction &tx) {
+    *const_cast<int*>(&nVersion) = tx.nVersion;
+    *const_cast<unsigned int*>(&nTime) = tx.nTime;
+    *const_cast<std::vector<CTxIn>*>(&vin) = tx.vin;
+    *const_cast<std::vector<CTxOut>*>(&vout) = tx.vout;
+    *const_cast<unsigned int*>(&nLockTime) = tx.nLockTime;
+    *const_cast<uint256*>(&hash) = tx.hash;
+    return *this;
 }
 
 /** Amount of bitcoins spent by the transaction.
@@ -115,6 +139,24 @@ double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSiz
     }
     if (nTxSize == 0) return 0.0;
     return dPriorityInputs / nTxSize;
+}
+
+std::string CMutableTransaction::ToString() const
+{
+    std::string str;
+    str += IsCoinBase() ? "Coinbase" : (IsCoinStake() ? "Coinstake" : "CTransaction");
+    str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%u, vout.size=%u, nLockTime=%d)\n",
+        GetHash().ToString(),
+        nTime,
+        nVersion,
+        vin.size(),
+        vout.size(),
+        nLockTime);
+    for (unsigned int i = 0; i < vin.size(); i++)
+        str += "    " + vin[i].ToString() + "\n";
+    for (unsigned int i = 0; i < vout.size(); i++)
+        str += "    " + vout[i].ToString() + "\n";
+    return str;
 }
 
 std::string CTransaction::ToString() const

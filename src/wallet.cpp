@@ -63,7 +63,10 @@ struct CompareValueOnly
 
 
 
-
+std::string COutput::ToString() const
+{
+    return strprintf("COutput(%s, %d, %d) [%s]", tx->GetHash().ToString(), i, nDepth, FormatMoney(tx->vout[i].nValue));
+}
 
 const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
 {
@@ -688,8 +691,8 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFromLoadWallet)
             {
                 if (mapBlockIndex.count(wtxIn.hashBlock))
                 {
-                    unsigned int latestNow = wtx.nTimeReceived;
-                    unsigned int latestEntry = 0;
+                    int64_t latestNow = wtx.nTimeReceived;
+                    int64_t latestEntry = 0;
                     {
                         // Tolerate times up to the last timestamp in the wallet not more than 5 minutes into the future
                         int64_t latestTolerated = latestNow + 300;
@@ -720,7 +723,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFromLoadWallet)
                         }
                     }
 
-                    unsigned int& blocktime = mapBlockIndex[wtxIn.hashBlock]->nTime;
+                    int64_t blocktime = mapBlockIndex[wtxIn.hashBlock]->GetBlockTime();
                     wtx.nTimeSmart = std::max(latestEntry, std::min(blocktime, latestNow));
                 }
                 else
@@ -1092,7 +1095,7 @@ int CWallet::ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate)
         {
             // no need to read and scan block, if block was created before
             // our wallet birthday (as adjusted for block time variability)
-            if (nTimeFirstKey && (pindex->nTime < (nTimeFirstKey - 7200))) {
+            if (nTimeFirstKey && (pindex->GetBlockTime() < (nTimeFirstKey - 7200))) {
                 pindex = chainActive.Next(pindex);
                 continue;
             }
@@ -1208,6 +1211,64 @@ void CWallet::ResendWalletTransactions(bool fForce)
 // Actions
 //
 
+int64_t CWalletTx::GetAvailableCredit(bool fUseCache) const
+{
+    if (pwallet == 0)
+        return 0;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if ((IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0)
+        return 0;
+
+    if (fUseCache && fAvailableCreditCached)
+        return nAvailableCreditCached;
+
+    int64_t nCredit = 0;
+    uint256 hashTx = GetHash();
+    for (unsigned int i = 0; i < vout.size(); i++)
+    {
+        if (!pwallet->IsSpent(hashTx, i))
+        {
+            const CTxOut &txout = vout[i];
+            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
+            if (!MoneyRange(nCredit))
+                throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
+        }
+    }
+
+    nAvailableCreditCached = nCredit;
+    fAvailableCreditCached = true;
+    return nCredit;
+}
+
+int64_t CWalletTx::GetAvailableWatchOnlyCredit(const bool& fUseCache) const
+{
+    if (pwallet == 0)
+        return 0;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if (IsCoinBase() && GetBlocksToMaturity() > 0)
+        return 0;
+
+    if (fUseCache && fAvailableWatchCreditCached)
+        return nAvailableWatchCreditCached;
+
+    int64_t nCredit = 0;
+    for (unsigned int i = 0; i < vout.size(); i++)
+    {
+        if (!pwallet->IsSpent(GetHash(), i))
+        {
+            const CTxOut &txout = vout[i];
+            nCredit += pwallet->GetCredit(txout, ISMINE_WATCH_ONLY);
+            if (!MoneyRange(nCredit))
+                throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
+        }
+    }
+
+    nAvailableWatchCreditCached = nCredit;
+    fAvailableWatchCreditCached = true;
+    return nCredit;
+}
 
 int64_t CWallet::GetBalance() const
 {
@@ -2377,7 +2438,7 @@ bool CWallet::SelectCoinsWithoutDenomination(int64_t nTargetValue, set<pair<cons
     return (nValueRet >= nTargetValue);
 }
 
-bool CWallet::CreateCollateralTransaction(CTransaction& txCollateral, std::string strReason)
+bool CWallet::CreateCollateralTransaction(CMutableTransaction& txCollateral, std::string strReason)
 {
     /*
         To doublespend a collateral transaction, it will require a fee higher than this. So there's
@@ -2461,7 +2522,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
         return false;
 
     wtxNew.BindWallet(this);
-    CTransaction txNew;
+    CMutableTransaction txNew;
 
     {
         LOCK2(cs_main, cs_wallet);
@@ -2469,8 +2530,8 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
             nFeeRet = payTxFee.GetFeePerK();
             while (true)
             {
-                wtxNew.vin.clear();
-                wtxNew.vout.clear();
+                txNew.vin.clear();
+                txNew.vout.clear();
                 wtxNew.fFromMe = true;
 
                 int64_t nTotalValue = nValue + nFeeRet;
@@ -2484,7 +2545,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                         strFailReason = _("Transaction amount too small");
                         return false;
                     }
-                    wtxNew.vout.push_back(txout);
+                    txNew.vout.push_back(txout);
                 }
                 // Choose coins to use
                 set<pair<const CWalletTx*,unsigned int> > setCoins;
@@ -2554,12 +2615,12 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                     else
                     {
                         // Insert change txn at random position:
-                        vector<CTxOut>::iterator position = wtxNew.vout.begin()+GetRandInt(wtxNew.vout.size());
+                        vector<CTxOut>::iterator position = txNew.vout.begin()+GetRandInt(txNew.vout.size());
 
                         // -- don't put change output between value and narration outputs
-                        if (position > wtxNew.vout.begin() && position < wtxNew.vout.end())
+                        if (position > txNew.vout.begin() && position < txNew.vout.end())
                         {
-                            while (position > wtxNew.vout.begin())
+                            while (position > txNew.vout.begin())
                             {
                                 if (position->nValue != 0)
                                     break;
@@ -2567,8 +2628,8 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                             };
                         };
 
-                        wtxNew.vout.insert(position, CTxOut(nChange, scriptChange));
-                        nChangePos = std::distance(wtxNew.vout.begin(), position);
+                        txNew.vout.insert(position, CTxOut(nChange, scriptChange));
+                        nChangePos = std::distance(txNew.vout.begin(), position);
                     }
                 }
                 else
@@ -2576,13 +2637,16 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
 
                 // Fill vin
                 BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
-                    wtxNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
+                    txNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
 
                 // Sign
                 int nIn = 0;
                 BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
-                    if (!SignSignature(*this, *coin.first, wtxNew, nIn++))
+                    if (!SignSignature(*this, *coin.first, txNew, nIn++))
                         return false;
+
+                // Embed the constructed transaction data in wtxNew.
+                *static_cast<CTransaction*>(&wtxNew) = CTransaction(txNew);
 
                 // Limit size
                 unsigned int nBytes = ::GetSerializeSize(*(CTransaction*)&wtxNew, SER_NETWORK, PROTOCOL_VERSION);
@@ -3392,7 +3456,7 @@ uint64_t CWallet::GetStakeWeight() const
     return nWeight;
 }
 
-bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64_t nSearchInterval, int64_t nFees, CTransaction& txNew, CKey& key)
+bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64_t nSearchInterval, int64_t nFees, CMutableTransaction& txNew, CKey& key)
 {
     CBlockIndex* pindexPrev = chainActive.Tip();
     if(chainActive.Height() < POS_START_BLOCK)
@@ -4457,7 +4521,7 @@ void CWallet::GetKeyBirthTimes(std::map<CKeyID, int64_t> &mapKeyBirth) const {
 
     // Extract block timestamps for those keys
     for (std::map<CKeyID, CBlockIndex*>::const_iterator it = mapKeyFirstBlock.begin(); it != mapKeyFirstBlock.end(); it++)
-        mapKeyBirth[it->first] = it->second->nTime - 7200; // block times can be 2h off
+        mapKeyBirth[it->first] = it->second->GetBlockTime() - 7200; // block times can be 2h off
 }
 
 bool CWallet::GetTransaction(const uint256 &hashTx, CWalletTx& wtx)

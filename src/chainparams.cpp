@@ -6,10 +6,12 @@
 #include "chainparams.h"
 
 #include "assert.h"
+#include "random.h"
 #include "util.h"
 
 #include <boost/assign/list_of.hpp>
 
+using namespace std;
 using namespace boost::assign;
 
 struct SeedSpec6 {
@@ -45,6 +47,7 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
 		networkID = CChainParams::MAIN;
+        strNetworkID = "main";
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
         // a large 4-byte int at any alignment.
@@ -57,6 +60,9 @@ public:
         nDefaultPort = 33820;
         nRPCPort = 33821;
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 20);
+        nEnforceBlockUpgradeMajority = 750;
+        nRejectBlockOutdatedMajority = 950;
+        nToCheckBlockUpgradeMajority = 1000;
 
         // Build the genesis block. Note that the output of the genesis coinbase cannot
         // be spent as it did not originally exist in the database.
@@ -67,7 +73,7 @@ public:
         //    CTxOut(empty)
         //  vMerkleTree: 12630d16a9
         const char* pszTimestamp = "Laptop ban on Etihad flights from Abu Dhabi lifted";
-        CTransaction txNew;
+        CMutableTransaction txNew;
         txNew.nTime = 1499037408;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
@@ -100,7 +106,6 @@ public:
 		fRequireRPCPassword = true;
 		fDefaultCheckMemPool = false;
 		fRequireStandard = true;
-		fRPCisTestNet = false;
 	}
 };
 static CMainParams mainParams;
@@ -114,6 +119,7 @@ class CTestNetParams : public CMainParams {
 public:
     CTestNetParams() {
 		networkID = CChainParams::TESTNET;
+        strNetworkID = "test";
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
         // a large 4-byte int at any alignment.
@@ -126,6 +132,9 @@ public:
         nDefaultPort = 28888;
         nRPCPort = 28889;
         strDataDir = "testnet";
+        nEnforceBlockUpgradeMajority = 51;
+        nRejectBlockOutdatedMajority = 75;
+        nToCheckBlockUpgradeMajority = 100;
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.
         genesis.nBits  = bnProofOfWorkLimit.GetCompact();
@@ -151,7 +160,6 @@ public:
 		fRequireRPCPassword = true;
 		fDefaultCheckMemPool = false;
 		fRequireStandard = false;
-		fRPCisTestNet = true;
 	}
 };
 static CTestNetParams testNetParams;

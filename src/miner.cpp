@@ -9,6 +9,7 @@
 #include "kernel.h"
 #include "masternode.h"
 
+#include <openssl/sha.h>
 
 using namespace std;
 
@@ -106,8 +107,11 @@ public:
 };
 
 // CreateNewBlock: create new block (without proof-of-work/proof-of-stake)
-CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFees)
+CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, bool fProofOfStake)
 {
+
+    CReserveKey reservekey(pwallet);
+
     // Create new block
     auto_ptr<CBlockTemplate> pblocktemplate(new CBlockTemplate());
     if(!pblocktemplate.get())
@@ -121,17 +125,14 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
     int nHeight = pindexPrev->nHeight + 1;
 
     // Create coinbase tx
-    CTransaction txNew;
+    CMutableTransaction txNew;
     txNew.vin.resize(1);
     txNew.vin[0].prevout.SetNull();
     txNew.vout.resize(1);
 
     if (!fProofOfStake)
     {
-        CPubKey pubkey;
-        if (!reservekey.GetReservedKey(pubkey))
-            return NULL;
-        txNew.vout[0].scriptPubKey.SetDestination(pubkey.GetID());
+        txNew.vout[0].scriptPubKey = scriptPubKeyIn;
     }
     else
     {
@@ -142,8 +143,8 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
         txNew.vout[0].SetEmpty();
     }
 
-    // Add our coinbase tx as first transaction
-    pblock->vtx.push_back(txNew);
+    // Add dummy coinbase tx as first transaction
+    pblock->vtx.push_back(CTransaction());
     pblocktemplate->vTxFees.push_back(-1); // updated at end
     pblocktemplate->vTxSigOps.push_back(-1); // updated at end
 
@@ -353,14 +354,14 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
         if (fDebug && GetBoolArg("-printpriority", false))
             LogPrintf("CreateNewBlock(): total size %u\n", nBlockSize);
 // >Linda<
+        // Compute final coinbase transaction.
+        pblock->vtx[0].vin[0].scriptSig = CScript() << nHeight << OP_0;
         if (!fProofOfStake)
         {
             int64_t nReward = GetProofOfWorkReward(nFees);
+            pblock->vtx[0] = txNew;
             pblock->vtx[0].vout[0].nValue = nReward;
         }
-
-        if (pFees)
-            *pFees = nFees;
 
         // Fill in header
         pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
@@ -385,6 +386,15 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int6
     return pblocktemplate.release();
 }
 
+CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake)
+{
+    CPubKey pubkey;
+    if (!reservekey.GetReservedKey(pubkey))
+        return NULL;
+
+    CScript scriptPubKey = CScript() << pubkey << OP_CHECKSIG;
+    return CreateNewBlock(scriptPubKey, pwallet, fProofOfStake);
+}
 
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce)
 {
@@ -398,9 +408,11 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
     ++nExtraNonce;
 
     unsigned int nHeight = pindexPrev->nHeight+1; // Height first in coinbase required for block.version=2
-    pblock->vtx[0].vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
-    assert(pblock->vtx[0].vin[0].scriptSig.size() <= 100);
+    CMutableTransaction txCoinbase(pblock->vtx[0]);
+    txCoinbase.vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
+    assert(txCoinbase.vin[0].scriptSig.size() <= 100);
 
+    pblock->vtx[0] = txCoinbase;
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 }
 
@@ -531,7 +543,7 @@ bool CheckStake(CBlock* pblock, CWallet& wallet)
     return true;
 }
 
-void ThreadStakeMiner(CWallet *pwallet)
+void ThreadStakeMiner(CWallet *pwallet, bool fProofOfStake)
 {
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
@@ -570,8 +582,8 @@ void ThreadStakeMiner(CWallet *pwallet)
         //
         // Create new block
         //
-        int64_t nFees;
-        auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlock(reservekey, true, &nFees));
+        int64_t nFees = 0;
+        auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwallet, fProofOfStake));
         if (!pblocktemplate.get())
             return;
 
