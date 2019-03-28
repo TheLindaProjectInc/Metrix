@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2012 The Bitcoin developers
+// Copyright (c) 2009-2014 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,7 +7,7 @@
 //        to at least gain what we can from it.
 
 #include <openssl/ecdsa.h>
-#include <openssl/rand.h>
+#include "random.h"
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>
 
@@ -446,7 +446,7 @@ bool CKey::ReserealizeSignature(std::vector<unsigned char>& vchSig) {
 
 void CKey::MakeNewKey(bool fCompressedIn) {
     do {
-        RAND_bytes(vch, sizeof(vch));
+        GetRandBytes(vch, sizeof(vch));
     } while (!Check(vch));
     fValid = true;
     fCompressed = fCompressedIn;
