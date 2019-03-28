@@ -831,7 +831,7 @@ public:
     // (memory only) Sequencial id assigned to distinguish order in which blocks are received.
     uint32_t nSequenceId;
 
-    CBlockIndex()
+    void SetNull()
     {
         phashBlock = NULL;
         pprev = NULL;
@@ -859,24 +859,15 @@ public:
         nNonce         = 0;
     }
 
+    CBlockIndex()
+    {
+        SetNull();
+    }
+
     CBlockIndex(CBlock& block)
     {
-        phashBlock = NULL;
-        pprev = NULL;
-        nHeight = 0;
-        nFile = 0;
-        nDataPos = 0;
-        nUndoPos = 0;
-        nChainTrust = 0;
-        nTx = 0;
-        nChainTx = 0;
-        nStatus = 0;
-        nSequenceId = 0;
-        nMint = 0;
-        nMoneySupply = 0;
-        nFlags = 0;
-        nStakeModifier = 0;
-        hashProof = 0;
+        SetNull();
+
         if (block.IsProofOfStake())
         {
             SetProofOfStake();
