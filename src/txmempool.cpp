@@ -270,7 +270,7 @@ public:
         size_t nPrevSize = 0;
         for (int i = 0; i < nBlocksToConfirm; i++)
             nPrevSize += history.at(i).FeeSamples();
-        size_t index = min(nPrevSize + nBucketSize/2, sortedFeeSamples.size()-1);
+        size_t index = min(nPrevSize + nBucketSize/2, sortedPrioritySamples.size()-1);
         return sortedFeeSamples[index];
     }
     double estimatePriority(int nBlocksToConfirm)
