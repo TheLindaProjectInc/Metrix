@@ -39,8 +39,8 @@
 
 #include "compat/sanity.h"
 
-using namespace std;
 using namespace boost;
+using namespace std;
 
 #ifdef ENABLE_WALLET
 CWallet* pwalletMain = NULL;
@@ -117,10 +117,12 @@ static CCoinsViewDB *pcoinsdbview;
 
 void Shutdown()
 {
-    LogPrintf("Shutdown : In progress...\n");
+    LogPrintf("%s: In progress...\n", __func__);
     static CCriticalSection cs_Shutdown;
     TRY_LOCK(cs_Shutdown, lockShutdown);
-    if (!lockShutdown) return;
+     if (!lockShutdown)
+        return;
+
     RenameThread("Linda-shutoff");
     mempool.AddTransactionsUpdated(1);
     StopRPCThreads();
@@ -136,7 +138,7 @@ void Shutdown()
     if (est_fileout)
         mempool.WriteFeeEstimates(est_fileout);
     else
-        LogPrintf("failed to write fee estimates");
+        LogPrintf("%s: Failed to write fee estimates to %s\n", __func__, est_path.string());
 
     {
         LOCK(cs_main);
@@ -149,8 +151,11 @@ void Shutdown()
         if (pcoinsTip)
             pcoinsTip->Flush();
         delete pcoinsTip;
+        pcoinsTip = NULL;
         delete pcoinsdbview;
+        pcoinsdbview = NULL;
         delete pblocktree;
+        pblocktree = NULL;
     }
 #ifdef ENABLE_WALLET
     if (pwalletMain)
@@ -165,7 +170,7 @@ void Shutdown()
         pwalletMain = NULL;
     }
 #endif
-    LogPrintf("Shutdown : done\n");
+    LogPrintf("%s: done\n", __func__);
 }
 
 //
@@ -626,9 +631,9 @@ bool AppInit2(boost::thread_group& threadGroup)
     else if (nScriptCheckThreads > MAX_SCRIPTCHECK_THREADS)
         nScriptCheckThreads = MAX_SCRIPTCHECK_THREADS;
 
-    // Check for -debugnet (deprecated)
+    // Check for -debugnet
     if (GetBoolArg("-debugnet", false))
-        InitWarning(_("Warning: Deprecated argument -debugnet ignored, use -debug=net"));
+        InitWarning(_("Warning: Unsupported argument -debugnet ignored, use -debug=net."));
     // Check for -tor - as this is a privacy risk to continue, exit here
     if (GetBoolArg("-tor", false))
         return InitError(_("Error: Unsupported argument -tor found, use -onion."));
@@ -1100,6 +1105,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     boost::filesystem::path est_path = GetDataDir() / FEE_ESTIMATES_FILENAME;
     CAutoFile est_filein = CAutoFile(fopen(est_path.string().c_str(), "rb"), SER_DISK, CLIENT_VERSION);
+    // Allowed to fail as this file IS missing on first startup.
     if (est_filein)
         mempool.ReadFeeEstimates(est_filein);
 
