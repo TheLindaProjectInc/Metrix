@@ -782,23 +782,33 @@ class CBlockIndex
 public:
     // pointer to the hash of the block, if any. memory is owned by this CBlockIndex    
     const uint256* phashBlock;
+
     // pointer to the index of the predecessor of this block
     CBlockIndex* pprev;
     uint256 nChainTrust; // ppcoin: trust score of block chain
+
+    // pointer to the index of some further predecessor of this block
+    CBlockIndex* pskip;
+
     // height of the entry in the chain. The genesis block has height 0
     int nHeight;
+
     // Which # file this block is stored in (blk?????.dat)
     int nFile;
+
     // Byte offset within blk?????.dat where this block's data is stored
     unsigned int nDataPos;
+
     // Byte offset within rev?????.dat where this block's undo data is stored
     unsigned int nUndoPos;
 
     // Number of transactions in this block.
     // Note: in a potential headers-first mode, this number cannot be relied upon
     unsigned int nTx;
+
      // (memory only) Number of transactions in the chain up to and including this block
     unsigned int nChainTx; // change to 64-bit type when necessary; won't happen before 2030
+
      // Verification status of this block. See enum BlockStatus
     unsigned int nStatus;
 
@@ -835,6 +845,7 @@ public:
     {
         phashBlock = NULL;
         pprev = NULL;
+        pskip = NULL;
         nHeight = 0;
         nFile = 0;
         nDataPos = 0;
@@ -1015,11 +1026,14 @@ public:
             hashMerkleRoot.ToString(),
             GetBlockHash().ToString());
     }
+
+    // Build the skiplist pointer for this entry.
+    void BuildSkip();
+
+    // Efficiently find an ancestor of this block.
+    CBlockIndex* GetAncestor(int height);
+    const CBlockIndex* GetAncestor(int height) const;
 };
-
-
-
-
 
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex
