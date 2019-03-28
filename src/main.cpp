@@ -4382,7 +4382,7 @@ void static ProcessGetData(CNode* pfrom)
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, int64_t nTimeReceived)
 {
     RandAddSeedPerfmon();
-    LogPrint("net", "received: %s (%u bytes)\n", strCommand, vRecv.size());
+    LogPrint("net", "received: %s (%u bytes) peer=%d\n", strCommand, vRecv.size(), pfrom->id);
     if (mapArgs.count("-dropmessagestest") && GetRand(atoi(mapArgs["-dropmessagestest"])) == 0)
     {
         LogPrintf("dropmessagestest DROPPING RECV MESSAGE\n");
@@ -4407,7 +4407,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pfrom->nVersion < MIN_PEER_PROTO_VERSION)
         {
             // disconnect from peers older than this proto version
-            LogPrintf("partner %s using obsolete version %i; disconnecting\n", pfrom->addr.ToString(), pfrom->nVersion);
+            LogPrintf("peer=%d using obsolete version %i; disconnecting\n", pfrom->id, pfrom->nVersion);
             pfrom->PushMessage("reject", strCommand, REJECT_OBSOLETE,
                 strprintf("Version must be %d or greater", MIN_PEER_PROTO_VERSION));
             pfrom->fDisconnect = true;
@@ -4493,8 +4493,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
         pfrom->fSuccessfullyConnected = true;
 
-        LogPrintf("receive version message: %s: version %d, blocks=%d, us=%s, them=%s, peer=%s\n", pfrom->strSubVer.c_str(), pfrom->nVersion, pfrom->nStartingHeight, addrMe.ToString().c_str(), addrFrom.ToString().c_str(), pfrom->addr.ToString().c_str());
-
+LogPrintf("receive version message: %s: version %d, blocks=%d, us=%s, peer=%d\n", pfrom->cleanSubVer, pfrom->nVersion, pfrom->nStartingHeight, addrMe.ToString(), pfrom->id);
         if (GetBoolArg("-synctime", true))
             AddTimeData(pfrom->addr, nTime);
     }
@@ -4601,7 +4600,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             pfrom->AddInventoryKnown(inv);
 
             bool fAlreadyHave = AlreadyHave(inv);
-            LogPrint("net", "  got inventory: %s  %s\n", inv.ToString(), fAlreadyHave ? "have" : "new");
+            LogPrint("net", "got inv: %s  %s peer=%d\n", inv.ToString(), fAlreadyHave ? "have" : "new", pfrom->id);
 
             if (!fAlreadyHave) {
                 if (!fImporting && !fReindex) {
@@ -4646,10 +4645,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         }
 
         if (fDebug || (vInv.size() != 1))
-            LogPrint("net", "received getdata (%u invsz)\n", vInv.size());
+            LogPrint("net", "received getdata (%u invsz) peer=%d\n", vInv.size(), pfrom->id);
 
         if ((fDebug && vInv.size() > 0) || (vInv.size() == 1))
-            LogPrint("net", "received getdata for: %s\n", vInv[0].ToString());
+            LogPrint("net", "received getdata for: %s peer=%d\n", vInv[0].ToString(), pfrom->id);
 
         pfrom->vRecvGetData.insert(pfrom->vRecvGetData.end(), vInv.begin(), vInv.end());
         ProcessGetData(pfrom);
@@ -4671,7 +4670,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pindex)
             pindex = chainActive.Next(pindex);
         int nLimit = 500;
-        LogPrint("net", "getblocks %d to %s limit %d\n", (pindex ? pindex->nHeight : -1), hashStop==uint256(0) ? "end" : hashStop.ToString(), nLimit);
+        LogPrint("net", "getblocks %d to %s limit %d from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop==uint256(0) ? "end" : hashStop.ToString(), nLimit, pfrom->id);
         for (; pindex; pindex = chainActive.Next(pindex))
         {
             if (pindex->GetBlockHash() == hashStop)
@@ -4753,8 +4752,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             vWorkQueue.push_back(inv.hash);
             vEraseQueue.push_back(inv.hash);
 		
-            LogPrintf("AcceptToMemoryPool: %s %s : accepted %s (poolsz %u)\n",
-                pfrom->addr.ToString().c_str(), pfrom->strSubVer.c_str(),
+            LogPrint("AcceptToMemoryPool: peer=%d %s : accepted %s (poolsz %u)\n",
+                pfrom->id, pfrom->strSubVer.c_str(),
                 tx.GetHash().ToString().c_str(),
                 mempool.mapTx.size());
 		
@@ -4830,6 +4829,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         vRecv >> block;
         uint256 hashBlock = block.GetHash();
 
+	LogPrint("net", "received block %s peer=%d\n", block.GetHash().ToString(), pfrom->id);
+        // block.print();
+	    
         CInv inv(MSG_BLOCK, hashBlock);
         pfrom->AddInventoryKnown(inv);
         // Remember who we got this block from.
@@ -4962,13 +4964,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         }
 
         if (!(sProblem.empty())) {
-            LogPrint("net", "pong %s %s: %s, %x expected, %x received, %zu bytes\n"
-                , pfrom->addr.ToString()
-                , pfrom->strSubVer
-                , sProblem
-                , pfrom->nPingNonceSent
-                , nonce
-                , nAvail);
+            LogPrint("net", "pong peer=%d %s: %s, %x expected, %x received, %u bytes\n",
+                pfrom->id,
+                pfrom->strSubVer,
+                sProblem,
+                pfrom->nPingNonceSent,
+                nonce,
+                nAvail);
         }
         if (bPingFinished) {
             pfrom->nPingNonceSent = 0;
@@ -5219,8 +5221,8 @@ bool ProcessMessages(CNode* pfrom)
         }
 
         if (!fRet)
-            LogPrintf("ProcessMessage(%s, %u bytes) FAILED\n", strCommand, nMessageSize);
-
+	   LogPrintf("ProcessMessage(%s, %u bytes) FAILED peer=%d\n", strCommand, nMessageSize, pfrom->id);
+	    
         break;
     }
 
@@ -5435,7 +5437,7 @@ bool SendMessages(CNode* pto)
             uint256 hash = state.vBlocksToDownload.front();
             vGetData.push_back(CInv(MSG_BLOCK, hash));
             MarkBlockAsInFlight(pto->GetId(), hash);
-            LogPrint("sync", "Requesting block %s from %s\n", hash.ToString().c_str(), pto->addr.ToString().c_str());
+            LogPrint("sync", "Requesting block %s peer=%d\n", hash.ToString(), pto->id);
             if (!pto->tGetdataBlock)
                 pto->tGetdataBlock = GetTimeMillis();
             if (vGetData.size() >= 1000)
@@ -5455,7 +5457,7 @@ bool SendMessages(CNode* pto)
             if (!AlreadyHave(inv))
             {
                 if (fDebug)
-                    LogPrint("net", "sending getdata: %s\n", inv.ToString());
+                    LogPrint("net", "Requesting %s peer=%d\n", inv.ToString(), pto->id);
                 vGetData.push_back(inv);
                 if (vGetData.size() >= 1000)
                 {
