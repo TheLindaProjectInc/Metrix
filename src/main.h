@@ -351,17 +351,7 @@ struct CDiskTxPos : public CDiskBlockPos
     }
 };
 
-
-
-
-enum GetMinFee_mode
-{
-    GMF_BLOCK,
-    GMF_RELAY,
-    GMF_SEND,
-};
-
-int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode = GMF_BLOCK, unsigned int nBytes = 0);
+int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes = 0);
 
 
 

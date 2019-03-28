@@ -896,7 +896,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 }
 
 
-int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int nBytes)
+int64_t GetMinRelayFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int nBytes)
 {
     
     int64_t nMinFee;
@@ -1052,7 +1052,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         unsigned int nSize = entry.GetTxSize();
 
         // Don't accept it if it can't get into a block
-        int64_t txMinFee = GetMinFee(tx, GMF_RELAY, nSize);
+        int64_t txMinFee = GetMinRelayFee(tx, GMF_RELAY, nSize);
         if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",

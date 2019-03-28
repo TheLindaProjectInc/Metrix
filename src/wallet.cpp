@@ -34,6 +34,7 @@ using namespace std;
 CFeeRate payTxFee(DEFAULT_TRANSACTION_FEE);
 int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
+unsigned int nTxConfirmTarget = 1;
 bool bSpendZeroConfChange = true;
 
 static int64_t GetStakeSplitAmount() { return 100000 * COIN; }
@@ -2521,6 +2522,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
     if (vecSend.empty() || nValue < 0)
         return false;
 
+    wtxNew.fTimeReceivedIsTxTime = true;
     wtxNew.BindWallet(this);
     CMutableTransaction txNew;
 
@@ -2655,21 +2657,31 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                 
                 dPriority = wtxNew.ComputePriority(dPriority, nBytes);
 
-                // Check that enough fee is included
-                int64_t nPayFee = payTxFee.GetFee(nBytes);
-                int64_t nMinFee = GetMinFee(wtxNew, GMF_SEND, nBytes);
+               int64_t nFeeNeeded = GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
 
-                LogPrintf("CWallet::CreateTransaction() -> nPayFee=%d  nMinFee=%d", nPayFee, nMinFee);
+                if (nFeeRet >= nFeeNeeded)
+                    break; // Done, enough fee included.
 
-                if (nFeeRet < max(nPayFee, nMinFee))
+                // Too big to send for free? Include more fee and try again:
+                if (nBytes > MAX_FREE_TRANSACTION_CREATE_SIZE)
                 {
-                    nFeeRet = max(nPayFee, nMinFee);
+                    nFeeRet = nFeeNeeded;
                     continue;
                 }
 
-                wtxNew.fTimeReceivedIsTxTime = true;
+                // Not enough fee: enough priority?
+                double dPriorityNeeded = mempool.estimatePriority(nTxConfirmTarget);
+                // Not enough mempool history to estimate: use hard-coded AllowFree.
+                if (dPriorityNeeded <= 0 && AllowFree(dPriority))
+                    break;
 
-                break;
+                // Small enough, and priority high enough, to send for free
+                if (dPriority >= dPriorityNeeded)
+                    break;
+
+                // Include more fee and try again.
+                nFeeRet = nFeeNeeded;
+                continue;
             }
         }
     }
@@ -3816,6 +3828,19 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64_t nV
     return SendMoney(scriptPubKey, nValue, sNarr, wtxNew);
 }
 
+int64_t CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool)
+{
+    // payTxFee is user-set "I want to pay this much"
+    int64_t nFeeNeeded = payTxFee.GetFee(nTxBytes);
+    // User didn't set: use -txconfirmtarget to estimate...
+    if (nFeeNeeded == 0)
+        nFeeNeeded = pool.estimateFee(nConfirmTarget).GetFee(nTxBytes);
+    // ... unless we don't have enough mempool data, in which case fall
+    // back to a hard-coded fee
+    if (nFeeNeeded == 0)
+        nFeeNeeded = CTransaction::minTxFee.GetFee(nTxBytes);
+    return nFeeNeeded;
+}
 
 string CWallet::PrepareDarksendDenominate(int minRounds, int maxRounds)
 {
