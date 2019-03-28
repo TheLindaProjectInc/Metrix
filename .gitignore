@@ -19,6 +19,7 @@ qrc_bitcoin.cpp
 src/obj/build.h
 object_script.Linda-qt.*
 # daemons
+src/Linda-tx
 src/Linda-cli
 src/Lindad
 # autotools
