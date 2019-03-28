@@ -41,6 +41,7 @@ static std::string strRPCUserColonPass;
 static bool fRPCInWarmup = true;
 static std::string rpcWarmupStatus("RPC server started");
 static CCriticalSection cs_rpcWarmup;
+static bool fRPCRunning = false;
 
 // These are created by StartRPCThreads, destroyed in StopRPCThreads
 static asio::io_service* rpc_io_service = NULL;
@@ -693,11 +694,14 @@ void StartRPCThreads()
     rpc_worker_group = new boost::thread_group();
     for (int i = 0; i < GetArg("-rpcthreads", 4); i++)
         rpc_worker_group->create_thread(boost::bind(&asio::io_service::run, rpc_io_service));
+    fRPCRunning = true;
 }
 
 void StopRPCThreads()
 {
     if (rpc_io_service == NULL) return;
+    // Set this to false first, so that longpolling loops will exit when woken up
+    fRPCRunning = false;
 
     // First, cancel all timers and acceptors
     // This is not done automatically by ->stop(), and in some cases the destructor of
@@ -719,11 +723,17 @@ void StopRPCThreads()
     deadlineTimers.clear();
 
     rpc_io_service->stop();
+    cvBlockChange.notify_all();
     if (rpc_worker_group != NULL)
         rpc_worker_group->join_all();
     delete rpc_worker_group; rpc_worker_group = NULL;
     delete rpc_ssl_context; rpc_ssl_context = NULL;
     delete rpc_io_service; rpc_io_service = NULL;
+}
+
+bool IsRPCRunning()
+{
+    return fRPCRunning;
 }
 
 void SetRPCWarmupStatus(const std::string& newStatus)

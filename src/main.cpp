@@ -54,6 +54,8 @@ int nCoinbaseMaturity = 10;
 
 CChain chainActive;
 int64_t nTimeBestReceived = 0;
+CWaitableCriticalSection csBestBlock;
+CConditionVariable cvBlockChange;
 int nScriptCheckThreads = 0;
 bool fImporting = false;
 bool fReindex = false;
@@ -2423,6 +2425,8 @@ void static UpdateTip(CBlockIndex *pindexNew)
         nBestBlockTrust.GetLow64(),
         (unsigned long)pindexNew->nChainTx,
         DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()));
+
+    cvBlockChange.notify_all();
 
     // Check the version of the last 100 blocks to see if we need to upgrade:
     if (!fIsInitialDownload)
