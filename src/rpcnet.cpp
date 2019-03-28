@@ -100,7 +100,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
             "    \"syncnode\" : true|false     (booleamn) if sync node\n"
             "  }\n"
             "  ,...\n"
-            "}\n"
+            "]\n"
 
             "\nExamples:\n"
             + HelpExampleCli("getpeerinfo", "")
