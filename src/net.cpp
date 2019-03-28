@@ -436,8 +436,7 @@ void CNode::CloseSocketDisconnect()
     if (hSocket != INVALID_SOCKET)
     {
         LogPrint("net", "disconnecting peer=%d\n", id);
-        closesocket(hSocket);
-        hSocket = INVALID_SOCKET;
+        CloseSocket(hSocket);
     }
 
     // in case this fails, we'll empty the recv buffer when the CNode is deleted
@@ -886,12 +885,13 @@ void ThreadSocketHandler()
                 }
                 else if (nInbound >= nMaxConnections - MAX_OUTBOUND_CONNECTIONS)
                 {
-                    closesocket(hSocket);
+                    CloseSocket(hSocket);
                 }
                 else if (CNode::IsBanned(addr) && !whitelisted)
                 {
                     LogPrintf("connection from %s dropped (banned)\n", addr.ToString());
-                    closesocket(hSocket);
+                    CloseSocket(hSocket);
+
                 }
                 else
                 {
@@ -1749,14 +1749,14 @@ public:
         BOOST_FOREACH(CNode* pnode, vNodes)
             if (pnode->hSocket != INVALID_SOCKET)
             {
-                closesocket(pnode->hSocket);
+                CloseSocket(pnode->hSocket);
             }
         BOOST_FOREACH(ListenSocket& hListenSocket, vhListenSocket)
             if (hListenSocket.socket != INVALID_SOCKET)
             {
-                if (closesocket(hListenSocket.socket) == SOCKET_ERROR)
+                if (!CloseSocket(hListenSocket.socket))
                 {
-                    LogPrintf("closesocket(hListenSocket) failed with error %s\n", NetworkErrorString(WSAGetLastError()));
+                    LogPrintf("CloseSocket(hListenSocket) failed with error %s\n", NetworkErrorString(WSAGetLastError()));
                 }
             }
 
