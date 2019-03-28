@@ -54,6 +54,7 @@ BITCOIN_CORE_H = \
   coincontrol.h \
   compat.h \
   core.h \
+  core_io.h \
   coins.h \
   crypter.h \
   darksend.h \
@@ -195,6 +196,8 @@ libbitcoin_common_a_SOURCES = \
   allocators.cpp \
   chainparams.cpp \
   core.cpp \
+  core_read.cpp \
+  core_write.cpp \
   darksend.cpp \
   eccryptoverify.cpp \
   hash.cpp \

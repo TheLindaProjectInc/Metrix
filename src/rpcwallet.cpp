@@ -6,6 +6,7 @@
 #include <boost/assign/list_of.hpp>
 
 #include "base58.h"
+#include "core_io.h"
 #include "rpcserver.h"
 #include "init.h"
 #include "net.h"
@@ -1830,6 +1831,8 @@ Value gettransaction(const Array& params, bool fHelp)
         Array details;
         ListTransactions(wtx, "*", 0, false, details, filter);
         entry.push_back(Pair("details", details));
+        string strHex = EncodeHexTx(static_cast<CTransaction>(wtx));
+
     }
     else
     {
