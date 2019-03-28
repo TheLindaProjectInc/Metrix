@@ -39,8 +39,6 @@ set<CWallet*> setpwalletRegistered;
 
 CCriticalSection cs_main;
 
-CTxMemPool mempool;
-
 map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
 
@@ -62,10 +60,12 @@ bool fReindex = false;
 bool fBenchmark = false;
 unsigned int nCoinCacheSize = 5000;
 
-/** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-CFeeRate CTransaction::minTxFee = CFeeRate(100000);  // Override with -mintxfee
+
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-CFeeRate CTransaction::minRelayTxFee = CFeeRate(10000);
+CFeeRate minRelayTxFee = CFeeRate(10000);
+
+CTxMemPool mempool(::minRelayTxFee);
+
 struct COrphanTx {
     CTransaction tx;
     NodeId fromPeer;
@@ -645,7 +645,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         }
         if (whichType == TX_NULL_DATA)
             nDataOut++;
-        if (txout.IsDust(CTransaction::minRelayTxFee)) {
+        if (txout.IsDust(::minRelayTxFee)) {
             reason = "dust";
             return false;
         }
@@ -896,7 +896,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 }
 
 
-int64_t GetMinRelayFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigned int nBytes)
+int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
 {
     
     int64_t nMinFee;
@@ -906,9 +906,9 @@ int64_t GetMinRelayFee(const CTransaction& tx, enum GetMinFee_mode mode, unsigne
     }
     else
     {
-        // Base fee is either minTxFee or minRelayTxFee
-        CFeeRate baseFeeRate = (mode == GMF_RELAY) ? tx.minRelayTxFee : tx.minTxFee;
-        nMinFee = baseFeeRate.GetFee(nBytes);
+    
+    int64_t nMinFee = ::minRelayTxFee.GetFee(nBytes);
+
     }        
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
@@ -1064,7 +1064,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
         // MBK: Support the tx fee increase at blockheight
-        if (fLimitFree && nFees < CTransaction::minRelayTxFee.GetFee(nSize))
+        if (fLimitFree && nFees < ::minRelayTxFee.GetFee(nSize))
         {
             static CCriticalSection csFreeLimiter;
             static double dFreeCount;
@@ -1086,10 +1086,10 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
             dFreeCount += nSize;
         }
 	    
-        if (fRejectInsaneFee && nFees > CTransaction::minRelayTxFee.GetFee(nSize) * 10000)
+        if (fRejectInsaneFee && nFees > ::minRelayTxFee.GetFee(nSize) * 10000)
             return error("CTxMemPool::accept() : insane fees %s, %d > %d",
                          hash.ToString(),
-                         nFees, CTransaction::minRelayTxFee.GetFee(nSize) * 10000);
+                         nFees, ::minRelayTxFee.GetFee(nSize) * 10000);
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.

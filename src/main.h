@@ -184,6 +184,7 @@ extern bool fImporting;
 extern bool fReindex;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
+extern CFeeRate minRelayTxFee;
 struct COrphanBlock;
 extern std::map<uint256, COrphanBlock*> mapOrphanBlocks;
 

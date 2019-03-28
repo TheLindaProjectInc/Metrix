@@ -282,7 +282,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             int64_t nMinFee = GetMinFee(tx, GMF_BLOCK);
 
             // Skip free transactions if we're past the minimum block size:
-            if (fSortedByFee && (feeRate < CTransaction::minRelayTxFee) && (nBlockSize + nTxSize >= nBlockMinSize))
+            if (fSortedByFee && (feeRate < ::minRelayTxFee) && (nBlockSize + nTxSize >= nBlockMinSize))
                 continue;
 
             // Prioritize by fee once past the priority size or we run out of high-priority
