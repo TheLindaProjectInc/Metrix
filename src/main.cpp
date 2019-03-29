@@ -4816,7 +4816,7 @@ LogPrintf("receive version message: %s: version %d, blocks=%d, us=%s, peer=%d\n"
             vWorkQueue.push_back(inv.hash);
             vEraseQueue.push_back(inv.hash);
 		
-            LogPrint("AcceptToMemoryPool: peer=%d %s : accepted %s (poolsz %u)\n",
+            LogPrint("mempool","AcceptToMemoryPool: peer=%d %s : accepted %s (poolsz %u)\n",
                 pfrom->id, pfrom->strSubVer.c_str(),
                 tx.GetHash().ToString().c_str(),
                 mempool.mapTx.size());
