@@ -31,8 +31,9 @@ noinst_LIBRARIES = \
   libbitcoin_server.a \
   libbitcoin_common.a \
   libbitcoin_cli.a \
-  crypto/libbitcoin_crypto.a
   univalue/libbitcoin_univalue.a \
+  crypto/libbitcoin_crypto.a
+  
 
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
@@ -276,7 +277,6 @@ Linda_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
 Linda_tx_LDADD = \
   $(LIBBITCOIN_UNIVALUE) \
   $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
   $(BOOST_LIBS)
 Linda_tx_SOURCES = bitcoin-tx.cpp
