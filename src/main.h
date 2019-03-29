@@ -354,7 +354,7 @@ struct CDiskTxPos : public CDiskBlockPos
     }
 };
 
-int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes = 0, bool fAllowFree = false);
+int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree);
 
 
 
