@@ -896,7 +896,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 }
 
 
-int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
+int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree)
 {
     
     int64_t nMinFee;
@@ -908,7 +908,15 @@ int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
     {
     
     int64_t nMinFee = ::minRelayTxFee.GetFee(nBytes);
-
+        if (fAllowFree)
+        {
+            // There is a free transaction area in blocks created by most miners,
+            // * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
+            //   to be considered to fall into this category. We don't want to encourage sending
+            //   multiple transactions instead of one big transaction to avoid fees.
+            if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
+                nMinFee = 0;
+        }
     }        
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
@@ -1052,7 +1060,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         unsigned int nSize = entry.GetTxSize();
 
         // Don't accept it if it can't get into a block
-        int64_t txMinFee = GetMinRelayFee(tx, GMF_RELAY, nSize);
+        int64_t txMinFee = GetMinRelayFee(tx, nSize, true);
         if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",
@@ -1210,7 +1218,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
         // MBK: Support the tx fee increase at blockheight
-        if (fLimitFree && nFees < CTransaction::minRelayTxFee.GetFee(nSize))
+        if (fLimitFree && nFees < ::minRelayTxFee.GetFee(nSize))
         {
             static CCriticalSection csFreeLimiter;
             static double dFreeCount;
