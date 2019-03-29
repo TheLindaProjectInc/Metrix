@@ -152,15 +152,6 @@ public:
 }
 instance_of_cinit;
 
-bool GetRandBytes(unsigned char *buf, int num)
-{
-    if (RAND_bytes(buf, num) == 0) {
-        LogPrint("rand", "%s : OpenSSL RAND_bytes() failed with error: %s\n", __func__, ERR_error_string(ERR_get_error(), NULL));
-        return false;
-    }
-    return true;
-}
-
 // LogPrintf() has been broken a couple of times now
 // by well-meaning people adding mutexes in the most straightforward way.
 // It breaks because it may be called by global destructors during shutdown.
