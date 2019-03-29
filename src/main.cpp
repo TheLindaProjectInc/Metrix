@@ -907,7 +907,8 @@ int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
     else
     {
     
-    int64_t nMinFee = ::minRelayTxFee.GetFee(nBytes);
+        nMinFee = ::minRelayTxFee.GetFee(nBytes);
+
         if (fAllowFree)
         {
             // There is a free transaction area in blocks created by most miners,
@@ -1208,7 +1209,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
 
         // Don't accept it if it can't get into a block
         // MBK: Support the tx fee increase at blockheight
-        int64_t txMinFee = GetMinFee(tx, GMF_RELAY, nSize);
+        int64_t txMinFee = GetMinRelayFee(tx, nSize, true);
         if (fLimitFree && nFees < txMinFee)
             return state.DoS(0, error("AcceptableInputs : not enough fees %s, %d < %d",
                 hash.ToString(), nFees, txMinFee),
@@ -2027,12 +2028,6 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
             if (nTxFee < 0)
                 return state.DoS(100, error("CheckInputs() : %s nTxFee < 0", tx.GetHash().ToString()),
                     REJECT_INVALID, "bad-txns-fee-negative");
-
-            // enforce transaction fees for every block
-            int64_t nRequiredFee = GetMinFee(tx);
-            if (nTxFee < nRequiredFee)
-                return state.DoS(100, error("ConnectInputs() : %s not paying required fee=%s, paid=%s", tx.GetHash().ToString(), FormatMoney(nRequiredFee), FormatMoney(nTxFee)),
-                    REJECT_INVALID, "not paying required fee");
 
             nFees += nTxFee;
             if (!MoneyRange(nFees))
