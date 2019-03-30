@@ -396,13 +396,12 @@ public:
 
     ~CNode()
     {
-        if (hSocket != INVALID_SOCKET)
-        {
-            CloseSocket(hSocket);
-        }
-        GetNodeSignals().FinalizeNode(GetId());
+        CloseSocket(hSocket);
+
         if (pfilter)
             delete pfilter;
+
+        GetNodeSignals().FinalizeNode(GetId());     
     }
 
 private:
