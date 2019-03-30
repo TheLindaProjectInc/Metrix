@@ -17,6 +17,7 @@ debug/
 Linda-qt
 qrc_bitcoin.cpp
 src/obj/build.h
+src/univalue/gen
 object_script.Linda-qt.*
 # daemons
 src/Linda-tx
