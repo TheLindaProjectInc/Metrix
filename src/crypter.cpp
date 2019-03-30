@@ -263,6 +263,8 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
                 break;
             }
             keyPass = true;
+            if (fDecryptionThoroughlyChecked)
+                break;
         }
         if (keyPass && keyFail)
         {
@@ -272,6 +274,7 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn)
         if (keyFail || !keyPass)
             return false;
         vMasterKey = vMasterKeyIn;
+        fDecryptionThoroughlyChecked = true;
     }
     NotifyStatusChanged(this);
     return true;
