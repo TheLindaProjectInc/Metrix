@@ -19,20 +19,29 @@ endif
 BITCOIN_CONFIG_INCLUDES = -I$(builddir)/config
 BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BITCOIN_CONFIG_INCLUDES) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
 
+LIBBITCOIN_SERVER=libbitcoin_server.a
+LIBBITCOIN_WALLET=libbitcoin_wallet.a
+LIBBITCOIN_COMMON=libbitcoin_common.a
+LIBBITCOIN_CLI=libbitcoin_cli.a
+LIBBITCOIN_UTIL=libbitcoin_util.a
+LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
+LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
+
 noinst_LIBRARIES = \
   libbitcoin_server.a \
   libbitcoin_common.a \
   libbitcoin_cli.a \
-  crypto/libbitcoin_crypto.a
   univalue/libbitcoin_univalue.a \
+  crypto/libbitcoin_crypto.a
+  
 
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
-bin_PROGRAMS += Linda-tx
 bin_PROGRAMS = Lindad Linda-cli
+bin_PROGRAMS += Linda-tx
 
 SUBDIRS = .
 DIST_SUBDIRS = .
@@ -268,7 +277,6 @@ Linda_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
 Linda_tx_LDADD = \
   $(LIBBITCOIN_UNIVALUE) \
   $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
   $(BOOST_LIBS)
 Linda_tx_SOURCES = bitcoin-tx.cpp

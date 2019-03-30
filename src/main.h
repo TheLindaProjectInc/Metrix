@@ -181,7 +181,7 @@ extern int64_t nLastCoinStakeSearchInterval;
 extern const std::string strMessageMagic;
 extern int64_t nTimeBestReceived;
 extern CWaitableCriticalSection csBestBlock;
-extern CConditionVariable cv
+extern CConditionVariable cvBlockChange;
 extern bool fImporting;
 extern bool fReindex;
 extern int nScriptCheckThreads;
@@ -354,7 +354,7 @@ struct CDiskTxPos : public CDiskBlockPos
     }
 };
 
-int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes = 0);
+int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree);
 
 
 

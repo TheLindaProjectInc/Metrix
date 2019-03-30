@@ -518,7 +518,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
 
     kMasterKey.vchSalt.resize(WALLET_CRYPTO_SALT_SIZE);
     if (!GetRandBytes(&kMasterKey.vchSalt[0], WALLET_CRYPTO_SALT_SIZE))
-        return false
+        return false;
 
     CCrypter crypter;
     int64_t nStartTime = GetTimeMillis();
@@ -3843,7 +3843,7 @@ int64_t CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarge
     // ... unless we don't have enough mempool data, in which case fall
     // back to a hard-coded fee
     if (nFeeNeeded == 0)
-        nFeeNeeded = CTransaction::minTxFee.GetFee(nTxBytes);
+        nFeeNeeded = minTxFee.GetFee(nTxBytes);
     return nFeeNeeded;
 }
 

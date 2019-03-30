@@ -896,7 +896,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 }
 
 
-int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
+int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree)
 {
     
     int64_t nMinFee;
@@ -907,8 +907,17 @@ int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
     else
     {
     
-    int64_t nMinFee = ::minRelayTxFee.GetFee(nBytes);
+        nMinFee = ::minRelayTxFee.GetFee(nBytes);
 
+        if (fAllowFree)
+        {
+            // There is a free transaction area in blocks created by most miners,
+            // * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
+            //   to be considered to fall into this category. We don't want to encourage sending
+            //   multiple transactions instead of one big transaction to avoid fees.
+            if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
+                nMinFee = 0;
+        }
     }        
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
@@ -1052,7 +1061,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         unsigned int nSize = entry.GetTxSize();
 
         // Don't accept it if it can't get into a block
-        int64_t txMinFee = GetMinRelayFee(tx, GMF_RELAY, nSize);
+        int64_t txMinFee = GetMinRelayFee(tx, nSize, true);
         if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",
@@ -1200,7 +1209,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
 
         // Don't accept it if it can't get into a block
         // MBK: Support the tx fee increase at blockheight
-        int64_t txMinFee = GetMinFee(tx, GMF_RELAY, nSize);
+        int64_t txMinFee = GetMinRelayFee(tx, nSize, true);
         if (fLimitFree && nFees < txMinFee)
             return state.DoS(0, error("AcceptableInputs : not enough fees %s, %d < %d",
                 hash.ToString(), nFees, txMinFee),
@@ -1210,7 +1219,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
         // MBK: Support the tx fee increase at blockheight
-        if (fLimitFree && nFees < CTransaction::minRelayTxFee.GetFee(nSize))
+        if (fLimitFree && nFees < ::minRelayTxFee.GetFee(nSize))
         {
             static CCriticalSection csFreeLimiter;
             static double dFreeCount;
@@ -2019,12 +2028,6 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
             if (nTxFee < 0)
                 return state.DoS(100, error("CheckInputs() : %s nTxFee < 0", tx.GetHash().ToString()),
                     REJECT_INVALID, "bad-txns-fee-negative");
-
-            // enforce transaction fees for every block
-            int64_t nRequiredFee = GetMinFee(tx);
-            if (nTxFee < nRequiredFee)
-                return state.DoS(100, error("ConnectInputs() : %s not paying required fee=%s, paid=%s", tx.GetHash().ToString(), FormatMoney(nRequiredFee), FormatMoney(nTxFee)),
-                    REJECT_INVALID, "not paying required fee");
 
             nFees += nTxFee;
             if (!MoneyRange(nFees))
@@ -4813,7 +4816,7 @@ LogPrintf("receive version message: %s: version %d, blocks=%d, us=%s, peer=%d\n"
             vWorkQueue.push_back(inv.hash);
             vEraseQueue.push_back(inv.hash);
 		
-            LogPrint("AcceptToMemoryPool: peer=%d %s : accepted %s (poolsz %u)\n",
+            LogPrint("mempool","AcceptToMemoryPool: peer=%d %s : accepted %s (poolsz %u)\n",
                 pfrom->id, pfrom->strSubVer.c_str(),
                 tx.GetHash().ToString().c_str(),
                 mempool.mapTx.size());
