@@ -6,6 +6,7 @@
 #define __BITCOIN_CORE_IO_H__
 
 #include <string>
+#include <vector>
 
 class uint256;
 class CScript;
