@@ -928,7 +928,6 @@ CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
 bool Solver(const CKeyStore& keystore, const CScript& scriptPubKey, uint256 hash, int nHashType,
                   CScript& scriptSigRet, txnouttype& whichTypeRet);
-//uint256 SignatureHash(const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType);
 
 
 class BaseSignatureChecker
