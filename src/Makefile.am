@@ -19,10 +19,6 @@ endif
 BITCOIN_CONFIG_INCLUDES = -I$(builddir)/config
 BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BITCOIN_CONFIG_INCLUDES) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
 
-if USE_LIBSECP256K1
-BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
-endif
-
 LIBBITCOIN_SERVER=libbitcoin_server.a
 LIBBITCOIN_WALLET=libbitcoin_wallet.a
 LIBBITCOIN_COMMON=libbitcoin_common.a
@@ -68,6 +64,7 @@ BITCOIN_CORE_H = \
   clientversion.h \
   coincontrol.h \
   compat.h \
+  compat/sanity.h \
   core.h \
   core_io.h \
   coins.h \
@@ -140,16 +137,12 @@ libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_server_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
-  allocators.cpp \
   alert.cpp \
-  bitcoin-cli.cpp \
   bitcoind.cpp \
   bloom.cpp \
   checkpoints.cpp \
-  coins.cpp \
   init.cpp \
   kernel.cpp \
-  keystore.cpp \
   leveldbwrapper.cpp \
   main.cpp \
   miner.cpp \
@@ -216,6 +209,7 @@ libbitcoin_common_a_SOURCES = \
   base58.cpp \
   allocators.cpp \
   chainparams.cpp \
+  coins.cpp \
   core.cpp \
   core_read.cpp \
   core_write.cpp \
@@ -224,6 +218,7 @@ libbitcoin_common_a_SOURCES = \
   hash.cpp \
   instantx.cpp \
   key.cpp \
+  keystore.cpp \
   masternode.cpp \
   masternodeconfig.cpp \
   netbase.cpp \
@@ -240,13 +235,14 @@ libbitcoin_common_a_SOURCES = \
 # backward-compatibility objects and their sanity checks are linked.
 libbitcoin_util_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_util_a_SOURCES = \
+  allocators.cpp \
+  compat/strnlen.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
   chainparamsbase.cpp \
   random.cpp \
   rpcprotocol.cpp \
   sync.cpp \
-  uint256.cpp \
   util.cpp \
   version.cpp \
   $(BITCOIN_CORE_H)
@@ -335,9 +331,3 @@ clean-local:
 %.pb.cc %.pb.h: %.proto
 	test -f $(PROTOC) && $(PROTOC) --cpp_out=$(@D) --proto_path=$(abspath $(<D) $<)  || \
 	  echo error: could not build $@
-
-LIBBITCOIN_SERVER=libbitcoin_server.a
-LIBBITCOIN_WALLET=libbitcoin_wallet.a
-LIBBITCOIN_COMMON=libbitcoin_common.a
-LIBBITCOIN_CLI=libbitcoin_cli.a
-LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
