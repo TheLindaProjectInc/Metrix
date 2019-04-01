@@ -46,7 +46,7 @@ static void convertSeed6(std::vector<CAddress> &vSeedsOut, const SeedSpec6 *data
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
-		networkID = CChainParams::MAIN;
+		networkID = CBaseChainParams::MAIN;
         strNetworkID = "main";
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -58,7 +58,6 @@ public:
         pchMessageStart[3] = 0x01;
         vAlertPubKey = ParseHex("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
         nDefaultPort = 33820;
-        nRPCPort = 33821;
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 20);
         nEnforceBlockUpgradeMajority = 750;
         nRejectBlockOutdatedMajority = 950;
@@ -118,7 +117,7 @@ static CMainParams mainParams;
 class CTestNetParams : public CMainParams {
 public:
     CTestNetParams() {
-		networkID = CChainParams::TESTNET;
+		networkID = CBaseChainParams::TESTNET;
         strNetworkID = "test";
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -130,8 +129,6 @@ public:
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 16);
         vAlertPubKey = ParseHex("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
         nDefaultPort = 28888;
-        nRPCPort = 28889;
-        strDataDir = "testnet";
         nEnforceBlockUpgradeMajority = 51;
         nRejectBlockOutdatedMajority = 75;
         nToCheckBlockUpgradeMajority = 100;
@@ -165,18 +162,20 @@ public:
 static CTestNetParams testNetParams;
 
 
-static CChainParams *pCurrentParams = &mainParams;
+static CChainParams *pCurrentParams = 0;
 
 const CChainParams &Params() {
+    assert(pCurrentParams);
     return *pCurrentParams;
 }
 
-void SelectParams(CChainParams::Network network) {
+void SelectParams(CBaseChainParams::Network network) {
+    SelectBaseParams(network);
     switch (network) {
-        case CChainParams::MAIN:
+        case CBaseChainParams::MAIN:
             pCurrentParams = &mainParams;
             break;
-        case CChainParams::TESTNET:
+        case CBaseChainParams::TESTNET:
             pCurrentParams = &testNetParams;
             break;
         default:
@@ -186,13 +185,8 @@ void SelectParams(CChainParams::Network network) {
 }
 
 bool SelectParamsFromCommandLine() {
-    
-    bool fTestNet = GetBoolArg("-testnet", false);
-    
-    if (fTestNet) {
-        SelectParams(CChainParams::TESTNET);
-    } else {
-        SelectParams(CChainParams::MAIN);
-    }
+    if (!SelectBaseParamsFromCommandLine())
+        return false;
+    SelectParams(BaseParams().NetworkID());
     return true;
 }

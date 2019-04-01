@@ -7,7 +7,7 @@
 #include "init.h"
 #include "rpcclient.h"
 #include "rpcprotocol.h"
-#include "chainparams.h"
+#include "chainparamsbase.h"
 #include "version.h"
 
 #define _(x) std::string(x) /* Keep the _() around in case gettext or such will be used later to translate non-UI */
@@ -64,8 +64,8 @@ static bool AppInitRPC(int argc, char* argv[])
         return false;
     }
 
-    // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
-    if (!SelectParamsFromCommandLine()) {
+    // Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
+    if (!SelectBaseParamsFromCommandLine()) {
         fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
         return false;
     }
@@ -109,7 +109,7 @@ Object CallRPC(const string& strMethod, const Array& params)
 
     bool fWait = GetBoolArg("-rpcwait", false); // -rpcwait means try until server has started
     do {
-        bool fConnected = d.connect(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", itostr(Params().RPCPort())));
+        bool fConnected = d.connect(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", itostr(BaseParams().RPCPort())));
         if (fConnected) break;
         if (fWait)
             MilliSleep(1000);
