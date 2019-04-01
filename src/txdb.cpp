@@ -50,7 +50,7 @@ bool CCoinsViewDB::SetBestBlock(const uint256 &hashBlock) {
     return db.WriteBatch(batch);
 }
 
-bool CCoinsViewDB::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) {
+bool CCoinsViewDB::BatchWrite(const CCoinsMap &mapCoins, const uint256 &hashBlock) {
     LogPrintf("Committing %u changed transactions to coin database...\n", (unsigned int)mapCoins.size());
 
     CLevelDBBatch batch;

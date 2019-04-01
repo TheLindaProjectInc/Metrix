@@ -12,8 +12,8 @@
 #include "txdb.h"
 #include "rpcserver.h"
 #include "net.h"
-#include "util.h"
 #include "ui_interface.h"
+#include "util.h"
 #include "activemasternode.h"
 #include "masternodeconfig.h"
 #include "spork.h"
@@ -71,6 +71,7 @@ enum BindFlags {
 };
 
 static const char* FEE_ESTIMATES_FILENAME="fee_estimates.dat";
+CClientUIInterface uiInterface;
 
 //////////////////////////////////////////////////////////////////////////////
 //

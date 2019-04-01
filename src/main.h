@@ -206,7 +206,7 @@ class CCoins;
 class CTxUndo;
 class CScriptCheck;
 class CValidationState;
- struct CBlockTemplate;
+struct CBlockTemplate;
 class CWalletInterface;
 struct CNodeStateStats;
 

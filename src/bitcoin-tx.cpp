@@ -3,17 +3,19 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "base58.h"
+#include "clientversion.h"
 #include "core.h"
 #include "core_io.h"
 #include "coins.h"
 #include "main.h"         // for MAX_BLOCK_SIZE
 #include "keystore.h"
 #include "ui_interface.h" // for _(...)
-#include "util.h"
 #include "univalue/univalue.h"
-
+#include "util.h"
 
 #include <stdio.h>
+
+#include <boost/algorithm/string.hpp>
 #include <boost/assign/list_of.hpp>
 
 using namespace std;
@@ -339,7 +341,7 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
     CMutableTransaction mergedTx(txVariants[0]);
     bool fComplete = true;
     CCoinsView viewDummy;
-    CCoinsViewCache view(viewDummy);
+    CCoinsViewCache view(&viewDummy);
 
     if (!registers.count("privatekeys"))
         throw runtime_error("privatekeys register variable must be set.");
