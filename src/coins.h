@@ -307,7 +307,7 @@ public:
 
     // Do a bulk modification (multiple SetCoins + one SetBestBlock).
     // The passed mapCoins can be modified.
-    virtual bool BatchWrite(const CCoinsMap &mapCoins, const uint256 &hashBlock);
+    virtual bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
 
     // Calculate statistics about the unspent transaction output set
     virtual bool GetStats(CCoinsStats &stats);
@@ -331,7 +331,7 @@ public:
     uint256 GetBestBlock();
     bool SetBestBlock(const uint256 &hashBlock);
     void SetBackend(CCoinsView &viewIn);
-    bool BatchWrite(const CCoinsMap &mapCoins, const uint256 &hashBlock);
+    bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
     bool GetStats(CCoinsStats &stats);
 };
 
@@ -352,7 +352,7 @@ public:
     bool HaveCoins(const uint256 &txid);
     uint256 GetBestBlock();
     bool SetBestBlock(const uint256 &hashBlock);
-    bool BatchWrite(const CCoinsMap &mapCoins, const uint256 &hashBlock);
+    bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
 
     // Return a modifiable reference to a CCoins. Check HaveCoins first.
     // Many methods explicitly require a CCoinsViewCache because of this method, to reduce
