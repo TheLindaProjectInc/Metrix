@@ -18,9 +18,6 @@
 class CScript;
 class CTransaction;
 
-static const int64_t COIN = 100000000;
-static const int64_t CENT = 1000000;
-
 /** No amount larger than this (in satoshi) is valid */
 static const int64_t MAX_MONEY = 30000000000 * COIN; // 30B coins
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }

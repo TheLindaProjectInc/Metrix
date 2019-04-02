@@ -54,7 +54,7 @@ bool CCoinsViewDB::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) {
     LogPrintf("Committing %u changed transactions to coin database...\n", (unsigned int)mapCoins.size());
 
     CLevelDBBatch batch;
-    for (CCoinsMap::iterator it = mapCoins.begin(); it != mapCoins.end();) {
+    for (CCoinsMap::iterator it = mapCoins.begin(); it != mapCoins.end(); it++) {
         BatchWriteCoins(batch, it->first, it->second);
         CCoinsMap::iterator itOld = it++;
         mapCoins.erase(itOld);

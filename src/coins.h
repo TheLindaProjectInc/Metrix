@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include <boost/foreach.hpp>
+#include <boost/unordered_map.hpp>
 
 /** pruned version of CTransaction: only retains metadata and unspent transaction outputs
  *
