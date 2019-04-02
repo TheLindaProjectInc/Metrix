@@ -180,10 +180,13 @@ extern uint64_t nLastBlockSize;
 extern int64_t nLastCoinStakeSearchInterval;
 extern const std::string strMessageMagic;
 extern int64_t nTimeBestReceived;
+extern CWaitableCriticalSection csBestBlock;
+extern CConditionVariable cvBlockChange;
 extern bool fImporting;
 extern bool fReindex;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
+extern CFeeRate minRelayTxFee;
 struct COrphanBlock;
 extern std::map<uint256, COrphanBlock*> mapOrphanBlocks;
 
@@ -351,17 +354,7 @@ struct CDiskTxPos : public CDiskBlockPos
     }
 };
 
-
-
-
-enum GetMinFee_mode
-{
-    GMF_BLOCK,
-    GMF_RELAY,
-    GMF_SEND,
-};
-
-int64_t GetMinFee(const CTransaction& tx, enum GetMinFee_mode mode = GMF_BLOCK, unsigned int nBytes = 0);
+int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree);
 
 
 
@@ -782,23 +775,33 @@ class CBlockIndex
 public:
     // pointer to the hash of the block, if any. memory is owned by this CBlockIndex    
     const uint256* phashBlock;
+
     // pointer to the index of the predecessor of this block
     CBlockIndex* pprev;
     uint256 nChainTrust; // ppcoin: trust score of block chain
+
+    // pointer to the index of some further predecessor of this block
+    CBlockIndex* pskip;
+
     // height of the entry in the chain. The genesis block has height 0
     int nHeight;
+
     // Which # file this block is stored in (blk?????.dat)
     int nFile;
+
     // Byte offset within blk?????.dat where this block's data is stored
     unsigned int nDataPos;
+
     // Byte offset within rev?????.dat where this block's undo data is stored
     unsigned int nUndoPos;
 
     // Number of transactions in this block.
     // Note: in a potential headers-first mode, this number cannot be relied upon
     unsigned int nTx;
+
      // (memory only) Number of transactions in the chain up to and including this block
     unsigned int nChainTx; // change to 64-bit type when necessary; won't happen before 2030
+
      // Verification status of this block. See enum BlockStatus
     unsigned int nStatus;
 
@@ -831,10 +834,11 @@ public:
     // (memory only) Sequencial id assigned to distinguish order in which blocks are received.
     uint32_t nSequenceId;
 
-    CBlockIndex()
+    void SetNull()
     {
         phashBlock = NULL;
         pprev = NULL;
+        pskip = NULL;
         nHeight = 0;
         nFile = 0;
         nDataPos = 0;
@@ -859,24 +863,15 @@ public:
         nNonce         = 0;
     }
 
+    CBlockIndex()
+    {
+        SetNull();
+    }
+
     CBlockIndex(CBlock& block)
     {
-        phashBlock = NULL;
-        pprev = NULL;
-        nHeight = 0;
-        nFile = 0;
-        nDataPos = 0;
-        nUndoPos = 0;
-        nChainTrust = 0;
-        nTx = 0;
-        nChainTx = 0;
-        nStatus = 0;
-        nSequenceId = 0;
-        nMint = 0;
-        nMoneySupply = 0;
-        nFlags = 0;
-        nStakeModifier = 0;
-        hashProof = 0;
+        SetNull();
+
         if (block.IsProofOfStake())
         {
             SetProofOfStake();
@@ -1024,11 +1019,14 @@ public:
             hashMerkleRoot.ToString(),
             GetBlockHash().ToString());
     }
+
+    // Build the skiplist pointer for this entry.
+    void BuildSkip();
+
+    // Efficiently find an ancestor of this block.
+    CBlockIndex* GetAncestor(int height);
+    const CBlockIndex* GetAncestor(int height) const;
 };
-
-
-
-
 
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex
@@ -1293,7 +1291,7 @@ public:
     CBlockIndex *FindFork(const CBlockLocator &locator) const;
 
     /** Find the last common block between this chain and a block index entry. */
-    CBlockIndex *FindFork(CBlockIndex *pindex) const;
+    const CBlockIndex *FindFork(const CBlockIndex *pindex) const;
 
 };
 

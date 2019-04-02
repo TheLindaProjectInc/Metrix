@@ -6,6 +6,7 @@
 #include <boost/assign/list_of.hpp>
 
 #include "base58.h"
+#include "core_io.h"
 #include "rpcserver.h"
 #include "init.h"
 #include "net.h"
@@ -1795,7 +1796,7 @@ Value gettransaction(const Array& params, bool fHelp)
             "  ]\n"
             "}\n"
 
-            "\nbExamples\n"
+            "\nExamples:\n"            
             + HelpExampleCli("gettransaction", "\"57c872aca011a57823d593df3a6bc972ab4a80a9a376912e528e070cbe076dc8\"")
             + HelpExampleRpc("gettransaction", "\"57c872aca011a57823d593df3a6bc972ab4a80a9a376912e528e070cbe076dc8\"")
         );
@@ -1830,6 +1831,8 @@ Value gettransaction(const Array& params, bool fHelp)
         Array details;
         ListTransactions(wtx, "*", 0, false, details, filter);
         entry.push_back(Pair("details", details));
+        string strHex = EncodeHexTx(static_cast<CTransaction>(wtx));
+
     }
     else
     {

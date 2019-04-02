@@ -81,13 +81,13 @@ public:
 
     // Used as belt-and-suspenders check when reading to detect
     // file corruption
-    bool AreSane(const std::vector<CFeeRate>& vecFee)
+    bool AreSane(const std::vector<CFeeRate>& vecFee, const CFeeRate& minRelayFee)
     {
         BOOST_FOREACH(CFeeRate fee, vecFee)
         {
             if (fee < CFeeRate(0))
                 return false;
-            if (fee.GetFee(1000) > CTransaction::minRelayTxFee.GetFee(1000) * 10000)
+            if (fee.GetFeePerK() > minRelayFee.GetFeePerK() * 10000)
                 return false;
         }
         return true;
@@ -110,10 +110,10 @@ public:
         fileout << vecPriority;
     }
 
-    void Read(CAutoFile& filein) {
+    void Read(CAutoFile& filein, const CFeeRate& minRelayFee) {
         std::vector<CFeeRate> vecFee;
         filein >> vecFee;
-        if (AreSane(vecFee))
+        if (AreSane(vecFee, minRelayFee))
             feeSamples.insert(feeSamples.end(), vecFee.begin(), vecFee.end());
         else
             throw runtime_error("Corrupt fee value in estimates file.");
@@ -142,7 +142,7 @@ private:
 
     // nBlocksAgo is 0 based, i.e. transactions that confirmed in the highest seen block are
     // nBlocksAgo == 0, transactions in the block before that are nBlocksAgo == 1 etc.
-    void seenTxConfirm(CFeeRate feeRate, double dPriority, int nBlocksAgo)
+    void seenTxConfirm(const CFeeRate& feeRate, const CFeeRate& minRelayFee, double dPriority, int nBlocksAgo)
     {
         // Last entry records "everything else".
         int nBlocksTruncated = min(nBlocksAgo, (int) history.size() - 1);
@@ -150,7 +150,7 @@ private:
 
         // We need to guess why the transaction was included in a block-- either
         // because it is high-priority or because it has sufficient fees.
-        bool sufficientFee = (feeRate > CTransaction::minRelayTxFee);
+        bool sufficientFee = (feeRate > minRelayFee);
         bool sufficientPriority = AllowFree(dPriority);
         const char* assignedTo = "unassigned";
         if (sufficientFee && !sufficientPriority)
@@ -178,7 +178,7 @@ public:
         history.resize(nEntries);
     }
 
-    void seenBlock(const std::vector<CTxMemPoolEntry>& entries, int nBlockHeight)
+    void seenBlock(const std::vector<CTxMemPoolEntry>& entries, int nBlockHeight, const CFeeRate minRelayFee)
     {
         if (nBlockHeight <= nBestSeenHeight)
         {
@@ -223,9 +223,15 @@ public:
                 // Fees are stored and reported as BTC-per-kb:
                 CFeeRate feeRate(entry->GetFee(), entry->GetTxSize());
                 double dPriority = entry->GetPriority(entry->GetHeight()); // Want priority when it went IN
-                seenTxConfirm(feeRate, dPriority, i);
+                seenTxConfirm(feeRate, minRelayFee, dPriority, i);
             }
         }
+
+        //After new samples are added, we have to clear the sorted lists,
+        //so they'll be resorted the next time someone asks for an estimate
+        sortedFeeSamples.clear();
+        sortedPrioritySamples.clear();
+
         for (size_t i = 0; i < history.size(); i++) {
             if (history[i].FeeSamples() + history[i].PrioritySamples() > 0)
                 LogPrint("estimatefee", "estimates: for confirming within %d blocks based on %d/%d samples, fee=%s, prio=%g\n", 
@@ -233,8 +239,6 @@ public:
                          history[i].FeeSamples(), history[i].PrioritySamples(),
                          estimateFee(i+1).ToString(), estimatePriority(i+1));
         }
-        sortedFeeSamples.clear();
-        sortedPrioritySamples.clear();
     }
 
     // Can return CFeeRate(0) if we don't have any data for that many blocks back. nBlocksToConfirm is 1 based.
@@ -270,7 +274,7 @@ public:
         size_t nPrevSize = 0;
         for (int i = 0; i < nBlocksToConfirm; i++)
             nPrevSize += history.at(i).FeeSamples();
-        size_t index = min(nPrevSize + nBucketSize/2, sortedFeeSamples.size()-1);
+        size_t index = min(nPrevSize + nBucketSize/2, sortedPrioritySamples.size()-1);
         return sortedFeeSamples[index];
     }
     double estimatePriority(int nBlocksToConfirm)
@@ -314,7 +318,7 @@ public:
         }
     }
 
-    void Read(CAutoFile& filein)
+    void Read(CAutoFile& filein, const CFeeRate& minRelayFee)
     {
         filein >> nBestSeenHeight;
         size_t numEntries;
@@ -323,14 +327,14 @@ public:
         for (size_t i = 0; i < numEntries; i++)
         {
             CBlockAverage entry;
-            entry.Read(filein);
+            entry.Read(filein, minRelayFee);
             history.push_back(entry);
         }
     }
 };
 
 
-CTxMemPool::CTxMemPool()
+CTxMemPool::CTxMemPool(const CFeeRate& _minRelayFee) : minRelayFee(_minRelayFee)
 {
     // Sanity checks off by default for performance, because otherwise
     // accepting transactions becomes O(N^2) where N is the number
@@ -369,9 +373,12 @@ void CTxMemPool::check(CCoinsViewCache *pcoins) const
 
     LogPrint("mempool", "Checking mempool with %u transactions and %u inputs\n", (unsigned int)mapTx.size(), (unsigned int)mapNextTx.size());
 
+    uint64_t checkTotal = 0;
+
     LOCK(cs);
     for (std::map<uint256, CTxMemPoolEntry>::const_iterator it = mapTx.begin(); it != mapTx.end(); it++) {
         unsigned int i = 0;
+        checkTotal += it->second.GetTxSize();
         const CTransaction& tx = it->second.GetTx();
         BOOST_FOREACH(const CTxIn &txin, tx.vin) {
             // Check that every mempool transaction's inputs refer to available coins, or other mempool tx's.
@@ -400,6 +407,8 @@ void CTxMemPool::check(CCoinsViewCache *pcoins) const
         assert(tx.vin.size() > it->second.n);
         assert(it->first == it->second.ptx->vin[it->second.n].prevout);
     }
+
+    assert(totalTxSize == checkTotal);
 }
 
 bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry)
@@ -414,6 +423,7 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry)
         for (unsigned int i = 0; i < tx.vin.size(); i++)
             mapNextTx[tx.vin[i].prevout] = CInPoint(&tx, i);
         nTransactionsUpdated++;
+        totalTxSize += entry.GetTxSize();
     }
     return true;
 }
@@ -450,6 +460,8 @@ void CTxMemPool::remove(const CTransaction &tx, std::list<CTransaction>& removed
             removed.push_front(tx);
             BOOST_FOREACH(const CTxIn& txin, tx.vin)
                 mapNextTx.erase(txin.prevout);
+
+            totalTxSize -= mapTx[hash].GetTxSize();
             mapTx.erase(hash);
             nTransactionsUpdated++;
         }
@@ -485,7 +497,7 @@ void CTxMemPool::removeForBlock(const std::vector<CTransaction>& vtx, unsigned i
         if (mapTx.count(hash))
             entries.push_back(mapTx[hash]);
     }
-    minerPolicyEstimator->seenBlock(entries, nBlockHeight);
+    minerPolicyEstimator->seenBlock(entries, nBlockHeight, minRelayFee);
     BOOST_FOREACH(const CTransaction& tx, vtx)
     {
         std::list<CTransaction> dummy;
@@ -531,7 +543,7 @@ CTxMemPool::ReadFeeEstimates(CAutoFile& filein)
             return error("CTxMemPool::ReadFeeEstimates() : up-version (%d) fee estimate file", nVersionRequired);
 
         LOCK(cs);
-        minerPolicyEstimator->Read(filein);
+        minerPolicyEstimator->Read(filein, minRelayFee);
     }
     catch (std::exception &e) {
         LogPrintf("CTxMemPool::ReadFeeEstimates() : unable to read policy estimator data (non-fatal)");
@@ -563,6 +575,7 @@ void CTxMemPool::clear()
     LOCK(cs);
     mapTx.clear();
     mapNextTx.clear();
+    totalTxSize = 0;
     ++nTransactionsUpdated;
 }
 

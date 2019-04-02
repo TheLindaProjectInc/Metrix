@@ -18,6 +18,9 @@
 class CScript;
 class CTransaction;
 
+static const int64_t COIN = 100000000;
+static const int64_t CENT = 1000000;
+
 /** No amount larger than this (in satoshi) is valid */
 static const int64_t MAX_MONEY = 30000000000 * COIN; // 30B coins
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
@@ -128,12 +131,15 @@ public:
     CFeeRate(int64_t nFeePaid, size_t nSize);
     CFeeRate(const CFeeRate& other) { nSatoshisPerK = other.nSatoshisPerK; }
 
-    int64_t GetFee(size_t size); // unit returned is satoshis
-    int64_t GetFeePerK() { return GetFee(1000); } // satoshis-per-1000-bytes
+    int64_t GetFee(size_t size) const; // unit returned is satoshis
+    int64_t GetFeePerK() const { return GetFee(1000); } // satoshis-per-1000-bytes
 
     friend bool operator<(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK < b.nSatoshisPerK; }
     friend bool operator>(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK > b.nSatoshisPerK; }
     friend bool operator==(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK == b.nSatoshisPerK; }
+
+    friend bool operator<=(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK <= b.nSatoshisPerK; }
+    friend bool operator>=(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK >= b.nSatoshisPerK; }
 
     std::string ToString() const;
 
@@ -227,8 +233,6 @@ private:
     void UpdateHash() const;
 
 public:
-    static CFeeRate minTxFee;
-    static CFeeRate minRelayTxFee;
     static const int CURRENT_VERSION = 1;
 
     // The local variables are made const to prevent unintended modification

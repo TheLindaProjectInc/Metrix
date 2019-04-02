@@ -1,5 +1,5 @@
 AM_CPPFLAGS =  $(INCLUDES)
-AM_LDFLAGS = $(PTHREAD_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS)
 
 if EMBEDDED_LEVELDB
 LEVELDB_CPPFLAGS = -I$(srcdir)/leveldb/include
@@ -19,11 +19,21 @@ endif
 BITCOIN_CONFIG_INCLUDES = -I$(builddir)/config
 BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BITCOIN_CONFIG_INCLUDES) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
 
+LIBBITCOIN_SERVER=libbitcoin_server.a
+LIBBITCOIN_WALLET=libbitcoin_wallet.a
+LIBBITCOIN_COMMON=libbitcoin_common.a
+LIBBITCOIN_CLI=libbitcoin_cli.a
+LIBBITCOIN_UTIL=libbitcoin_util.a
+LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
+LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
+
 noinst_LIBRARIES = \
   libbitcoin_server.a \
   libbitcoin_common.a \
   libbitcoin_cli.a \
+  univalue/libbitcoin_univalue.a \
   crypto/libbitcoin_crypto.a
+  
 
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
@@ -31,6 +41,7 @@ noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
 bin_PROGRAMS = Lindad Linda-cli
+bin_PROGRAMS += Linda-tx
 
 SUBDIRS = .
 DIST_SUBDIRS = .
@@ -52,6 +63,7 @@ BITCOIN_CORE_H = \
   coincontrol.h \
   compat.h \
   core.h \
+  core_io.h \
   coins.h \
   crypter.h \
   darksend.h \
@@ -180,12 +192,22 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha1.h \
   crypto/ripemd160.h
 
+# univalue JSON library
+univalue_libbitcoin_univalue_a_SOURCES = \
+  univalue/univalue.cpp \
+  univalue/univalue_read.cpp \
+  univalue/univalue_write.cpp \
+  univalue/univalue_escapes.h \
+  univalue/univalue.h
+
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   base58.cpp \
   allocators.cpp \
   chainparams.cpp \
   core.cpp \
+  core_read.cpp \
+  core_write.cpp \
   darksend.cpp \
   eccryptoverify.cpp \
   hash.cpp \
@@ -225,6 +247,7 @@ nodist_libbitcoin_common_a_SOURCES = $(srcdir)/obj/build.h
 Lindad_LDADD = \
   libbitcoin_server.a \
   libbitcoin_common.a \
+  $(LIBBITCOIN_UNIVALUE) \
   crypto/libbitcoin_crypto.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
@@ -249,6 +272,16 @@ Linda_cli_LDADD = \
   $(BOOST_LIBS)
 Linda_cli_SOURCES = bitcoin-cli.cpp
 Linda_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
+#
+
+# Linda-tx binary #
+Linda_tx_LDADD = \
+  $(LIBBITCOIN_UNIVALUE) \
+  $(LIBBITCOIN_COMMON) \
+  $(LIBBITCOIN_CRYPTO) \
+  $(BOOST_LIBS)
+Linda_tx_SOURCES = bitcoin-tx.cpp
+Linda_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
 
 if TARGET_WINDOWS

@@ -6,6 +6,7 @@
 
 #include "clientversion.h"
 #include <string>
+#include <vector>
 
 //
 // client versioning
@@ -32,7 +33,7 @@ static const int DATABASE_VERSION = 70509;
 
 static const int PROTOCOL_VERSION = 70004;
 
-// intial proto version, to be increased after version/verack negotiation
+// initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 209;
 
 // disconnect from peers older than this proto version
@@ -53,7 +54,10 @@ static const int NOBLKS_VERSION_END = 70000;
 // BIP 0031, pong message, is enabled for all versions AFTER this one
 static const int BIP0031_VERSION = 60000;
 
-// "mempool" command, enhanced "getdata" behavior starts with this version:
+// "mempool" command, enhanced "getdata" behavior starts with this version
 static const int MEMPOOL_GD_VERSION = 60002;
+
+std::string FormatFullVersion();
+std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 
 #endif

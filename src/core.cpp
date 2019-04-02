@@ -67,7 +67,7 @@ CFeeRate::CFeeRate(int64_t nFeePaid, size_t nSize)
         nSatoshisPerK = 0;
 }
 
-int64_t CFeeRate::GetFee(size_t nSize)
+int64_t CFeeRate::GetFee(size_t nSize) const
 {
     return nSatoshisPerK*nSize / 1000;
 }

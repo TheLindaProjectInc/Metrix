@@ -6,6 +6,7 @@
 #include "rpcprotocol.h"
 
 #include "util.h"
+#include "version.h"
 
 #include <stdint.h>
 
@@ -57,8 +58,19 @@ static string rfc1123Time()
     return DateTimeStrFormat("%a, %d %b %Y %H:%M:%S +0000", GetTime());
 }
 
-string HTTPReply(int nStatus, const string& strMsg, bool keepalive,
-                 bool headersOnly, const char *contentType)
+static const char *httpStatusDescription(int nStatus)
+{
+    switch (nStatus) {
+        case HTTP_OK: return "OK";
+        case HTTP_BAD_REQUEST: return "Bad Request";
+        case HTTP_FORBIDDEN: return "Forbidden";
+        case HTTP_NOT_FOUND: return "Not Found";
+        case HTTP_INTERNAL_SERVER_ERROR: return "Internal Server Error";
+        default: return "";
+    }
+}
+
+string HTTPError(int nStatus, bool keepalive, bool headersOnly)
 {
     if (nStatus == HTTP_UNAUTHORIZED)
         return strprintf("HTTP/1.0 401 Authorization Required\r\n"
@@ -77,20 +89,13 @@ string HTTPReply(int nStatus, const string& strMsg, bool keepalive,
             "</HEAD>\r\n"
             "<BODY><H1>401 Unauthorized.</H1></BODY>\r\n"
             "</HTML>\r\n", rfc1123Time(), FormatFullVersion());
-    const char *cStatus;
-         if (nStatus == HTTP_OK) cStatus = "OK";
-    else if (nStatus == HTTP_BAD_REQUEST) cStatus = "Bad Request";
-    else if (nStatus == HTTP_FORBIDDEN) cStatus = "Forbidden";
-    else if (nStatus == HTTP_NOT_FOUND) cStatus = "Not Found";
-    else if (nStatus == HTTP_INTERNAL_SERVER_ERROR) cStatus = "Internal Server Error";
-    else cStatus = "";
     
-    bool useInternalContent = false;
-    if (nStatus != HTTP_OK) {
-        contentType = "text/plain";
-        useInternalContent = true;
-    }
+    return HTTPReply(nStatus, httpStatusDescription(nStatus), keepalive,
+                     headersOnly, "text/plain");
+}
 
+string HTTPReplyHeader(int nStatus, bool keepalive, size_t contentLength, const char *contentType)
+{
     return strprintf(
             "HTTP/1.1 %d %s\r\n"
             "Date: %s\r\n"
@@ -98,17 +103,25 @@ string HTTPReply(int nStatus, const string& strMsg, bool keepalive,
             "Content-Length: %u\r\n"
             "Content-Type: %s\r\n"
             "Server: Linda-json-rpc/%s\r\n"
-            "\r\n"
-            "%s",
+            "\r\n",
         nStatus,
-        cStatus,
+        httpStatusDescription(nStatus),
         rfc1123Time(),
         keepalive ? "keep-alive" : "close",
-        strMsg.size(),
+        contentLength,
         contentType,
-        FormatFullVersion(),
-        (headersOnly ? "" :
-            (useInternalContent ? cStatus : strMsg.c_str())));
+         FormatFullVersion());
+}
+
+string HTTPReply(int nStatus, const string& strMsg, bool keepalive,
+                 bool headersOnly, const char *contentType)
+{
+    if (headersOnly)
+    {
+        return HTTPReplyHeader(nStatus, keepalive, 0, contentType);
+    } else {
+        return HTTPReplyHeader(nStatus, keepalive, strMsg.size(), contentType) + strMsg;
+    }
 }
 
 bool ReadHTTPRequestLine(std::basic_istream<char>& stream, int &proto,

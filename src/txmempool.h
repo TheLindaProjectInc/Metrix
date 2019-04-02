@@ -68,13 +68,15 @@ private:
     unsigned int nTransactionsUpdated;
     CMinerPolicyEstimator* minerPolicyEstimator;
 
+    CFeeRate minRelayFee; // Passed to constructor to avoid dependency on main
+    uint64_t totalTxSize; // sum of all mempool tx' byte sizes
 
 public:
     mutable CCriticalSection cs;
      std::map<uint256, CTxMemPoolEntry> mapTx;
     std::map<COutPoint, CInPoint> mapNextTx;
 
-    CTxMemPool();
+    CTxMemPool(const CFeeRate& _minRelayFee);
     ~CTxMemPool();
 
 
@@ -104,7 +106,12 @@ public:
         LOCK(cs);
         return mapTx.size();
     }
-
+    uint64_t GetTotalTxSize()
+    {
+        LOCK(cs);
+        return totalTxSize;
+    }
+    
     bool exists(uint256 hash) const
     {
         LOCK(cs);

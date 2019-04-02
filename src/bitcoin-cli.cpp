@@ -9,6 +9,7 @@
 #include "rpcprotocol.h"
 #include "ui_interface.h" /* for _(...) */
 #include "chainparams.h"
+#include "version.h"
 
 #include <boost/filesystem/operations.hpp>
 
