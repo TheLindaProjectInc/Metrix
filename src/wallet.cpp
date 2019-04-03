@@ -1604,30 +1604,29 @@ void CWallet::AvailableCoins(
 // check to see if the coins earned masternode rewards
 // this will prevent unfair payments on masternode owners
 // attempting to also earn POS rewards
-static bool HasMasternodePayment(CTxOut vout, int nDepth) {
-    // only check a maximum of 10 000 blocks so we don't get stuck here for too long
-    nDepth = min(nDepth, 10000);
-    if (vout.nValue == MASTERNODE_COLLATERAL) {
-        CBlockIndex* pblockindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
-        for (int n = 0; n < nDepth; n++) {
-            CBlock block;
-            if (ReadBlockFromDisk(block, pblockindex)) {
-                if (block.HasMasternodePayment()) {
-                    CScript payee;
-                    if (block.vtx[1].vout.size() == 3) {
-                        payee = block.vtx[1].vout[2].scriptPubKey;
-                    } else if (block.vtx[1].vout.size() == 4) {
-                        payee = block.vtx[1].vout[3].scriptPubKey;
-                    }
-                    if (vout.scriptPubKey == payee) {
-                        return true;
-                    }
+bool CWallet::HasMasternodePayment(const CTxOut vout, int nDepth) const
+{
+    if (vout.nValue == MASTERNODE_COLLATERAL)
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const uint256& wtxid = it->first;
+            const CWalletTx* pcoin = &(*it).second;
+            
+            if (pcoin->IsCoinStake()) {
+                CScript payee;
+                if (pcoin->vout.size() == 3) {
+                    payee = pcoin->vout[2].scriptPubKey;
+                } else if (pcoin->vout.size() == 4) {
+                    payee = pcoin->vout[3].scriptPubKey;
+                }
+                if (pcoin->GetDepthInMainChain() < nDepth && vout.scriptPubKey == payee) {
+                    return true;
                 }
             }
-            pblockindex = pblockindex->pprev;  
         }
     }
-
     return false;
 }
 

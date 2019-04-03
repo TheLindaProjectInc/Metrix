@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <boost/assign/list_of.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "base58.h"
 #include "rpcserver.h"
@@ -77,6 +78,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, Object& entry)
         const CTxOut& txout = tx.vout[i];
         Object out;
         out.push_back(Pair("value", ValueFromAmount(txout.nValue)));
+        out.push_back(Pair("rawvalue", txout.nValue));
         out.push_back(Pair("n", (int64_t)i));
         Object o;
         ScriptPubKeyToJSON(txout.scriptPubKey, o, true);
@@ -310,6 +312,7 @@ Value listunspent(const Array& params, bool fHelp)
             }
         }
         entry.push_back(Pair("amount",ValueFromAmount(nValue)));
+        entry.push_back(Pair("rawamount",nValue));
         entry.push_back(Pair("confirmations",out.nDepth));
         entry.push_back(Pair("spendable", out.fSpendable));
         entry.push_back(Pair("time",out.tx->GetTxTime()));
@@ -403,6 +406,71 @@ Value createrawtransaction(const Array& params, bool fHelp)
     }
 
    return EncodeHexTx(rawTx);
+}
+
+Value createpreciserawtransaction(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "Functions the same as createrawtransaction but allows sending of numbers as strings and in satoshis.\n"
+            "\nThe pruprose of this is to handle creating transactions from languages that have a limit on the size of numbers."
+            "\nBe very careful when using this function and make sure you output values are strings in satoshis."
+        );
+
+    RPCTypeCheck(params, list_of(array_type)(obj_type));
+
+    Array inputs = params[0].get_array();
+    Object sendTo = params[1].get_obj();
+
+    CTransaction rawTx;
+
+    BOOST_FOREACH(const Value& input, inputs)
+    {
+        const Object& o = input.get_obj();
+
+        uint256 txid = ParseHashO(o, "txid");
+
+        const Value& vout_v = find_value(o, "vout");
+        if (vout_v.type() != int_type)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, missing vout key");
+        int nOutput = vout_v.get_int();
+        if (nOutput < 0)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, vout must be positive");
+
+        CTxIn in(COutPoint(uint256(txid), nOutput));
+        rawTx.vin.push_back(in);
+    }
+
+    set<CBitcoinAddress> setAddress;
+    BOOST_FOREACH(const Pair& s, sendTo)
+    {
+        CBitcoinAddress address(s.name_);
+        if (!address.IsValid())
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Lindacoin address: ")+s.name_);
+
+        if (setAddress.count(address))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+s.name_);
+        setAddress.insert(address);
+
+        CScript scriptPubKey;
+        scriptPubKey.SetDestination(address.Get());
+        string sAmount = s.value_.get_str();
+        int64_t nAmount = 0;
+        try {
+            nAmount = boost::lexical_cast<long long>(sAmount);
+        } catch (std::exception &e) {
+            throw JSONRPCError(RPC_TYPE_ERROR, "Amount parse failed");
+        }
+        if (!MoneyRange(nAmount))
+            throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+        
+        CTxOut out(nAmount, scriptPubKey);
+        rawTx.vout.push_back(out);
+    }
+
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss << rawTx;
+    return HexStr(ss.begin(), ss.end());
 }
 
 Value decoderawtransaction(const Array& params, bool fHelp)

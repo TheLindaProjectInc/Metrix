@@ -1861,121 +1861,6 @@ bool DoBurnVout(const CTransaction& tx, unsigned int nVout)
     return true;
 }
 
-void CheckBlockForBurntInputs(const uint256 bHash)
-{
-    AssertLockHeld(cs_main);
-    CBlock block;
-    CBlockIndex* pblockindex = mapBlockIndex[bHash];
-    ReadBlockFromDisk(block, pblockindex);
-    BOOST_FOREACH(CTransaction transaction, block.vtx)
-    {
-        BOOST_FOREACH(CTxIn input, transaction.vin)
-        {
-            if (find(vBurntInputs.begin(), vBurntInputs.end(), input.prevout) != vBurntInputs.end())
-            {
-                // inputs are burnt and cannot be spent
-                for (unsigned int i = 0; i < transaction.vout.size(); i++)
-                {
-                    if (DoBurnVout(transaction, i))
-                    {
-                        const COutPoint burnt = COutPoint(transaction.GetHash(), i);
-                        if (find(vBurntInputs.begin(), vBurntInputs.end(), burnt) == vBurntInputs.end())
-                        {
-                            vBurntInputs.push_back(burnt);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Linda: Cryptopia coin burn
-bool IsInputBurnt(const CTransaction& tx)
-{
-    int nHeight = chainActive.Height();
-    if (nHeight >= CB_START_BLOCK)
-    {
-        // vBurntInputs contains the list of inputs which are non-usable
-        // initially this is just the coinbase transactions the received the high fees
-        // we need to scan through the blocks to find where these have been sent before
-        // the fork time so we have a complete list of what can't be spent
-        if (vBurntInputs.size() == 0)
-        {
-            LOCK(cs_main);
-            vBurntInputs.push_back(COutPoint(uint256("0x9c65b0a749bd7ed31ce497434ca20059381afb9a52270f163326949ea235bf51"), 1));
-            vBurntInputs.push_back(COutPoint(uint256("0x01efd8d58f9440f2dd09fbd84f10191c737d0ec038b0ea96cf1752574d268472"), 1));
-            vBurntInputs.push_back(COutPoint(uint256("0xca5ae30a273f93c6a2e497c3cc294e7c61274aa1425c05c3fd049d92b61161b8"), 1));
-            // START in the next release this can be replaced with hardcoded COutPoint in vBurntInputs
-            // find all burnt inputs. Since we cannot stop the sending of the inputs to burn
-            // before releasing this patch we must search through the blocks to create an input trail
-            // get all block hashes between limits
-            
-            // if the input is outside of this range than we can skip these checks since it is impossible
-            // to have moved the inputs after the fork block so we don't need to waste CPU resources
-            int nMinBlockHeight = 717683;
-
-            CBlockIndex* pblockindex = mapBlockIndex[chainActive.Tip()->GetBlockHash()];
-            while (nHeight >= nMinBlockHeight)
-            {
-                if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
-                    vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
-                pblockindex = pblockindex->pprev;
-                nHeight--;
-            }
-
-            // scan through new blocks to get burnt inputs
-            BOOST_FOREACH(const uint256 bHash, vBurntScanBlockHash)
-            {
-                CheckBlockForBurntInputs(bHash);
-            }
-            // END in the next release this can be replaced with hardcoded COutPoint in vBurntInputs
-        }
-        else
-        {
-            // we need to check every new block incase the burnt coins have made a stake
-            const uint256 bHash = chainActive.Tip()->GetBlockHash();
-            CBlockIndex* pblockindex = mapBlockIndex[bHash];
-            if (find(vBurntScanBlockHash.begin(), vBurntScanBlockHash.end(), *pblockindex->phashBlock) == vBurntScanBlockHash.end())
-            {
-                vBurntScanBlockHash.insert(vBurntScanBlockHash.begin(), *pblockindex->phashBlock);
-            
-                LOCK(cs_main);
-                CheckBlockForBurntInputs(bHash);
-            }
-        }
-
-        // check all transaction unspents if a burnt input is attempting to be spent
-        // we're going to allow the inputs to mint so they don't create invalid blocks
-        // and risk a fork on older versions
-        if (!tx.IsCoinStake())
-        {
-            for (unsigned int i = 0; i < tx.vin.size(); i++)
-            {
-                const COutPoint &prevout = tx.vin[i].prevout;
-                if (find(vBurntInputs.begin(), vBurntInputs.end(), prevout) != vBurntInputs.end())
-                {   
-                    if (tx.vout.size() == 1)
-                    {
-                        // only allow inputs to be sent to a Linda Core Team controlled address
-                        CScript payee;
-                        CBitcoinAddress address("LgUYY8jWMpXUaUKy42NDh2wwVJVLVgZNzX");
-                        payee.SetDestination(address.Get());
-
-                        if (payee == tx.vout[0].scriptPubKey)
-                            return false;
-                    }
-
-                    LogPrintf("IsInputBurnt() : Transaction %s attempted to spend burnt input %s %i\n", tx.GetHash().ToString(), prevout.hash.ToString(), prevout.n);
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
 bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, bool fScriptChecks, unsigned int flags,
     std::vector<CScriptCheck> *pvChecks)
 {
@@ -2077,11 +1962,6 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
             }
         }
     }
-
-    // Linda: Cryptopia coin burn
-    if (IsInputBurnt(tx))
-        return state.DoS(100, error("CheckInputs() : inputs have been marked as burnt"),
-                    REJECT_INVALID, "bad-txns-inputs-burnt");
 
     return true;
 }

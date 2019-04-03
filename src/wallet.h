@@ -231,6 +231,8 @@ public:
     bool SelectCoinsMinConf(int64_t nTargetValue, unsigned int nSpendTime, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64_t& nValueRet) const;
     bool SelectCoinsMinConfByCoinAge(int64_t nTargetValue, unsigned int nSpendTime, int nConfMine, int nConfTheirs, std::vector<COutput> vCoins, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64_t& nValueRet) const;
     
+    bool HasMasternodePayment(const CTxOut vout, int nDepth) const;
+
     bool IsSpent(const uint256& hash, unsigned int n) const;
 
     bool IsLockedCoin(uint256 hash, unsigned int n) const;
