@@ -15,11 +15,80 @@
 
 using namespace std;
 
+string SanitizeString(const string& str)
+{
+    /**
+     * safeChars chosen to allow simple messages/URLs/email addresses, but avoid anything
+     * even possibly remotely dangerous like & or >
+     */
+    static string safeChars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890 .,;_/:?@()");
+    string strResult;
+    for (std::string::size_type i = 0; i < str.size(); i++)
+    {
+        if (safeChars.find(str[i]) != std::string::npos)
+            strResult.push_back(str[i]);
+    }
+    return strResult;
+}
 
+const signed char p_util_hexdigit[256] =
+{ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  0,1,2,3,4,5,6,7,8,9,-1,-1,-1,-1,-1,-1,
+  -1,0xa,0xb,0xc,0xd,0xe,0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,0xa,0xb,0xc,0xd,0xe,0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, };
 
+signed char HexDigit(char c)
+{
+    return p_util_hexdigit[(unsigned char)c];
+}
 
+bool IsHex(const string& str)
+{
+    for (std::string::const_iterator it(str.begin()); it != str.end(); ++it)
+    {
+        if (HexDigit(*it) < 0)
+            return false;
+    }
+    return (str.size() > 0) && (str.size() % 2 == 0);
+}
 
+vector<unsigned char> ParseHex(const char* psz)
+{
+    // convert hex dump to vector
+    vector<unsigned char> vch;
+    while (true)
+    {
+        while (isspace(*psz))
+            psz++;
+        signed char c = HexDigit(*psz++);
+        if (c == (signed char)-1)
+            break;
+        unsigned char n = (c << 4);
+        c = HexDigit(*psz++);
+        if (c == (signed char)-1)
+            break;
+        n |= c;
+        vch.push_back(n);
+    }
+    return vch;
+}
 
+vector<unsigned char> ParseHex(const string& str)
+{
+    return ParseHex(str.c_str());
+}
 
 string EncodeBase64(const unsigned char* pch, size_t len)
 {
