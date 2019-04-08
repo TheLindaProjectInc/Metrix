@@ -6,6 +6,7 @@
 
 #include "script.h"
 #include "scrypt.h"
+#include "util.h"
 
 #include <string>
 #include <vector>

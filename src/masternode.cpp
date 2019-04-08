@@ -4,6 +4,7 @@
 //#include "primitives/transaction.h"
 #include "main.h"
 #include "util.h"
+#include "utiltime.h"
 #include "addrman.h"
 #include <boost/lexical_cast.hpp>
 

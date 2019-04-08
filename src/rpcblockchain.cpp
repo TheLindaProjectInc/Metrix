@@ -7,6 +7,7 @@
 #include "main.h"
 #include "kernel.h"
 #include "checkpoints.h"
+#include "util.h"
 
 using namespace json_spirit;
 using namespace std;

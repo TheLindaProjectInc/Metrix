@@ -7,6 +7,8 @@
 #include "main.h"
 #include "hash.h"
 
+#include <boost/thread.hpp>
+
 using namespace std;
 
 void static BatchWriteCoins(CLevelDBBatch &batch, const uint256 &hash, const CCoins &coins) {

@@ -13,7 +13,7 @@
 #include "script.h"
 #include "stealth.h"
 #include "ui_interface.h"
-#include "util.h"
+#include "utiltime.h"
 #include "walletdb.h"
 
 #include <algorithm>

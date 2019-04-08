@@ -11,6 +11,8 @@
 #include "kernel.h"
 #include "net.h"
 #include "timedata.h"
+#include "util.h"
+#include "utilmoneystr.h"
 #include "txdb.h"
 #include "ui_interface.h"
 #include "walletdb.h"
@@ -25,6 +27,7 @@
 
 
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/thread.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 

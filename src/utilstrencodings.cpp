@@ -7,6 +7,7 @@
 
 #include "tinyformat.h"
 
+#include <boost/foreach.hpp>
 #include <errno.h>
 #include <limits>
 #include <cstdlib>

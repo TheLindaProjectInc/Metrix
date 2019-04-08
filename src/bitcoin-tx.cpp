@@ -12,6 +12,7 @@
 #include "ui_interface.h" // for _(...)
 #include "univalue/univalue.h"
 #include "util.h"
+#include "utilmoneystr.h"
 
 #include <stdio.h>
 

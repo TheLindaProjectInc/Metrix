@@ -9,7 +9,9 @@
 #include "main.h"
 #include "noui.h"
 #include "rpcserver.h"
+
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/thread.hpp>
 
 static bool fDaemon;
 

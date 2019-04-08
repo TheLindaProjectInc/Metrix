@@ -18,6 +18,7 @@
 #include "scrypt.h"
 #include "sync.h"
 #include "txmempool.h"
+#include "utilmoneystr.h"
 
 #include <algorithm>
 #include <exception>

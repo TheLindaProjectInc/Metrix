@@ -6,6 +6,7 @@
 #include "core.h"
 #include "txmempool.h"
 #include "main.h" // for CTransaction
+#include "util.h"
 
 #include <boost/circular_buffer.hpp>
 
