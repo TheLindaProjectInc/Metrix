@@ -4,7 +4,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "core.h"
-#include "util.h"
+#include "utilstrencodings.h"
+#include "utilmoneystr.h"
 #include "scrypt.h"
 
 

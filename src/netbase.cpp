@@ -15,6 +15,7 @@
 #include "util.h"
 #include "sync.h"
 #include "hash.h"
+#include "utilstrencodings.h"
 
 #ifndef WIN32
 #ifdef HAVE_INET_PTON
@@ -25,6 +26,7 @@
 
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string/predicate.hpp> // for startswith() and endswith()
+#include <boost/thread.hpp>
 
 #if !defined(HAVE_MSG_NOSIGNAL) && !defined(MSG_NOSIGNAL)
 #define MSG_NOSIGNAL 0

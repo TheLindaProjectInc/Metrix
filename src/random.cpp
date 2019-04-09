@@ -4,17 +4,21 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "random.h"
+#include "utiltime.h"
 
 #ifdef WIN32
 #include "compat.h" // for Windows API
 #endif
+#include "serialize.h" // for begin_ptr(vec)
 #include "util.h" // for LogPrint()
+#include "utilstrencodings.h" // for GetTime()
 
 #ifndef WIN32
 #include <sys/time.h>
 #endif
 #include <cstring> // for memset()
 
+#include <limits>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>

@@ -8,6 +8,7 @@
 #include "rpcclient.h"
 #include "rpcprotocol.h"
 #include "chainparamsbase.h"
+#include "utilstrencodings.h"
 #include "version.h"
 
 #define _(x) std::string(x) /* Keep the _() around in case gettext or such will be used later to translate non-UI */

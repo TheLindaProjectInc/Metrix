@@ -9,6 +9,10 @@
 #include "miner.h"
 #include "kernel.h"
 #include "masternode.h"
+#include "util.h"
+#include "utilmoneystr.h"
+
+#include <boost/thread.hpp>
 
 using namespace std;
 

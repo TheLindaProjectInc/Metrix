@@ -20,6 +20,7 @@
 #include "eccryptoverify.h"
 
 #include <boost/foreach.hpp>
+#include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 

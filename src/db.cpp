@@ -8,12 +8,15 @@
 #include "addrman.h"
 #include "hash.h"
 #include "util.h"
+#include "utiltime.h"
+#include "utilstrencodings.h"
 
 #ifndef WIN32
 #include <sys/stat.h>
 #endif
 
 #include <boost/filesystem.hpp>
+#include <boost/thread.hpp>
 #include <openssl/rand.h>
 
 using namespace std;

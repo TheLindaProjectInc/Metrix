@@ -109,6 +109,9 @@ BITCOIN_CORE_H = \
   txmempool.h \
   uint256.h \
   ui_interface.h \
+  utilstrencodings.h \
+  utilmoneystr.h \
+  utiltime.h \
   util.h \
   version.h \
   wallet.h \
@@ -244,6 +247,9 @@ libbitcoin_util_a_SOURCES = \
   rpcprotocol.cpp \
   sync.cpp \
   util.cpp \
+  utilstrencodings.cpp \
+  utilmoneystr.cpp \
+  utiltime.cpp \
   version.cpp \
   $(BITCOIN_CORE_H)
 
