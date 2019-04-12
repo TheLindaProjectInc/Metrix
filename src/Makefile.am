@@ -209,8 +209,8 @@ univalue_libbitcoin_univalue_a_SOURCES = \
 # common: shared between bitcoind and non-server tools
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
-  base58.cpp \
   allocators.cpp \
+  base58.cpp \
   chainparams.cpp \
   coins.cpp \
   core.cpp \
