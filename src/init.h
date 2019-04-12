@@ -17,6 +17,7 @@ class CWallet;
 namespace boost {
     class thread_group;
 } // namespace boost
+
 extern volatile bool fRequestShutdown;
 extern CWallet* pwalletMain;
 void StartShutdown();

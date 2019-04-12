@@ -12,8 +12,7 @@ class CBlockIndex;
 /** Block-chain checkpoints are compiled-in sanity checks.
  * They are updated every release or three.
  */
-namespace Checkpoints
-{
+namespace Checkpoints {
     // Returns true if block passes checkpoint checks
     bool CheckBlock(int nHeight, const uint256& hash);
 
@@ -26,6 +25,6 @@ namespace Checkpoints
     double GuessVerificationProgress(CBlockIndex *pindex);
 
     extern bool fEnabled;
-}
+} // namespace Checkpoints
 
 #endif

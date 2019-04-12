@@ -96,6 +96,7 @@ std::set<uint256> setValidatedTx;
 
 // Internal stuff
 namespace {
+
     struct CBlockIndexWorkComparator
     {
         bool operator()(CBlockIndex *pa, CBlockIndex *pb) {
@@ -133,12 +134,14 @@ namespace {
     // Sources of received blocks, to be able to send them reject messages or ban
     // them, if processing happens afterwards. Protected by cs_main.
     map<uint256, NodeId> mapBlockSource;
-}
 
-// Blocks that are in flight, and that are in the queue to be downloaded.
-// Protected by cs_main.
-map<uint256, pair<NodeId, list<QueuedBlock>::iterator> > mapBlocksInFlight;
-map<uint256, pair<NodeId, list<uint256>::iterator> > mapBlocksToDownload;
+    // Blocks that are in flight, and that are in the queue to be downloaded.
+    // Protected by cs_main.
+    map<uint256, pair<NodeId, list<QueuedBlock>::iterator> > mapBlocksInFlight;
+    map<uint256, pair<NodeId, list<uint256>::iterator> > mapBlocksToDownload;
+
+} // anon namespace
+
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -148,6 +151,7 @@ map<uint256, pair<NodeId, list<uint256>::iterator> > mapBlocksToDownload;
 // These functions dispatch to one or all registered wallets
 
 namespace {
+
 struct CMainSignals {
     // Notifies listeners of updated transaction data (transaction, and optionally the block it is found in.
     boost::signals2::signal<void (const CTransaction &, const CBlock *)> SyncTransaction;
@@ -162,7 +166,8 @@ struct CMainSignals {
     // Tells listeners to broadcast their data.
     boost::signals2::signal<void (bool)> Broadcast;
 } g_signals;
-}
+
+} // anon namespace
 
 void RegisterWallet(CWalletInterface* pwalletIn) {
     g_signals.SyncTransaction.connect(boost::bind(&CWalletInterface::SyncTransaction, pwalletIn, _1, _2));
@@ -276,7 +281,8 @@ void FinalizeNode(NodeId nodeid) {
 
     mapNodeState.erase(nodeid);
 }
-}
+
+} // anon namespace
 
 bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats) {
     LOCK(cs_main);

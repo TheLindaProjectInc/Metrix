@@ -199,7 +199,7 @@ namespace {
         bool inline operator()(const CStealthAddress &stxAddr) const { return false; }
         bool operator()(const CNoDestination &no) const { return false; }
     };
-};
+} // anon namespace
 
 bool CBitcoinAddress::Set(const CKeyID &id) {
     SetData(Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS), &id, 20);
