@@ -289,6 +289,7 @@ static const CRPCCommand vRPCCommands[] =
     { "staking",             "getblocktemplate",       &getblocktemplate,       true,      false,     false },
     { "staking",             "getmininginfo",          &getmininginfo,          true,      false,     false },
     { "staking",             "getstakinginfo",         &getstakinginfo,         true,      false,     false },
+    { "staking",             "prioritisetransaction",  &prioritisetransaction,  true,      false,     false },
     { "staking",             "submitblock",            &submitblock,            false,     true,      false },
   
     /* Raw transactions */

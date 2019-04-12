@@ -906,6 +906,16 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree)
 {
     
+    {
+        LOCK(mempool.cs);
+        uint256 hash = tx.GetHash();
+        double dPriorityDelta = 0;
+        int64_t nFeeDelta = 0;
+        mempool.ApplyDeltas(hash, dPriorityDelta, nFeeDelta);
+        if (dPriorityDelta > 0 || nFeeDelta > 0)
+            return 0;
+    }
+
     int64_t nMinFee;
 
     if(chainActive.Height() < TX_FEE_V2_INCREASE_BLOCK) {
