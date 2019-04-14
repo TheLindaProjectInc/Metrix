@@ -2797,10 +2797,9 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 }
 
 
-bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckSig)
+bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
-    // These are checks that are independent of context
-    // that can be verified before saving an orphan block.
+    // Check block version
     if (block.nVersion > block.CURRENT_VERSION)
         return state.DoS(100, error("AcceptBlock() : reject unknown block version %d", block.nVersion),
             REJECT_INVALID, "unknown block version");
@@ -2809,24 +2808,38 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.DoS(100, error("AcceptBlock() : reject too old nVersion = %d", block.nVersion), 
             REJECT_INVALID, "old nVersion");
 
-    if (fCheckPOW && block.IsProofOfWork() && chainActive.Height() >= Params().LastPOWBlock())
+    // check POW block is before cutoff
+    if (fCheckPOW && chainActive.Height() >= Params().LastPOWBlock())
         return state.DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", chainActive.Height()),
             REJECT_INVALID, "rejected pow");
+
+    // Check proof of work matches claimed amount
+    if (fCheckPOW && !CheckProofOfWork(block.GetPoWHash(), block.nBits))
+        return state.DoS(50, error("CheckBlock() : proof of work failed"),
+            REJECT_INVALID, "high-hash");
+
+    // Check timestamp
+    if (block.GetBlockTime() > FutureDrift(GetAdjustedTime()) && !fCheckPOW)
+        return state.Invalid(error("CheckBlock() : block timestamp too far in the future"),
+            REJECT_INVALID, "time-too-new");
+
+    return true;
+}
+
+bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckSig)
+{
+
+    // These are checks that are independent of context
+    // that can be verified before saving an orphan block.
+
+    if (!CheckBlockHeader(block, state, block.IsProofOfWork()))
+        return state.DoS(100, error("CheckBlock() : CheckBlockHeader failed"),
+            REJECT_INVALID, "bad-header", true);
 
     // Size limits
     if (block.vtx.empty() || block.vtx.size() > MAX_BLOCK_SIZE || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
         return state.DoS(100, error("CheckBlock() : size limits failed"),
             REJECT_INVALID, "bad-blk-length");
-
-    // Check proof of work matches claimed amount
-    if (fCheckPOW && block.IsProofOfWork() && !CheckProofOfWork(block.GetPoWHash(), block.nBits))
-        return state.DoS(50, error("CheckBlock() : proof of work failed"),
-            REJECT_INVALID, "high-hash");
-
-    // Check timestamp
-    if (block.GetBlockTime() > FutureDrift(GetAdjustedTime()) && !block.IsProofOfWork())
-        return state.Invalid(error("CheckBlock() : block timestamp too far in the future"),
-            REJECT_INVALID, "time-too-new");
 
     // First transaction must be coinbase, the rest must not be
     if (block.vtx.empty() || !block.vtx[0].IsCoinBase())
