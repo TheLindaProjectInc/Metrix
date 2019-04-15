@@ -2203,8 +2203,13 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     if (fJustCheck)
         return true;
 
+    // Correct transaction counts.
+    pindex->nTx = block.vtx.size();
+    if (pindex->pprev)
+        pindex->nChainTx = pindex->pprev->nChainTx + block.vtx.size();
+
     // Write undo information to disk
-    if (pindex->GetUndoPos().IsNull() || (pindex->nStatus & BLOCK_VALID_MASK) < BLOCK_VALID_SCRIPTS)
+    if (pindex->GetUndoPos().IsNull() || !pindex->IsValid(BLOCK_VALID_SCRIPTS))
     {
          if (pindex->GetUndoPos().IsNull()) {
             CDiskBlockPos pos;
@@ -2218,7 +2223,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             pindex->nStatus |= BLOCK_HAVE_UNDO;
         }
 
-        pindex->nStatus = (pindex->nStatus & ~BLOCK_VALID_MASK) | BLOCK_VALID_SCRIPTS;
+        pindex->RaiseValidity(BLOCK_VALID_SCRIPTS);
 
         CDiskBlockIndex blockindex(pindex);
         if (!pblocktree->WriteBlockIndex(blockindex))
@@ -2443,7 +2448,7 @@ static CBlockIndex* FindMostWorkChain() {
         bool fInvalidAncestor = false;
         while (pindexTest && !chainActive.Contains(pindexTest))
         {
-            if (pindexTest->nStatus & BLOCK_FAILED_MASK)
+            if (!pindexTest->IsValid(BLOCK_VALID_TRANSACTIONS) || !(pindexTest->nStatus & BLOCK_HAVE_DATA))
             {
                 // Candidate has an invalid ancestor, remove entire chain from the set.
                 if (pindexBestInvalid == NULL || pindexNew->nChainTrust > pindexBestInvalid->nChainTrust)
@@ -2640,12 +2645,13 @@ bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache
     return true;
 }
 
-bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos, const uint256& hashProof)
+CBlockIndex* AddToBlockIndex(const CBlockHeader& block)
 {
     // Check for duplicate
     uint256 hash = block.GetHash();
-    if (mapBlockIndex.count(hash))
-        return state.Invalid(error("AddToBlockIndex() : %s already exists", hash.ToString()), 0, "duplicate");
+    std::map<uint256, CBlockIndex*>::iterator it = mapBlockIndex.find(hash);
+    if (it != mapBlockIndex.end())
+        return it->second;
 
     // Construct new block index object
     CBlockIndex* pindexNew = new CBlockIndex(block);
@@ -2662,16 +2668,40 @@ bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos
         pindexNew->pprev = (*miPrev).second;
         pindexNew->nHeight = pindexNew->pprev->nHeight + 1;
         pindexNew->BuildSkip();
-
     }
-    pindexNew->nTx = block.vtx.size();
     // ppcoin: compute chain trust score
     pindexNew->nChainTrust = (pindexNew->pprev ? pindexNew->pprev->nChainTrust : 0) + pindexNew->GetBlockTrust();
-    pindexNew->nChainTx = (pindexNew->pprev ? pindexNew->pprev->nChainTx : 0) + pindexNew->nTx;
+    
+    pindexNew->RaiseValidity(BLOCK_VALID_TREE);
+    return pindexNew;
+}
+
+// Mark a block as having its data received and checked (up to BLOCK_VALID_TRANSACTIONS).
+bool ReceivedBlockTransactions(const CBlock &block, CValidationState& state, CBlockIndex *pindexNew, const CDiskBlockPos& pos, const uint256& hashProof)
+{
+    pindexNew->nTx = block.vtx.size();
+    if (pindexNew->pprev) {
+        // Not the genesis block.
+        if (pindexNew->pprev->nChainTx) {
+            // This parent's block's total number transactions is known, so compute outs.
+            pindexNew->nChainTx = pindexNew->pprev->nChainTx + pindexNew->nTx;
+        } else {
+            // The total number of transactions isn't known yet.
+            // We will compute it when the block is connected.
+            pindexNew->nChainTx = 0;
+        }
+    } else {
+        // Genesis block.
+        pindexNew->nChainTx = pindexNew->nTx;
+    }
+
     pindexNew->nFile = pos.nFile;
     pindexNew->nDataPos = pos.nPos;
     pindexNew->nUndoPos = 0;
-    pindexNew->nStatus = BLOCK_VALID_TRANSACTIONS | BLOCK_HAVE_DATA;
+    pindexNew->nStatus |= BLOCK_HAVE_DATA;
+
+    // lindacoin: SetExtractionSource
+    pindexNew->SetPOSDetail(block);
 
     // ppcoin: compute stake entropy bit for stake modifier
     if (!pindexNew->SetStakeEntropyBit(block.GetStakeEntropyBit()))
@@ -2688,12 +2718,13 @@ bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos
     pindexNew->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
 
     // Add to mapBlockIndex
-    map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.insert(make_pair(hash, pindexNew)).first;
+    map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.insert(make_pair(block.GetHash(), pindexNew)).first;
     if (pindexNew->IsProofOfStake())
         setStakeSeen.insert(make_pair(pindexNew->prevoutStake, pindexNew->nStakeTime));
     pindexNew->phashBlock = &((*mi).first);
 
-    setBlockIndexValid.insert(pindexNew);
+    if (pindexNew->RaiseValidity(BLOCK_VALID_TRANSACTIONS))
+        setBlockIndexValid.insert(pindexNew);   
 
     if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindexNew)))
         return state.Abort(_("Failed to write block index"));
@@ -2801,26 +2832,26 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
 {
     // Check block version
     if (block.nVersion > block.CURRENT_VERSION)
-        return state.DoS(100, error("AcceptBlock() : reject unknown block version %d", block.nVersion),
+        return state.DoS(100, error("CheckBlockHeader() : reject unknown block version %d", block.nVersion),
             REJECT_INVALID, "unknown block version");
 
     if (block.GetHash() != Params().HashGenesisBlock() && block.nVersion < 7)
-        return state.DoS(100, error("AcceptBlock() : reject too old nVersion = %d", block.nVersion), 
+        return state.DoS(100, error("CheckBlockHeader() : reject too old nVersion = %d", block.nVersion), 
             REJECT_INVALID, "old nVersion");
 
     // check POW block is before cutoff
     if (fCheckPOW && chainActive.Height() >= Params().LastPOWBlock())
-        return state.DoS(100, error("AcceptBlock() : reject proof-of-work at height %d", chainActive.Height()),
+        return state.DoS(100, error("CheckBlockHeader() : reject proof-of-work at height %d", chainActive.Height()),
             REJECT_INVALID, "rejected pow");
 
     // Check proof of work matches claimed amount
     if (fCheckPOW && !CheckProofOfWork(block.GetPoWHash(), block.nBits))
-        return state.DoS(50, error("CheckBlock() : proof of work failed"),
+        return state.DoS(50, error("CheckBlockHeader() : proof of work failed"),
             REJECT_INVALID, "high-hash");
 
     // Check timestamp
     if (block.GetBlockTime() > FutureDrift(GetAdjustedTime()) && !fCheckPOW)
-        return state.Invalid(error("CheckBlock() : block timestamp too far in the future"),
+        return state.Invalid(error("CheckBlockHeader() : block timestamp too far in the future"),
             REJECT_INVALID, "time-too-new");
 
     return true;
@@ -3007,18 +3038,22 @@ BOOST_FOREACH(const CTransaction &tx, block.vtx)
     return true;
 }
 
-bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
+bool AcceptBlockHeader(CBlockHeader& block, CValidationState& state, CBlockIndex** ppindex)
 {
     AssertLockHeld(cs_main);
 
     // Check for duplicate
     uint256 hash = block.GetHash();
-    if (mapBlockIndex.count(hash))
-        return state.Invalid(error("AcceptBlock() : block already in mapBlockIndex"), 0, "duplicate");
+    std::map<uint256, CBlockIndex*>::iterator miSelf = mapBlockIndex.find(hash);
+    CBlockIndex *pindex = NULL;
+    if (miSelf != mapBlockIndex.end()) {
+        pindex = miSelf->second;
+        if (pindex->nStatus & BLOCK_FAILED_MASK)
+            return state.Invalid(error("AcceptBlock() : block is marked invalid"), 0, "duplicate");
+    }
 
     CBlockIndex* pindexPrev = NULL;
     int nHeight = 0;
-    uint256 hashProof;
     if (hash != Params().HashGenesisBlock()) {
         // Get prev block index
         map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
@@ -3027,6 +3062,59 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
 
+        // Check timestamp against prev
+        if (block.GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(block.GetBlockTime()) < pindexPrev->GetBlockTime())
+            return state.Invalid(error("AcceptBlock() : block's timestamp is too early"),
+                REJECT_INVALID, "time-too-old");
+
+        // Check that the block chain matches the known block chain up to a checkpoint
+        if (!Checkpoints::CheckBlock(nHeight, hash))
+            return state.DoS(100, error("AcceptBlock() : rejected by hardened checkpoint lock-in at %d", nHeight),
+                REJECT_CHECKPOINT, "checkpoint mismatch");
+       
+        // Don't accept any forks from the main chain prior to last checkpoint
+        CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
+        if (pcheckpoint && nHeight < pcheckpoint->nHeight)
+            return state.DoS(100, error("AcceptBlock() : forked chain older than last checkpoint (height %d)", nHeight));
+    }
+    if (pindex == NULL)
+        pindex = AddToBlockIndex(block);
+
+    if (ppindex)
+        *ppindex = pindex;
+
+    return true;
+}
+
+bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, CDiskBlockPos* dbp)
+{
+    AssertLockHeld(cs_main);
+
+    CBlockIndex *&pindex = *ppindex;
+
+    if (!AcceptBlockHeader(block, state, &pindex))
+        return false;
+
+    if (!CheckBlock(block, state)) {
+        if (state.Invalid() && !state.CorruptionPossible()) {
+            pindex->nStatus |= BLOCK_FAILED_VALID;
+        }
+        return false;
+    }
+
+    int nHeight = pindex->nHeight;
+    uint256 hashProof;
+    uint256 hash = pindex->GetBlockHash();
+    CBlockIndex* pindexPrev = NULL;
+    
+    if (hash != Params().HashGenesisBlock()) {
+        // Get prev block index
+        map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
+        if (mi == mapBlockIndex.end())
+            return state.DoS(10, error("AcceptBlock() : prev block not found"), 0, "bad-prevblk");
+        pindexPrev = (*mi).second;
+        nHeight = pindexPrev->nHeight+1;
+        // check POS before start block
         if (block.IsProofOfStake() && nHeight < POS_START_BLOCK)
             return state.DoS(100, error("AcceptBlock() : reject proof-of-stake at height < %d", POS_START_BLOCK),
                 REJECT_INVALID, "pos height rejected");
@@ -3046,26 +3134,13 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             return state.DoS(100, error("AcceptBlock() : incorrect %s", block.IsProofOfWork() ? "proof-of-work" : "proof-of-stake"),
                 REJECT_INVALID, "incorrect pow/pos");
 
-        // Check timestamp against prev
-        if (block.GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(block.GetBlockTime()) < pindexPrev->GetBlockTime())
-            return state.Invalid(error("AcceptBlock() : block's timestamp is too early"),
-                REJECT_INVALID, "time-too-old");
-
         // Check that all transactions are finalized
         BOOST_FOREACH(const CTransaction& tx, block.vtx)
-            if (!IsFinalTx(tx, nHeight, block.GetBlockTime()))
+            if (!IsFinalTx(tx, nHeight, block.GetBlockTime())) {
+                pindex->nStatus |= BLOCK_FAILED_VALID;
                 return state.DoS(10, error("AcceptBlock() : contains a non-final transaction"),
-                    REJECT_INVALID, "bad-txns-nonfinal");
-
-        // Check that the block chain matches the known block chain up to a checkpoint
-        if (!Checkpoints::CheckBlock(nHeight, hash))
-            return state.DoS(100, error("AcceptBlock() : rejected by hardened checkpoint lock-in at %d", nHeight),
-                REJECT_CHECKPOINT, "checkpoint mismatch");
-       
-        // Don't accept any forks from the main chain prior to last checkpoint
-        CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
-        if (pcheckpoint && nHeight < pcheckpoint->nHeight)
-            return state.DoS(100, error("AcceptBlock() : forked chain older than last checkpoint (height %d)", nHeight));
+                                REJECT_INVALID, "bad-txns-nonfinal");
+            }
 
         // Verify hash target and signature of coinstake tx
         if (block.IsProofOfStake())
@@ -3081,22 +3156,23 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             hashProof = block.GetPoWHash();
 
         // Enforce rule that the coinbase starts with serialized block height
-        // Enforce block.nVersion=2 rule that the coinbase starts with serialized block height
-        if (block.nVersion >= 2 && 
-            CBlockIndex::IsSuperMajority(2, pindexPrev, Params().EnforceBlockUpgradeMajority()))
+        // Enforce block.nVersion=7 rule that the coinbase starts with serialized block height
+        if (block.nVersion >= 7 && 
+            CBlockIndex::IsSuperMajority(7, pindexPrev, Params().EnforceBlockUpgradeMajority()))
         {
             {
                 CScript expect = CScript() << nHeight;
                 if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
                     !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin()))
                 {
+                    pindex->nStatus |= BLOCK_FAILED_VALID;
                     return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"), REJECT_INVALID, "bad-cb-height");
                 }
                     
             }
         }
-
     }
+
     // Write block to history file
     try {
         unsigned int nBlockSize = ::GetSerializeSize(block, SER_DISK, CLIENT_VERSION);
@@ -3108,8 +3184,8 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         if (dbp == NULL)
             if (!WriteBlockToDisk(block, blockPos))
                 return state.Abort(_("Failed to write block"));
-        if (!AddToBlockIndex(block, state, blockPos, hashProof))
-            return error("AcceptBlock() : AddToBlockIndex failed");
+        if (!ReceivedBlockTransactions(block, state, pindex, blockPos, hashProof))
+            return error("AcceptBlock() : ReceivedBlockTransactions failed");
     } catch(std::runtime_error &e) {
         return state.Abort(_("System error: ") + e.what());
     }
@@ -3261,8 +3337,9 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                 LogPrintf("WARNING: ProcessBlock() : ReserealizeBlockSignature FAILED\n");
         }
 
-        // If we don't already have its previous block, shunt it off to holding area until we get it
-        if (pblock->hashPrevBlock != 0 && !mapBlockIndex.count(pblock->hashPrevBlock))
+        // If we don't already have its previous block (with full data), shunt it off to holding area until we get it
+        std::map<uint256, CBlockIndex*>::iterator it = mapBlockIndex.find(pblock->hashPrevBlock);
+        if (pblock->hashPrevBlock != 0 && (it == mapBlockIndex.end() || !(it->second->nStatus & BLOCK_HAVE_DATA)))
         {
             LogPrintf("ProcessBlock: ORPHAN BLOCK %lu, prev=%s\n", (unsigned long)mapOrphanBlocks.size(), pblock->hashPrevBlock.ToString());
 
@@ -3304,7 +3381,9 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         }
 
         // Store to disk
-        if (!AcceptBlock(*pblock, state, dbp))
+        CBlockIndex *pindex = NULL;
+        bool ret = AcceptBlock(*pblock, state, &pindex, dbp);
+        if (!ret)
             return error("ProcessBlock() : AcceptBlock FAILED");
 
         // Recursively process any orphan blocks that depended on this one
@@ -3325,7 +3404,8 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                 block.BuildMerkleTree();
                 // Use a dummy CValidationState so someone can't setup nodes to counter-DoS based on orphan resolution (that is, feeding people an invalid block based on LegitBlockX in order to get anyone relaying LegitBlockX banned)
                 CValidationState stateDummy;
-                if (AcceptBlock(block, stateDummy))
+                CBlockIndex *pindexChild = NULL;
+                if (AcceptBlock(block, stateDummy, &pindexChild))
                     vWorkQueue.push_back(mi->second->hashBlock);
                 mapOrphanBlocks.erase(mi->second->hashBlock);
 
@@ -3662,7 +3742,7 @@ bool static LoadBlockIndexDB()
         CBlockIndex* pindex = item.second;
         pindex->nChainTrust = (pindex->pprev ? pindex->pprev->nChainTrust : 0) + pindex->GetBlockTrust();
         pindex->nChainTx = (pindex->pprev ? pindex->pprev->nChainTx : 0) + pindex->nTx;
-        if ((pindex->nStatus & BLOCK_VALID_MASK) >= BLOCK_VALID_TRANSACTIONS && !(pindex->nStatus & BLOCK_FAILED_MASK))
+        if (pindex->IsValid(BLOCK_VALID_TRANSACTIONS))
             setBlockIndexValid.insert(pindex);
         if (pindex->nStatus & BLOCK_FAILED_MASK && (!pindexBestInvalid || pindex->nChainTrust > pindexBestInvalid->nChainTrust))
             pindexBestInvalid = pindex;
@@ -3849,7 +3929,8 @@ bool InitBlockIndex()
                 return error("AcceptBlock() : FindBlockPos failed");
             if (!WriteBlockToDisk(block, blockPos))
                 return error("LoadBlockIndex() : writing genesis block to disk failed");
-            if (!AddToBlockIndex(block, state, blockPos, Params().HashGenesisBlock()))
+            CBlockIndex *pindex = AddToBlockIndex(block);
+            if (!ReceivedBlockTransactions(block, state, pindex, blockPos, Params().HashGenesisBlock()))
                 return error("LoadBlockIndex() : genesis block not accepted");
             if (!ActivateBestChain(state))
                 return error("LoadBlockIndex() : genesis block cannot be activated");

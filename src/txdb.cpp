@@ -232,6 +232,9 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nStakeTime     = diskindex.nStakeTime;
                 pindexNew->hashProof      = diskindex.hashProof;
 
+                // lindacoin POS details are set from db
+                pindexNew->POSDetailSet  = true;
+
                 if (!pindexNew->CheckIndex())
                     return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString());
 

@@ -672,16 +672,14 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
 // Apply the effects of this block (with given index) on the UTXO set represented by coins
 bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool fJustCheck = false);
 
-// Add this block to the block index, and if necessary, switch the active block chain to this
-bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos& pos, const uint256& hashProof);
-
 // Context-independent validity checks
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW = true);
 bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true, bool fCheckSig=true);
 
 // Store block on disk
 // if dbp is provided, the file is known to already reside on disk
-bool AcceptBlock(CBlock& block, CValidationState &state, CDiskBlockPos *dbp = NULL);
+bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex **pindex, CDiskBlockPos* dbp = NULL);
+bool AcceptBlockHeader(CBlockHeader& block, CValidationState& state, CBlockIndex **ppindex= NULL);
 
 // Linda: attempt to generate suitable proof-of-stake
 bool SignBlock(CBlock& block, CWallet& keystore, int64_t nFees);
@@ -819,6 +817,9 @@ public:
 
     uint256 hashProof;
 
+    // (memory only) check POSDetailSet method has been set before accessing body
+    bool POSDetailSet;
+
     // block header
     int nVersion;
     uint256 hashMerkleRoot;
@@ -856,6 +857,8 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+
+        POSDetailSet  = false;
     }
 
     CBlockIndex()
@@ -863,22 +866,13 @@ public:
         SetNull();
     }
 
-    CBlockIndex(CBlock& block)
+    CBlockIndex(const CBlockHeader& block)
     {
         SetNull();
 
-        if (block.IsProofOfStake())
-        {
-            SetProofOfStake();
-            prevoutStake = block.vtx[1].vin[0].prevout;
-            nStakeTime = block.vtx[1].nTime;
-        }
-        else
-        {
-            prevoutStake.SetNull();
-            nStakeTime = 0;
-        }
-
+        // for headfirst SetPOSDetail must be called
+        // before accessing IsProofOfStake
+        
         nVersion       = block.nVersion;
         hashMerkleRoot = block.hashMerkleRoot;
         nTime          = block.nTime;
@@ -969,6 +963,7 @@ public:
 
     bool IsProofOfStake() const
     {
+        assert(POSDetailSet == true);
         return (nFlags & BLOCK_PROOF_OF_STAKE);
     }
 
@@ -1002,6 +997,30 @@ public:
             nFlags |= BLOCK_STAKE_MODIFIER;
     }
 
+    void SetPOSDetail(const CBlock& block)
+    {
+        // lindacoin
+        // when doin head first sync we cannot
+        // set the POS details of the block
+        // so we must make sure we set these details
+        // when we get the rest of the block
+        if (!POSDetailSet)
+        {
+            if (block.IsProofOfStake())
+            {
+                SetProofOfStake();
+                prevoutStake = block.vtx[1].vin[0].prevout;
+                nStakeTime = block.vtx[1].nTime;
+            }
+            else
+            {
+                prevoutStake.SetNull();
+                nStakeTime = 0;
+            }
+            POSDetailSet = true;
+        }
+    }
+
     std::string ToString() const
     {
         return strprintf("CBlockIndex(nprev=%p, nHeight=%d, nMint=%s, nMoneySupply=%s, nFlags=(%s)(%d)(%s), nStakeModifier=%016x, hashProof=%s, prevoutStake=(%s), nStakeTime=%d merkle=%s, hashBlock=%s)",
@@ -1021,6 +1040,29 @@ public:
     // Efficiently find an ancestor of this block.
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
+
+    // Check whether this block index entry is valid up to the passed validity level.
+    bool IsValid(enum BlockStatus nUpTo = BLOCK_VALID_TRANSACTIONS) const
+    {
+        assert(!(nUpTo & ~BLOCK_VALID_MASK)); // Only validity flags allowed.
+        if (nStatus & BLOCK_FAILED_MASK)
+            return false;
+        return ((nStatus & BLOCK_VALID_MASK) >= nUpTo);
+    }
+
+     // Raise the validity level of this block index entry.
+    // Returns true if the validity was changed.
+    bool RaiseValidity(enum BlockStatus nUpTo)
+    {
+        assert(!(nUpTo & ~BLOCK_VALID_MASK)); // Only validity flags allowed.
+        if (nStatus & BLOCK_FAILED_MASK)
+            return false;
+        if ((nStatus & BLOCK_VALID_MASK) < nUpTo) {
+            nStatus = (nStatus & ~BLOCK_VALID_MASK) | nUpTo;
+            return true;
+        }
+        return false;
+    }
 };
 
 /** Used to marshal pointers into hashes for db storage. */
@@ -1061,6 +1103,7 @@ public:
         READWRITE(VARINT(nMoneySupply));
         READWRITE(nFlags);
         READWRITE(nStakeModifier);
+        const_cast<CDiskBlockIndex*>(this)->POSDetailSet = true;
         if (IsProofOfStake())
         {
             READWRITE(prevoutStake);
