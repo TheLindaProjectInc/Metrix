@@ -5205,6 +5205,7 @@ LogPrintf("receive version message: %s: version %d, blocks=%d, us=%s, peer=%d\n"
         ProcessSpork(pfrom, strCommand, vRecv);
 
         // Ignore unknown commands for extensibility
+        LogPrint("net", "Unknown command \"%s\" from peer=%d\n", SanitizeString(strCommand), pfrom->id);
     }
 
 
