@@ -6,7 +6,7 @@
 #define BITCOIN_MAIN_H
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "config/bitcoin-config.h"
 #endif
 
 #include "chainparams.h"
@@ -203,6 +203,9 @@ class CValidationState;
 struct CBlockTemplate;
 class CWalletInterface;
 struct CNodeStateStats;
+
+/** Set up internal signal handlers **/
+void RegisterInternalSignals();
 
 /** Register a wallet to receive updates from core */
 void RegisterWallet(CWalletInterface* pwalletIn);

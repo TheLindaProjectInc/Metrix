@@ -32,10 +32,10 @@
 #include <boost/thread.hpp>
 #include <list>
 
-using namespace std;
 using namespace boost;
 using namespace boost::asio;
 using namespace json_spirit;
+using namespace std;
 
 static std::string strRPCUserColonPass;
 
@@ -289,6 +289,7 @@ static const CRPCCommand vRPCCommands[] =
     { "staking",             "getblocktemplate",       &getblocktemplate,       true,      false,     false },
     { "staking",             "getmininginfo",          &getmininginfo,          true,      false,     false },
     { "staking",             "getstakinginfo",         &getstakinginfo,         true,      false,     false },
+    { "staking",             "prioritisetransaction",  &prioritisetransaction,  true,      false,     false },
     { "staking",             "submitblock",            &submitblock,            false,     true,      false },
   
     /* Raw transactions */
@@ -958,9 +959,7 @@ void ServiceConnection(AcceptedConnection *conn)
 		{
 			if (!HTTPReq_JSONRPC(conn, strRequest, mapHeaders, fRun))
 				break;
-		}
-		else
-		{
+		} else {
             conn->stream() << HTTPError(HTTP_NOT_FOUND, false) << std::flush;
 			break;
 		}

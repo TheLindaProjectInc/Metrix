@@ -10,8 +10,8 @@
 #include "main.h"
 #include "uint256.h"
 
-namespace Checkpoints
-{
+namespace Checkpoints {
+
     typedef std::map<int, uint256> MapCheckpoints;
 
     // How many times we expect transactions after the last checkpoint to
@@ -131,4 +131,4 @@ namespace Checkpoints
         }
         return NULL;
     }
-}
+} // namespace Checkpoints

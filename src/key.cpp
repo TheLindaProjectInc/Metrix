@@ -25,6 +25,7 @@
 
 // anonymous namespace with local implementation code (OpenSSL interaction)
 namespace {
+
 #ifdef USE_SECP256K1
 class CSecp256k1Init {
 public:
@@ -405,7 +406,7 @@ const unsigned char vchMaxModHalfOrder[32] = {
 
 const unsigned char vchZero[0] = {};
 
-}; // end of anonymous namespace
+} // anon namespace
 
 
 bool CKey::Check(const unsigned char *vch) {

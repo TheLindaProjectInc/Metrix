@@ -6,7 +6,7 @@
 #define BITCOIN_INIT_H
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "config/bitcoin-config.h"
 #endif
 
 #include <string>
@@ -17,6 +17,7 @@ class CWallet;
 namespace boost {
     class thread_group;
 } // namespace boost
+
 extern volatile bool fRequestShutdown;
 extern CWallet* pwalletMain;
 void StartShutdown();

@@ -23,7 +23,7 @@ typedef std::vector<unsigned char> valtype;
 
 class CKeyStore;
 class CTransaction;
-class CMutableTransaction;
+struct CMutableTransaction;
 
 class BaseSignatureChecker;
 
