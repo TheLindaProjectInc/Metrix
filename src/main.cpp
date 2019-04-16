@@ -9,6 +9,7 @@
 #include <boost/thread.hpp>
 
 #include "alert.h"
+#include "bignum.h"
 #include "bloom.h"
 #include "chainparams.h"
 #include "checkpoints.h"
@@ -44,9 +45,9 @@ CCriticalSection cs_main;
 map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
 
-CBigNum bnProofOfStakeLimit(~uint256(0) >> 20);
-CBigNum bnProofOfStakeLimitV2(~uint256(0) >> 48);
-CBigNum bnProofOfStakeLimitV2fork(~uint256(0) >> 32);
+uint256 bnProofOfStakeLimit(~uint256(0) >> 20);
+uint256 bnProofOfStakeLimitV2(~uint256(0) >> 48);
+uint256 bnProofOfStakeLimitV2fork(~uint256(0) >> 32);
 
 unsigned int nStakeMinAge = 24 * 60 * 60; // 24 hours
 unsigned int nStakeMaxAge = 30 * 24 * 60 * 60; // 30 days
@@ -1588,7 +1589,7 @@ void static PruneOrphanBlocks()
     mapOrphanBlocks.erase(hash);
 }
 
-static CBigNum GetProofOfStakeLimit(int nHeight)
+static uint256 GetProofOfStakeLimit(int nHeight)
 {
     if(nHeight < DIFF_FORK_BLOCK) {
        return bnProofOfStakeLimitV2;
@@ -1649,9 +1650,9 @@ static const int64_t nTargetTimespan = 10 * 60;  // 16 mins
 //
 // maximum nBits value could possible be required nTime after
 //
-unsigned int ComputeMaxBits(CBigNum bnTargetLimit, unsigned int nBase, int64_t nTime)
+unsigned int ComputeMaxBits(uint256 bnTargetLimit, unsigned int nBase, int64_t nTime)
 {
-    CBigNum bnResult;
+    uint256 bnResult;
     bnResult.SetCompact(nBase);
     bnResult *= 2;
     while (nTime > 0 && bnResult < bnTargetLimit)
@@ -1699,7 +1700,7 @@ unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfS
    //if(pindexLast->GetBlockTime() > STAKE_TIMESPAN_SWITCH_TIME)
     //    nTargetTimespan = 2 * 60; // 2 minutes
 
-    CBigNum bnTargetLimit = fProofOfStake ? GetProofOfStakeLimit(pindexLast->nHeight) : Params().ProofOfWorkLimit();
+    CBigNum bnTargetLimit = CBigNum(fProofOfStake ? GetProofOfStakeLimit(pindexLast->nHeight) : Params().ProofOfWorkLimit());
 
     if (pindexLast == NULL)
         return bnTargetLimit.GetCompact(); // genesis block
@@ -1732,15 +1733,17 @@ unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfS
 
 bool CheckProofOfWork(uint256 hash, unsigned int nBits)
 {
-    CBigNum bnTarget;
-    bnTarget.SetCompact(nBits);
+	bool fNegative;
+	bool fOverflow;
+	uint256 bnTarget;
+	bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
     // Check range
-    if (bnTarget <= 0 || bnTarget > Params().ProofOfWorkLimit())
+    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > Params().ProofOfWorkLimit())
         return error("CheckProofOfWork() : nBits below minimum work");
 
     // Check proof of work matches claimed amount
-    if (hash > bnTarget.getuint256())
+    if (hash > bnTarget)
         return error("CheckProofOfWork() : hash doesn't match nBits");
 
     return true;
@@ -1783,7 +1786,7 @@ void CheckForkWarningConditions()
     if (pindexBestForkTip && chainActive.Height() - pindexBestForkTip->nHeight >= 72)
         pindexBestForkTip = NULL;
 
-    if (pindexBestForkTip || (pindexBestInvalid && pindexBestInvalid->nChainTrust > chainActive.Tip()->nChainTrust + (CBigNum(chainActive.Tip()->GetBlockTrust()) * 6).getuint256()))
+    if (pindexBestForkTip || (pindexBestInvalid && pindexBestInvalid->nChainTrust > chainActive.Tip()->nChainTrust + (chainActive.Tip()->GetBlockTrust()* 6)))
     {
         if (!fLargeWorkForkFound)
         {
@@ -1799,8 +1802,8 @@ void CheckForkWarningConditions()
         if (pindexBestForkTip)
         {
             LogPrintf("CheckForkWarningConditions: Warning: Large valid fork found\n  forking the chain at height %d (%s)\n  lasting to height %d (%s).\nChain state database corruption likely.\n",
-                pindexBestForkBase->nHeight, pindexBestForkBase->phashBlock->ToString().c_str(),
-                pindexBestForkTip->nHeight, pindexBestForkTip->phashBlock->ToString().c_str());
+                pindexBestForkBase->nHeight, pindexBestForkBase->phashBlock->ToString(),
+                pindexBestForkTip->nHeight, pindexBestForkTip->phashBlock->ToString());
             fLargeWorkForkFound = true;
         }
         else
@@ -1838,7 +1841,7 @@ void CheckForkWarningConditionsOnNewFork(CBlockIndex* pindexNewForkTip)
    // We define it this way because it allows us to only store the highest fork tip (+ base) which meets
    // the 7-block condition and from this always have the most-likely-to-cause-warning fork
     if (pfork && (!pindexBestForkTip || (pindexBestForkTip && pindexNewForkTip->nHeight > pindexBestForkTip->nHeight)) &&
-        pindexNewForkTip->nChainTrust - pfork->nChainTrust > (CBigNum(pfork->GetBlockTrust()) * 7).getuint256() &&
+        pindexNewForkTip->nChainTrust - pfork->nChainTrust > (pfork->GetBlockTrust() * 7) &&
         chainActive.Height() - pindexNewForkTip->nHeight < 72)
     {
         pindexBestForkTip = pindexNewForkTip;
@@ -1852,10 +1855,6 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
     if (!pindexBestInvalid || pindexNew->nChainTrust > pindexBestInvalid->nChainTrust)
     {
         pindexBestInvalid = pindexNew;
-        // The current code doesn't actually read the BestInvalidWork entry in
-        // the block database anymore, as it is derived from the flags in block
-        // index entry. We only write it for backward compatibility.
-        pblocktree->WriteBestInvalidTrust(CBigNum(pindexBestInvalid->nChainTrust));
     }
 
     uint256 nBestInvalidBlockTrust = pindexNew->nChainTrust - pindexNew->pprev->nChainTrust;
@@ -1863,11 +1862,11 @@ void static InvalidChainFound(CBlockIndex* pindexNew)
 
     LogPrintf("InvalidChainFound: invalid block=%s  height=%d  trust=%s  blocktrust=%d  date=%s\n",
       pindexNew->GetBlockHash().ToString(), pindexNew->nHeight,
-      CBigNum(pindexNew->nChainTrust).ToString(), nBestInvalidBlockTrust.GetLow64(),
+      (pindexNew->nChainTrust).ToString(), nBestInvalidBlockTrust.GetLow64(),
       DateTimeStrFormat("%x %H:%M:%S", pindexNew->GetBlockTime()));
     LogPrintf("InvalidChainFound:  current best=%s  height=%d  trust=%s  blocktrust=%d  date=%s\n",
         chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(),
-      CBigNum(chainActive.Tip()->nChainTrust).ToString(),
+      (chainActive.Tip()->nChainTrust).ToString(),
       nBestBlockTrust.GetLow64(),
       DateTimeStrFormat("%x %H:%M:%S", chainActive.Tip()->GetBlockTime()));
     CheckForkWarningConditions();
@@ -2393,7 +2392,7 @@ void static UpdateTip(CBlockIndex *pindexNew)
 
     LogPrintf("UpdateTip: new best=%s  height=%d  trust=%s  blocktrust=%d  tx=%lu  date=%s\n",
         chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(),
-        CBigNum(chainActive.Tip()->nChainTrust).ToString(),
+        (chainActive.Tip()->nChainTrust).ToString(),
         nBestBlockTrust.GetLow64(),
         (unsigned long)pindexNew->nChainTx,
         DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()));
@@ -2723,7 +2722,7 @@ bool GetCoinAge(const CTransaction& tx, CValidationState &state, CCoinsViewCache
 
     CBigNum bnCoinDay = bnCentSecond * CENT / COIN / (24 * 60 * 60);
     if (fDebug && GetBoolArg("-printcoinage", false))
-        LogPrintf("coin age bnCoinDay=%s\n", bnCoinDay.ToString().c_str());
+        LogPrintf("coin age bnCoinDay=%s\n", bnCoinDay.ToString());
     nCoinAge = bnCoinDay.getuint64();
     return true;
 }
@@ -3278,13 +3277,17 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
 
 uint256 CBlockIndex::GetBlockTrust() const
 {
-    CBigNum bnTarget;
-    bnTarget.SetCompact(nBits);
-
-    if (bnTarget <= 0)
-        return 0;
-
-    return ((CBigNum(1)<<256) / (bnTarget+1)).getuint256();
+    uint256 bnTarget;
+    bool fNegative;
+    bool fOverflow;
+    bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
+    if (fNegative || fOverflow || bnTarget == 0)
+	    return 0;
+    // We need to compute 2**256 / (bnTarget+1), but we can't represent 2**256
+    // as it's too large for a arith_uint256. However, as 2**256 is at least as large
+    // as bnTarget+1, it is equal to ((2**256 - bnTarget - 1) / (bnTarget+1)) + 1,
+    // or ~bnTarget / (nTarget+1) + 1.
+    return (~bnTarget / (bnTarget + 1)) + 1;
 }
 
 bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired)

@@ -76,12 +76,6 @@ bool CBlockTreeDB::WriteBlockIndex(const CDiskBlockIndex& blockindex)
     return Write(make_pair('b', blockindex.GetBlockHash()), blockindex);
 }
 
-bool CBlockTreeDB::WriteBestInvalidTrust(const CBigNum& bnBestInvalidTrust)
-{
-    // Obsolete; only written for backward compatibility.
-    return Write('I', bnBestInvalidTrust);
-}
-
 bool CBlockTreeDB::WriteBlockFileInfo(int nFile, const CBlockFileInfo &info) {
     return Write(make_pair('f', nFile), info);
 }
