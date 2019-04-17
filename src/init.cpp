@@ -1444,7 +1444,6 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("mapAddressBook.size() = %u\n",  pwalletMain ? pwalletMain->mapAddressBook.size() : 0);
 #endif
 
-    RegisterInternalSignals();
     StartNode(threadGroup);
 
 #ifdef ENABLE_WALLET

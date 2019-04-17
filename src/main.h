@@ -204,9 +204,6 @@ struct CBlockTemplate;
 class CWalletInterface;
 struct CNodeStateStats;
 
-/** Set up internal signal handlers **/
-void RegisterInternalSignals();
-
 /** Register a wallet to receive updates from core */
 void RegisterWallet(CWalletInterface* pwalletIn);
 /** Unregister a wallet from core */
