@@ -386,28 +386,18 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 }
 
-bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
+bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 {
-    uint256 hashBlock = pblock->GetHash();
-    uint256 hashProof = pblock->GetPoWHash();
-    uint256 hashTarget = uint256().SetCompact(pblock->nBits);
-
     if(!pblock->IsProofOfWork())
-        return error("CheckWork() : %s is not a proof-of-work block", hashBlock.GetHex());
+        return error("ProcessBlockFound() : %s is not a proof-of-work block", hashBlock.GetHex());
 
-    if (hashProof > hashTarget)
-        return error("CheckWork() : proof-of-work not meeting target");
-
-    //// debug print
-    LogPrintf("CheckWork() : new proof-of-work block found  \n  proof hash: %s  \ntarget: %s\n", hashProof.GetHex(), hashTarget.GetHex());
-    LogPrintf("%s\n", pblock->ToString());
     LogPrintf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue));
 
     // Found a solution
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
-            return error("CheckWork() : generated block is stale");
+            return error("ProcessBlockFound() : generated block is stale");
     }
         
     // Remove key from key pool
