@@ -329,7 +329,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -debug=<category>      " + _("Output debugging information (default: 0, supplying <category> is optional)") + "\n";
     strUsage += _("If <category> is not supplied, output all debugging information.") + "\n";
     strUsage += _("<category> can be:");
-    strUsage += " addrman, alert, db, lock, rand, rpc, selectcoins, mempool, net,";
+    strUsage += " addrman, alert, bench, db, lock, rand, rpc, selectcoins, mempool, net,";
     strUsage += " coinage, coinstake, creation, stakemodifier";
     if (mode == HMM_BITCOIN_QT)
     {
@@ -658,6 +658,8 @@ bool AppInit2(boost::thread_group& threadGroup)
     // Check for -tor - as this is a privacy risk to continue, exit here
     if (GetBoolArg("-tor", false))
         return InitError(_("Error: Unsupported argument -tor found, use -onion."));
+    if (GetBoolArg("-benchmark", false))
+        InitWarning(_("Warning: Unsupported argument -benchmark ignored, use -debug=bench."));
     // Check for -socks - as this is a privacy risk to continue, exit here
     if (mapArgs.count("-socks"))
         return InitError(_("Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported."));
