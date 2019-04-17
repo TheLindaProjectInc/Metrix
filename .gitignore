@@ -1,5 +1,4 @@
 /build/
-src/qt/locale/*.qm
 /bin/
 release/
 debug/
@@ -10,24 +9,25 @@ debug/
 *.d
 .*
 *.a
+
+#Dev tools & build testing
 .circleci/run-build-locally.sh
 !.circleci/
 .vscode/
 .vs/
-Linda-qt
-qrc_bitcoin.cpp
+
 src/obj/build.h
 src/univalue/gen
 object_script.Linda-qt.*
+
 # daemons
 src/Linda-tx
 src/Linda-cli
 src/Lindad
+
 # autotools
-Makefile.*
 Makefile
-!Makefile.am
-!Makefile.include
+Makefile.in
 !depends/Makefile
 *plugin_import.cpp
 configure
@@ -48,3 +48,14 @@ src/config/bitcoin-config.h
 src/config/bitcoin-config.h.in
 src/config/stamp-h1
 !src/config/.empty
+
+# Libtool
+libtool
+src/m4/libtool.m4
+src/m4/ltoptions.m4
+src/m4/ltsugar.m4
+src/m4/ltversion.m4
+src/m4/lt~obsolete.m4
+
+# Resources cpp
+qrc_*.cpp
