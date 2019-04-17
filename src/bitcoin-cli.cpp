@@ -66,7 +66,8 @@ static bool AppInitRPC(int argc, char* argv[])
     }
 
     // Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
-    if (!SelectBaseParamsFromCommandLine()) {
+    if (!SelectBaseParamsFromCommandLine())
+    {
         fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
         return false;
     }
@@ -202,14 +203,17 @@ int CommandLineRPC(int argc, char *argv[])
                 strPrint = write_string(result, true);
         }
     }
-    catch (boost::thread_interrupted) {
+    catch (boost::thread_interrupted)
+    {
         throw;
     }
-    catch (std::exception& e) {
+    catch (std::exception& e)
+    {
         strPrint = string("error: ") + e.what();
         nRet = EXIT_FAILURE;
     }
-    catch (...) {
+    catch (...)
+    {
         PrintExceptionContinue(NULL, "CommandLineRPC()");
         throw;
     }
@@ -230,11 +234,13 @@ int main(int argc, char* argv[])
         if (!AppInitRPC(argc, argv))
             return EXIT_FAILURE;
     }
-    catch (std::exception& e) {
+    catch (std::exception& e)
+    {
         PrintExceptionContinue(&e, "AppInitRPC()");
         return EXIT_FAILURE;
     }
-    catch (...) {
+    catch (...)
+    {
         PrintExceptionContinue(NULL, "AppInitRPC()");
         return EXIT_FAILURE;
     }
@@ -244,10 +250,12 @@ int main(int argc, char* argv[])
     {
         ret = CommandLineRPC(argc, argv);
     }
-    catch (std::exception& e) {
+    catch (std::exception& e)
+    {
         PrintExceptionContinue(&e, "CommandLineRPC()");
     }
-    catch (...) {
+    catch (...)
+    {
         PrintExceptionContinue(NULL, "CommandLineRPC()");
     }
     return ret;
