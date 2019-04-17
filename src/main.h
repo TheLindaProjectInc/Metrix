@@ -177,6 +177,7 @@ extern CWaitableCriticalSection csBestBlock;
 extern CConditionVariable cvBlockChange;
 extern bool fImporting;
 extern bool fReindex;
+extern bool fIsBareMultisigStd;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
 extern CFeeRate minRelayTxFee;
