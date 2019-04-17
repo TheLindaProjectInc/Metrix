@@ -389,7 +389,7 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
 bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 {
     if(!pblock->IsProofOfWork())
-        return error("ProcessBlockFound() : %s is not a proof-of-work block", hashBlock.GetHex());
+        return error("ProcessBlockFound() : %s is not a proof-of-work block", pblock->GetHash().GetHex());
 
     LogPrintf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue));
 
