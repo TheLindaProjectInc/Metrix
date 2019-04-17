@@ -7,7 +7,6 @@ debug/
 *.o
 *.o-*
 *.d
-.*
 *.a
 
 #Dev tools & build testing
