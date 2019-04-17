@@ -373,6 +373,8 @@ AC_TRY_COMPILE([#include <sys/socket.h>],
  [ AC_MSG_RESULT(no)]
 )
 
+AC_SEARCH_LIBS([clock_gettime],[rt])
+
 if test x$enable_wallet != xno; then
     dnl Check for libdb_cxx only if wallet enabled
     BITCOIN_FIND_BDB48
@@ -406,7 +408,7 @@ dnl If neither is available, abort.
 dnl If sleep_for is used, boost_chrono becomes a requirement.
 if test x$ax_cv_boost_chrono = xyes; then
 TEMP_LIBS="$LIBS"
-LIBS="$LIBS $BOOST_LIBS $BOOST_CHRONO_LIB"
+LIBS="$BOOST_LIBS $BOOST_CHRONO_LIB $LIBS"
 AC_TRY_LINK([
   #include <boost/thread/thread.hpp>
   #include <boost/version.hpp>
@@ -425,7 +427,7 @@ fi
 
 if test x$boost_sleep != xyes; then
 TEMP_LIBS="$LIBS"
-LIBS="$LIBS $BOOST_LIBS"
+LIBS="$BOOST_LIBS $LIBS"
 AC_TRY_LINK([
   #include <boost/version.hpp>
   #include <boost/thread.hpp>
