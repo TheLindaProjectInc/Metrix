@@ -1,0 +1,17 @@
+[Unit]
+Description=Linda's distributed currency daemon
+After=network.target
+
+[Service]
+User=lindad
+Group=lindad
+
+Type=forking
+PIDFile=/var/lib/lindad/lindad.pid
+ExecStart=/usr/bin/Lindad -daemon -pid=/var/lib/lindad/lindad.pid -conf=/etc/lindad.conf -datadir=/var/lib/lindad
+
+Restart=always
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
