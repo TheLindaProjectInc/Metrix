@@ -508,7 +508,10 @@ void ThreadStakeMiner(CWallet *pwallet, bool fProofOfStake)
         int64_t nFees = 0;
         auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwallet, fProofOfStake));
         if (!pblocktemplate.get())
+        {
+            LogPrintf("Error in ThreadStakeMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
             return;
+        }
 
         CBlock *pblock = &pblocktemplate->block;
         // Trying to sign a block
