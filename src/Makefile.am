@@ -246,6 +246,7 @@ libbitcoin_util_a_SOURCES = \
   random.cpp \
   rpcprotocol.cpp \
   sync.cpp \
+  uint256.cpp \
   util.cpp \
   utilstrencodings.cpp \
   utilmoneystr.cpp \

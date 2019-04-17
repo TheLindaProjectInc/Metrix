@@ -47,8 +47,8 @@ int64_t gcd(int64_t n,int64_t m) { return m == 0 ? n : gcd(m, n % m); }
 static uint64_t CoinWeightCost(const COutput &out)
 {
     int64_t nTimeWeight = (int64_t)GetTime() - (int64_t)out.tx->nTime;
-    CBigNum bnCoinDayWeight = CBigNum(out.tx->vout[out.i].nValue) * nTimeWeight / (24 * 60 * 60);
-    return bnCoinDayWeight.getuint64();
+    uint256 bnCoinDayWeight = uint256(out.tx->vout[out.i].nValue) * nTimeWeight / (24 * 60 * 60);
+    return bnCoinDayWeight.GetLow64();
 }
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */

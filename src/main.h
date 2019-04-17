@@ -12,7 +12,6 @@
 #include "chainparams.h"
 #include "coins.h"
 #include "core.h"
-#include "bignum.h"
 #include "net.h"
 #include "script.h"
 #include "scrypt.h"
