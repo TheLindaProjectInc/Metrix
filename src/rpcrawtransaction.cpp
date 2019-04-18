@@ -456,9 +456,12 @@ Value createpreciserawtransaction(const Array& params, bool fHelp)
         scriptPubKey.SetDestination(address.Get());
         string sAmount = s.value_.get_str();
         int64_t nAmount = 0;
-        try {
+        try
+        {
             nAmount = boost::lexical_cast<long long>(sAmount);
-        } catch (std::exception &e) {
+        } 
+        catch (std::exception &e)
+        {
             throw JSONRPCError(RPC_TYPE_ERROR, "Amount parse failed");
         }
         if (!MoneyRange(nAmount))
@@ -570,7 +573,9 @@ Value decodescript(const Array& params, bool fHelp)
     if (params[0].get_str().size() > 0){
         vector<unsigned char> scriptData(ParseHexV(params[0], "argument"));
         script = CScript(scriptData.begin(), scriptData.end());
-    } else {
+    }
+    else
+    {
         // Empty scripts are valid
     }
     ScriptPubKeyToJSON(script, r, false);
@@ -636,12 +641,14 @@ Value signrawtransaction(const Array& params, bool fHelp)
     vector<CMutableTransaction> txVariants;
     while (!ssData.empty())
     {
-        try {
+        try
+        {
             CMutableTransaction tx;
             ssData >> tx;
             txVariants.push_back(tx);
         }
-        catch (std::exception &e) {
+        catch (std::exception &e)
+        {
             throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
         }
     }
@@ -663,7 +670,8 @@ Value signrawtransaction(const Array& params, bool fHelp)
         CCoinsViewMemPool viewMempool(viewChain, mempool);
         view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
 
-        BOOST_FOREACH(const CTxIn& txin, mergedTx.vin) {
+        BOOST_FOREACH(const CTxIn& txin, mergedTx.vin)
+        {
             const uint256& prevHash = txin.prevout.hash;
             CCoins coins;
             view.GetCoins(prevHash, coins); // this is certainly allowed to fail
@@ -715,8 +723,10 @@ Value signrawtransaction(const Array& params, bool fHelp)
             CScript scriptPubKey(pkData.begin(), pkData.end());
 
             CCoins coins;
-            if (view.GetCoins(txid, coins)) {
-                if (coins.IsAvailable(nOut) && coins.vout[nOut].scriptPubKey != scriptPubKey) {
+            if (view.GetCoins(txid, coins))
+            {
+                if (coins.IsAvailable(nOut) && coins.vout[nOut].scriptPubKey != scriptPubKey)
+                {
                     string err("Previous output scriptPubKey mismatch:\n");
                     err = err + coins.vout[nOut].scriptPubKey.ToString() + "\nvs:\n"+ scriptPubKey.ToString();
                     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, err);
@@ -851,13 +861,16 @@ Value sendrawtransaction(const Array& params, bool fHelp)
         CValidationState state;
         if (AcceptToMemoryPool(mempool, state, tx, false, NULL, !fOverrideFees))
             SyncWithWallets(tx, NULL);
-        else {
+        else
+        {
             if(state.IsInvalid())
                 throw JSONRPCError(RPC_TRANSACTION_REJECTED, strprintf("%i: %s", state.GetRejectCode(), state.GetRejectReason()));
             else
                 throw JSONRPCError(RPC_TRANSACTION_ERROR, state.GetRejectReason());
         }
-    } else if (fHaveChain) {
+    }
+    else if (fHaveChain)
+    {
         throw JSONRPCError(RPC_TRANSACTION_ALREADY_IN_CHAIN, "transaction already in block chain");
     }
     RelayTransaction(tx);
@@ -902,7 +915,8 @@ Value searchrawtransactions(const Array &params, bool fHelp)
     while (it != vtxhash.end() && nSkip--) it++;
 
     Array result;
-    while (it != vtxhash.end() && nCount--) {
+    while (it != vtxhash.end() && nCount--)
+    {
         CTransaction tx;
         uint256 hashBlock;
         if (!GetTransaction(*it, tx, hashBlock, true))
@@ -910,12 +924,15 @@ Value searchrawtransactions(const Array &params, bool fHelp)
         CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
         ssTx << tx;
         string strHex = HexStr(ssTx.begin(), ssTx.end());
-        if (fVerbose) {
+        if (fVerbose)
+        {
             Object object;
             TxToJSON(tx, hashBlock, object);
             object.push_back(Pair("hex", strHex));
             result.push_back(object);
-        } else {
+        }
+        else
+        {
             result.push_back(strHex);
         }
         it++;

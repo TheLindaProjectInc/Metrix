@@ -81,10 +81,6 @@ void WalletTxToJSON(const CWalletTx& wtx, Object& entry)
     BOOST_FOREACH(const uint256& conflict, wtx.GetConflicts())
         conflicts.push_back(conflict.GetHex());
     entry.push_back(Pair("walletconflicts", conflicts));
-    Array respends;
-    BOOST_FOREACH(const uint256& respend, wtx.GetConflicts(false))
-        respends.push_back(respend.GetHex());
-    entry.push_back(Pair("respendsobserved", respends));
     entry.push_back(Pair("time", wtx.GetTxTime()));
     entry.push_back(Pair("timereceived", (int64_t)wtx.nTimeReceived));
     BOOST_FOREACH(const PAIRTYPE(string,string)& item, wtx.mapValue)
@@ -253,7 +249,7 @@ Value getrawchangeaddress(const Array& params, bool fHelp)
     CReserveKey reservekey(pwalletMain);
     CPubKey vchPubKey;
     if (!reservekey.GetReservedKey(vchPubKey))
-        throw JSONRPCError(RPC_WALLET_ERROR, "Error: Unable to obtain key for change");
+        throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
     reservekey.KeepKey();
 
@@ -1527,12 +1523,6 @@ Value listtransactions(const Array& params, bool fHelp)
             "                                          category of transactions.\n"
             "    \"txid\": \"transactionid\", (string) The transaction id see https://www.mystakingwallet.com/app/explorer/transaction/[transactionid]. Available \n"
             "                                          for 'send' and 'receive' category of transactions.\n"
-            "    \"walletconflicts\" : [\n"
-            "        \"conflictid\",  (string) Ids of transactions, including equivalent clones, that re-spend a txid input.\n"
-            "    ],\n"
-            "    \"respendsobserved\" : [\n"
-            "        \"respendid\",  (string) Ids of transactions, NOT equivalent clones, that re-spend a txid input. \"Double-spends.\"\n"
-            "    ],\n"
             "    \"time\": xxx,              (numeric) The transaction time in seconds since epoch (midnight Jan 1 1970 GMT).\n"
             "    \"timereceived\": xxx,      (numeric) The time received in seconds since epoch (midnight Jan 1 1970 GMT). Available \n"
             "                                          for 'send' and 'receive' category of transactions.\n"
@@ -1716,12 +1706,6 @@ Value listsinceblock(const Array& params, bool fHelp)
             "    \"blockindex\": n,          (numeric) The block index containing the transaction. Available for 'send' and 'receive' category of transactions.\n"
             "    \"blocktime\": xxx,         (numeric) The block time in seconds since epoch (1 Jan 1970 GMT).\n"
             "    \"txid\": \"transactionid\",  (string) The transaction id see https://www.mystakingwallet.com/app/explorer/transaction/[transactionid]. Available for 'send' and 'receive' category of transactions.\n"
-            "    \"walletconflicts\" : [\n"
-            "        \"conflictid\",  (string) Ids of transactions, including equivalent clones, that re-spend a txid input.\n"
-            "    ],\n"
-            "    \"respendsobserved\" : [\n"
-            "        \"respendid\",  (string) Ids of transactions, NOT equivalent clones, that re-spend a txid input. \"Double-spends.\"\n"
-            "    ],\n"
             "    \"time\": xxx,              (numeric) The transaction time in seconds since epoch (Jan 1 1970 GMT).\n"
             "    \"timereceived\": xxx,      (numeric) The time received in seconds since epoch (Jan 1 1970 GMT). Available for 'send' and 'receive' category of transactions.\n"
             "    \"comment\": \"...\",       (string) If a comment is associated with the transaction.\n"
@@ -1799,12 +1783,6 @@ Value gettransaction(const Array& params, bool fHelp)
             "  \"blockindex\" : xx,       (numeric) The block index\n"
             "  \"blocktime\" : ttt,       (numeric) The time in seconds since epoch (1 Jan 1970 GMT)\n"
             "  \"txid\" : \"transactionid\",   (string) The transaction id, see also https://www.mystakingwallet.com/app/explorer/transaction/[transactionid]\n"
-            "  \"walletconflicts\" : [\n"
-            "      \"conflictid\",  (string) Ids of transactions, including equivalent clones, that re-spend a txid input.\n"
-            "  ],\n"
-            "  \"respendsobserved\" : [\n"
-            "      \"respendid\",  (string) Ids of transactions, NOT equivalent clones, that re-spend a txid input. \"Double-spends.\"\n"
-            "  ],\n"
             "  \"time\" : ttt,            (numeric) The transaction time in seconds since epoch (1 Jan 1970 GMT)\n"
             "  \"timereceived\" : ttt,    (numeric) The time received in seconds since epoch (1 Jan 1970 GMT)\n"
             "  \"details\" : [\n"

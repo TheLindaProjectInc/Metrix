@@ -10,7 +10,6 @@
 
 #include "alert.h"
 #include "bignum.h"
-#include "bloom.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "db.h"
@@ -62,7 +61,7 @@ CConditionVariable cvBlockChange;
 int nScriptCheckThreads = 0;
 bool fImporting = false;
 bool fReindex = false;
-bool fBenchmark = false;
+bool fIsBareMultisigStd = true;
 unsigned int nCoinCacheSize = 5000;
 
 
@@ -144,9 +143,6 @@ namespace {
 
 } // anon namespace
 
-// Forward reference functions defined here:
-static const unsigned int MAX_DOUBLESPEND_BLOOM = 1000;
-static void RelayDoubleSpend(const COutPoint& outPoint, const CTransaction& doubleSpend, bool fInBlock, CBloomFilter& filter);
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -170,23 +166,9 @@ struct CMainSignals {
     boost::signals2::signal<void (const uint256 &)> Inventory;
     // Tells listeners to broadcast their data.
     boost::signals2::signal<void (bool)> Broadcast;
-    // Notifies listeners of detection of a double-spent transaction. Arguments are outpoint that is
-    // double-spent, first transaction seen, double-spend transaction, and whether the second double-spend
-    // transaction was first seen in a block.
-    // Note: only notifies if the previous transaction is in the memory pool; if previous transction was in a block,
-    // then the double-spend simply fails when we try to lookup the inputs in the current UTXO set.
-    boost::signals2::signal<void(const COutPoint&, const CTransaction&, bool)> DetectedDoubleSpend;
 } g_signals;
 
 } // anon namespace
-
-void RegisterInternalSignals() {
-    static CBloomFilter doubleSpendFilter;
-    seed_insecure_rand();
-    doubleSpendFilter = CBloomFilter(MAX_DOUBLESPEND_BLOOM, 0.01, insecure_rand(), BLOOM_UPDATE_NONE);
-
-    g_signals.DetectedDoubleSpend.connect(boost::bind(RelayDoubleSpend, _1, _2, _3, doubleSpendFilter));
-}
 
 void RegisterWallet(CWalletInterface* pwalletIn) {
     g_signals.SyncTransaction.connect(boost::bind(&CWalletInterface::SyncTransaction, pwalletIn, _1, _2));
@@ -669,9 +651,14 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             reason = "scriptpubkey";
             return false;
         }
+
         if (whichType == TX_NULL_DATA)
             nDataOut++;
-        if (txout.IsDust(::minRelayTxFee)) {
+        else if ((whichType == TX_MULTISIG) && (!fIsBareMultisigStd)) {
+            reason = "bare-multisig";
+            return false;
+        }
+        else if (txout.IsDust(::minRelayTxFee)) {
             reason = "dust";
             return false;
         }
@@ -960,23 +947,6 @@ int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
     return nMinFee;
 }
 
-// Exponentially limit the rate of nSize flow to nLimit.  nLimit unit is thousands-per-minute.
-bool RateLimitExceeded(double& dCount, int64_t& nLastTime, int64_t nLimit, unsigned int nSize)
-{
-    static CCriticalSection csLimiter;
-    int64_t nNow = GetTime();
-
-    LOCK(csLimiter);
-
-    // Use an exponentially decaying ~10-minute window:
-    dCount *= pow(1.0 - 1.0 / 600.0, (double)(nNow - nLastTime));
-    nLastTime = nNow;
-    if (dCount >= nLimit * 10 * 1000)
-        return true;
-    dCount += nSize;
-    return false;
-}
-
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransaction &tx, bool fLimitFree,
                         bool* pfMissingInputs, bool fRejectInsaneFee)
 {
@@ -1036,10 +1006,9 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
             COutPoint outpoint = tx.vin[i].prevout;
-            // Does tx conflict with a member of the pool, and is it not equivalent to that member?
-            if (pool.mapNextTx.count(outpoint) && !tx.IsEquivalentTo(*pool.mapNextTx[outpoint].ptx))
+            if (pool.mapNextTx.count(outpoint))
             {
-                g_signals.DetectedDoubleSpend(outpoint, tx, false);
+                // Disable replacement feature for now
                 return false;
             }
         }
@@ -1129,14 +1098,24 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // MBK: Support the tx fee increase at blockheight
         if (fLimitFree && nFees < ::minRelayTxFee.GetFee(nSize))
         {
+            static CCriticalSection csFreeLimiter;
             static double dFreeCount;
-            static int64_t nLastFreeTime;
-            static int64_t nFreeLimit = GetArg("-limitfreerelay", 15);
+            static int64_t nLastTime;
+            int64_t nNow = GetTime();
+            
+            LOCK(csFreeLimiter);
 
-            if (RateLimitExceeded(dFreeCount, nLastFreeTime, nFreeLimit, nSize))
-                return state.DoS(0, error("AcceptToMemoryPool : free transaction rejected by rate limiter"),
-                    REJECT_INSUFFICIENTFEE, "insufficient priority");
+            // Use an exponentially decaying ~10-minute window:
+            dFreeCount *= pow(1.0 - 1.0/600.0, (double)(nNow - nLastTime));
+            nLastTime = nNow;
+            // -limitfreerelay unit is thousand-bytes-per-minute
+            // At default rate it would take over a month to fill 1GB
+            if (dFreeCount > GetArg("-limitfreerelay", 15)*10*1000) {
+                errorMessage = "free transaction rejected by rate limiter";
+                return error("AcceptToMemoryPool : free transaction rejected by rate limiter");
+            }
             LogPrint("mempool", "Rate limit dFreeCount: %g => %g\n", dFreeCount, dFreeCount+nSize);
+            dFreeCount += nSize;
         }
 	    
         if (fRejectInsaneFee && nFees > ::minRelayTxFee.GetFee(nSize) * 10000)
@@ -1299,47 +1278,6 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
     return true;
 }
 
-static void RelayDoubleSpend(const COutPoint& outPoint, const CTransaction& doubleSpend, bool fInBlock, CBloomFilter& filter)
-{
-    // Relaying double-spend attempts to our peers lets them detect when
-    // somebody might be trying to cheat them. However, blindly relaying
-    // every double-spend across the entire network gives attackers
-    // a denial-of-service attack: just generate a stream of double-spends
-    // re-spending the same (limited) set of outpoints owned by the attacker.
-    // So, we use a bloom filter and only relay (at most) the first double
-    // spend for each outpoint. False-positives ("we have already relayed")
-    // are OK, because if the peer doesn't hear about the double-spend
-    // from us they are very likely to hear about it from another peer, since
-    // each peer uses a different, randomized bloom filter.
-
-    if (fInBlock || filter.contains(outPoint)) return;
-
-    // Apply an independent rate limit to double-spend relays
-    static double dRespendCount;
-    static int64_t nLastRespendTime;
-    static int64_t nRespendLimit = GetArg("-limitrespendrelay", 100);
-    unsigned int nSize = ::GetSerializeSize(doubleSpend, SER_NETWORK, PROTOCOL_VERSION);
-
-    if (RateLimitExceeded(dRespendCount, nLastRespendTime, nRespendLimit, nSize))
-    {
-        LogPrint("mempool", "Double-spend relay rejected by rate limiter\n");
-        return;
-    }
-
-    LogPrint("mempool", "Rate limit dRespendCount: %g => %g\n", dRespendCount, dRespendCount + nSize);
-
-    // Clear the filter on average every MAX_DOUBLE_SPEND_BLOOM
-    // insertions
-    if (insecure_rand() % MAX_DOUBLESPEND_BLOOM == 0)
-        filter.clear();
-
-    filter.insert(outPoint);
-
-    RelayTransaction(doubleSpend);
-
-    // Share conflict with wallet
-    g_signals.SyncTransaction(doubleSpend, NULL);
-}
 
 int CMerkleTx::GetDepthInMainChainINTERNAL(CBlockIndex* &pindexRet) const
 {
@@ -2153,6 +2091,12 @@ void ThreadScriptCheck() {
     scriptcheckqueue.Thread();
 }
 
+static int64_t nTimeVerify = 0;
+static int64_t nTimeConnect = 0;
+static int64_t nTimeIndex = 0;
+static int64_t nTimeCallbacks = 0;
+static int64_t nTimeTotal = 0;
+
 bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& view, bool fJustCheck)
 {
     AssertLockHeld(cs_main);
@@ -2185,6 +2129,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     CBlockUndo blockundo;
     CCheckQueueControl<CScriptCheck> control(fScriptChecks && nScriptCheckThreads ? &scriptcheckqueue : NULL);
+
+    int64_t nTimeStart = GetTimeMicros();
     int64_t nFees = 0;
     int64_t nValueIn = 0;
     int64_t nValueOut = 0;
@@ -2242,6 +2188,11 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
 
+    int64_t nTime1 = GetTimeMicros();
+    nTimeConnect += nTime1 - nTimeStart;
+    LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001* (nTime1 - nTimeStart), 0.001* (nTime1 - nTimeStart) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime1 - nTimeStart) / (nInputs - 1), nTimeConnect * 0.000001);
+
+
     if (block.IsProofOfWork()) {
         int64_t nReward = GetProofOfWorkReward(nFees);
         
@@ -2282,6 +2233,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     pindex->nMint = nValueOut - nValueIn + nFees;
     pindex->nMoneySupply = (pindex->pprev? pindex->pprev->nMoneySupply : 0) + nValueOut - nValueIn;
 
+    int64_t nTime2 = GetTimeMicros();
+    nTimeVerify += nTime2 - nTimeStart;
+    LogPrint("bench", "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs]\n", nInputs - 1, 0.001* (nTime2 - nTimeStart), nInputs <= 1 ? 0 : 0.001 * (nTime2 - nTimeStart) / (nInputs - 1), nTimeVerify * 0.000001);
+
     if (fJustCheck)
         return true;
 
@@ -2319,6 +2274,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     ret = view.SetBestBlock(pindex->GetBlockHash());
     assert(ret);
 
+    int64_t nTime3 = GetTimeMicros(); nTimeIndex += nTime3 - nTime2;
+    LogPrint("bench", "    - Index writing: %.2fms [%.2fs]\n", 0.001* (nTime3 - nTime2), nTimeIndex* 0.000001);
+
+
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
         SyncWithWallets(tx, &block);
     
@@ -2326,6 +2285,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     static uint256 hashPrevBestCoinBase;
     g_signals.UpdatedTransaction(hashPrevBestCoinBase);
     hashPrevBestCoinBase = block.vtx[0].GetHash();
+
+    int64_t nTime4 = GetTimeMicros(); nTimeCallbacks += nTime4 - nTime3;
+    LogPrint("bench", "    - Callbacks: %.2fms [%.2fs]\n", 0.001* (nTime4 - nTime3), nTimeCallbacks* 0.000001);
+
 
     return true;
 }
@@ -2436,8 +2399,7 @@ bool static DisconnectTip(CValidationState &state)
             return error("DisconnectTip() : DisconnectBlock %s failed", pindexDelete->GetBlockHash().ToString());
         assert(view.Flush());
     }
-    if (fBenchmark)
-        LogPrintf("- Disconnect: %.2fms\n", (GetTimeMicros() - nStart) * 0.001);
+    LogPrint("bench", "- Disconnect block: %.2fms\n", (GetTimeMicros() - nStart) * 0.001);
     // Write the chain state to disk, if necessary.
     if (!WriteChainState(state))
         return false;
@@ -2461,6 +2423,11 @@ bool static DisconnectTip(CValidationState &state)
     return true;
 }
 
+static int64_t nTimeReadFromDisk = 0;
+static int64_t nTimeConnectTotal = 0;
+static int64_t nTimeFlush = 0;
+static int64_t nTimeChainState = 0;
+static int64_t nTimePostConnect = 0;
 
 // Connect a new block to chainActive.
 bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew) 
@@ -2469,11 +2436,15 @@ bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew)
     mempool.check(pcoinsTip);
 
     // Read block from disk.
+    int64_t nTime1 = GetTimeMicros();
     CBlock block;
     if (!ReadBlockFromDisk(block, pindexNew))
         return state.Abort(_("Failed to read block"));
     // Apply the block atomically to the chain state.
-    int64_t nStart = GetTimeMicros();
+    int64_t nTime2 = GetTimeMicros();
+    nTimeReadFromDisk += nTime2 - nTime1;
+    int64_t nTime3;
+    LogPrint("bench", "  - Load block from disk: %.2fms [%.2fs]\n", (nTime2 - nTime1) * 0.001, nTimeReadFromDisk * 0.000001);
     {
         CCoinsViewCache view(*pcoinsTip, true);
         CInv inv(MSG_BLOCK, pindexNew->GetBlockHash());
@@ -2484,14 +2455,18 @@ bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew)
             return error("ConnectTip() : ConnectBlock %s failed", pindexNew->GetBlockHash().ToString());
         }
         mapBlockSource.erase(inv.hash);
+        nTime3 = GetTimeMicros(); nTimeConnectTotal += nTime3 - nTime2;
+        LogPrint("bench", "  - Connect total: %.2fms [%.2fs]\n", (nTime3 - nTime2) * 0.001, nTimeConnectTotal * 0.000001);
         assert(view.Flush());
     }
 
-    if (fBenchmark)
-        LogPrintf("- Connect: %.2fms\n", (GetTimeMicros() - nStart) * 0.001);
+    int64_t nTime4 = GetTimeMicros(); nTimeFlush += nTime4 - nTime3;
+    LogPrint("bench", "  - Flush: %.2fms [%.2fs]\n", (nTime4 - nTime3) * 0.001, nTimeFlush * 0.000001);
     // Write the chain state to disk, if necessary.
     if (!WriteChainState(state))
         return false;
+    int64_t nTime5 = GetTimeMicros(); nTimeChainState += nTime5 - nTime4;
+    LogPrint("bench", "  - Writing chainstate: %.2fms [%.2fs]\n", (nTime5 - nTime4) * 0.001, nTimeChainState * 0.000001);
     // Remove conflicting transactions from the mempool.
     list<CTransaction> txConflicted;
     mempool.removeForBlock(block.vtx, pindexNew->nHeight, txConflicted);
@@ -2507,6 +2482,9 @@ bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew)
     BOOST_FOREACH(const CTransaction &tx, block.vtx) {
         SyncWithWallets(tx, &block);
     }
+    int64_t nTime6 = GetTimeMicros(); nTimePostConnect += nTime6 - nTime5; nTimeTotal += nTime6 - nTime1;
+    LogPrint("bench", "  - Connect postprocess: %.2fms [%.2fs]\n", (nTime6 - nTime5)* 0.001, nTimePostConnect* 0.000001);
+    LogPrint("bench", "- Connect block: %.2fms [%.2fs]\n", (nTime6 - nTime1)* 0.001, nTimeTotal* 0.000001);
     return true;
 }
 
@@ -3178,7 +3156,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
         return false;
 
     if (!CheckBlock(block, state)) {
-        if (state.Invalid() && !state.CorruptionPossible()) {
+        if (state.IsInvalid() && !state.CorruptionPossible()) {
             pindex->nStatus |= BLOCK_FAILED_VALID;
         }
         return false;

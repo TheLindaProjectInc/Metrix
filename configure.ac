@@ -9,6 +9,7 @@ define(_COPYRIGHT_YEAR, 2018)
 AC_INIT([Lindacoin],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[support@lindacoin.com],[lindacoin])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
+LT_INIT([disable-shared])
 AC_CANONICAL_HOST
 AH_TOP([#ifndef BITCOIN_CONFIG_H])
 AH_TOP([#define BITCOIN_CONFIG_H])
@@ -372,6 +373,8 @@ AC_TRY_COMPILE([#include <sys/socket.h>],
  [ AC_MSG_RESULT(no)]
 )
 
+AC_SEARCH_LIBS([clock_gettime],[rt])
+
 if test x$enable_wallet != xno; then
     dnl Check for libdb_cxx only if wallet enabled
     BITCOIN_FIND_BDB48
@@ -405,7 +408,7 @@ dnl If neither is available, abort.
 dnl If sleep_for is used, boost_chrono becomes a requirement.
 if test x$ax_cv_boost_chrono = xyes; then
 TEMP_LIBS="$LIBS"
-LIBS="$LIBS $BOOST_LIBS $BOOST_CHRONO_LIB"
+LIBS="$BOOST_LIBS $BOOST_CHRONO_LIB $LIBS"
 AC_TRY_LINK([
   #include <boost/thread/thread.hpp>
   #include <boost/version.hpp>
@@ -424,7 +427,7 @@ fi
 
 if test x$boost_sleep != xyes; then
 TEMP_LIBS="$LIBS"
-LIBS="$LIBS $BOOST_LIBS"
+LIBS="$BOOST_LIBS $LIBS"
 AC_TRY_LINK([
   #include <boost/version.hpp>
   #include <boost/thread.hpp>
@@ -693,6 +696,7 @@ AM_CONDITIONAL([USE_LCOV],[test x$use_lcov == xyes])
 AM_CONDITIONAL([USE_COMPARISON_TOOL],[test x$use_comparison_tool != xno])
 AM_CONDITIONAL([EMBEDDED_LEVELDB],[true])
 AM_CONDITIONAL([GLIBC_BACK_COMPAT],[test x$use_glibc_compat = xyes])
+AM_CONDITIONAL([USE_LIBSECP256K1],[test x$use_libsecp256k1 = xyes])
 
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
 AC_DEFINE(CLIENT_VERSION_MINOR, _CLIENT_VERSION_MINOR, [Minor version])

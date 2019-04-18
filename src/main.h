@@ -177,6 +177,7 @@ extern CWaitableCriticalSection csBestBlock;
 extern CConditionVariable cvBlockChange;
 extern bool fImporting;
 extern bool fReindex;
+extern bool fIsBareMultisigStd;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
 extern CFeeRate minRelayTxFee;
@@ -202,9 +203,6 @@ class CValidationState;
 struct CBlockTemplate;
 class CWalletInterface;
 struct CNodeStateStats;
-
-/** Set up internal signal handlers **/
-void RegisterInternalSignals();
 
 /** Register a wallet to receive updates from core */
 void RegisterWallet(CWalletInterface* pwalletIn);

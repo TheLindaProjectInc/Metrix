@@ -405,7 +405,7 @@ bool CWallet::SetMaxVersion(int nVersion)
     return true;
 }
 
-set<uint256> CWallet::GetConflicts(const uint256& txid, bool includeEquivalent) const
+set<uint256> CWallet::GetConflicts(const uint256& txid) const
 {
     set<uint256> result;
     AssertLockHeld(cs_wallet);
@@ -424,8 +424,7 @@ set<uint256> CWallet::GetConflicts(const uint256& txid, bool includeEquivalent) 
         
         range = mapTxSpends.equal_range(txin.prevout);
         for (TxSpends::const_iterator it = range.first; it != range.second; ++it)
-            if (includeEquivalent || !wtx.IsEquivalentTo(mapWallet.at(it->second)))
-                result.insert(it->second);
+            result.insert(it->second);
     }
     return result;
 }
@@ -454,7 +453,6 @@ void CWallet::SyncMetaData(pair<TxSpends::iterator, TxSpends::iterator> range)
         const uint256& hash = it->second;
         CWalletTx* copyTo = &mapWallet[hash];
         if (copyFrom == copyTo) continue;
-        if (!copyFrom->IsEquivalentTo(*copyTo)) continue;
         copyTo->mapValue = copyFrom->mapValue;
         copyTo->vOrderForm = copyFrom->vOrderForm;
         // fTimeReceivedIsTxTime not copied on purpose
@@ -798,28 +796,6 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFromLoadWallet)
         // Notify UI of new or updated transaction
         NotifyTransactionChanged(this, hash, fInsertedNew ? CT_NEW : CT_UPDATED);
 
-        // Notifications for existing transactions that now have conflicts with this one
-        if (fInsertedNew)
-        {
-            BOOST_FOREACH(const uint256& conflictHash, wtxIn.GetConflicts(false))
-            {
-                CWalletTx& txConflict = mapWallet[conflictHash];
-                NotifyTransactionChanged(this, conflictHash, CT_UPDATED); //Updates UI table
-                if (IsFromMe(txConflict) || IsMine(txConflict))
-                {
-                    NotifyTransactionChanged(this, conflictHash, CT_GOT_CONFLICT);  //Throws dialog
-                    // external respend notify
-                    std::string strCmd = GetArg("-respendnotify", "");
-                    if (!strCmd.empty())
-                    {
-                        boost::replace_all(strCmd, "%s", wtxIn.GetHash().GetHex());
-                        boost::replace_all(strCmd, "%t", conflictHash.GetHex());
-                        boost::thread t(runCommand, strCmd); // thread runs free
-                    }
-                }
-            }
-        }
-
         // notify an external script when a wallet transaction comes in or is updated
         std::string strCmd = GetArg("-walletnotify", "");
 
@@ -846,12 +822,7 @@ bool CWallet::AddToWalletIfInvolvingMe(const CTransaction& tx, const CBlock* pbl
         mapValue_t mapNarr;
         FindStealthTransactions(tx, mapNarr);
 
-
-        bool fIsConflicting = IsConflicting(tx);
-        if (fIsConflicting)
-            nConflictsReceived++;
-
-        if (fExisted || IsMine(tx) || IsFromMe(tx) || fIsConflicting)
+        if (fExisted || IsMine(tx) || IsFromMe(tx))
         {
             CWalletTx wtx(this,tx);
 
@@ -1166,7 +1137,7 @@ void CWallet::ReacceptWalletTransactions()
 
         int nDepth = wtx.GetDepthInMainChain();
 
-        if (!wtx.IsCoinBase() && !wtx.IsCoinStake() && nDepth < 0 && (IsMine(wtx) || IsFromMe(wtx)))
+        if (!wtx.IsCoinBase() && !wtx.IsCoinStake() && nDepth < 0)
         {
             // Try to add to memory pool
             LOCK(mempool.cs);
@@ -1186,13 +1157,13 @@ void CWalletTx::RelayWalletTransaction()
     }
 }
 
-set<uint256> CWalletTx::GetConflicts(bool includeEquivalent) const
+set<uint256> CWalletTx::GetConflicts() const
 {
     set<uint256> result;
     if (pwallet != NULL)
     {
         uint256 myHash = GetHash();
-        result = pwallet->GetConflicts(myHash, includeEquivalent);
+        result = pwallet->GetConflicts(myHash);
         result.erase(myHash);
     }
     return result;
@@ -2712,7 +2683,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                     break;
 
                 // Small enough, and priority high enough, to send for free
-                if (dPriority >= dPriorityNeeded)
+                if (dPriorityNeeded > 0 && dPriority >= dPriorityNeeded)
                     break;
 
                 // Include more fee and try again.
@@ -4436,11 +4407,7 @@ bool CReserveKey::GetReservedKey(CPubKey& pubkey)
         if (nIndex != -1)
             vchPubKey = keypool.vchPubKey;
         else {
-            if (pwallet->vchDefaultKey.IsValid()) {
-                LogPrintf("CReserveKey::GetReservedKey(): Warning: Using default key instead of a new key, top up your keypool!");
-                vchPubKey = pwallet->vchDefaultKey;
-            } else
-                return false;
+            return false;
         }
     }
     assert(vchPubKey.IsValid());

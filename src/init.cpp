@@ -260,6 +260,9 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -par=<n>               " + strprintf(_("Set the number of script verification threads (%u to %d, 0 = auto, <0 = leave that many cores free, default: %d)"), -(int)boost::thread::hardware_concurrency(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS) + "\n";
     strUsage += "  -pid=<file>            " + _("Specify pid file (default: Lindad.pid)") + "\n";
     strUsage += "  -reindex               " + _("Rebuild blockchain index from current blk000??.dat files") + "\n";
+#if !defined(WIN32)
+    strUsage += "  -sysperms              " + _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)") + "\n";
+#endif
 
     strUsage += "\n" + _("Connection options:") + "\n";
     strUsage += "  -addnode=<ip>          " + _("Add a node to connect to and attempt to keep the connection open") + "\n";
@@ -277,6 +280,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -maxreceivebuffer=<n>  " + _("Maximum per-connection receive buffer, <n>*1000 bytes (default: 5000)") + "\n";
     strUsage += "  -maxsendbuffer=<n>     " + _("Maximum per-connection send buffer, <n>*1000 bytes (default: 1000)") + "\n";
     strUsage += "  -onlynet=<net>         " + _("Only connect to nodes in network <net> (ipv4, ipv6 or onion)") + "\n";
+    strUsage += "  -permitbaremultisig    " + _("Relay non-P2SH multisig (default: 1)") + "\n";
     strUsage += "  -port=<port>           " + _("Listen for connections on <port> (default: 15714 or testnet: 25714)") + "\n";
     strUsage += "  -proxy=<ip:port>       " + _("Connect through SOCKS5 proxy") + "\n";
     strUsage += "  -seednode=<ip>         " + _("Connect to a node to retrieve peer addresses, and disconnect") + "\n";
@@ -295,7 +299,8 @@ std::string HelpMessage(HelpMessageMode mode)
 #ifdef ENABLE_WALLET
     strUsage += "\n" + _("Wallet options:") + "\n";
     strUsage += "  -disablewallet         " + _("Do not load the wallet and disable wallet RPC calls") + "\n";
-    strUsage += "  -mintxfee=<amt>        " + strprintf(_("Fees (in BTC/Kb) smaller than this are considered zero fee for transaction creation (default: %s)"), FormatMoney(CWallet::minTxFee.GetFeePerK())) + "\n";
+    if (GetBoolArg("-help-debug", false))
+        strUsage += "  -mintxfee=<amt>        " + strprintf(_("Fees (in BTC/Kb) smaller than this are considered zero fee for transaction creation (default: %s)"), FormatMoney(CWallet::minTxFee.GetFeePerK())) + "\n";
     strUsage += "  -keypool=<n>           " + _("Set key pool size to <n> (default: 100)") + "\n";
     strUsage += "  -paytxfee=<amt>        " + _("Fee per KB to add to transactions you send") + "\n";
     strUsage += "  -txconfirmtarget=<n>   " + _("If paytxfee is not set, include enough fee so transactions are confirmed on average within n blocks (default: 1)") + "\n";
@@ -307,7 +312,6 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -upgradewallet         " + _("Upgrade wallet to latest format") + "\n";
     strUsage += "  -wallet=<file>          " + _("Specify wallet file (within data directory)") + "\n";
     strUsage += "  -walletnotify=<cmd>    " + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n";
-    strUsage += "  -respendnotify=<cmd>   " + _("Execute command when a network tx respends wallet tx input (%s=respend TxID, %t=wallet TxID)") + "\n";
     strUsage += "  -zapwallettxes=<mode>  " + _("Delete all wallet transactions and only recover those part of the blockchain through -rescan on startup") + "\n";
     strUsage += "                         " + _("(default: 1, 1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)") + "\n";
 #endif
@@ -325,7 +329,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -debug=<category>      " + _("Output debugging information (default: 0, supplying <category> is optional)") + "\n";
     strUsage += _("If <category> is not supplied, output all debugging information.") + "\n";
     strUsage += _("<category> can be:");
-    strUsage += " addrman, alert, db, lock, rand, rpc, selectcoins, mempool, net,";
+    strUsage += " addrman, alert, bench, db, lock, rand, rpc, selectcoins, mempool, net,";
     strUsage += " coinage, coinstake, creation, stakemodifier";
     if (mode == HMM_BITCOIN_QT)
     {
@@ -533,7 +537,16 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 #endif
 #ifndef WIN32
-    umask(077);
+
+    if (GetBoolArg("-sysperms", false)) {
+#ifdef ENABLE_WALLET
+        if (!GetBoolArg("-disablewallet", false))
+            return InitError("Error: -sysperms is not allowed in combination with enabled wallet functionality");
+#endif
+    }
+    else {
+        umask(077);
+    }
 
     // Clean shutdown on SIGTERM
     registerSignalHandler(SIGTERM, HandleSIGTERM);
@@ -645,6 +658,8 @@ bool AppInit2(boost::thread_group& threadGroup)
     // Check for -tor - as this is a privacy risk to continue, exit here
     if (GetBoolArg("-tor", false))
         return InitError(_("Error: Unsupported argument -tor found, use -onion."));
+    if (GetBoolArg("-benchmark", false))
+        InitWarning(_("Warning: Unsupported argument -benchmark ignored, use -debug=bench."));
     // Check for -socks - as this is a privacy risk to continue, exit here
     if (mapArgs.count("-socks"))
         return InitError(_("Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported."));
@@ -707,7 +722,9 @@ bool AppInit2(boost::thread_group& threadGroup)
     bSpendZeroConfChange = GetArg("-spendzeroconfchange", true);
 
     std::string strWalletFile = GetArg("-wallet", "wallet.dat");
-#endif
+#endif // ENABLE_WALLET
+
+    fIsBareMultisigStd = GetArg("-permitbaremultisig", true);
 
     fConfChange = GetBoolArg("-confchange", false);
     fMinimizeCoinAge = GetBoolArg("-minimizecoinage", false);
@@ -1428,7 +1445,6 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("mapAddressBook.size() = %u\n",  pwalletMain ? pwalletMain->mapAddressBook.size() : 0);
 #endif
 
-    RegisterInternalSignals();
     StartNode(threadGroup);
 
 #ifdef ENABLE_WALLET

@@ -49,4 +49,11 @@ void SelectBaseParams(CBaseChainParams::Network network);
  */
 bool SelectBaseParamsFromCommandLine();
 
+/**
+ * Return true if SelectBaseParamsFromCommandLine() has been called to select
+ * a network.
+ */
+bool AreBaseParamsConfigured();
+
+
 #endif

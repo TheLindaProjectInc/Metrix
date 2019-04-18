@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "coins.h"
+#include "random.h"
 
 #include <assert.h>
 
@@ -60,6 +61,7 @@ bool CCoinsView::SetBestBlock(const uint256 &hashBlock) { return false; }
 bool CCoinsView::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) { return false; }
 bool CCoinsView::GetStats(CCoinsStats &stats) { return false; }
 
+CCoinsKeyHasher::CCoinsKeyHasher() : salt(GetRandHash()) {}
 
 CCoinsViewBacked::CCoinsViewBacked(CCoinsView &viewIn) : base(&viewIn) { }
 bool CCoinsViewBacked::GetCoins(const uint256 &txid, CCoins &coins) { return base->GetCoins(txid, coins); }
@@ -86,8 +88,8 @@ bool CCoinsViewCache::GetCoins(const uint256 &txid, CCoins &coins) {
 }
 
 CCoinsMap::iterator CCoinsViewCache::FetchCoins(const uint256 &txid) {
-    CCoinsMap::iterator it = cacheCoins.lower_bound(txid);
-    if (it != cacheCoins.end() && it->first == txid)
+    CCoinsMap::iterator it = cacheCoins.find(txid);
+    if (it != cacheCoins.end())
         return it;
     CCoins tmp;
     if (!base->GetCoins(txid,tmp))
