@@ -324,13 +324,13 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         if (fDebug && GetBoolArg("-printpriority", false))
             LogPrintf("CreateNewBlock(): total size %u\n", nBlockSize);
 // >Linda<
+        txNew.vin[0].scriptSig = CScript() << nHeight << OP_0;
         // Compute final coinbase transaction.
-        pblock->vtx[0].vin[0].scriptSig = CScript() << nHeight << OP_0;
         if (!fProofOfStake)
         {
             int64_t nReward = GetProofOfWorkReward(nFees);
-            pblock->vtx[0] = txNew;
-            pblock->vtx[0].vout[0].nValue = nReward;
+            txNew.vout[0].nValue = nReward;
+            pblock->vtx[0] = txNew;        
         }
 
         // Fill in header
