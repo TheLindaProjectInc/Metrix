@@ -162,14 +162,14 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
         //  - this is checked later by .check() in many places and by ThreadCheckDarkSendPool()
 
         CValidationState state;
-        CTransaction tx = CTransaction();
+        CMutableTransaction tx = CMutableTransaction();
         int64_t nTempTxOut = (MASTERNODE_COLLATERAL / COIN) - 1;
 
         CTxOut vout = CTxOut(nTempTxOut*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
         bool pfMissingInputs = false;
-        if(AcceptableInputs(mempool, state, tx, false, &pfMissingInputs)){
+        if(AcceptableInputs(mempool, state, CTransaction(tx), false, &pfMissingInputs)){
             if(fDebug) LogPrintf("dsee - Accepted masternode entry %i %i\n", count, current);
 
             if(GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS){
@@ -665,14 +665,14 @@ void CMasterNode::Check()
 
     if(!unitTest){
         CValidationState state;
-        CTransaction tx = CTransaction();
+        CMutableTransaction tx = CMutableTransaction();
         int64_t nTempTxOut = (MASTERNODE_COLLATERAL/COIN) - 1;
         CTxOut vout = CTxOut(nTempTxOut*COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
 
         bool pfMissingInputs = false;
-	    if(!AcceptableInputs(mempool, state, tx, false, &pfMissingInputs))
+	    if(!AcceptableInputs(mempool, state, CTransaction(tx), false, &pfMissingInputs))
         {
             enabled = 3;
             return;
