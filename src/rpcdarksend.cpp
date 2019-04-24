@@ -122,6 +122,8 @@ Value getpoolinfo(const Array& params, bool fHelp)
 Value masternode(const Array& params, bool fHelp)
 {
     string strCommand;
+    string strCommandParam;
+
     if (params.size() >= 1)
         strCommand = params[0].get_str();
 
@@ -300,7 +302,7 @@ Value masternode(const Array& params, bool fHelp)
                 ExtractDestination(pubkey, address1);
                 CBitcoinAddress address2(address1);
 
-                obj.push_back(Pair(mn.addr.ToString(),       address2.ToString()));
+                obj.push_back(Pair(mn.addr.ToString(), address2.ToString()));
             } else if (strCommand == "protocol") {
                 obj.push_back(Pair(mn.addr.ToString(),       (int64_t)mn.protocolVersion));
             } else if (strCommand == "lastseen") {
@@ -614,20 +616,26 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "status" || strCommand == "status-all")
     {
+        // This will take a pubkey parameter for filtering
+        if (params.size() == 2) {
+            strCommandParam = params[1].get_str().c_str();
+        }
+
         // get masternode status
-        std::vector<Value> resultArr;      
+        std::vector<Value> resultArr;
         std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(chainActive.Height(), MIN_INSTANTX_PROTO_VERSION);
 
         BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
-            if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr) { 
-                Object mnObj;
+            
+            // get masternode address
+            CScript pubkey;
+            pubkey = GetScriptForDestination(mn.pubkey.GetID());
+            CTxDestination address1;
+            ExtractDestination(pubkey, address1);
+            CBitcoinAddress address2(address1);
 
-                // get masternode address
-                CScript pubkey;
-                pubkey = GetScriptForDestination(mn.pubkey.GetID());
-                CTxDestination address1;
-                ExtractDestination(pubkey, address1);
-                CBitcoinAddress address2(address1);
+            if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr || address2.ToString() == strCommandParam) {
+                Object mnObj;
 
                 mnObj.push_back(Pair("minProtoVersion", mn.minProtoVersion));
                 mnObj.push_back(Pair("address", mn.addr.ToString()));
@@ -647,9 +655,9 @@ Value masternode(const Array& params, bool fHelp)
                     mnObj.push_back(Pair("status", activeMasternode.status));                
 
                 resultArr.push_back(mnObj);
+
             }
-    	}
-        
+    	}  
     	return resultArr;
     }
 
