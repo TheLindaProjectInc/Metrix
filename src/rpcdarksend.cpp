@@ -122,6 +122,8 @@ Value getpoolinfo(const Array& params, bool fHelp)
 Value masternode(const Array& params, bool fHelp)
 {
     string strCommand;
+    string strCommandParam;
+
     if (params.size() >= 1)
         strCommand = params[0].get_str();
 
@@ -276,13 +278,17 @@ Value masternode(const Array& params, bool fHelp)
     {
         std::string strCommand = "active";
 
-        if (params.size() == 2){
+        if (params.size() >= 2){
             strCommand = params[1].get_str().c_str();
+        }
+
+        if (params.size() == 3) {
+            strCommandParam = params[2].get_str().c_str();
         }
 
         if (strCommand != "active" && strCommand != "vin" && strCommand != "pubkey" && strCommand != "lastseen" && strCommand != "activeseconds" && strCommand != "rank" && strCommand != "protocol"){
             throw runtime_error(
-                "list supports 'active', 'vin', 'pubkey', 'lastseen', 'activeseconds', 'rank', 'protocol'\n");
+                "list supports 'active', 'vin', 'pubkey <pubkey>(optional)', 'lastseen', 'activeseconds', 'rank', 'protocol'\n");
         }
 
         Object obj;
@@ -300,7 +306,16 @@ Value masternode(const Array& params, bool fHelp)
                 ExtractDestination(pubkey, address1);
                 CBitcoinAddress address2(address1);
 
-                obj.push_back(Pair(mn.addr.ToString(),       address2.ToString()));
+                if (!strCommandParam.empty()) {
+                    if (address2.ToString() == strCommandParam) {
+                        obj.push_back(Pair(mn.addr.ToString(), address2.ToString()));
+                        return obj;
+                    }
+                }
+                else {
+                    obj.push_back(Pair(mn.addr.ToString(), address2.ToString()));
+                }
+
             } else if (strCommand == "protocol") {
                 obj.push_back(Pair(mn.addr.ToString(),       (int64_t)mn.protocolVersion));
             } else if (strCommand == "lastseen") {
