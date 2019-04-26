@@ -4,9 +4,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "core.h"
+#include "tinyformat.h"
+#include "scrypt.h"
 #include "utilstrencodings.h"
 #include "utilmoneystr.h"
-#include "scrypt.h"
 
 
 std::string COutPoint::ToString() const
