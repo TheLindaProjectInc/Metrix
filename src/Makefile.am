@@ -301,6 +301,7 @@ endif
 
 Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 Lindad_CPPFLAGS = $(BITCOIN_INCLUDES)
+Lindad_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
 
 # Linda-cli binary #
 Linda_cli_LDADD = \
@@ -330,20 +331,22 @@ Linda_tx_LDADD = \
   $(LIBBITCOIN_CRYPTO)
 
 if USE_LIBSECP256K1
-  bitcoin_tx_LDADD += secp256k1/libsecp256k1.la
+  Linda_tx_LDADD += secp256k1/libsecp256k1.la
 endif
 
-  bitcoin_tx_LDADD += \
+  Linda_tx_LDADD += \
   $(BOOST_LIBS) \
   $(SSL_LIBS) \
   $(CRYPTO_LIBS)
 Linda_tx_SOURCES = bitcoin-tx.cpp
 Linda_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
+Linda_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
 
 if TARGET_WINDOWS
 Linda_cli_SOURCES += bitcoin-cli-res.rc
 endif
+Linda_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
 
 CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
 
