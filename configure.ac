@@ -536,6 +536,18 @@ if test x$boost_sleep != xyes; then
   AC_MSG_ERROR(No working boost sleep implementation found)
 fi
 
+AC_ARG_WITH([utils],
+  [AS_HELP_STRING([--with-utils],
+  [build bitcoin-cli bitcoin-tx (default=yes)])],
+  [build_bitcoin_utils=$withval],
+  [build_bitcoin_utils=yes])
+
+AC_ARG_WITH([daemon],
+  [AS_HELP_STRING([--with-daemon],
+  [build bitcoind daemon (default=yes)])],
+  [build_bitcoind=$withval],
+  [build_bitcoind=yes])
+
 if test x$use_pkgconfig = xyes; then
 
   if test x$PKG_CONFIG == x; then
@@ -641,6 +653,14 @@ else
     fi
   fi
 fi
+
+AC_MSG_CHECKING([whether to build bitcoind])
+AM_CONDITIONAL([BUILD_BITCOIND], [test x$build_bitcoind = xyes])
+AC_MSG_RESULT($build_bitcoind)
+
+AC_MSG_CHECKING([whether to build utils (bitcoin-cli bitcoin-tx)])
+AM_CONDITIONAL([BUILD_BITCOIN_UTILS], [test x$build_bitcoin_utils = xyes])
+AC_MSG_RESULT($build_bitcoin_utils)
 
 AC_LANG_POP
 
@@ -781,6 +801,10 @@ if test x$use_reduce_exports != xno; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
+fi
+
+if test x$build_bitcoin_utils$build_bitcoind$use_tests = xnonono; then
+  AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-daemon --with-gui or --enable-tests])
 fi
 
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])

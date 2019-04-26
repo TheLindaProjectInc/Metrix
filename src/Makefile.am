@@ -49,8 +49,16 @@ BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
-bin_PROGRAMS = Lindad Linda-cli
-bin_PROGRAMS += Linda-tx
+bin_PROGRAMS =
+TESTS =
+
+if BUILD_BITCOIND
+  bin_PROGRAMS += Lindad
+endif
+
+if BUILD_BITCOIN_UTILS
+  bin_PROGRAMS += Linda-cli Linda-tx
+endif
 
 SUBDIRS = .
 DIST_SUBDIRS = .
