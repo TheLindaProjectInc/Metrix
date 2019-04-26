@@ -873,10 +873,6 @@ public:
         return -(tx->vout[i].nValue/COIN);
     }
 
-    void print() const
-    {
-        LogPrintf("%s\n", ToString());
-    }
 };
 
 
