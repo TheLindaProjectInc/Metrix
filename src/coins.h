@@ -375,7 +375,7 @@ public:
     // Return a modifiable reference to a CCoins. Check HaveCoins first.
     // Many methods explicitly require a CCoinsViewCache because of this method, to reduce
     // copying.
-    CCoins &GetCoins(const uint256 &txid) const;
+    const CCoins &GetCoins(const uint256 &txid) const;
 
     // Push the modifications applied to this cache to its base.
     // If false is returned, the state of this cache (and its backing view) will be undefined.
