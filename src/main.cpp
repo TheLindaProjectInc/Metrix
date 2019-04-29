@@ -2428,7 +2428,6 @@ static int64_t nTimePostConnect = 0;
 // corresponding to pindexNew, to bypass loading it again from disk.
 bool static ConnectTip(CValidationState& state, CBlockIndex* pindexNew, CBlock* pblock)
 {
-    {
     assert(pindexNew->pprev == chainActive.Tip());
     mempool.check(pcoinsTip);
 
@@ -2495,7 +2494,8 @@ bool static ConnectTip(CValidationState& state, CBlockIndex* pindexNew, CBlock* 
 
 // Return the tip of the chain with the most work in it, that isn't
 // known to be invalid (it's however far from certain to be valid).
-static CBlockIndex* FindMostWorkChain() {
+static CBlockIndex* FindMostWorkChain()
+{
     do {
         CBlockIndex *pindexNew = NULL;
 
