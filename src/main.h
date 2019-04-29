@@ -355,7 +355,7 @@ int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
 // Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)
 // This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
 // instead of being performed inline.
-bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCache &view, bool fScriptChecks = true,
+bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &view, bool fScriptChecks = true,
                     unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC,
                     std::vector<CScriptCheck> *pvChecks = NULL);
 
@@ -487,7 +487,7 @@ unsigned int GetLegacySigOpCount(const CTransaction& tx);
     @return maximum number of sigops required to validate this transaction's inputs
     @see CTransaction::FetchInputs
  */
-unsigned int GetP2SHSigOpCount(const CTransaction& tx, CCoinsViewCache& inputs);
+unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& inputs);
 
 /** Check for standard transaction types
     @return True if all outputs (scriptPubKeys) use only standard transaction forms

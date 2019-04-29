@@ -88,7 +88,7 @@ public:
      * check does nothing.
      */
     typedef CCoins& (*CoinLookupFunc)(const uint256&);
-    void check(CCoinsViewCache *pcoins) const;
+    void check(const CCoinsViewCache *pcoins) const;
     void setSanityCheck(bool _fSanityCheck) { fSanityCheck = _fSanityCheck; }
 
     bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry);

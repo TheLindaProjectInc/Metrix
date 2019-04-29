@@ -378,7 +378,7 @@ void CTxMemPool::AddTransactionsUpdated(unsigned int n)
     nTransactionsUpdated += n;
 }
 
-void CTxMemPool::check(CCoinsViewCache *pcoins) const
+void CTxMemPool::check(const CCoinsViewCache *pcoins) const
 {
     if (!fSanityCheck)
         return;
@@ -400,7 +400,7 @@ void CTxMemPool::check(CCoinsViewCache *pcoins) const
                 assert(tx2.vout.size() > txin.prevout.n && !tx2.vout[txin.prevout.n].IsNull());
             }
             else {
-                CCoins &coins = pcoins->GetCoins(txin.prevout.hash);
+                const CCoins &coins = pcoins->GetCoins(txin.prevout.hash);
                 assert(coins.IsAvailable(txin.prevout.n));
             }
             // Check whether its inputs are marked in mapNextTx.
