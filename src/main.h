@@ -263,7 +263,7 @@ uint256 WantedByOrphan(const COrphanBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void ThreadStakeMiner(CWallet *pwallet, bool fProofOfStake);
 /** Find the best known block, and make it the tip of the block chain */
-bool ActivateBestChain(CValidationState &state);
+bool ActivateBestChain(CValidationState &state, CBlock* pblock = NULL);
 /** Create a new block index entry for a given block hash */
 CBlockIndex * InsertBlockIndex(uint256 hash);
 /** Verify a signature */
