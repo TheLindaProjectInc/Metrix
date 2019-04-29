@@ -113,7 +113,7 @@ CCoins &CCoinsViewCache::GetCoins(const uint256 &txid) {
     return it->second;
 }
 
-const CCoins& CCoinsViewCache::GetCoins(const uint256& txid) const
+const CCoins &CCoinsViewCache::GetCoins(const uint256& txid) const
 {
     /* Avoid redundant implementation with the const-cast.  */
     return const_cast<CCoinsViewCache*>(this)->GetCoins(txid);
