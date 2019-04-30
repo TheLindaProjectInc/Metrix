@@ -152,7 +152,7 @@ obj/build.h: FORCE
 libbitcoin_util_a-version.$(OBJEXT): obj/build.h
 
 # server: bitcoind
-libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES)
+libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
 libbitcoin_server_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
