@@ -6,6 +6,7 @@
 /**
  * Utilities for converting data from/to strings.
  */
+
 #ifndef BITCOIN_UTILSTRENCODINGS_H
 #define BITCOIN_UTILSTRENCODINGS_H
 

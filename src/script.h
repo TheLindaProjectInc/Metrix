@@ -957,4 +957,4 @@ public:
     bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode) const;
 };
 
-#endif
+#endif // H_BITCOIN_SCRIPT

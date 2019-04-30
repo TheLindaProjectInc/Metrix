@@ -109,4 +109,4 @@ void SelectParams(CBaseChainParams::Network network);
  */
 bool SelectParamsFromCommandLine();
 
-#endif
+#endif // BITCOIN_CHAIN_PARAMS_H

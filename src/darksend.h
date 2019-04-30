@@ -429,4 +429,4 @@ void ConnectToDarkSendMasterNodeWinner();
 
 void ThreadCheckDarkSendPool();
 
-#endif
+#endif // DARKSEND_H

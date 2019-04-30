@@ -115,4 +115,3 @@ bool IsStealthAddress(const std::string& encodedAddress);
 
 
 #endif  // BITCOIN_STEALTH_H
-

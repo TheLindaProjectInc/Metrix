@@ -100,5 +100,4 @@ private:
 };
 
 
-#endif /* SRC_MASTERNODECONFIG_H_ */
-
+#endif // SRC_MASTERNODECONFIG_H_

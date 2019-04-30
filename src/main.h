@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef BITCOIN_MAIN_H
 #define BITCOIN_MAIN_H
 
@@ -1277,4 +1278,4 @@ public:
 /** The currently-connected chain of blocks. */
 extern CChain chainActive;
 
-#endif
+#endif // BITCOIN_MAIN_H
