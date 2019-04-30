@@ -1609,7 +1609,6 @@ bool CWallet::HasMasternodePayment(const CTxOut vout, int nDepth) const
         LOCK(cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
-            const uint256& wtxid = it->first;
             const CWalletTx* pcoin = &(*it).second;
             
             if (pcoin->IsCoinStake()) {
