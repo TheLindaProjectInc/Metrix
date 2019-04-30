@@ -3,34 +3,36 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "init.h"
-#include "main.h"
-#include "checkpoints.h"
-#include "key.h"
-#include "db.h"
+#include "activemasternode.h"
 #include "chainparams.h"
-#include "txdb.h"
-#include "rpcserver.h"
+#include "checkpoints.h"
+#include "db.h"
+#include "init.h"
+#include "keepass.h"
+#include "key.h"
+#include "main.h"
+#include "masternodeconfig.h"
 #include "net.h"
+#include "rpcserver.h"
+#include "spork.h"
+#include "txdb.h"
 #include "ui_interface.h"
 #include "util.h"
 #include "utilmoneystr.h"
-#include "activemasternode.h"
-#include "masternodeconfig.h"
-#include "spork.h"
-#include "keepass.h"
 
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #include "walletdb.h"
 #endif
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/thread.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+
 #include <openssl/crypto.h>
 
 #include <stdio.h>
