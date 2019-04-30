@@ -36,13 +36,16 @@ class CMessageHeader
         std::string GetCommand() const;
         bool IsValid() const;
 
-        IMPLEMENT_SERIALIZE
-            (
-             READWRITE(FLATDATA(pchMessageStart));
-             READWRITE(FLATDATA(pchCommand));
-             READWRITE(nMessageSize);
-             READWRITE(nChecksum);
-            )
+        IMPLEMENT_SERIALIZE;
+
+        template <typename Stream, typename Operation>
+        inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+        {
+            READWRITE(FLATDATA(pchMessageStart));
+            READWRITE(FLATDATA(pchCommand));
+            READWRITE(nMessageSize);
+            READWRITE(nChecksum);
+        }
 
     // TODO: make private (improves encapsulation)
     public:
@@ -84,21 +87,24 @@ class CAddress : public CService
 
         void Init();
 
-        IMPLEMENT_SERIALIZE
-            (
-             CAddress* pthis = const_cast<CAddress*>(this);
-             CService* pip = (CService*)pthis;
-             if (fRead)
-                 pthis->Init();
-             if (nType & SER_DISK)
-                 READWRITE(nVersion);
-             if ((nType & SER_DISK) ||
-                 (nVersion >= CADDR_TIME_VERSION && !(nType & SER_GETHASH)))
-                 READWRITE(nTime);
-             READWRITE(nServices);
-             READWRITE(*pip);
-            )
+        IMPLEMENT_SERIALIZE;
 
+        template <typename Stream, typename Operation>
+        inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+        {
+            bool fRead = ser_action.ForRead();
+
+            CAddress* pthis = const_cast<CAddress*>(this);
+            if (fRead)
+                pthis->Init();
+            if (nType & SER_DISK)
+                READWRITE(nVersion);
+            if ((nType & SER_DISK) ||
+                (nVersion >= CADDR_TIME_VERSION && !(nType & SER_GETHASH)))
+                READWRITE(nTime);
+            READWRITE(nServices);
+            READWRITE(*(CService*)this);
+        }
 
     // TODO: make private (improves encapsulation)
     public:
@@ -119,11 +125,14 @@ class CInv
         CInv(int typeIn, const uint256& hashIn);
         CInv(const std::string& strType, const uint256& hashIn);
 
-        IMPLEMENT_SERIALIZE
-        (
+        IMPLEMENT_SERIALIZE;
+
+        template <typename Stream, typename Operation>
+        inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+        {
             READWRITE(type);
             READWRITE(hash);
-        )
+        }
 
         friend bool operator<(const CInv& a, const CInv& b);
 

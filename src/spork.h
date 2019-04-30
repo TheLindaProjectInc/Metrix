@@ -72,11 +72,11 @@ public:
         return n;
     }
 
-    ADD_SERIALIZE_METHODS;
+    IMPLEMENT_SERIALIZE;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-	unsigned int nSerSize = 0;
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(nSporkID);
         READWRITE(nValue);
         READWRITE(nTimeSigned);

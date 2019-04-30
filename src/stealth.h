@@ -84,19 +84,20 @@ public:
 	return Encoded() == y.Encoded();
     }
     
-    IMPLEMENT_SERIALIZE
-    (
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(this->options);
         READWRITE(this->scan_pubkey);
         READWRITE(this->spend_pubkey);
         READWRITE(this->label);
-        
+
         READWRITE(this->scan_secret);
         READWRITE(this->spend_secret);
-    );
+    }
     
-    
-
 };
 
 void AppendChecksum(data_chunk& data);
