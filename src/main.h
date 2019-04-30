@@ -395,7 +395,7 @@ private:
     int nHashType;
 
 public:
-    CScriptCheck() {}
+    CScriptCheck() : ptxTo(0), nIn(0), nFlags(0), nHashType(0) {}
     CScriptCheck(const CCoins& txFromIn, const CTransaction& txToIn, unsigned int nInIn, unsigned int nFlagsIn, int nHashTypeIn) :
         scriptPubKey(txFromIn.vout[txToIn.vin[nInIn].prevout.n].scriptPubKey),
         ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn), nHashType(nHashTypeIn) { }
