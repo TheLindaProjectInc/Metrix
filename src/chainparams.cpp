@@ -163,26 +163,30 @@ public:
 static CTestNetParams testNetParams;
 
 
-static CChainParams *pCurrentParams = &mainParams;
+static CChainParams *pCurrentParams = 0;
 
 const CChainParams &Params() {
     assert(pCurrentParams);
     return *pCurrentParams;
 }
 
-void SelectParams(CBaseChainParams::Network network) {
-    SelectBaseParams(network);
+CChainParams& Params(CBaseChainParams::Network network)
+{
     switch (network) {
         case CBaseChainParams::MAIN:
-            pCurrentParams = &mainParams;
-            break;
+            return mainParams;
         case CBaseChainParams::TESTNET:
-            pCurrentParams = &testNetParams;
-            break;
+            return testNetParams;
         default:
             assert(false && "Unimplemented network");
-            return;
+            return mainParams;
     }
+}
+
+void SelectParams(CBaseChainParams::Network network)
+{
+    SelectBaseParams(network);
+    pCurrentParams = &Params(network);
 }
 
 bool SelectParamsFromCommandLine() {
