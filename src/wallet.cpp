@@ -4631,3 +4631,20 @@ bool CWallet::GetDestData(const CTxDestination &dest, const std::string &key, st
     }
     return false;
 }
+
+CKeyPool::CKeyPool()
+{
+    nTime = GetTime();
+}
+
+CKeyPool::CKeyPool(const CPubKey& vchPubKeyIn)
+{
+    nTime = GetTime();
+    vchPubKey = vchPubKeyIn;
+}
+
+CWalletKey::CWalletKey(int64_t nExpires = 0)
+{
+    nTimeCreated = (nExpires ? GetTime() : 0);
+    nTimeExpires = nExpires;
+}
