@@ -163,7 +163,7 @@ public:
 static CTestNetParams testNetParams;
 
 
-static CChainParams *pCurrentParams = 0;
+static CChainParams* pCurrentParams = &mainParams;
 
 const CChainParams &Params() {
     assert(pCurrentParams);
