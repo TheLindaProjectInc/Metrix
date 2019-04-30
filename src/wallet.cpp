@@ -4638,7 +4638,7 @@ CKeyPool::CKeyPool(const CPubKey& vchPubKeyIn)
     vchPubKey = vchPubKeyIn;
 }
 
-CWalletKey::CWalletKey(int64_t nExpires = 0)
+CWalletKey::CWalletKey(int64_t nExpires)
 {
     nTimeCreated = (nExpires ? GetTime() : 0);
     nTimeExpires = nExpires;
