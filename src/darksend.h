@@ -146,11 +146,11 @@ public:
         ready = false;
     }
 
-    ADD_SERIALIZE_METHODS;
+    IMPLEMENT_SERIALIZE;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion){
-	unsigned int nSerSize = 0;
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(nDenom);
         READWRITE(vin);
         READWRITE(time);

@@ -190,17 +190,17 @@ public:
         return n3;
     }
 
-    ADD_SERIALIZE_METHODS;
+    IMPLEMENT_SERIALIZE;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion){
-	unsigned int nSerSize = 0;
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(nBlockHeight);
         READWRITE(payee);
         READWRITE(vin);
         READWRITE(score);
         READWRITE(vchSig);
-     }
+    }
 };
 
 //

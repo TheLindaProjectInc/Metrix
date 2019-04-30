@@ -31,7 +31,14 @@ public:
 
     COutPoint() { SetNull(); }
     COutPoint(uint256 hashIn, unsigned int nIn) { hash = hashIn; n = nIn; }
-    IMPLEMENT_SERIALIZE( READWRITE(FLATDATA(*this)); )
+
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        READWRITE(FLATDATA(*this));
+    }
     void SetNull() { hash = 0; n = (unsigned int) -1; }
     bool IsNull() const { return (hash == 0 && n == (unsigned int) -1); }
 
@@ -87,12 +94,15 @@ public:
 
     explicit CTxIn(uint256 hashPrevTx, unsigned int nOut, CScript scriptSigIn = CScript(), uint32_t nSequenceIn = std::numeric_limits<unsigned int>::max());
 
-    IMPLEMENT_SERIALIZE
-    (
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(prevout);
         READWRITE(scriptSig);
         READWRITE(nSequence);
-    )
+    }
 
     bool IsFinal() const
     {
@@ -140,7 +150,13 @@ public:
 
     std::string ToString() const;
 
-    IMPLEMENT_SERIALIZE(READWRITE(nSatoshisPerK); )
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        READWRITE(nSatoshisPerK);
+    }
 };
 
 
@@ -160,11 +176,14 @@ public:
 
     CTxOut(int64_t nValueIn, CScript scriptPubKeyIn);
 
-    IMPLEMENT_SERIALIZE
-    (
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(nValue);
         READWRITE(scriptPubKey);
-    )
+    }
 
     void SetNull()
     {
@@ -251,7 +270,12 @@ public:
 
     CTransaction& operator=(const CTransaction& tx);
 
-    IMPLEMENT_SERIALIZE(
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        bool fRead = ser_action.ForRead();
         READWRITE(*const_cast<int32_t*>(&this->nVersion));
         READWRITE(*const_cast<unsigned int*>(&nTime));
         READWRITE(*const_cast<std::vector<CTxIn>*>(&vin));
@@ -259,7 +283,7 @@ public:
         READWRITE(*const_cast<uint32_t*>(&nLockTime));
         if (fRead)
             UpdateHash();
-    )
+    }
 
     bool IsNull() const
     {
@@ -313,14 +337,18 @@ struct CMutableTransaction
     CMutableTransaction();
     CMutableTransaction(const CTransaction& tx);
 
-    IMPLEMENT_SERIALIZE(
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(this->nVersion);
-    nVersion = this->nVersion;
-    READWRITE(nTime);
-    READWRITE(vin);
-    READWRITE(vout);
-    READWRITE(nLockTime);
-    )
+        nVersion = this->nVersion;
+        READWRITE(nTime);
+        READWRITE(vin);
+        READWRITE(vout);
+        READWRITE(nLockTime);
+    }
 
     bool IsCoinBase() const
     {
@@ -363,19 +391,23 @@ public:
 
     CTxOutCompressor(CTxOut &txoutIn) : txout(txoutIn) { }
 
-    IMPLEMENT_SERIALIZE(
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        bool fRead = ser_action.ForRead();
         if (!fRead) {
             uint64_t nVal = CompressAmount(txout.nValue);
             READWRITE(VARINT(nVal));
-        }
-        else {
+        } else {
             uint64_t nVal = 0;
             READWRITE(VARINT(nVal));
             txout.nValue = DecompressAmount(nVal);
         }
-    CScriptCompressor cscript(REF(txout.scriptPubKey));
-    READWRITE(cscript);
-    )
+        CScriptCompressor cscript(REF(txout.scriptPubKey));
+        READWRITE(cscript);
+    }
 };
 
 /** Undo information for a CTxIn
@@ -430,9 +462,13 @@ public:
     // undo information for all txins
     std::vector<CTxInUndo> vprevout;
 
-    IMPLEMENT_SERIALIZE(
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(vprevout);
-    )
+    }
 };
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
@@ -462,18 +498,21 @@ public:
         SetNull();
     }
 
-    IMPLEMENT_SERIALIZE
-    (
-        READWRITE(this->nVersion);
-    nVersion = this->nVersion;
-    READWRITE(hashPrevBlock);
-    READWRITE(hashMerkleRoot);
-    READWRITE(nTime);
-    READWRITE(nBits);
-    READWRITE(nNonce);
-    )
+    IMPLEMENT_SERIALIZE;
 
-        void SetNull()
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        READWRITE(this->nVersion);
+        nVersion = this->nVersion;
+        READWRITE(hashPrevBlock);
+        READWRITE(hashMerkleRoot);
+        READWRITE(nTime);
+        READWRITE(nBits);
+        READWRITE(nNonce);
+    }
+
+    void SetNull()
     {
         nVersion = CBlockHeader::CURRENT_VERSION;
         hashPrevBlock = 0;
@@ -510,28 +549,36 @@ public:
     std::vector<unsigned char> vchBlockSig;
     // memory only
     mutable std::vector<uint256> vMerkleTree;
+
     CBlock()
     {
         SetNull();
     }
+
     CBlock(const CBlockHeader &header)
     {
         SetNull();
         *((CBlockHeader*)this) = header;
     }
-    IMPLEMENT_SERIALIZE
-    (
+
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(*(CBlockHeader*)this);
-    READWRITE(vtx);
-    READWRITE(vchBlockSig);
-    )
-        void SetNull()
+        READWRITE(vtx);
+        READWRITE(vchBlockSig);
+    }
+
+    void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
         vchBlockSig.clear();
         vMerkleTree.clear();
     }
+
     CBlockHeader GetBlockHeader() const
     {
         CBlockHeader block;
@@ -616,12 +663,15 @@ public:
         vHave = vHaveIn;
     }
 
-    IMPLEMENT_SERIALIZE
-    (
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
-    READWRITE(vHave);
-    )
+        READWRITE(vHave);
+    }
 
         void SetNull()
     {
