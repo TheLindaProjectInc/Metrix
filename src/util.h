@@ -60,18 +60,6 @@ typedef int64_t CAmount;
 
 boost::filesystem::path GetMasternodeConfigFile();
 
-#ifdef WIN32
-#define MSG_NOSIGNAL        0
-#define MSG_DONTWAIT        0
-
-#ifndef S_IRUSR
-#define S_IRUSR             0400
-#define S_IWUSR             0200
-#endif
-#else
-#define MAX_PATH            1024
-#endif
-
 inline void MilliSleep(int64_t n)
 {
 #if defined(HAVE_WORKING_BOOST_SLEEP_FOR)
