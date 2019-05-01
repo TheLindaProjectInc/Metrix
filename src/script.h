@@ -6,18 +6,17 @@
 #ifndef H_BITCOIN_SCRIPT
 #define H_BITCOIN_SCRIPT
 
+#include "key.h"
+#include "utilstrencodings.h"
+#include "tinyformat.h"
+#include "stealth.h"
+
 #include <string>
 #include <vector>
 
 #include <stdint.h>
 
-#include <boost/foreach.hpp>
 #include <boost/variant.hpp>
-
-#include "key.h"
-#include "utilstrencodings.h"
-#include "tinyformat.h"
-#include "stealth.h"
 
 typedef std::vector<unsigned char> valtype;
 

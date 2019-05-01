@@ -9,6 +9,7 @@
 #include "utilstrencodings.h"
 #include "utilmoneystr.h"
 
+#include <boost/foreach.hpp>
 
 std::string COutPoint::ToString() const
 {

@@ -15,6 +15,8 @@
 
 #include <stdio.h>
 
+#include <boost/foreach.hpp>
+
 class CScript;
 class CTransaction;
 
