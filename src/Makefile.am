@@ -1,4 +1,3 @@
-AM_CPPFLAGS =  $(INCLUDES)
 AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS)
 
 if USE_LIBSECP256K1
@@ -22,7 +21,7 @@ $(LIBLEVELDB) $(LIBMEMENV):
 endif
 
 BITCOIN_CONFIG_INCLUDES = -I$(builddir)/config
-BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS)
+BITCOIN_INCLUDES = -I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
 if USE_LIBSECP256K1
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
@@ -50,8 +49,16 @@ BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
-bin_PROGRAMS = Lindad Linda-cli
-bin_PROGRAMS += Linda-tx
+bin_PROGRAMS =
+TESTS =
+
+if BUILD_BITCOIND
+  bin_PROGRAMS += Lindad
+endif
+
+if BUILD_BITCOIN_UTILS
+  bin_PROGRAMS += Linda-cli Linda-tx
+endif
 
 SUBDIRS = .
 DIST_SUBDIRS = .
@@ -145,7 +152,7 @@ obj/build.h: FORCE
 libbitcoin_util_a-version.$(OBJEXT): obj/build.h
 
 # server: bitcoind
-libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES)
+libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
 libbitcoin_server_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
@@ -268,6 +275,7 @@ libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
 libbitcoin_util_a_SOURCES += compat/glibcxx_compat.cpp
 endif
 
+libbitcoin_cli_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_cli_a_SOURCES = \
   rpcclient.cpp \
   $(BITCOIN_CORE_H)
@@ -299,8 +307,9 @@ if TARGET_WINDOWS
 Lindad_SOURCES += bitcoind-res.rc
 endif
 
-Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
+Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS)
 Lindad_CPPFLAGS = $(BITCOIN_INCLUDES)
+Lindad_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
 
 # Linda-cli binary #
 Linda_cli_LDADD = \
@@ -308,7 +317,10 @@ Linda_cli_LDADD = \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
-  $(BOOST_LIBS)
+  $(BOOST_LIBS) \
+  $(SSL_LIBS) \
+  $(CRYPTO_LIBS)
+
 Linda_cli_SOURCES = \
 	bitcoin-cli.cpp
 
@@ -324,14 +336,26 @@ Linda_tx_LDADD = \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
-  $(BOOST_LIBS)
+  $(LIBBITCOIN_CRYPTO)
+
+if USE_LIBSECP256K1
+  Linda_tx_LDADD += secp256k1/libsecp256k1.la
+endif
+
+  Linda_tx_LDADD += \
+  $(BOOST_LIBS) \
+  $(SSL_LIBS) \
+  $(CRYPTO_LIBS)
 Linda_tx_SOURCES = bitcoin-tx.cpp
 Linda_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
+Linda_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
+
 
 if TARGET_WINDOWS
 Linda_cli_SOURCES += bitcoin-cli-res.rc
 endif
+Linda_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
 
 CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
 

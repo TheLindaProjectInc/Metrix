@@ -130,4 +130,4 @@ public:
 
 extern CKeePassIntegrator keePassInt;
 
-#endif
+#endif // KEEPASS_H

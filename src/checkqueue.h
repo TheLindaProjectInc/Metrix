@@ -189,4 +189,4 @@ public:
     }
 };
 
-#endif
+#endif // CHECKQUEUE_H

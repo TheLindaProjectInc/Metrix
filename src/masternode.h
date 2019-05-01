@@ -3,6 +3,7 @@
 // Copyright (c) 2009-2012 The Darkcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef MASTERNODE_H
 #define MASTERNODE_H
 
@@ -189,17 +190,17 @@ public:
         return n3;
     }
 
-    ADD_SERIALIZE_METHODS;
+    IMPLEMENT_SERIALIZE;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion){
-	unsigned int nSerSize = 0;
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(nBlockHeight);
         READWRITE(payee);
         READWRITE(vin);
         READWRITE(score);
         READWRITE(vchSig);
-     }
+    }
 };
 
 //
@@ -248,4 +249,4 @@ public:
 };
 
 
-#endif
+#endif // MASTERNODE_H

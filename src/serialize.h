@@ -90,67 +90,30 @@ enum
     SER_GETHASH         = (1 << 2),
 };
 
-#define IMPLEMENT_SERIALIZE(statements)    \
-    unsigned int GetSerializeSize(int nType, int nVersion) const  \
-    {                                           \
-        CSerActionGetSerializeSize ser_action;  \
-        const bool fGetSize = true;             \
-        const bool fWrite = false;              \
-        const bool fRead = false;               \
-        unsigned int nSerSize = 0;              \
-        ser_streamplaceholder s;                \
-        assert(fGetSize||fWrite||fRead); /* suppress warning */ \
-        s.nType = nType;                        \
-        s.nVersion = nVersion;                  \
-        {statements}                            \
-        return nSerSize;                        \
-    }                                           \
-    template<typename Stream>                   \
-    void Serialize(Stream& s, int nType, int nVersion) const  \
-    {                                           \
-        CSerActionSerialize ser_action;         \
-        const bool fGetSize = false;            \
-        const bool fWrite = true;               \
-        const bool fRead = false;               \
-        unsigned int nSerSize = 0;              \
-        assert(fGetSize||fWrite||fRead); /* suppress warning */ \
-        {statements}                            \
-    }                                           \
-    template<typename Stream>                   \
-    void Unserialize(Stream& s, int nType, int nVersion)  \
-    {                                           \
-        CSerActionUnserialize ser_action;       \
-        const bool fGetSize = false;            \
-        const bool fWrite = false;              \
-        const bool fRead = true;                \
-        unsigned int nSerSize = 0;              \
-        assert(fGetSize||fWrite||fRead); /* suppress warning */ \
-        {statements}                            \
-    }
-
-#define READWRITE(obj)      (nSerSize += ::SerReadWrite(s, (obj), nType, nVersion, ser_action))
-#define READWRITES(obj)	    (::SerReadWrite(s, (obj), nType, nVersion, ser_action))
-
+#define READWRITE(obj)	    (::SerReadWrite(s, (obj), nType, nVersion, ser_action))
 
 /** 
  * Implement three methods for serializable objects. These are actually wrappers over
  * "SerializationOp" template, which implements the body of each class' serialization
- * code. Adding "ADD_SERIALIZE_METHODS" in the body of the class causes these wrappers to be
+ * code. Adding "IMPLEMENT_SERIALIZE" in the body of the class causes these wrappers to be
  * added as members. 
  */
-#define ADD_SERIALIZE_METHODS                                                          \
-    size_t GetSerializeSize(int nType, int nVersion) const {                         \
-        CSizeComputer s(nType, nVersion);                                            \
-        NCONST_PTR(this)->SerializationOp(s, CSerActionSerialize(), nType, nVersion);\
-        return s.size();                                                             \
-    }                                                                                \
-    template<typename Stream>                                                        \
-    void Serialize(Stream& s, int nType, int nVersion) const {                       \
-        NCONST_PTR(this)->SerializationOp(s, CSerActionSerialize(), nType, nVersion);\
-    }                                                                                \
-    template<typename Stream>                                                        \
-    void Unserialize(Stream& s, int nType, int nVersion) {                           \
-        SerializationOp(s, CSerActionUnserialize(), nType, nVersion);                \
+#define IMPLEMENT_SERIALIZE                                                           \
+    size_t GetSerializeSize(int nType, int nVersion) const                            \
+    {                                                                                 \
+        CSizeComputer s(nType, nVersion);                                             \
+        NCONST_PTR(this)->SerializationOp(s, CSerActionSerialize(), nType, nVersion); \
+        return s.size();                                                              \
+    }                                                                                 \
+    template <typename Stream>                                                        \
+    void Serialize(Stream& s, int nType, int nVersion) const                          \
+    {                                                                                 \
+        NCONST_PTR(this)->SerializationOp(s, CSerActionSerialize(), nType, nVersion); \
+    }                                                                                 \
+    template <typename Stream>                                                        \
+    void Unserialize(Stream& s, int nType, int nVersion)                              \
+    {                                                                                 \
+        SerializationOp(s, CSerActionUnserialize(), nType, nVersion);                 \
     }
 
 
@@ -854,44 +817,24 @@ void Unserialize(Stream& is, std::set<K, Pred, A>& m, int nType, int nVersion)
 //
 // Support for IMPLEMENT_SERIALIZE and READWRITE macro
 //
-class CSerActionGetSerializeSize { };
-class CSerActionSerialize { };
-class CSerActionUnserialize { };
-
-template<typename Stream, typename T>
-inline unsigned int SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionGetSerializeSize ser_action)
-{
-    return ::GetSerializeSize(obj, nType, nVersion);
-}
-
-template<typename Stream, typename T>
-inline unsigned int SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionSerialize ser_action)
-{
-    ::Serialize(s, obj, nType, nVersion);
-    return 0;
-}
-
-template<typename Stream, typename T>
-inline unsigned int SerReadWrite(Stream& s, T& obj, int nType, int nVersion, CSerActionUnserialize ser_action)
-{
-    ::Unserialize(s, obj, nType, nVersion);
-    return 0;
-}
-
-struct ser_streamplaceholder
-{
-    int nType;
-    int nVersion;
+struct CSerActionSerialize {
+    bool ForRead() const { return false; }
+};
+struct CSerActionUnserialize {
+    bool ForRead() const { return true; }
 };
 
+template<typename Stream, typename T>
+inline void SerReadWrite(Stream& s, const T& obj, int nType, int nVersion, CSerActionSerialize ser_action)
+{
+    ::Serialize(s, obj, nType, nVersion);
+}
 
-
-
-
-
-
-
-
+template<typename Stream, typename T>
+inline void SerReadWrite(Stream& s, T& obj, int nType, int nVersion, CSerActionUnserialize ser_action)
+{
+    ::Unserialize(s, obj, nType, nVersion);
+}
 
 
 typedef std::vector<char, zero_after_free_allocator<char> > CSerializeData;
@@ -1489,6 +1432,4 @@ public:
     }
 };
 
-
-
-#endif
+#endif // BITCOIN_SERIALIZE_H

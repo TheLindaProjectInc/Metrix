@@ -12,7 +12,7 @@
 
 using namespace std;
 
-CTxMemPoolEntry::CTxMemPoolEntry()
+CTxMemPoolEntry::CTxMemPoolEntry() : nFee(0), nTxSize(0), nTime(0), dPriority(0.0)
 {
     nHeight = MEMPOOL_HEIGHT;
 }
@@ -346,7 +346,7 @@ public:
 };
 
 
-CTxMemPool::CTxMemPool(const CFeeRate& _minRelayFee) : minRelayFee(_minRelayFee)
+CTxMemPool::CTxMemPool(const CFeeRate& _minRelayFee) : nTransactionsUpdated(0), minRelayFee(_minRelayFee)
 {
     // Sanity checks off by default for performance, because otherwise
     // accepting transactions becomes O(N^2) where N is the number
@@ -378,7 +378,7 @@ void CTxMemPool::AddTransactionsUpdated(unsigned int n)
     nTransactionsUpdated += n;
 }
 
-void CTxMemPool::check(CCoinsViewCache *pcoins) const
+void CTxMemPool::check(const CCoinsViewCache *pcoins) const
 {
     if (!fSanityCheck)
         return;
@@ -400,7 +400,7 @@ void CTxMemPool::check(CCoinsViewCache *pcoins) const
                 assert(tx2.vout.size() > txin.prevout.n && !tx2.vout[txin.prevout.n].IsNull());
             }
             else {
-                CCoins &coins = pcoins->GetCoins(txin.prevout.hash);
+                const CCoins &coins = pcoins->GetCoins(txin.prevout.hash);
                 assert(coins.IsAvailable(txin.prevout.n));
             }
             // Check whether its inputs are marked in mapNextTx.
@@ -595,7 +595,7 @@ void CTxMemPool::ClearPrioritisation(const uint256 hash)
 
 CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView &baseIn, CTxMemPool &mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) { }
 
-bool CCoinsViewMemPool::GetCoins(const uint256 &txid, CCoins &coins) {
+bool CCoinsViewMemPool::GetCoins(const uint256 &txid, CCoins &coins) const {
     // If an entry in the mempool exists, always return that one, as it's guaranteed to never
     // conflict with the underlying cache, and it cannot have pruned entries (as it contains full)
     // transactions. First checking the underlying cache risks returning a pruned entry instead.
@@ -607,7 +607,7 @@ bool CCoinsViewMemPool::GetCoins(const uint256 &txid, CCoins &coins) {
     return (base->GetCoins(txid, coins) && !coins.IsPruned());
 }
 
-bool CCoinsViewMemPool::HaveCoins(const uint256 &txid) {
+bool CCoinsViewMemPool::HaveCoins(const uint256 &txid) const {
     return mempool.exists(txid) || base->HaveCoins(txid);
 }
 

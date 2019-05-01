@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2013 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef BITCOIN_KEY_H
 #define BITCOIN_KEY_H
 
@@ -196,7 +197,8 @@ private:
 public:
 
     // Construct an invalid private key.
-    CKey() : fValid(false) {
+    CKey() : fValid(false), fCompressed(false)
+    {
         LockObject(vch);
     }
 
@@ -319,4 +321,4 @@ struct CExtKey {
 /** Check that required EC support is available at runtime */
 bool ECC_InitSanityCheck(void);
 
-#endif
+#endif // BITCOIN_KEY_H

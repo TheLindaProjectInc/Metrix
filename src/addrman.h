@@ -2,7 +2,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef _BITCOIN_ADDRMAN
-#define _BITCOIN_ADDRMAN 1
+#define _BITCOIN_ADDRMAN
 
 #include "netbase.h"
 #include "protocol.h"
@@ -43,13 +43,16 @@ private:
 
 public:
 
-    IMPLEMENT_SERIALIZE(
-        CAddress* pthis = (CAddress*)(this);
-        READWRITE(*pthis);
+    IMPLEMENT_SERIALIZE;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
+        READWRITE(*(CAddress*)this);
         READWRITE(source);
         READWRITE(nLastSuccess);
         READWRITE(nAttempts);
-    )
+    }
 
     void Init()
     {
@@ -500,4 +503,4 @@ public:
     }
 };
 
-#endif
+#endif  // _BITCOIN_ADDRMAN

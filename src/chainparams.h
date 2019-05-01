@@ -100,6 +100,9 @@ protected:
  */
 const CChainParams &Params();
 
+/** Return parameters for the given network. */
+CChainParams& Params(CBaseChainParams::Network network);
+
 /** Sets the params returned by Params() to those for the given network. */
 void SelectParams(CBaseChainParams::Network network);
 
@@ -109,4 +112,4 @@ void SelectParams(CBaseChainParams::Network network);
  */
 bool SelectParamsFromCommandLine();
 
-#endif
+#endif // BITCOIN_CHAIN_PARAMS_H

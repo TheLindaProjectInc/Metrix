@@ -1616,22 +1616,6 @@ unsigned int HaveKeys(const vector<valtype>& pubkeys, const CKeyStore& keystore)
     return nResult;
 }
 
-
-class CKeyStoreIsMineVisitor : public boost::static_visitor<bool>
-{
-private:
-    const CKeyStore *keystore;
-public:
-    CKeyStoreIsMineVisitor(const CKeyStore *keystoreIn) : keystore(keystoreIn) { }
-    bool operator()(const CNoDestination &dest) const { return false; }
-    bool operator()(const CKeyID &keyID) const { return keystore->HaveKey(keyID); }
-    bool operator()(const CScriptID &scriptID) const { return keystore->HaveCScript(scriptID); }
-    bool operator()(const CStealthAddress &stxAddr) const
-    {
-        return stxAddr.scan_secret.size() == ec_secret_size;
-    }
-};
-
 isminetype IsMine(const CKeyStore &keystore, const CTxDestination& dest)
 {
     CScript script;

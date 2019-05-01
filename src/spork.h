@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2012 The Darkcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef SPORK_H
 #define SPORK_H
 
@@ -71,11 +72,11 @@ public:
         return n;
     }
 
-    ADD_SERIALIZE_METHODS;
+    IMPLEMENT_SERIALIZE;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-	unsigned int nSerSize = 0;
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(nSporkID);
         READWRITE(nValue);
         READWRITE(nTimeSigned);
@@ -110,4 +111,4 @@ public:
 
 };
 
-#endif
+#endif // SPORK_H

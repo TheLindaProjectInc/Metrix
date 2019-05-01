@@ -6,6 +6,7 @@
 /**
  * Money parsing/formatting utilities.
  */
+
 #ifndef BITCOIN_UTILMONEYSTR_H
 #define BITCOIN_UTILMONEYSTR_H
 

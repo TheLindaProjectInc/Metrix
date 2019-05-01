@@ -25,7 +25,7 @@ void static BatchWriteHashBestChain(CLevelDBBatch &batch, const uint256 &hash) {
 CCoinsViewDB::CCoinsViewDB(size_t nCacheSize, bool fMemory, bool fWipe) : db(GetDataDir() / "chainstate", nCacheSize, fMemory, fWipe) {
 }
 
-bool CCoinsViewDB::GetCoins(const uint256 &txid, CCoins &coins) { 
+bool CCoinsViewDB::GetCoins(const uint256 &txid, CCoins &coins) const { 
     return db.Read(make_pair('c', txid), coins); 
 }
 
@@ -35,11 +35,11 @@ bool CCoinsViewDB::SetCoins(const uint256 &txid, const CCoins &coins) {
     return db.WriteBatch(batch);
 }
 
-bool CCoinsViewDB::HaveCoins(const uint256 &txid) {
+bool CCoinsViewDB::HaveCoins(const uint256 &txid) const {
     return db.Exists(make_pair('c', txid)); 
 }
 
-uint256 CCoinsViewDB::GetBestBlock() {
+uint256 CCoinsViewDB::GetBestBlock() const {
     uint256 hashBestChain;
     if (!db.Read('B', hashBestChain))
         return uint256(0);
@@ -104,8 +104,12 @@ bool CBlockTreeDB::ReadLastBlockFile(int &nFile) {
     return Read('l', nFile);
 }
 
-bool CCoinsViewDB::GetStats(CCoinsStats &stats) {
-    leveldb::Iterator *pcursor = db.NewIterator();
+bool CCoinsViewDB::GetStats(CCoinsStats& stats) const
+{
+    /* It seems that there are no "const iterators" for LevelDB.  Since we
+       only need read operations on it, use a const-cast to get around
+       that restriction.  */
+    leveldb::Iterator* pcursor = const_cast<CLevelDBWrapper*>(&db)->NewIterator();
     pcursor->SeekToFirst();
 
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
@@ -150,7 +154,6 @@ bool CCoinsViewDB::GetStats(CCoinsStats &stats) {
             return error("%s : Deserialize or I/O error - %s", __func__, e.what());
         }
     }
-    delete pcursor;
     stats.nHeight = mapBlockIndex.find(GetBestBlock())->second->nHeight;
     stats.hashSerialized = ss.GetHash();
     stats.nTotalAmount = nTotalAmount;
@@ -182,7 +185,7 @@ bool CBlockTreeDB::ReadFlag(const std::string &name, bool &fValue) {
 
 bool CBlockTreeDB::LoadBlockIndexGuts()
 {
-    leveldb::Iterator *pcursor = NewIterator();
+    boost::scoped_ptr<leveldb::Iterator> pcursor(NewIterator());
 
     CDataStream ssKeySet(SER_DISK, CLIENT_VERSION);
     ssKeySet << make_pair('b', uint256(0));
@@ -244,7 +247,6 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
             return error("%s : Deserialize or I/O error - %s", __func__, e.what());
         }
     }
-    delete pcursor;
 
     return true;
 }

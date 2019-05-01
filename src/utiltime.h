@@ -23,4 +23,4 @@ inline std::string DateTimeStrFormat(int64_t nTime)
     return DateTimeStrFormat(strTimestampFormat.c_str(), nTime);
 }
 
-#endif
+#endif // BITCOIN_UTILTIME_H
