@@ -36,7 +36,7 @@ class CMessageHeader
         std::string GetCommand() const;
         bool IsValid() const;
 
-        IMPLEMENT_SERIALIZE;
+        ADD_SERIALIZE_METHODS;
 
         template <typename Stream, typename Operation>
         inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
@@ -87,7 +87,7 @@ class CAddress : public CService
 
         void Init();
 
-        IMPLEMENT_SERIALIZE;
+        ADD_SERIALIZE_METHODS;
 
         template <typename Stream, typename Operation>
         inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
@@ -122,7 +122,7 @@ class CInv
         CInv(int typeIn, const uint256& hashIn);
         CInv(const std::string& strType, const uint256& hashIn);
 
-        IMPLEMENT_SERIALIZE;
+        ADD_SERIALIZE_METHODS;
 
         template <typename Stream, typename Operation>
         inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
