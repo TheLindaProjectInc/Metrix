@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+#include <boost/unordered_map.hpp>
 
 #define START_MASTERNODE_PAYMENTS_TESTNET 1429738064
 #define START_MASTERNODE_PAYMENTS 1429738064
@@ -160,10 +161,15 @@ inline unsigned int GetTargetSpacing() { return 90; }
 
 static const int64_t STAKE_TIMESPAN_SWITCH_TIME = 1428537599;
 
+struct BlockHasher {
+    size_t operator()(const uint256& hash) const { return hash.GetLow64(); }
+};
+
 extern CScript COINBASE_FLAGS;
 extern CCriticalSection cs_main;
 extern CTxMemPool mempool;
-extern std::map<uint256, CBlockIndex*> mapBlockIndex;
+typedef boost::unordered_map<uint256, CBlockIndex*, BlockHasher> BlockMap;
+extern BlockMap mapBlockIndex;
 extern std::set<std::pair<COutPoint, unsigned int> > setStakeSeen;
 extern unsigned int nStakeMinAge;
 extern unsigned int nStakeMaxAge;
