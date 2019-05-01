@@ -122,6 +122,8 @@ Value getpoolinfo(const Array& params, bool fHelp)
 Value masternode(const Array& params, bool fHelp)
 {
     string strCommand;
+    string strCommandParam;
+
     if (params.size() >= 1)
         strCommand = params[0].get_str();
 
@@ -614,27 +616,33 @@ Value masternode(const Array& params, bool fHelp)
 
     if (strCommand == "status" || strCommand == "status-all")
     {
+        // This will take a pubkey parameter for filtering
+        if (params.size() == 2) {
+            strCommandParam = params[1].get_str().c_str();
+        }
+
         // get masternode status
-        std::vector<Value> resultArr;      
+        std::vector<Value> resultArr;
         std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(chainActive.Height(), MIN_INSTANTX_PROTO_VERSION);
 
         BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
-            if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr) { 
-                Object mnObj;
 
-                // get masternode address
-                CScript pubkey;
-                pubkey = GetScriptForDestination(mn.pubkey.GetID());
-                CTxDestination address1;
-                ExtractDestination(pubkey, address1);
-                CBitcoinAddress address2(address1);
+            // get masternode address
+            CScript pubkey;
+            pubkey = GetScriptForDestination(mn.pubkey.GetID());
+            CTxDestination address1;
+            ExtractDestination(pubkey, address1);
+            CBitcoinAddress address2(address1);
+
+            if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr || address2.ToString() == strCommandParam) {
+                Object mnObj;
 
                 mnObj.push_back(Pair("minProtoVersion", mn.minProtoVersion));
                 mnObj.push_back(Pair("address", mn.addr.ToString()));
                 mnObj.push_back(Pair("pubkey", address2.ToString()));
                 mnObj.push_back(Pair("vin", mn.vin.ToString()));
-                mnObj.push_back(Pair("lastTimeSeen", mn.lastTimeSeen));            
-                mnObj.push_back(Pair("activeseconds",  mn.lastTimeSeen - mn.now));   
+                mnObj.push_back(Pair("lastTimeSeen", mn.lastTimeSeen));
+                mnObj.push_back(Pair("activeseconds",  mn.lastTimeSeen - mn.now));
                 mnObj.push_back(Pair("rank", GetMasternodeRank(mn.vin, vecMasternodeScores)));
                 mnObj.push_back(Pair("lastDseep", mn.lastDseep));
                 mnObj.push_back(Pair("enabled", mn.enabled));
@@ -644,7 +652,7 @@ Value masternode(const Array& params, bool fHelp)
 
                 // check if me to include activeMasternode.status
                 if (mn.addr.ToString() == strMasterNodeAddr)
-                    mnObj.push_back(Pair("status", activeMasternode.status));                
+                    mnObj.push_back(Pair("status", activeMasternode.status));
 
                 resultArr.push_back(mnObj);
             }

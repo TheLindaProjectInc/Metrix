@@ -25,3 +25,6 @@ We are moving away from the Lindad executable functioning both as a server and a
 
 #### Staking
 Fixed an issue that prevented attempting to create a stake every second. This will allow nodes to earn stake rewards more often.
+
+#### RPC Commands
+- Added pubkey filter to 'masternode status' command to find an active masternode with the given public key
