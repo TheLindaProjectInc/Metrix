@@ -28,3 +28,4 @@ Fixed an issue that prevented attempting to create a stake every second. This wi
 
 #### RPC Commands
 - Added pubkey filter to 'masternode status' command to find an active masternode with the given public key
+- Fix `masternode status` not showing current masternode when masternodeaddr isn't set in Linda.conf

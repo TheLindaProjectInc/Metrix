@@ -617,7 +617,9 @@ Value masternode(const Array& params, bool fHelp)
     if (strCommand == "status" || strCommand == "status-all")
     {
         // This will take a pubkey parameter for filtering
+        bool searchMode = false;
         if (params.size() == 2) {
+            searchMode = true;
             strCommandParam = params[1].get_str().c_str();
         }
 
@@ -634,7 +636,11 @@ Value masternode(const Array& params, bool fHelp)
             ExtractDestination(pubkey, address1);
             CBitcoinAddress address2(address1);
 
-            if (strCommand == "status-all" || mn.addr.ToString() == strMasterNodeAddr || address2.ToString() == strCommandParam) {
+            if (
+                strCommand == "status-all" || 
+                !searchMode && mn.vin == activeMasternode.vin || 
+                searchMode && address2.ToString() == strCommandParam
+                ) {
                 Object mnObj;
 
                 mnObj.push_back(Pair("minProtoVersion", mn.minProtoVersion));
@@ -651,7 +657,7 @@ Value masternode(const Array& params, bool fHelp)
                 mnObj.push_back(Pair("nLastDsq", mn.nLastDsq));
 
                 // check if me to include activeMasternode.status
-                if (mn.addr.ToString() == strMasterNodeAddr)
+                if (mn.vin == activeMasternode.vin)
                     mnObj.push_back(Pair("status", activeMasternode.status));
 
                 resultArr.push_back(mnObj);
