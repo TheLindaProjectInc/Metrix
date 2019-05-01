@@ -1277,9 +1277,9 @@ bool GetTransaction(const uint256 &hash, CTransaction &txOut, uint256 &hashBlock
             int nHeight = -1;
             {
                 CCoinsViewCache &view = *pcoinsTip;
-                CCoins coins;
-                if (view.GetCoins(hash, coins))
-                    nHeight = coins.nHeight;
+                const CCoins* coins = view.AccessCoins(hash);
+                if (coins)
+                    nHeight = coins->nHeight;
             }
             if (nHeight > 0)
                 pindexSlow = chainActive[nHeight];
@@ -1794,13 +1794,14 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
         for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
             const COutPoint &prevout = tx.vin[i].prevout;
-            const CCoins &coins = inputs.GetCoins(prevout.hash);
+            const CCoins* coins = inputs.AccessCoins(prevout.hash);
+            assert(coins);
 
             // If prev is coinbase or coinstake, check that it's matured
-            if (coins.IsCoinBase() || coins.IsCoinStake())
-                if (nSpendHeight - coins.nHeight < nCoinbaseMaturity)
+            if (coins->IsCoinBase() || coins.IsCoinStake())
+                if (nSpendHeight - coins->nHeight < nCoinbaseMaturity)
                     return state.Invalid(
-                        error("CheckInputs() : tried to spend %s at depth %d", coins.IsCoinBase() ? "coinbase" : "coinstake", nSpendHeight - coins.nHeight),
+                        error("CheckInputs() : tried to spend %s at depth %d", coins->IsCoinBase() ? "coinbase" : "coinstake", nSpendHeight - coins->nHeight),
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
 
             // ppcoin: check transaction timestamp
@@ -1809,8 +1810,8 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                     REJECT_INVALID, "timestamp earlier than input transaction");
 
             // Check for negative or overflow input values
-            nValueIn += coins.vout[prevout.n].nValue;
-            if (!MoneyRange(coins.vout[prevout.n].nValue) || !MoneyRange(nValueIn))
+            nValueIn += coins->vout[prevout.n].nValue;
+            if (!MoneyRange(coins->vout[prevout.n].nValue) || !MoneyRange(nVa
                 return state.DoS(100, error("CheckInputs() : txin values out of range"),
                     REJECT_INVALID, "bad-txns-inputvalues-outofrange");
 
@@ -1844,10 +1845,11 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
         if (fScriptChecks) {
             for (unsigned int i = 0; i < tx.vin.size(); i++) {
                 const COutPoint &prevout = tx.vin[i].prevout;
-                const CCoins &coins = inputs.GetCoins(prevout.hash);
+                const CCoins* coins = inputs.AccessCoins(prevout.hash);
+                assert(coins);
 
                 // Verify signature
-                CScriptCheck check(coins, tx, i, flags, 0);
+                CScriptCheck check(*coins, tx, i, flags, 0);
                 if (pvChecks) {
                     pvChecks->push_back(CScriptCheck());
                     check.swap(pvChecks->back());
@@ -1859,7 +1861,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                         // arguments; if so, don't trigger DoS protection to
                         // avoid splitting the network between upgraded and
                         // non-upgraded nodes.
-                        CScriptCheck check(coins, tx, i,
+                        CScriptCheck check(*coins, tx, i,
                             flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, 0);
                         if (check())
                             return state.Invalid(false, REJECT_NONSTANDARD, "non-mandatory-script-verify-flag");
@@ -2010,8 +2012,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     // BIP30
 	BOOST_FOREACH(const CTransaction& tx, block.vtx) {
-		const uint256& hash = tx.GetHash();
-        if (view.HaveCoins(hash) && !view.GetCoins(hash).IsPruned())
+        const CCoins* coins = view.AccessCoins(tx.GetHash());
+        if (coins && !coins->IsPruned())
             return state.DoS(100, error("ConnectBlock() : tried to overwrite transaction"),
                 REJECT_INVALID, "bad-txns-BIP30");
     }
