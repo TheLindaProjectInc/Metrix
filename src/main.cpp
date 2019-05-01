@@ -1798,20 +1798,20 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
             assert(coins);
 
             // If prev is coinbase or coinstake, check that it's matured
-            if (coins->IsCoinBase() || coins.IsCoinStake())
+            if (coins->IsCoinBase() || coins->IsCoinStake())
                 if (nSpendHeight - coins->nHeight < nCoinbaseMaturity)
                     return state.Invalid(
                         error("CheckInputs() : tried to spend %s at depth %d", coins->IsCoinBase() ? "coinbase" : "coinstake", nSpendHeight - coins->nHeight),
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
 
             // ppcoin: check transaction timestamp
-            if (coins.nTime > tx.nTime)
+            if (coins->nTime > tx.nTime)
                 return state.DoS(100, error("CheckInputs() : transaction timestamp earlier than input transaction"),
                     REJECT_INVALID, "timestamp earlier than input transaction");
 
             // Check for negative or overflow input values
             nValueIn += coins->vout[prevout.n].nValue;
-            if (!MoneyRange(coins->vout[prevout.n].nValue) || !MoneyRange(nVa
+            if (!MoneyRange(coins->vout[prevout.n].nValue) || !MoneyRange(nValueIn))
                 return state.DoS(100, error("CheckInputs() : txin values out of range"),
                     REJECT_INVALID, "bad-txns-inputvalues-outofrange");
 
