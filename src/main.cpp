@@ -3407,8 +3407,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 
     if (nSearchTime > nLastCoinStakeSearchTime)
     {
-        int64_t nSearchInterval = 1;
-        if (wallet.CreateCoinStake(wallet, block.nBits, nSearchInterval, nFees, txCoinStake, key))
+        if (wallet.CreateCoinStake(wallet, block.nBits, nSearchTime-nLastCoinStakeSearchTime, nFees, txCoinStake, key))
         {
             if (txCoinStake.nTime >= chainActive.Tip()->GetPastTimeLimit()+1)
             {
