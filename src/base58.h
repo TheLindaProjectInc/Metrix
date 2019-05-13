@@ -21,7 +21,7 @@
 #include "chainparams.h"
 #include "bignum.h"
 #include "key.h"
-#include "scriptutils.h"
+#include "script/script.h"
 #include "allocators.h"
 #include "util.h"
 

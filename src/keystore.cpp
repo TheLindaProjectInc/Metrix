@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "keystore.h"
-#include "scriptutils.h"
+#include "script/script.h"
 #include "util.h"
 
 

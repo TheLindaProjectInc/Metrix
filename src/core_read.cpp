@@ -4,7 +4,7 @@
 
 #include "core.h"
 #include "serialize.h"
-#include "scriptutils.h"
+#include "script/script.h"
 #include "util.h"
 
 #include <boost/assign/list_of.hpp>
