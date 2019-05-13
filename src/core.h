@@ -9,7 +9,8 @@
 #include "uint256.h"
 #include "serialize.h"
 #include "util.h"
-#include "scriptutils.h"
+#include "script/compressor.h"
+#include "script/script.h"
 #include "scrypt.h"
 #include "timedata.h"
 
