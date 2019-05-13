@@ -4,13 +4,13 @@
 
 
 #include "darksend.h"
-#include "main.h"
 #include "init.h"
-//#include "script/sign.h"
-#include "util.h"
-#include "masternode.h"
 #include "instantx.h"
+#include "main.h"
+#include "masternode.h"
+#include "script/sign.h"
 #include "ui_interface.h"
+#include "util.h"
 //#include "random.h"
 
 #include <openssl/rand.h>

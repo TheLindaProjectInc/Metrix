@@ -772,8 +772,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFromLoadWallet)
 
         // If default receiving address gets used, replace it with a new one
         if (vchDefaultKey.IsValid()) {
-            CScript scriptDefaultKey;
-            scriptDefaultKey.SetDestination(vchDefaultKey.GetID());
+            CScript scriptDefaultKey = GetScriptForDestination(vchDefaultKey.GetID());
             BOOST_FOREACH(const CTxOut& txout, wtx.vout)
             {
                 if (txout.scriptPubKey == scriptDefaultKey)
@@ -2590,7 +2589,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
 
                     // coin control: send change to custom address
                     if (coinControl && !boost::get<CNoDestination>(&coinControl->destChange))
-                        scriptChange.SetDestination(coinControl->destChange);
+                        scriptChange = GetScriptForDestination(coinControl->destChange);
 
                     // no coin control: send change to newly generated address
                     else
@@ -2606,7 +2605,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend, 
                         CPubKey vchPubKey;
                         assert(reservekey.GetReservedKey(vchPubKey)); // should never fail, as we just unlocked
 
-                        scriptChange.SetDestination(vchPubKey.GetID());
+                        scriptChange = GetScriptForDestination(vchPubKey.GetID());
                     }
 
                     CTxOut newTxOut(nChange, scriptChange);
@@ -3191,8 +3190,7 @@ bool CWallet::SendStealthMoneyToDestination(CStealthAddress& sxAddress, int64_t 
     };
     
     // -- Parse Bitcoin address
-    CScript scriptPubKey;
-    scriptPubKey.SetDestination(addrTo.Get());
+    CScript scriptPubKey = GetScriptForDestination(addrTo.Get());
     
     if ((sError = SendStealthMoney(scriptPubKey, nValue, ephem_pubkey, vchNarr, sNarr, wtxNew, fAskFee)) != "")
         return false;
@@ -3825,8 +3823,7 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64_t nV
         return _("Narration must be 24 characters or less.");
 
     // Parse Bitcoin address
-    CScript scriptPubKey;
-    scriptPubKey.SetDestination(address);
+    CScript scriptPubKey = GetScriptForDestination(address);
 
     return SendMoney(scriptPubKey, nValue, sNarr, wtxNew);
 }

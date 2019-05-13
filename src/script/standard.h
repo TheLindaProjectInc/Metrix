@@ -9,12 +9,12 @@
 #include "script/interpreter.h"
 #include "script/script.h"
 
-#include <key.h>
 #include <stealth.h>
 
 #include <stdint.h>
 
-class CKeyID;
+#include <boost/variant.hpp>
+
 class CScript;
 class CStealthAddress;
 
@@ -70,5 +70,8 @@ int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned c
 bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType);
 bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet);
 bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<CTxDestination>& addressRet, int& nRequiredRet);
+
+CScript GetScriptForDestination(const CTxDestination& dest);
+CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
 #endif // H_BITCOIN_SCRIPT_STANDARD

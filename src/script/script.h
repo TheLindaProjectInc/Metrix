@@ -8,7 +8,7 @@
 
 #include "key.h"
 #include "tinyformat.h"
-#include "../stealth.h"
+#include "script/standard.h"
 #include "utilstrencodings.h"
 
 #include <stdexcept>
@@ -320,6 +320,8 @@ inline std::string ValueString(const std::vector<unsigned char>& vch)
         return HexStr(vch);
 }
 
+
+
 /** Serialized script, used inside transaction inputs and outputs */
 class CScript : public std::vector<unsigned char>
 {
@@ -572,9 +574,6 @@ public:
     {
         return (size() > 0 && *begin() == OP_RETURN);
     }
-
-    void SetDestination(const CTxDestination& address);
-    void SetMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
     std::string ToString(bool fShort = false) const
     {

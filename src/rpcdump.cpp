@@ -5,13 +5,15 @@
 #include <iostream>
 #include <fstream>
 
-#include "init.h" // for pwalletMain
-#include "wallet.h"
-#include "rpcserver.h"
-#include "ui_interface.h"
 #include "base58.h"
+#include "init.h" // for pwalletMain
+#include "rpcserver.h"
+#include "script/script.h"
+#include "script/standard.h"
+#include "ui_interface.h"
 #include "utiltime.h"
 #include "util.h"
+#include "wallet.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/variant/get.hpp>
@@ -202,7 +204,7 @@ Value importaddress(const Array& params, bool fHelp)
 
     CBitcoinAddress address(params[0].get_str());
     if (address.IsValid()) {
-        script.SetDestination(address.Get());
+        script = GetScriptForDestination(address.Get());
     } else if (IsHex(params[0].get_str())) {
         std::vector<unsigned char> data(ParseHex(params[0].get_str()));
         script = CScript(data.begin(), data.end());

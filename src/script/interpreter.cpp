@@ -8,9 +8,10 @@
 #include "core.h"
 #include "crypto/ripemd160.h"
 #include "crypto/sha1.h"
-#include "crypto/sha2.h"
+#include "crypto/sha256.h"
 #include "random.h"
 #include "script/script.h"
+#include "scriptutils.h"
 #include "uint256.h"
 #include "util.h"
 
@@ -608,9 +609,9 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     valtype& vch = stacktop(-1);
                     valtype vchHash((opcode == OP_RIPEMD160 || opcode == OP_SHA1 || opcode == OP_HASH160) ? 20 : 32);
                     if (opcode == OP_RIPEMD160)
-                        RIPEMD160(&vch[0], vch.size(), &vchHash[0]);
+                        CRIPEMD160().Write(&vch[0], vch.size()).Finalize(&vchHash[0]);
                     else if (opcode == OP_SHA1)
-                        SHA1(&vch[0], vch.size(), &vchHash[0]);
+                        CSHA1().Write(&vch[0], vch.size()).Finalize(&vchHash[0]);
                     else if (opcode == OP_SHA256)
                         CSHA256().Write(&vch[0], vch.size()).Finalize(&vchHash[0]);
                     else if (opcode == OP_HASH160)
