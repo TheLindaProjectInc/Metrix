@@ -7,6 +7,8 @@
 #include "script/script.h"
 #include "util.h"
 
+#include <stealth.h>
+
 #include <boost/foreach.hpp>
 
 using namespace std;
@@ -232,29 +234,35 @@ namespace
 class CScriptVisitor : public boost::static_visitor<bool>
 {
 private:
-    CScript* script;
+    CScript *script;
 
 public:
-    CScriptVisitor(CScript* scriptin) { script = scriptin; }
+    CScriptVisitor(CScript *scriptin) { script = scriptin; }
 
-    bool operator()(const CNoDestination& dest) const
+    bool operator()(const CNoDestination &dest) const
     {
         script->clear();
         return false;
     }
 
-    bool operator()(const CKeyID& keyID) const
+    bool operator()(const CKeyID &keyID) const
     {
         script->clear();
         *script << OP_DUP << OP_HASH160 << keyID << OP_EQUALVERIFY << OP_CHECKSIG;
         return true;
     }
 
-    bool operator()(const CScriptID& scriptID) const
+    bool operator()(const CScriptID &scriptID) const
     {
         script->clear();
         *script << OP_HASH160 << scriptID << OP_EQUAL;
         return true;
+    }
+
+    bool operator()(const CStealthAddress &ek) const
+    {
+        script->clear();
+        return false;
     }
 };
 } // namespace

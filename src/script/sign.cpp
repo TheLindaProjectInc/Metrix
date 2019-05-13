@@ -122,6 +122,16 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutabl
     return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0);
 }
 
+bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
+{
+    assert(nIn < txTo.vin.size());
+    CTxIn& txin = txTo.vin[nIn];
+    assert(txin.prevout.n < txFrom.vout.size());
+    const CTxOut& txout = txFrom.vout[txin.prevout.n];
+
+    return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, nHashType);
+}
+
 static CScript PushAll(const vector<valtype>& values)
 {
     CScript result;

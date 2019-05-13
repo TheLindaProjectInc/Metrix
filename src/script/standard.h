@@ -9,12 +9,14 @@
 #include "script/interpreter.h"
 #include "script/script.h"
 
+#include <key.h>
 #include <stealth.h>
 
 #include <stdint.h>
 
 #include <boost/variant.hpp>
 
+class CKeyID;
 class CScript;
 class CStealthAddress;
 

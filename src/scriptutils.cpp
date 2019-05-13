@@ -93,16 +93,6 @@ bool CheckSig(vector<unsigned char> vchSig, const vector<unsigned char> &vchPubK
 
 static const size_t nDefaultMaxNumSize = 4;
 
-bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
-{
-    assert(nIn < txTo.vin.size());
-    CTxIn& txin = txTo.vin[nIn];
-    assert(txin.prevout.n < txFrom.vout.size());
-    const CTxOut& txout = txFrom.vout[txin.prevout.n];
-
-    return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, nHashType);
-}
-
 unsigned int HaveKeys(const vector<valtype>& pubkeys, const CKeyStore& keystore)
 {
     unsigned int nResult = 0;
@@ -243,25 +233,6 @@ bool SignatureChecker::CheckSig(const vector<unsigned char>& vchSigIn, const vec
         return false;
 
     return true;
-}
-
-CScript GetScriptForDestination(const CTxDestination& dest)
-{
-    CScript script;
-
-    boost::apply_visitor(CScriptVisitor(&script), dest);
-    return script;
-}
-
-CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys)
-{
-    CScript script;
-
-    script << CScript::EncodeOP_N(nRequired);
-    BOOST_FOREACH(const CPubKey& key, keys)
-        script << ToByteVector(key);
-    script << CScript::EncodeOP_N(keys.size()) << OP_CHECKMULTISIG;
-    return script;
 }
 
 bool CScript::IsNormalPaymentScript() const
