@@ -113,6 +113,7 @@ BITCOIN_CORE_H = \
   rpcserver.h \
   script/compressor.h \
   script/script.h \
+  script/standard.cpp \
   scriptutils.h \
   scrypt.h \
   serialize.h \
@@ -247,6 +248,7 @@ libbitcoin_common_a_SOURCES = \
   pbkdf2.cpp \
   script/compressor.cpp \
   script/script.cpp \
+  script/standard.cpp \
   scriptutils.cpp \
   scrypt.cpp \
   stealth.cpp \

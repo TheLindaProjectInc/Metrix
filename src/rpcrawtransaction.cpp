@@ -3,19 +3,21 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <boost/assign/list_of.hpp>
-#include <boost/lexical_cast.hpp>
-
 #include "base58.h"
-#include "rpcserver.h"
-#include "txdb.h"
 #include "core_io.h"
 #include "init.h"
-#include "net.h"
 #include "keystore.h"
+#include "net.h"
+#include "rpcserver.h"
+#include "script/script.h"
+#include "script/standard.h"
+#include "txdb.h"
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
+
+#include <boost/assign/list_of.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace boost;
