@@ -6,18 +6,17 @@
 #ifndef H_BITCOIN_SCRIPT
 #define H_BITCOIN_SCRIPT
 
+#include "key.h"
+#include "utilstrencodings.h"
+#include "tinyformat.h"
+#include "stealth.h"
+
 #include <string>
 #include <vector>
 
 #include <stdint.h>
 
-#include <boost/foreach.hpp>
 #include <boost/variant.hpp>
-
-#include "key.h"
-#include "utilstrencodings.h"
-#include "tinyformat.h"
-#include "stealth.h"
 
 typedef std::vector<unsigned char> valtype;
 
@@ -504,21 +503,6 @@ inline std::string ValueString(const std::vector<unsigned char>& vch)
     else
         return HexStr(vch);
 }
-
-inline std::string StackString(const std::vector<std::vector<unsigned char> >& vStack)
-{
-    std::string str;
-    BOOST_FOREACH(const std::vector<unsigned char>& vch, vStack)
-    {
-        if (!str.empty())
-            str += " ";
-        str += ValueString(vch);
-    }
-    return str;
-}
-
-
-
 
 /** Serialized script, used inside transaction inputs and outputs */
 class CScript : public std::vector<unsigned char>

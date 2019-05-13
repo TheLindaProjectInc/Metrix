@@ -190,11 +190,12 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                     nTotalIn += mempool.mapTx[txin.prevout.hash].GetTx().vout[txin.prevout.n].nValue;
                     continue;
                 }
-                const CCoins &coins = view.GetCoins(txin.prevout.hash);
-                int64_t nValueIn = coins.vout[txin.prevout.n].nValue;
+                const CCoins* coins = view.AccessCoins(txin.prevout.hash);
+                assert(coins);
+                int64_t nValueIn = coins->vout[txin.prevout.n].nValue;
                 nTotalIn += nValueIn;
 
-                int nConf = pindexPrev->nHeight - coins.nHeight + 1;
+                int nConf = pindexPrev->nHeight - coins->nHeight + 1;
                 dPriority += (double)nValueIn * nConf;
             }
             if (fMissingInputs) continue;

@@ -230,7 +230,7 @@ bool static Bind(const CService &addr, unsigned int flags) {
     if (!(flags & BF_EXPLICIT) && IsLimited(addr))
         return false;
     std::string strError;
-    if (!BindListenPort(addr, strError, flags & BF_WHITELIST)) {
+    if (!BindListenPort(addr, strError, (flags & BF_WHITELIST) != 0)) {
         if (flags & BF_REPORT_ERROR)
             return InitError(strError);
         return false;
@@ -726,7 +726,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     std::string strWalletFile = GetArg("-wallet", "wallet.dat");
 #endif // ENABLE_WALLET
 
-    fIsBareMultisigStd = GetArg("-permitbaremultisig", true);
+    fIsBareMultisigStd = GetArg("-permitbaremultisig", true) != 0;
 
     fConfChange = GetBoolArg("-confchange", false);
     fMinimizeCoinAge = GetBoolArg("-minimizecoinage", false);
@@ -1112,7 +1112,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     {
         string strMatch = mapArgs["-printblock"];
         int nFound = 0;
-        for (map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.begin(); mi != mapBlockIndex.end(); ++mi)
+        for (BlockMap::iterator mi = mapBlockIndex.begin(); mi != mapBlockIndex.end(); ++mi)
         {
             uint256 hash = (*mi).first;
 			if (boost::algorithm::starts_with(hash.ToString(), strMatch))

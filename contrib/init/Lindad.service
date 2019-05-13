@@ -1,0 +1,22 @@
+[Unit]
+Description=Linda's distributed currency daemon
+After=network.target
+
+[Service]
+User=Linda
+Group=Linda
+
+Type=forking
+PIDFile=/var/lib/Lindad/Lindad.pid
+ExecStart=/usr/bin/Lindad -daemon -pid=/var/lib/Lindad/Lindad.pid \
+-conf=/etc/Linda/Linda.conf -datadir=/var/lib/Lindad -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

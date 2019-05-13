@@ -400,8 +400,8 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
                 assert(tx2.vout.size() > txin.prevout.n && !tx2.vout[txin.prevout.n].IsNull());
             }
             else {
-                const CCoins &coins = pcoins->GetCoins(txin.prevout.hash);
-                assert(coins.IsAvailable(txin.prevout.n));
+                const CCoins* coins = pcoins->AccessCoins(txin.prevout.hash);
+                assert(coins && coins->IsAvailable(txin.prevout.n));
             }
             // Check whether its inputs are marked in mapNextTx.
             std::map<COutPoint, CInPoint>::const_iterator it3 = mapNextTx.find(txin.prevout);

@@ -239,7 +239,7 @@ CDB::CDB(const std::string& strFilename, const char* pszMode) :
     if (strFilename.empty())
         return;
 
-    bool fCreate = strchr(pszMode, 'c');
+    bool fCreate = strchr(pszMode, 'c') != NULL;
     unsigned int nFlags = DB_THREAD;
     if (fCreate)
         nFlags |= DB_CREATE;

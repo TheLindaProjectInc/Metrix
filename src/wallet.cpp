@@ -811,7 +811,7 @@ bool CWallet::AddToWalletIfInvolvingMe(const CTransaction& tx, const CBlock* pbl
 {
     {
         AssertLockHeld(cs_wallet);
-        bool fExisted = mapWallet.count(tx.GetHash());
+        bool fExisted = mapWallet.count(tx.GetHash()) != 0;
         if (fExisted && !fUpdate) return false;
 
         mapValue_t mapNarr;
@@ -4064,7 +4064,7 @@ bool CWallet::SetAddressBook(const CTxDestination& address, const string& strNam
         fUpdated = mi != mapAddressBook.end();
         mapAddressBook[address].name = strName;
     }
-    NotifyAddressBookChanged(this, address, strName, ::IsMine(*this, address),
+    NotifyAddressBookChanged(this, address, strName, ::IsMine(*this, address) != ISMINE_NO,
                              (fUpdated ? CT_UPDATED : CT_NEW) );
     if (!fFileBacked)
         return false;
@@ -4090,7 +4090,7 @@ bool CWallet::DelAddressBook(const CTxDestination& address)
 
     mapAddressBook.erase(address);
 
-    NotifyAddressBookChanged(this, address, "", ::IsMine(*this, address), CT_DELETED);
+    NotifyAddressBookChanged(this, address, "", ::IsMine(*this, address) != ISMINE_NO, CT_DELETED);
 
     if (!fFileBacked)
         return false;
@@ -4523,7 +4523,7 @@ void CWallet::GetKeyBirthTimes(std::map<CKeyID, int64_t> &mapKeyBirth) const {
     for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); it++) {
         // iterate over all wallet transactions...
         const CWalletTx &wtx = (*it).second;
-        std::map<uint256, CBlockIndex*>::const_iterator blit = mapBlockIndex.find(wtx.hashBlock);
+        BlockMap::const_iterator blit = mapBlockIndex.find(wtx.hashBlock);
         if (blit != mapBlockIndex.end() && chainActive.Contains(blit->second)) {
             // ... which are already in a block
             int nHeight = blit->second->nHeight;
@@ -4680,7 +4680,7 @@ int CMerkleTx::SetMerkleBranch(const CBlock* pblock)
         }
 
         // Is the tx in a block that's in the main chain
-        map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
+        BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
         if (mi == mapBlockIndex.end())
             return 0;
         CBlockIndex* pindex = (*mi).second;
@@ -4697,7 +4697,7 @@ int CMerkleTx::GetDepthInMainChainINTERNAL(CBlockIndex * &pindexRet) const
     AssertLockHeld(cs_main);
 
     // Find the block it claims to be in
-    map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
+    BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
     if (mi == mapBlockIndex.end())
         return 0;
     CBlockIndex* pindex = (*mi).second;
