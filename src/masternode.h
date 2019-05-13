@@ -19,7 +19,7 @@
 #include "base58.h"
 #include "main.h"
 #include "timedata.h"
-#include "script.h"
+#include "scriptutils.h"
 
 class CMasterNode;
 class CMasternodePayments;

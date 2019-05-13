@@ -13,7 +13,7 @@
 //#include "primitives/transaction.h"
 #include "util.h"
 //#include "script/script.h"
-#include "script.h"
+#include "scriptutils.h"
 #include "base58.h"
 #include "main.h"
 

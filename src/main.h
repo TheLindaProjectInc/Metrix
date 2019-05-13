@@ -14,7 +14,7 @@
 #include "coins.h"
 #include "core.h"
 #include "net.h"
-#include "script.h"
+#include "scriptutils.h"
 #include "scrypt.h"
 #include "sync.h"
 #include "txmempool.h"

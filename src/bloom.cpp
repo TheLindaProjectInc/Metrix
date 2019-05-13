@@ -6,7 +6,7 @@
 
 #include "bloom.h"
 #include "core.h"
-#include "script.h"
+#include "scriptutils.h"
 
 #include <boost/foreach.hpp>
 

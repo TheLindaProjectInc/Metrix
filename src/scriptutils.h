@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPT
-#define H_BITCOIN_SCRIPT
+#ifndef H_BITCOIN_SCRIPTUTILS
+#define H_BITCOIN_SCRIPTUTILS
 
 #include "key.h"
 #include "utilstrencodings.h"
@@ -941,4 +941,4 @@ public:
     bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode) const;
 };
 
-#endif // H_BITCOIN_SCRIPT
+#endif // H_BITCOIN_SCRIPTUTILS
