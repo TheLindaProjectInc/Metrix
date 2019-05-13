@@ -8,21 +8,13 @@
 
 #include "key.h"
 #include "stealth.h"
-#include "script/interpreter.h"
 #include "script/script.h"
-#include "script/standard.h"
-
-#include <string>
-#include <vector>
 
 #include <stdint.h>
 
 typedef std::vector<unsigned char> valtype;
 
 class CKeyStore;
-class CTransaction;
-struct CMutableTransaction;
-
 class BaseSignatureChecker;
 
 template <typename T>
@@ -98,21 +90,11 @@ bool IsDERSignature(const valtype &vchSig, bool haveHashType = true);
 isminetype IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
 isminetype IsMine(const CKeyStore& keystore, const CTxDestination& dest);
 void ExtractAffectedKeys(const CKeyStore &keystore, const CScript& scriptPubKey, std::vector<CKeyID> &vKeys);
-bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutableTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
-bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
-bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, unsigned int flags, int nHashType);
 
-// Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,
-// combine them intelligently and return the result.
-CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2);
+bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, unsigned int flags, int nHashType);
 
 CScript GetScriptForDestination(const CTxDestination& dest);
 CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
-
-bool Solver(const CKeyStore& keystore, const CScript& scriptPubKey, uint256 hash, int nHashType,
-                  CScript& scriptSigRet, txnouttype& whichTypeRet);
-//uint256 SignatureHash(const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType);
-
 
 class BaseSignatureChecker
 {

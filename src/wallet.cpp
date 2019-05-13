@@ -15,6 +15,8 @@
 #include "key.h"
 #include "masternode.h"
 #include "net.h"
+#include "script/script.h"
+#include "script/sign.h"
 #include "spork.h"
 #include "timedata.h"
 #include "txdb.h"

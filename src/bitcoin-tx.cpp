@@ -10,7 +10,7 @@
 #include "main.h"         // for MAX_BLOCK_SIZE
 #include "keystore.h"
 #include "script/script.h"
-#include "scriptutils.h"
+#include "script/sign.h"
 #include "ui_interface.h" // for _(...)
 #include "univalue/univalue.h"
 #include "util.h"
