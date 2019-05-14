@@ -15,13 +15,15 @@
 #include <vector>
 
 #include <boost/filesystem/path.hpp>
+
 #include <db_cxx.h>
 
-struct CBlockLocator;
 class CDiskBlockIndex;
 class CDiskTxPos;
 class COutPoint;
 class CTxIndex;
+
+struct CBlockLocator;
 
 extern unsigned int nWalletDBUpdated;
 
