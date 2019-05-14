@@ -12,9 +12,9 @@
 #include "eccryptoverify.h"
 #include "random.h"
 #include "script/script.h"
-#include "scriptutils.h"
 #include "uint256.h"
 #include "util.h"
+#include "wallet_ismine.h"
 
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple_comparison.hpp>

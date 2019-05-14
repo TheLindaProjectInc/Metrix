@@ -116,7 +116,6 @@ BITCOIN_CORE_H = \
   script/script.h \
   script/sign.h \
   script/standard.h \
-  scriptutils.h \
   scrypt.h \
   serialize.h \
   spork.h \
@@ -136,6 +135,7 @@ BITCOIN_CORE_H = \
   util.h \
   version.h \
   wallet.h \
+  wallet_ismine.h \
   walletdb.h \
   compat/sanity.h
 
@@ -196,6 +196,7 @@ libbitcoin_wallet_a_SOURCES = \
   rpcwallet.cpp \
   stealth.cpp \
   wallet.cpp \
+  wallet_ismine.cpp \
   walletdb.cpp \
   $(BITCOIN_CORE_H)
 
@@ -253,7 +254,6 @@ libbitcoin_common_a_SOURCES = \
   script/script.cpp \
   script/sign.cpp \
   script/standard.cpp \
-  scriptutils.cpp \
   scrypt.cpp \
   stealth.cpp \
   timedata.cpp \

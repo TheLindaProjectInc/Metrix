@@ -6,15 +6,14 @@
 #ifndef SPORK_H
 #define SPORK_H
 
-#include "bignum.h"
-#include "sync.h"
-#include "net.h"
-#include "key.h"
-
-#include "util.h"
-#include "scriptutils.h"
 #include "base58.h"
+#include "bignum.h"
+#include "key.h"
 #include "main.h"
+#include "net.h"
+#include "sync.h"
+#include "util.h"
+#include "wallet_ismine.h"
 
 using namespace std;
 using namespace boost;

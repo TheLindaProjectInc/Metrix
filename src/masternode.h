@@ -14,11 +14,11 @@
 //#include "primitives/transaction.h"
 //#include "primitives/block.h"
 #include "script/script.h"
-#include "scriptutils.h"
 #include "sync.h"
 #include "timedata.h"
 #include "uint256.h"
 #include "util.h"
+#include "wallet_ismine.h"
 
 class CMasterNode;
 class CMasternodePayments;

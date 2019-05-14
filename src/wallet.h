@@ -11,11 +11,11 @@
 #include "key.h"
 #include "keystore.h"
 #include "main.h"
-#include "scriptutils.h"
 #include "stealth.h"
 #include "ui_interface.h"
 #include "utiltime.h"
 #include "walletdb.h"
+#include "wallet_ismine.h"
 
 #include <algorithm>
 #include <map>

@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPTUTILS
-#define H_BITCOIN_SCRIPTUTILS
+#ifndef H_BITCOIN_WALLET_ISMINE
+#define H_BITCOIN_WALLET_ISMINE
 
 #include "key.h"
 #include "stealth.h"
@@ -120,4 +120,4 @@ public:
     bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode) const;
 };
 
-#endif // H_BITCOIN_SCRIPTUTILS
+#endif // H_BITCOIN_WALLET_ISMINE
