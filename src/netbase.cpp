@@ -11,10 +11,11 @@
 #include <netdb.h>
 #endif
 
-#include "netbase.h"
-#include "util.h"
-#include "sync.h"
 #include "hash.h"
+#include "netbase.h"
+#include "sync.h"
+#include "util.h"
+#include "utiltime.h"
 #include "utilstrencodings.h"
 
 #ifndef WIN32
@@ -429,7 +430,7 @@ bool static ConnectSocketDirectly(const CService &addrConnect, SOCKET& hSocketRe
         // WSAEINVAL is here because some legacy version of winsock uses it
         if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL)
         {
-            struct timeval timeout = MillisToTimeval(nTimeout)
+            struct timeval timeout = MillisToTimeval(nTimeout);
             fd_set fdset;
             FD_ZERO(&fdset);
             FD_SET(hSocket, &fdset);
