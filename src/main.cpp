@@ -3362,9 +3362,11 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         vWorkQueue.push_back(hash);
         for (unsigned int i = 0; i < vWorkQueue.size(); i++)
         {
-            uint256 hashPrev = vWorkQueue[i];
-            for (multimap<uint256, COrphanBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
-                mi != mapOrphanBlocksByPrev.upper_bound(hashPrev);
+            map<uint256, set<uint256> >::iterator itByPrev = mapOrphanTransactionsByPrev.find(vWorkQueue[i]);
+            if (itByPrev == mapOrphanTransactionsByPrev.end())
+                continue;
+            for (set<uint256>::iterator mi = itByPrev->second.begin();
+                 mi != itByPrev->second.end();
                 ++mi)
             {
                 CBlock block;
