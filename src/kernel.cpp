@@ -282,6 +282,7 @@ bool CheckProofOfStake(CValidationState &state, CBlockIndex* pindexPrev, const C
 
     // Read txPrev and header of its block
     CBlockHeader header;
+    uint256 hashBlock;
     CTransaction txPrev;
     {
         CAutoFile file(OpenBlockFile(postx, true), SER_DISK, CLIENT_VERSION);
@@ -295,11 +296,15 @@ bool CheckProofOfStake(CValidationState &state, CBlockIndex* pindexPrev, const C
         if (txPrev.GetHash() != txin.prevout.hash)
             return error("%s() : txid mismatch in CheckProofOfStake()", __func__);
     }
+    
+    // First try finding the previous transaction in database
+    if (!GetTransaction(txin.prevout.hash, txPrev, hashBlock, true))
+        return error("CheckProofOfStake() : INFO: read txPrev failed");
 
     // Verify signature
     CCoins coins(txPrev, 0);
-    if (!CScriptCheck(coins, tx, 0, SCRIPT_VERIFY_P2SH))
-        return state.DoS(100, error("CheckProofOfStake() : CScriptCheck failed on coinstake %s", tx.GetHash().ToString()));
+    if (!VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, tx, 0, STANDARD_SCRIPT_VERIFY_FLAGS, 0))
+        return state.DoS(100, error("CheckProofOfStake() : VerifyScript failed on coinstake %s", tx.GetHash().ToString()));
 
     if (!CheckStakeKernelHash(pindexPrev, nBits, header.GetBlockTime(), txPrev, txin.prevout, tx.nTime, hashProofOfStake, targetProofOfStake, fDebug))
         return state.DoS(1, error("CheckProofOfStake() : INFO: check kernel failed on coinstake %s, hashProof=%s", tx.GetHash().ToString(), hashProofOfStake.ToString())); // may occur during initial download or if behind on block chain sync
