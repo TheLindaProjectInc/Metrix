@@ -303,7 +303,7 @@ bool CheckProofOfStake(CValidationState &state, CBlockIndex* pindexPrev, const C
 
     // Verify signature
     CCoins coins(txPrev, 0);
-    if (!VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, tx, 0, STANDARD_SCRIPT_VERIFY_FLAGS, 0))
+    if (!VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, tx, 0, STANDARD_SCRIPT_VERIFY_FLAGS))
         return state.DoS(100, error("CheckProofOfStake() : VerifyScript failed on coinstake %s", tx.GetHash().ToString()));
 
     if (!CheckStakeKernelHash(pindexPrev, nBits, header.GetBlockTime(), txPrev, txin.prevout, tx.nTime, hashProofOfStake, targetProofOfStake, fDebug))
