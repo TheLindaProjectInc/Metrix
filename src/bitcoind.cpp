@@ -110,7 +110,6 @@ bool AppInit(int argc, char* argv[])
             }
             if (pid > 0) // Parent process, pid is child process id
             {
-                CreatePidFile(GetPidFile(), pid);
                 return true;
             }
             // Child process falls through to rest of initialization
