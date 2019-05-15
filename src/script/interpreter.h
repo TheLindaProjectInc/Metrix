@@ -26,7 +26,7 @@ enum {
 enum {
     SCRIPT_VERIFY_NONE = 0,
     SCRIPT_VERIFY_NOCACHE = (1U << 0),
-    SCRIPT_VERIFY_P2SH = (1U << 0),    // Evaluate P2SH subscripts (softfork safe, BIP16).
+    SCRIPT_VERIFY_P2SH = (1U << 0), // Evaluate P2SH subscripts (softfork safe, BIP16).
 
     // Passing a non-strict-DER signature or one with undefined hashtype to a checksig operation causes script failure.
     // Evaluating a pubkey that is not (0x04 + 64 bytes) or (0x02 or 0x03 + 32 bytes) by checksig causes script failure.

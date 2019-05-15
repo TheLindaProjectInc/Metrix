@@ -7,8 +7,8 @@
 #define H_BITCOIN_WALLET_ISMINE
 
 #include "key.h"
-#include "stealth.h"
 #include "script/script.h"
+#include "stealth.h"
 
 #include <stdint.h>
 
@@ -23,8 +23,7 @@ std::vector<unsigned char> ToByteVector(const T& in)
     return std::vector<unsigned char>(in.begin(), in.end());
 }
 
-typedef enum ScriptError_t
-{
+typedef enum ScriptError_t {
     SCRIPT_ERR_OK = 0,
     SCRIPT_ERR_UNKNOWN_ERROR,
     SCRIPT_ERR_EVAL_FALSE,
@@ -72,21 +71,18 @@ typedef enum ScriptError_t
 const char* ScriptErrorString(const ScriptError error);
 
 
-
-
 /** IsMine() return codes */
-enum isminetype
-{
+enum isminetype {
     ISMINE_NO = 0,
     ISMINE_WATCH_ONLY = 1,
     ISMINE_SPENDABLE = 2,
-	ISMINE_ALL = ISMINE_WATCH_ONLY | ISMINE_SPENDABLE
+    ISMINE_ALL = ISMINE_WATCH_ONLY | ISMINE_SPENDABLE
 };
 
 /** used for bitflags of isminetype */
 typedef uint8_t isminefilter;
 
-bool IsDERSignature(const valtype &vchSig, bool haveHashType = true);
+bool IsDERSignature(const valtype& vchSig, bool haveHashType = true);
 isminetype IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
 isminetype IsMine(const CKeyStore& keystore, const CTxDestination& dest);
 

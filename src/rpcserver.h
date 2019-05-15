@@ -6,8 +6,8 @@
 #ifndef _BITCOINRPC_SERVER_H_
 #define _BITCOINRPC_SERVER_H_
 
-#include "uint256.h"
 #include "rpcprotocol.h"
+#include "uint256.h"
 
 #include <list>
 #include <map>
@@ -45,13 +45,15 @@ void SetRPCWarmupFinished();
   Use like:  RPCTypeCheck(params, boost::assign::list_of(str_type)(int_type)(obj_type));
 */
 void RPCTypeCheck(const json_spirit::Array& params,
-                  const std::list<json_spirit::Value_type>& typesExpected, bool fAllowNull=false);
+                  const std::list<json_spirit::Value_type>& typesExpected,
+                  bool fAllowNull = false);
 /*
   Check for expected keys/value types in an Object.
   Use like: RPCTypeCheck(object, boost::assign::map_list_of("name", str_type)("value", int_type));
 */
 void RPCTypeCheck(const json_spirit::Object& o,
-                  const std::map<std::string, json_spirit::Value_type>& typesExpected, bool fAllowNull=false);
+                  const std::map<std::string, json_spirit::Value_type>& typesExpected,
+                  bool fAllowNull = false);
 
 /*
   Run func nSeconds from now. Uses boost deadline timers.
@@ -62,7 +64,7 @@ void RPCRunLater(const std::string& name, boost::function<void(void)> func, int6
 //! Convert boost::asio address to CNetAddr
 extern CNetAddr BoostAsioToCNetAddr(boost::asio::ip::address address);
 
-typedef json_spirit::Value(*rpcfn_type)(const json_spirit::Array& params, bool fHelp);
+typedef json_spirit::Value (*rpcfn_type)(const json_spirit::Array& params, bool fHelp);
 
 class CRPCCommand
 {
@@ -82,6 +84,7 @@ class CRPCTable
 {
 private:
     std::map<std::string, const CRPCCommand*> mapCommands;
+
 public:
     CRPCTable();
     const CRPCCommand* operator[](std::string name) const;
@@ -94,7 +97,7 @@ public:
      * @returns Result of the call.
      * @throws an exception (json_spirit::Value) when an error happens.
      */
-    json_spirit::Value execute(const std::string &method, const json_spirit::Array &params) const;
+    json_spirit::Value execute(const std::string& method, const json_spirit::Array& params) const;
 };
 
 extern const CRPCTable tableRPC;
@@ -207,7 +210,7 @@ extern json_spirit::Value signrawtransaction(const json_spirit::Array& params, b
 extern json_spirit::Value sendrawtransaction(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getbestblockhash(const json_spirit::Array& params, bool fHelp); // in rpcblockchain.cpp
-extern json_spirit::Value getblockcount(const json_spirit::Array& params, bool fHelp); // in rpcblockchain.cpp
+extern json_spirit::Value getblockcount(const json_spirit::Array& params, bool fHelp);    // in rpcblockchain.cpp
 extern json_spirit::Value getdifficulty(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value settxfee(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value getmempoolinfo(const json_spirit::Array& params, bool fHelp);

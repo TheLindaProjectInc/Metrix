@@ -3,12 +3,12 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "ui_interface.h"
 #include "init.h"
-#include "util.h"
 #include "main.h"
 #include "noui.h"
 #include "rpcserver.h"
+#include "ui_interface.h"
+#include "util.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/thread.hpp>
@@ -19,13 +19,11 @@ void WaitForShutdown(boost::thread_group* threadGroup)
 {
     bool fShutdown = ShutdownRequested();
     // Tell the main threads to shutdown.
-    while (!fShutdown)
-    {
+    while (!fShutdown) {
         MilliSleep(200);
         fShutdown = ShutdownRequested();
     }
-    if (threadGroup)
-    {
+    if (threadGroup) {
         threadGroup->interrupt_all();
         threadGroup->join_all();
     }
@@ -40,23 +38,19 @@ bool AppInit(int argc, char* argv[])
     boost::thread_group threadGroup;
 
     bool fRet = false;
-    try
-    {
+    try {
         //
         // Parameters
         //
         // If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
         ParseParameters(argc, argv);
-        if (!boost::filesystem::is_directory(GetDataDir(false)))
-        {
+        if (!boost::filesystem::is_directory(GetDataDir(false))) {
             fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
             return false;
         }
-        try
-        {
+        try {
             ReadConfigFile(mapArgs, mapMultiArgs);
-        }
-        catch (std::exception &e) {
+        } catch (std::exception& e) {
             fprintf(stderr, "Error reading configuration file: %s\n", e.what());
             return false;
         }
@@ -66,18 +60,14 @@ bool AppInit(int argc, char* argv[])
             return false;
         }
 
-        if (mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version"))
-        {
-        std::string strUsage = _("Linda Version") + " " + _("version") + " " + FormatFullVersion() + "\n";
+        if (mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
+            std::string strUsage = _("Linda Version") + " " + _("version") + " " + FormatFullVersion() + "\n";
 
-            if (!mapArgs.count("-version"))
-            {
+            if (!mapArgs.count("-version")) {
                 strUsage += LicenseInfo();
-            }
-            else
-            {
+            } else {
                 strUsage += "\n" + _("Usage:") + "\n" +
-                    "  Lindad [options]                     " + _("Start Linda Core Daemon") + "\n";
+                            "  Lindad [options]                     " + _("Start Linda Core Daemon") + "\n";
 
                 strUsage += "\n" + HelpMessage(HMM_BITCOIND);
             }
@@ -90,21 +80,18 @@ bool AppInit(int argc, char* argv[])
             if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "Linda:"))
                 fCommandLine = true;
 
-        if (fCommandLine)
-        {
+        if (fCommandLine) {
             fprintf(stderr, "Error: There is no RPC client functionality in Lindad anymore. Use the Linda-cli utility instead.\n");
             exit(1);
         }
 #ifndef WIN32
         fDaemon = GetBoolArg("-daemon", false);
-        if (fDaemon)
-        {
+        if (fDaemon) {
             fprintf(stdout, "Linda server starting\n");
 
             // Daemonize
             pid_t pid = fork();
-            if (pid < 0)
-            {
+            if (pid < 0) {
                 fprintf(stderr, "Error: fork() returned %d errno %d\n", pid, errno);
                 return false;
             }
@@ -122,8 +109,7 @@ bool AppInit(int argc, char* argv[])
         SoftSetBoolArg("-server", true);
 
         fRet = AppInit2(threadGroup);
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         PrintExceptionContinue(&e, "AppInit()");
         throw;
     } catch (...) {
@@ -131,8 +117,7 @@ bool AppInit(int argc, char* argv[])
         throw;
     }
 
-    if (!fRet)
-    {
+    if (!fRet) {
         threadGroup.interrupt_all();
         // threadGroup.join_all(); was left out intentionally here, because we didn't re-test all of
         // the startup-failure cases to make sure they don't result in a hang due to some

@@ -17,9 +17,11 @@ using namespace boost::assign;
 // Main network
 //
 
-class CBaseMainParams : public CBaseChainParams {
+class CBaseMainParams : public CBaseChainParams
+{
 public:
-    CBaseMainParams() {
+    CBaseMainParams()
+    {
         networkID = CBaseChainParams::MAIN;
         nRPCPort = 33821;
     }
@@ -29,9 +31,11 @@ static CBaseMainParams mainParams;
 //
 // Testnet
 //
-class CBaseTestNetParams : public CBaseMainParams {
+class CBaseTestNetParams : public CBaseMainParams
+{
 public:
-    CBaseTestNetParams() {
+    CBaseTestNetParams()
+    {
         networkID = CBaseChainParams::TESTNET;
         nRPCPort = 28889;
         strDataDir = "testnet";
@@ -39,14 +43,16 @@ public:
 };
 static CBaseTestNetParams testNetParams;
 
-static CBaseChainParams *pCurrentBaseParams = 0;
+static CBaseChainParams* pCurrentBaseParams = 0;
 
-const CBaseChainParams &BaseParams() {
+const CBaseChainParams& BaseParams()
+{
     assert(pCurrentBaseParams);
     return *pCurrentBaseParams;
 }
 
-void SelectBaseParams(CBaseChainParams::Network network) {
+void SelectBaseParams(CBaseChainParams::Network network)
+{
     switch (network) {
     case CBaseChainParams::MAIN:
         pCurrentBaseParams = &mainParams;
@@ -60,18 +66,19 @@ void SelectBaseParams(CBaseChainParams::Network network) {
     }
 }
 
-bool SelectBaseParamsFromCommandLine() {
+bool SelectBaseParamsFromCommandLine()
+{
     bool fTestNet = GetBoolArg("-testnet", false);
 
     if (fTestNet) {
         SelectBaseParams(CBaseChainParams::TESTNET);
-    }
-    else {
+    } else {
         SelectBaseParams(CBaseChainParams::MAIN);
     }
     return true;
 }
 
-bool AreBaseParamsConfigured() {
+bool AreBaseParamsConfigured()
+{
     return pCurrentBaseParams != NULL;
 }

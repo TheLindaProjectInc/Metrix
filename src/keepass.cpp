@@ -4,20 +4,20 @@
 
 #include "keepass.h"
 
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <exception>
 #include <openssl/rand.h>
-#include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 //#include <boost/asio.hpp>
 
 #include "util.h"
 //#include "random.h"
-#include "serialize.h"
 #include "clientversion.h"
-#include "json/json_spirit_writer_template.h"
-#include "json/json_spirit_reader_template.h"
 #include "rpcprotocol.h"
+#include "serialize.h"
 #include "wallet_ismine.h"
+#include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_writer_template.h"
 //#include "script/script.h" // Necessary to prevent compile errors due to forward declaration of
 //CScript in serialize.h (included from crypter.h)
 #include "wallet.h"
@@ -27,11 +27,11 @@ using boost::asio::ip::tcp;
 CKeePassIntegrator keePassInt;
 
 CKeePassIntegrator::CKeePassIntegrator()
-    :sKeyBase64(" "), sKey(" "), sUrl(" ") // Prevent LockedPageManagerBase complaints
+    : sKeyBase64(" "), sKey(" "), sUrl(" ") // Prevent LockedPageManagerBase complaints
 {
     sKeyBase64.clear(); // Prevent LockedPageManagerBase complaints
-    sKey.clear(); // Prevent LockedPageManagerBase complaints
-    sUrl.clear(); // Prevent LockedPageManagerBase complaints
+    sKey.clear();       // Prevent LockedPageManagerBase complaints
+    sUrl.clear();       // Prevent LockedPageManagerBase complaints
     bIsActive = false;
     nPort = KEEPASS_KEEPASSHTTP_PORT;
 }
@@ -45,13 +45,11 @@ void CKeePassIntegrator::init()
     sKeePassId = GetArg("-keepassid", "");
     sKeePassEntryName = GetArg("-keepassname", "");
     // Convert key if available
-    if(sKeyBase64.size() > 0)
-    {
+    if (sKeyBase64.size() > 0) {
         sKey = DecodeBase64Secure(sKeyBase64);
     }
     // Construct url if available
-    if(sKeePassEntryName.size() > 0)
-    {
+    if (sKeePassEntryName.size() > 0) {
         sUrl = SecureString("http://");
         sUrl += SecureString(sKeePassEntryName.c_str());
         sUrl += SecureString("/");
@@ -69,8 +67,7 @@ void CKeePassIntegrator::CKeePassRequest::addStrParameter(std::string sName, Sec
 {
     std::string sCipherValue;
 
-    if(!EncryptAES256(sKey, sValue, sIV, sCipherValue))
-    {
+    if (!EncryptAES256(sKey, sValue, sIV, sCipherValue)) {
         throw std::runtime_error("Unable to encrypt Verifier");
     }
 
@@ -89,15 +86,14 @@ void CKeePassIntegrator::CKeePassRequest::init()
     // Generate Nonce, Verifier and RequestType
     SecureString sNonceBase64Secure = EncodeBase64Secure(sIVSecure);
     addStrParameter("Nonce", std::string(&sNonceBase64Secure[0], sNonceBase64Secure.size())); // Plain
-    addStrParameter("Verifier", sNonceBase64Secure); // Encoded
+    addStrParameter("Verifier", sNonceBase64Secure);                                          // Encoded
     addStrParameter("RequestType", sType);
 }
 
 void CKeePassIntegrator::CKeePassResponse::parseResponse(std::string sResponse)
 {
     json_spirit::Value responseValue;
-    if(!json_spirit::read_string(sResponse, responseValue))
-    {
+    if (!json_spirit::read_string(sResponse, responseValue)) {
         throw std::runtime_error("Unable to parse KeePassHttp response");
     }
 
@@ -119,12 +115,9 @@ SecureString CKeePassIntegrator::CKeePassResponse::getSecureStr(std::string sNam
 {
     std::string sValueBase64Encrypted(json_spirit::find_value(responseObj, sName).get_str());
     SecureString sValue;
-    try
-    {
+    try {
         sValue = decrypt(sValueBase64Encrypted);
-    }
-    catch (std::exception &e)
-    {
+    } catch (std::exception& e) {
         std::string sErrorMessage = "Exception occured while decrypting ";
         sErrorMessage += sName + ": " + e.what();
         throw std::runtime_error(sErrorMessage);
@@ -136,21 +129,18 @@ SecureString CKeePassIntegrator::CKeePassResponse::decrypt(std::string sValueBas
 {
     std::string sValueEncrypted = DecodeBase64(sValueBase64Encrypted);
     SecureString sValue;
-    if(!DecryptAES256(sKey, sValueEncrypted, sIV, sValue))
-    {
-      throw std::runtime_error("Unable to decrypt value.");
+    if (!DecryptAES256(sKey, sValueEncrypted, sIV, sValue)) {
+        throw std::runtime_error("Unable to decrypt value.");
     }
     return sValue;
 }
 
 std::vector<CKeePassIntegrator::CKeePassEntry> CKeePassIntegrator::CKeePassResponse::getEntries()
 {
-
     std::vector<CKeePassEntry> vEntries;
 
     json_spirit::Array aEntries = json_spirit::find_value(responseObj, "Entries").get_array();
-    for(json_spirit::Array::iterator it = aEntries.begin(); it != aEntries.end(); ++it)
-    {
+    for (json_spirit::Array::iterator it = aEntries.begin(); it != aEntries.end(); ++it) {
         SecureString sEntryUuid(decrypt(json_spirit::find_value((*it).get_obj(), "Uuid").get_str().c_str()));
         SecureString sEntryName(decrypt(json_spirit::find_value((*it).get_obj(), "Name").get_str().c_str()));
         SecureString sEntryLogin(decrypt(json_spirit::find_value((*it).get_obj(), "Login").get_str().c_str()));
@@ -160,7 +150,6 @@ std::vector<CKeePassIntegrator::CKeePassEntry> CKeePassIntegrator::CKeePassRespo
     }
 
     return vEntries;
-
 }
 
 SecureString CKeePassIntegrator::generateRandomKey(size_t nSize)
@@ -170,13 +159,13 @@ SecureString CKeePassIntegrator::generateRandomKey(size_t nSize)
     key.resize(nSize);
 
     RandAddSeedPerfmon();
-    RAND_bytes((unsigned char *) &key[0], nSize);
+    RAND_bytes((unsigned char*)&key[0], nSize);
 
     return key;
 }
 
 // Construct POST body for RPC JSON call
-std::string CKeePassIntegrator::constructHTTPPost(const std::string& strMsg, const std::map<std::string,std::string>& mapRequestHeaders)
+std::string CKeePassIntegrator::constructHTTPPost(const std::string& strMsg, const std::map<std::string, std::string>& mapRequestHeaders)
 {
     std::ostringstream s;
     s << "POST / HTTP/1.1\r\n"
@@ -186,9 +175,10 @@ std::string CKeePassIntegrator::constructHTTPPost(const std::string& strMsg, con
       << "Content-Length: " << strMsg.size() << "\r\n"
       << "Connection: close\r\n"
       << "Accept: application/json\r\n";
-    BOOST_FOREACH(const PAIRTYPE(std::string, std::string)& item, mapRequestHeaders)
+    BOOST_FOREACH (const PAIRTYPE(std::string, std::string) & item, mapRequestHeaders)
         s << item.first << ": " << item.second << "\r\n";
-    s << "\r\n" << strMsg;
+    s << "\r\n"
+      << strMsg;
 
     return s.str();
 }
@@ -208,14 +198,12 @@ void CKeePassIntegrator::doHTTPPost(const std::string& sRequest, int& nStatus, s
     // Try each endpoint until we successfully establish a connection.
     tcp::socket socket(io_service);
     boost::system::error_code error = boost::asio::error::host_not_found;
-    while (error && endpoint_iterator != end)
-    {
-      socket.close();
-      socket.connect(*endpoint_iterator++, error);
+    while (error && endpoint_iterator != end) {
+        socket.close();
+        socket.connect(*endpoint_iterator++, error);
     }
 
-    if(error)
-    {
+    if (error) {
         throw boost::system::system_error(error);
     }
 
@@ -225,7 +213,8 @@ void CKeePassIntegrator::doHTTPPost(const std::string& sRequest, int& nStatus, s
 
     // Logging of actual post data disabled as to not write passphrase in debug.log. Only enable temporarily when needed
     //if(fDebug) LogPrintf("CKeePassIntegrator::doHTTPPost - send POST data: %s\n", strPost.c_str());
-    if(fDebug) LogPrintf("CKeePassIntegrator::doHTTPPost - send POST data\n");
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::doHTTPPost - send POST data\n");
 
     boost::asio::streambuf request;
     std::ostream request_stream(&request);
@@ -234,7 +223,8 @@ void CKeePassIntegrator::doHTTPPost(const std::string& sRequest, int& nStatus, s
     // Send the request.
     boost::asio::write(socket, request);
 
-    if(fDebug) LogPrintf("CKeePassIntegrator::doHTTPPost - request written\n");
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::doHTTPPost - request written\n");
 
     // Read the response status line. The response streambuf will automatically
     // grow to accommodate the entire line. The growth may be limited by passing
@@ -242,31 +232,32 @@ void CKeePassIntegrator::doHTTPPost(const std::string& sRequest, int& nStatus, s
     boost::asio::streambuf response;
     boost::asio::read_until(socket, response, "\r\n");
 
-    if(fDebug) LogPrintf("CKeePassIntegrator::doHTTPPost - request status line read\n");
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::doHTTPPost - request status line read\n");
 
     // Receive HTTP reply status
     int nProto = 0;
     std::istream response_stream(&response);
     nStatus = ReadHTTPStatus(response_stream, nProto);
 
-    if(fDebug) LogPrintf("CKeePassIntegrator::doHTTPPost - reading response body start\n");
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::doHTTPPost - reading response body start\n");
     // Read until EOF, writing data to output as we go.
-    while (boost::asio::read(socket, response, boost::asio::transfer_at_least(1), error))
-    {
-        if (error != boost::asio::error::eof)
-        {
-            if (error != 0)
-            { // 0 is success
+    while (boost::asio::read(socket, response, boost::asio::transfer_at_least(1), error)) {
+        if (error != boost::asio::error::eof) {
+            if (error != 0) { // 0 is success
                 throw boost::system::system_error(error);
             }
         }
     }
-    if(fDebug) LogPrintf("CKeePassIntegrator::doHTTPPost - reading response body end\n");
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::doHTTPPost - reading response body end\n");
 
     // Receive HTTP reply message headers and body
     std::map<std::string, std::string> mapHeaders;
     ReadHTTPMessage(response_stream, mapHeaders, sResponse, nProto, MAX_SIZE);
-    if(fDebug) LogPrintf("CKeePassIntegrator::doHTTPPost - Processed body\n");
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::doHTTPPost - Processed body\n");
 }
 
 void CKeePassIntegrator::rpcTestAssociation(bool bTriggerUnlock)
@@ -279,12 +270,12 @@ void CKeePassIntegrator::rpcTestAssociation(bool bTriggerUnlock)
 
     doHTTPPost(request.getJson(), nStatus, sResponse);
 
-    if(fDebug) LogPrintf("CKeePassIntegrator::rpcTestAssociation - send result: status: %d response: %s\n", nStatus, sResponse.c_str());
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::rpcTestAssociation - send result: status: %d response: %s\n", nStatus, sResponse.c_str());
 }
 
 std::vector<CKeePassIntegrator::CKeePassEntry> CKeePassIntegrator::rpcGetLogins()
 {
-
     // Convert key format
     SecureString sKey = DecodeBase64Secure(sKeyBase64);
 
@@ -301,10 +292,10 @@ std::vector<CKeePassIntegrator::CKeePassEntry> CKeePassIntegrator::rpcGetLogins(
 
     // Logging of actual response data disabled as to not write passphrase in debug.log. Only enable temporarily when needed
     //if(fDebug) LogPrintf("CKeePassIntegrator::rpcGetLogins - send result: status: %d response: %s\n", nStatus, sResponse.c_str());
-    if(fDebug) LogPrintf("CKeePassIntegrator::rpcGetLogins - send result: status: %d\n", nStatus);
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::rpcGetLogins - send result: status: %d\n", nStatus);
 
-    if(nStatus != 200)
-    {
+    if (nStatus != 200) {
         std::string sErrorMessage = "Error returned by KeePassHttp: HTTP code ";
         sErrorMessage += boost::lexical_cast<std::string>(nStatus);
         sErrorMessage += " - Response: ";
@@ -317,8 +308,7 @@ std::vector<CKeePassIntegrator::CKeePassEntry> CKeePassIntegrator::rpcGetLogins(
     // Parse the response
     CKeePassResponse response(sKey, sResponse);
 
-    if(!response.getSuccess())
-    {
+    if (!response.getSuccess()) {
         std::string sErrorMessage = "KeePassHttp returned failure status";
         throw std::runtime_error(sErrorMessage);
     }
@@ -328,7 +318,6 @@ std::vector<CKeePassIntegrator::CKeePassEntry> CKeePassIntegrator::rpcGetLogins(
 
 void CKeePassIntegrator::rpcSetLogin(const SecureString& strWalletPass, const SecureString& sEntryId)
 {
-
     // Convert key format
     SecureString sKey = DecodeBase64Secure(sKeyBase64);
 
@@ -336,13 +325,13 @@ void CKeePassIntegrator::rpcSetLogin(const SecureString& strWalletPass, const Se
     request.addStrParameter("Id", sKeePassId);
     request.addStrParameter("Url", sUrl);
 
-    if(fDebug) LogPrintf("CKeePassIntegrator::rpcSetLogin - send Url: %s\n", sUrl.c_str());
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::rpcSetLogin - send Url: %s\n", sUrl.c_str());
 
     //request.addStrParameter("SubmitUrl", sSubmitUrl); // Is used to construct the entry title
     request.addStrParameter("Login", SecureString("Linda"));
     request.addStrParameter("Password", strWalletPass);
-    if(sEntryId.size() != 0)
-    {
+    if (sEntryId.size() != 0) {
         request.addStrParameter("Uuid", sEntryId); // Update existing
     }
 
@@ -352,10 +341,10 @@ void CKeePassIntegrator::rpcSetLogin(const SecureString& strWalletPass, const Se
     doHTTPPost(request.getJson(), nStatus, sResponse);
 
 
-    if(fDebug) LogPrintf("CKeePassIntegrator::rpcSetLogin - send result: status: %d response: %s\n", nStatus, sResponse.c_str());
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::rpcSetLogin - send result: status: %d response: %s\n", nStatus, sResponse.c_str());
 
-    if(nStatus != 200)
-    {
+    if (nStatus != 200) {
         std::string sErrorMessage = "Error returned: HTTP code ";
         sErrorMessage += boost::lexical_cast<std::string>(nStatus);
         sErrorMessage += " - Response: ";
@@ -368,8 +357,7 @@ void CKeePassIntegrator::rpcSetLogin(const SecureString& strWalletPass, const Se
     // Parse the response
     CKeePassResponse response(sKey, sResponse);
 
-    if(!response.getSuccess())
-    {
+    if (!response.getSuccess()) {
         throw std::runtime_error("KeePassHttp returned failure status");
     }
 }
@@ -395,10 +383,10 @@ void CKeePassIntegrator::rpcAssociate(std::string& sId, SecureString& sKeyBase64
 
     doHTTPPost(request.getJson(), nStatus, sResponse);
 
-    if(fDebug) LogPrintf("CKeePassIntegrator::rpcAssociate - send result: status: %d response: %s\n", nStatus, sResponse.c_str());
+    if (fDebug)
+        LogPrintf("CKeePassIntegrator::rpcAssociate - send result: status: %d response: %s\n", nStatus, sResponse.c_str());
 
-    if(nStatus != 200)
-    {
+    if (nStatus != 200) {
         std::string sErrorMessage = "Error returned: HTTP code ";
         sErrorMessage += boost::lexical_cast<std::string>(nStatus);
         sErrorMessage += " - Response: ";
@@ -411,8 +399,7 @@ void CKeePassIntegrator::rpcAssociate(std::string& sId, SecureString& sKeyBase64
     // Parse the response
     CKeePassResponse response(sKey, sResponse);
 
-    if(!response.getSuccess())
-    {
+    if (!response.getSuccess()) {
         throw std::runtime_error("KeePassHttp returned failure status");
     }
 
@@ -423,31 +410,25 @@ void CKeePassIntegrator::rpcAssociate(std::string& sId, SecureString& sKeyBase64
 // Retrieve wallet passphrase from KeePass
 SecureString CKeePassIntegrator::retrievePassphrase()
 {
-
     // Check we have all required information
-    if(sKey.size() == 0)
-    {
+    if (sKey.size() == 0) {
         throw std::runtime_error("keepasskey parameter is not defined. Please specify the configuration parameter.");
     }
-    if(sKeePassId.size() == 0)
-    {
+    if (sKeePassId.size() == 0) {
         throw std::runtime_error("keepassid parameter is not defined. Please specify the configuration parameter.");
     }
-    if(sKeePassEntryName == "")
-    {
+    if (sKeePassEntryName == "") {
         throw std::runtime_error("keepassname parameter is not defined. Please specify the configuration parameter.");
     }
 
     // Retrieve matching logins from KeePass
-    std::vector<CKeePassIntegrator::CKeePassEntry>  entries = rpcGetLogins();
+    std::vector<CKeePassIntegrator::CKeePassEntry> entries = rpcGetLogins();
 
     // Only accept one unique match
-    if(entries.size() == 0)
-    {
+    if (entries.size() == 0) {
         throw std::runtime_error("KeePassHttp returned 0 matches, please verify the keepassurl setting.");
     }
-    if(entries.size() > 1)
-    {
+    if (entries.size() > 1) {
         throw std::runtime_error("KeePassHttp returned multiple matches, bailing out.");
     }
 
@@ -458,16 +439,13 @@ SecureString CKeePassIntegrator::retrievePassphrase()
 void CKeePassIntegrator::updatePassphrase(const SecureString& sWalletPassphrase)
 {
     // Check we have all required information
-    if(sKey.size() == 0)
-    {
+    if (sKey.size() == 0) {
         throw std::runtime_error("keepasskey parameter is not defined. Please specify the configuration parameter.");
     }
-    if(sKeePassId.size() == 0)
-    {
+    if (sKeePassId.size() == 0) {
         throw std::runtime_error("keepassid parameter is not defined. Please specify the configuration parameter.");
     }
-    if(sKeePassEntryName == "")
-    {
+    if (sKeePassEntryName == "") {
         throw std::runtime_error("keepassname parameter is not defined. Please specify the configuration parameter.");
     }
 
@@ -478,13 +456,11 @@ void CKeePassIntegrator::updatePassphrase(const SecureString& sWalletPassphrase)
     // Lookup existing entry
     std::vector<CKeePassIntegrator::CKeePassEntry> vEntries = rpcGetLogins();
 
-    if(vEntries.size() > 1)
-    {
+    if (vEntries.size() > 1) {
         throw std::runtime_error("KeePassHttp returned multiple matches, bailing out.");
     }
 
-    if(vEntries.size() == 1)
-    {
+    if (vEntries.size() == 1) {
         sEntryId = vEntries[0].getUuid();
     }
 

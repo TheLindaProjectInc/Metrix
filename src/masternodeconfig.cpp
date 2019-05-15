@@ -1,25 +1,26 @@
 
-#include "net.h"
 #include "masternodeconfig.h"
+#include "net.h"
 #include "util.h"
 
 CMasternodeConfig masternodeConfig;
 
-void CMasternodeConfig::add(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex) {
+void CMasternodeConfig::add(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex)
+{
     CMasternodeEntry cme(alias, ip, privKey, txHash, outputIndex);
     entries.push_back(cme);
 }
 
-bool CMasternodeConfig::read(std::string& strErr) {
+bool CMasternodeConfig::read(std::string& strErr)
+{
     entries = std::vector<CMasternodeEntry>(); // Clear entries so we don't double up
     boost::filesystem::ifstream streamConfig(GetMasternodeConfigFile());
     if (!streamConfig.good()) {
         return true; // No masternode.conf file is OK
     }
 
-    for(std::string line; std::getline(streamConfig, line); )
-    {
-        if(line.empty()) {
+    for (std::string line; std::getline(streamConfig, line);) {
+        if (line.empty()) {
             continue;
         }
         std::istringstream iss(line);
@@ -30,7 +31,7 @@ bool CMasternodeConfig::read(std::string& strErr) {
             return false;
         }
 
-/*        if(CService(ip).GetPort() != 19999 && CService(ip).GetPort() != 9999)  {
+        /*        if(CService(ip).GetPort() != 19999 && CService(ip).GetPort() != 9999)  {
             strErr = "Invalid port (must be 9999 for mainnet or 19999 for testnet) detected in masternode.conf: " + line;
             streamConfig.close();
             return false;
@@ -43,13 +44,14 @@ bool CMasternodeConfig::read(std::string& strErr) {
     return true;
 }
 
-bool CMasternodeConfig::create(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex) {
+bool CMasternodeConfig::create(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex)
+{
     // check if already have masternode account
     bool exists = false;
     for (std::vector<CMasternodeEntry>::const_iterator it = entries.begin(); it != entries.end(); it++) {
         if ((*it).getAlias() == alias) {
             exists = true;
-            break; 
+            break;
         }
     }
 
@@ -74,7 +76,8 @@ bool CMasternodeConfig::create(std::string alias, std::string ip, std::string pr
     return false;
 }
 
-bool CMasternodeConfig::remove(std::string alias) {
+bool CMasternodeConfig::remove(std::string alias)
+{
     // update masternode config file to remove the account
     boost::filesystem::ofstream streamConfig(GetMasternodeConfigFile());
     int rIndex = -1;
@@ -88,14 +91,14 @@ bool CMasternodeConfig::remove(std::string alias) {
             rIndex = i;
         }
     }
-    
+
     streamConfig.close();
 
     // remove from our entries
     if (rIndex != -1) {
-        entries.erase(entries.begin()+rIndex);
+        entries.erase(entries.begin() + rIndex);
         return true;
     }
-    
-    return false;    
+
+    return false;
 }

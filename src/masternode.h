@@ -11,14 +11,14 @@
 #include "key.h"
 #include "main.h"
 #include "net.h"
-//#include "primitives/transaction.h"
-//#include "primitives/block.h"
 #include "script/script.h"
 #include "sync.h"
 #include "timedata.h"
 #include "uint256.h"
 #include "util.h"
 #include "wallet_ismine.h"
+//#include "primitives/transaction.h"
+//#include "primitives/block.h"
 
 class CMasterNode;
 class CMasternodePayments;
@@ -66,7 +66,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 class CMasterNode
 {
 public:
-	static int minProtoVersion;
+    static int minProtoVersion;
     CService addr;
     CTxIn vin;
     int64_t lastTimeSeen;
@@ -104,11 +104,11 @@ public:
         protocolVersion = protocolVersionIn;
     }
 
-    uint256 CalculateScore(int64_t nBlockHeight=0);
+    uint256 CalculateScore(int64_t nBlockHeight = 0);
 
-    void UpdateLastSeen(int64_t override=0)
+    void UpdateLastSeen(int64_t override = 0)
     {
-        if(override == 0){
+        if (override == 0) {
             lastTimeSeen = GetAdjustedTime();
         } else {
             lastTimeSeen = override;
@@ -118,7 +118,7 @@ public:
     inline uint64_t SliceHash(uint256& hash, int slice)
     {
         uint64_t n = 0;
-        memcpy(&n, &hash+slice*64, 64);
+        memcpy(&n, &hash + slice * 64, 64);
         return n;
     }
 
@@ -143,26 +143,27 @@ public:
 
     int GetMasternodeInputAge()
     {
-        if(chainActive.Tip() == NULL) return 0;
+        if (chainActive.Tip() == NULL)
+            return 0;
 
-        if(cacheInputAge == 0){
+        if (cacheInputAge == 0) {
             cacheInputAge = GetInputAge(vin);
             cacheInputAgeBlock = chainActive.Height();
         }
 
-        return cacheInputAge+(chainActive.Height()-cacheInputAgeBlock);
+        return cacheInputAge + (chainActive.Height() - cacheInputAgeBlock);
     }
 };
 
 
 // Get the current winner for this block
-int GetCurrentMasterNode(int64_t nBlockHeight=0, int minProtocol=CMasterNode::minProtoVersion);
+int GetCurrentMasterNode(int64_t nBlockHeight = 0, int minProtocol = CMasterNode::minProtoVersion);
 
 int GetMasternodeByVin(CTxIn& vin);
-int GetMasternodeRank(CTxIn& vin, int64_t nBlockHeight=0, int minProtocol=CMasterNode::minProtoVersion);
+int GetMasternodeRank(CTxIn& vin, int64_t nBlockHeight = 0, int minProtocol = CMasterNode::minProtoVersion);
 int GetMasternodeRank(CTxIn& vin, std::vector<pair<unsigned int, CTxIn> >& vecMasternodeScores);
-int GetMasternodeByRank(int findRank, int64_t nBlockHeight=0, int minProtocol=CMasterNode::minProtoVersion);
-std::vector<pair<unsigned int, CTxIn> > GetMasternodeScores(int64_t nBlockHeight, int minProtocol=CMasterNode::minProtoVersion);
+int GetMasternodeByRank(int findRank, int64_t nBlockHeight = 0, int minProtocol = CMasterNode::minProtoVersion);
+std::vector<pair<unsigned int, CTxIn> > GetMasternodeScores(int64_t nBlockHeight, int minProtocol = CMasterNode::minProtoVersion);
 
 
 // for storing the winning payments
@@ -175,14 +176,16 @@ public:
     std::vector<unsigned char> vchSig;
     uint64_t score;
 
-    CMasternodePaymentWinner() {
+    CMasternodePaymentWinner()
+    {
         nBlockHeight = 0;
         score = 0;
         vin = CTxIn();
         payee = CScript();
     }
 
-    uint256 GetHash(){
+    uint256 GetHash()
+    {
         uint256 n2 = Hash(BEGIN(nBlockHeight), END(nBlockHeight));
         uint256 n3 = vin.prevout.hash > n2 ? (vin.prevout.hash - n2) : (n2 - vin.prevout.hash);
 
@@ -218,8 +221,8 @@ private:
     bool enabled;
 
 public:
-
-    CMasternodePayments() {
+    CMasternodePayments()
+    {
         strMainPubKey = "0469d959402805bde2f4be0b26db7920d92bddfaa3025e4d1167a3916e6c466f1be4d92d9ea04f1c81ed939a79be9617cde2b51f917d195680c6855c58eb3a5519";
         strTestPubKey = "0469d959402805bde2f4be0b26db7920d92bddfaa3025e4d1167a3916e6c466f1be4d92d9ea04f1c81ed939a79be9617cde2b51f917d195680c6855c58eb3a5519";
         enabled = false;

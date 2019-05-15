@@ -23,34 +23,34 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/fcntl.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <net/if.h>
-#include <netinet/in.h>
 #include <ifaddrs.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/fcntl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 
 
 #ifdef WIN32
-#define MSG_DONTWAIT        0
+#define MSG_DONTWAIT 0
 #else
 typedef u_int SOCKET;
 #include "errno.h"
-#define WSAGetLastError()   errno
-#define WSAEINVAL           EINVAL
-#define WSAEALREADY         EALREADY
-#define WSAEWOULDBLOCK      EWOULDBLOCK
-#define WSAEMSGSIZE         EMSGSIZE
-#define WSAEINTR            EINTR
-#define WSAEINPROGRESS      EINPROGRESS
-#define WSAEADDRINUSE       EADDRINUSE
-#define WSAENOTSOCK         EBADF
-#define INVALID_SOCKET      (SOCKET)(~0)
-#define SOCKET_ERROR        -1
+#define WSAGetLastError() errno
+#define WSAEINVAL EINVAL
+#define WSAEALREADY EALREADY
+#define WSAEWOULDBLOCK EWOULDBLOCK
+#define WSAEMSGSIZE EMSGSIZE
+#define WSAEINTR EINTR
+#define WSAEINPROGRESS EINPROGRESS
+#define WSAEADDRINUSE EADDRINUSE
+#define WSAENOTSOCK EBADF
+#define INVALID_SOCKET (SOCKET)(~0)
+#define SOCKET_ERROR -1
 #endif
 
 #ifdef WIN32
@@ -72,10 +72,10 @@ typedef u_int SOCKET;
 #ifndef PRIO_MAX
 #define PRIO_MAX 20
 #endif
-#define THREAD_PRIORITY_LOWEST          PRIO_MAX
-#define THREAD_PRIORITY_BELOW_NORMAL    2
-#define THREAD_PRIORITY_NORMAL          0
-#define THREAD_PRIORITY_ABOVE_NORMAL    (-2)
+#define THREAD_PRIORITY_LOWEST PRIO_MAX
+#define THREAD_PRIORITY_BELOW_NORMAL 2
+#define THREAD_PRIORITY_NORMAL 0
+#define THREAD_PRIORITY_ABOVE_NORMAL (-2)
 #endif
 
 #endif // _BITCOIN_COMPAT_H

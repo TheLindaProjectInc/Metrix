@@ -8,12 +8,16 @@
 
 #include "base58.h"
 #include "bignum.h"
+#include "darksend.h"
 #include "key.h"
 #include "main.h"
 #include "net.h"
+#include "protocol.h"
 #include "sync.h"
 #include "util.h"
 #include "wallet_ismine.h"
+
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace boost;
@@ -32,17 +36,6 @@ using namespace boost;
 
 class CSporkMessage;
 class CSporkManager;
-
-#include "bignum.h"
-#include "net.h"
-#include "key.h"
-#include "util.h"
-#include "protocol.h"
-#include "darksend.h"
-#include <boost/lexical_cast.hpp>
-
-using namespace std;
-using namespace boost;
 
 extern std::map<uint256, CSporkMessage> mapSporks;
 extern std::map<int, CSporkMessage> mapSporksActive;
@@ -66,7 +59,8 @@ public:
     int64_t nValue;
     int64_t nTimeSigned;
 
-    uint256 GetHash(){
+    uint256 GetHash()
+    {
         uint256 n = Hash(BEGIN(nSporkID), END(nTimeSigned));
         return n;
     }
@@ -80,7 +74,7 @@ public:
         READWRITE(nValue);
         READWRITE(nTimeSigned);
         READWRITE(vchSig);
-	}
+    }
 };
 
 
@@ -94,8 +88,8 @@ private:
     std::string strMainPubKey;
 
 public:
-
-    CSporkManager() {
+    CSporkManager()
+    {
         strMainPubKey = "0469d959402805bde2f4be0b26db7920d92bddfaa3025e4d1167a3916e6c466f1be4d92d9ea04f1c81ed939a79be9617cde2b51f917d195680c6855c58eb3a5519";
         strTestPubKey = "0469d959402805bde2f4be0b26db7920d92bddfaa3025e4d1167a3916e6c466f1be4d92d9ea04f1c81ed939a79be9617cde2b51f917d195680c6855c58eb3a5519";
     }
@@ -107,7 +101,6 @@ public:
     bool CheckSignature(CSporkMessage& spork);
     bool Sign(CSporkMessage& spork);
     void Relay(CSporkMessage& msg);
-
 };
 
 #endif // SPORK_H

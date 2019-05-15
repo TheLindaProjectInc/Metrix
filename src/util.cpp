@@ -36,16 +36,16 @@
 
 #include <algorithm>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
 
 #else
 
 #ifdef _MSC_VER
-#pragma warning(disable:4786)
-#pragma warning(disable:4804)
-#pragma warning(disable:4805)
-#pragma warning(disable:4717)
+#pragma warning(disable : 4786)
+#pragma warning(disable : 4804)
+#pragma warning(disable : 4805)
+#pragma warning(disable : 4717)
 #endif
 
 #ifdef _WIN32_WINNT
@@ -63,8 +63,8 @@
 #define NOMINMAX
 #endif
 
-#include <io.h> /* for _commit */
 #include "shlobj.h"
+#include <io.h> /* for _commit */
 #endif
 
 #ifdef HAVE_SYS_PRCTL_H
@@ -165,8 +165,7 @@ public:
             delete ppmutexOpenSSL[i];
         OPENSSL_free(ppmutexOpenSSL);
     }
-}
-instance_of_cinit;
+} instance_of_cinit;
 
 // LogPrintf() has been broken a couple of times now
 // by well-meaning people adding mutexes in the most straightforward way.
@@ -190,15 +189,15 @@ static void DebugPrintInit()
 
     boost::filesystem::path pathDebug = GetDataDir() / "debug.log";
     fileout = fopen(pathDebug.string().c_str(), "a");
-    if (fileout) setbuf(fileout, NULL); // unbuffered
+    if (fileout)
+        setbuf(fileout, NULL); // unbuffered
 
     mutexDebugLog = new boost::mutex();
 }
 
 bool LogAcceptCategory(const char* category)
 {
-    if (category != NULL)
-    {
+    if (category != NULL) {
         if (!fDebug)
             return false;
 
@@ -207,8 +206,7 @@ bool LogAcceptCategory(const char* category)
         // where mapMultiArgs might be deleted before another
         // global destructor calls LogPrint()
         static boost::thread_specific_ptr<set<string> > ptrCategory;
-        if (ptrCategory.get() == NULL)
-        {
+        if (ptrCategory.get() == NULL) {
             const vector<string>& categories = mapMultiArgs["-debug"];
             ptrCategory.reset(new set<string>(categories.begin(), categories.end()));
             // thread_specific_ptr automatically deletes the set when the thread ends.
@@ -223,17 +221,14 @@ bool LogAcceptCategory(const char* category)
     return true;
 }
 
-int LogPrintStr(const std::string &str)
+int LogPrintStr(const std::string& str)
 {
     int ret = 0; // Returns total number of characters written
-    if (fPrintToConsole)
-    {
+    if (fPrintToConsole) {
         // print to console
         ret = fwrite(str.data(), 1, str.size(), stdout);
         fflush(stdout);
-    }
-    else if (fPrintToDebugLog && AreBaseParamsConfigured())
-    {
+    } else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
         static bool fStartedNewLine = true;
         boost::call_once(&DebugPrintInit, debugPrintInitFlag);
 
@@ -246,14 +241,14 @@ int LogPrintStr(const std::string &str)
         if (fReopenDebugLog) {
             fReopenDebugLog = false;
             boost::filesystem::path pathDebug = GetDataDir() / "debug.log";
-            if (freopen(pathDebug.string().c_str(),"a",fileout) != NULL)
+            if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL)
                 setbuf(fileout, NULL); // unbuffered
         }
 
         // Debug print useful for profiling
         if (fLogTimestamps && fStartedNewLine)
             ret += fprintf(fileout, "%s ", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
-        if (!str.empty() && str[str.size()-1] == '\n')
+        if (!str.empty() && str[str.size() - 1] == '\n')
             fStartedNewLine = true;
         else
             fStartedNewLine = false;
@@ -267,12 +262,10 @@ int LogPrintStr(const std::string &str)
 static void InterpretNegativeSetting(string name, map<string, string>& mapSettingsRet)
 {
     // interpret -nofoo as -foo=0 (and -nofoo=0 as -foo=1) as long as -foo not set
-    if (name.find("-no") == 0)
-    {
+    if (name.find("-no") == 0) {
         std::string positive("-");
-        positive.append(name.begin()+3, name.end());
-        if (mapSettingsRet.count(positive) == 0)
-        {
+        positive.append(name.begin() + 3, name.end());
+        if (mapSettingsRet.count(positive) == 0) {
             bool value = !GetBoolArg(name, false);
             mapSettingsRet[positive] = (value ? "1" : "0");
         }
@@ -284,14 +277,12 @@ void ParseParameters(int argc, const char* const argv[])
     mapArgs.clear();
     mapMultiArgs.clear();
 
-    for (int i = 1; i < argc; i++)
-    {
+    for (int i = 1; i < argc; i++) {
         std::string str(argv[i]);
         std::string strValue;
         size_t is_index = str.find('=');
-        if (is_index != std::string::npos)
-        {
-            strValue = str.substr(is_index+1);
+        if (is_index != std::string::npos) {
+            strValue = str.substr(is_index + 1);
             str = str.substr(0, is_index);
         }
 #ifdef WIN32
@@ -313,10 +304,7 @@ void ParseParameters(int argc, const char* const argv[])
     }
 
     // New 0.6 features:
-    BOOST_FOREACH(const PAIRTYPE(string,string)& entry, mapArgs)
-    {
-       
-
+    BOOST_FOREACH (const PAIRTYPE(string, string) & entry, mapArgs) {
         // interpret -nofoo as -foo=0 (and -nofoo=0 as -foo=1) as long as -foo not set
         InterpretNegativeSetting(entry.first, mapArgs);
     }
@@ -338,8 +326,7 @@ int64_t GetArg(const std::string& strArg, int64_t nDefault)
 
 bool GetBoolArg(const std::string& strArg, bool fDefault)
 {
-    if (mapArgs.count(strArg))
-    {
+    if (mapArgs.count(strArg)) {
         if (mapArgs[strArg].empty())
             return true;
         return (atoi(mapArgs[strArg]) != 0);
@@ -365,19 +352,17 @@ bool SoftSetBoolArg(const std::string& strArg, bool fValue)
 
 void SetupEnvironment()
 {
-    #ifndef WIN32
-    try
-    {
-	#if BOOST_FILESYSTEM_VERSION == 3
-            boost::filesystem::path::codecvt(); // Raises runtime error if current locale is invalid
-	#else				          // boost filesystem v2
-            std::locale();                      // Raises runtime error if current locale is invalid
-	#endif
-    } catch(std::runtime_error &e)
-    {
+#ifndef WIN32
+    try {
+#if BOOST_FILESYSTEM_VERSION == 3
+        boost::filesystem::path::codecvt(); // Raises runtime error if current locale is invalid
+#else                                       // boost filesystem v2
+        std::locale(); // Raises runtime error if current locale is invalid
+#endif
+    } catch (std::runtime_error& e) {
         setenv("LC_ALL", "C", 1); // Force C locale
     }
-    #endif
+#endif
 }
 
 static std::string FormatException(std::exception* pex, const char* pszThread)
@@ -433,19 +418,20 @@ boost::filesystem::path GetDefaultDataDir()
 #endif
 }
 
-static boost::filesystem::path pathCached[CBaseChainParams::MAX_NETWORK_TYPES+1];
+static boost::filesystem::path pathCached[CBaseChainParams::MAX_NETWORK_TYPES + 1];
 static CCriticalSection csPathCached;
 
-const boost::filesystem::path &GetDataDir(bool fNetSpecific)
+const boost::filesystem::path& GetDataDir(bool fNetSpecific)
 {
     namespace fs = boost::filesystem;
 
     LOCK(csPathCached);
 
     int nNet = CBaseChainParams::MAX_NETWORK_TYPES;
-    if (fNetSpecific) nNet = BaseParams().NetworkID();
+    if (fNetSpecific)
+        nNet = BaseParams().NetworkID();
 
-    fs::path &path = pathCached[nNet];
+    fs::path& path = pathCached[nNet];
 
     // This can be called during exceptions by LogPrintf(), so we cache the
     // value so we don't have to do memory allocations after that.
@@ -469,7 +455,8 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
     return path;
 }
 
-string randomStrGen(int length) {
+string randomStrGen(int length)
+{
     static string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
     string result;
     result.resize(length);
@@ -479,44 +466,42 @@ string randomStrGen(int length) {
     return result;
 }
 
-void createConf()       //Automatic BitcoinDark.conf generation
+void createConf() //Automatic BitcoinDark.conf generation
 {
     srand(time(NULL));
 
     ofstream pConf;
     pConf.open(GetConfigFile().generic_string().c_str());
-    const char* nodes = "\nrpcport=33821"                  //List of known nodes, to be periodically updated
+    const char* nodes = "\nrpcport=33821" //List of known nodes, to be periodically updated
                         "\nrpcallowip=127.0.0.1"
                         "\ndaemon=1"
                         "\nserver=1"
                         "\nlistenonion=0";
 
-    pConf   << std::string("rpcuser=")
-            +  randomStrGen(5)
-            + std::string("\nrpcpassword=") 
-            + randomStrGen(15)
-            + std::string(nodes);
+    pConf << std::string("rpcuser=") + randomStrGen(5) + std::string("\nrpcpassword=") + randomStrGen(15) + std::string(nodes);
 
     pConf.close();
 }
 
 void ClearDatadirCache()
 {
-    std::fill(&pathCached[0], &pathCached[CBaseChainParams::MAX_NETWORK_TYPES+1],
+    std::fill(&pathCached[0], &pathCached[CBaseChainParams::MAX_NETWORK_TYPES + 1],
               boost::filesystem::path());
 }
 
 boost::filesystem::path GetConfigFile()
 {
     boost::filesystem::path pathConfigFile(GetArg("-conf", "Linda.conf"));
-    if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
+    if (!pathConfigFile.is_complete())
+        pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
 }
 
 boost::filesystem::path GetMasternodeConfigFile()
 {
     boost::filesystem::path pathConfigFile(GetArg("-mnconf", "masternode.conf"));
-    if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
+    if (!pathConfigFile.is_complete())
+        pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
 }
 
@@ -527,20 +512,18 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
     if (!streamConfig.good()) //Linda.conf doesn't exist
     {
         createConf();
-        new(&streamConfig) boost::filesystem::ifstream(GetConfigFile());
-        if(!streamConfig.good())
+        new (&streamConfig) boost::filesystem::ifstream(GetConfigFile());
+        if (!streamConfig.good())
             return;
     }
 
     set<string> setOptions;
     setOptions.insert("*");
 
-    for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
-    {
+    for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it) {
         // Don't overwrite existing settings so command line settings override bitcoin.conf
         string strKey = string("-") + it->string_key;
-        if (mapSettingsRet.count(strKey) == 0)
-        {
+        if (mapSettingsRet.count(strKey) == 0) {
             mapSettingsRet[strKey] = it->value[0];
             // interpret nofoo=1 as foo=0 (and nofoo=0 as foo=1) as long as foo not set)
             InterpretNegativeSetting(strKey, mapSettingsRet);
@@ -555,15 +538,15 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
 boost::filesystem::path GetPidFile()
 {
     boost::filesystem::path pathPidFile(GetArg("-pid", "Lindad.pid"));
-    if (!pathPidFile.is_complete()) pathPidFile = GetDataDir() / pathPidFile;
+    if (!pathPidFile.is_complete())
+        pathPidFile = GetDataDir() / pathPidFile;
     return pathPidFile;
 }
 
-void CreatePidFile(const boost::filesystem::path &path, pid_t pid)
+void CreatePidFile(const boost::filesystem::path& path, pid_t pid)
 {
     FILE* file = fopen(path.string().c_str(), "w");
-    if (file)
-    {
+    if (file) {
         fprintf(file, "%d\n", pid);
         fclose(file);
     }
@@ -585,11 +568,9 @@ bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest)
 //   Specifically handles case where path p exists, but it wasn't possible for the user to write to the parent directory.
 bool TryCreateDirectory(const boost::filesystem::path& p)
 {
-    try
-    {
+    try {
         return boost::filesystem::create_directory(p);
-    }
-    catch (boost::filesystem::filesystem_error) {
+    } catch (boost::filesystem::filesystem_error) {
         if (!boost::filesystem::exists(p) || !boost::filesystem::is_directory(p))
             throw;
     }
@@ -598,24 +579,25 @@ bool TryCreateDirectory(const boost::filesystem::path& p)
     return false;
 }
 
-void FileCommit(FILE *fileout)
+void FileCommit(FILE* fileout)
 {
-    fflush(fileout);                // harmless if redundantly called
+    fflush(fileout); // harmless if redundantly called
 #ifdef WIN32
     HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(fileout));
     FlushFileBuffers(hFile);
 #else
-    #if defined(__linux__) || defined(__NetBSD__)
-        fdatasync(fileno(fileout));
-    #elif defined(__APPLE__) && defined(F_FULLFSYNC)
-        fcntl(fileno(fileout), F_FULLFSYNC, 0);
-    #else
-        fsync(fileno(fileout));
-    #endif
+#if defined(__linux__) || defined(__NetBSD__)
+    fdatasync(fileno(fileout));
+#elif defined(__APPLE__) && defined(F_FULLFSYNC)
+    fcntl(fileno(fileout), F_FULLFSYNC, 0);
+#else
+    fsync(fileno(fileout));
+#endif
 #endif
 }
 
-bool TruncateFile(FILE *file, unsigned int length) {
+bool TruncateFile(FILE* file, unsigned int length)
+{
 #if defined(WIN32)
     return _chsize(_fileno(file), length) == 0;
 #else
@@ -625,7 +607,8 @@ bool TruncateFile(FILE *file, unsigned int length) {
 
 // this function tries to raise the file descriptor limit to the requested number.
 // It returns the actual file descriptor limit (which may be more or less than nMinFD)
-int RaiseFileDescriptorLimit(int nMinFD) {
+int RaiseFileDescriptorLimit(int nMinFD)
+{
 #if defined(WIN32)
     return 2048;
 #else
@@ -647,7 +630,8 @@ int RaiseFileDescriptorLimit(int nMinFD) {
 
 // this function tries to make a particular range of a file allocated (corresponding to disk space)
 // it is advisory, and the range specified in the arguments will never contain live data
-void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length) {
+void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length)
+{
 #if defined(WIN32)
     // Windows-specific version
     HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(file));
@@ -694,8 +678,7 @@ void ShrinkDebugFile()
     // Scroll debug.log if it's getting too big
     boost::filesystem::path pathLog = GetDataDir() / "debug.log";
     FILE* file = fopen(pathLog.string().c_str(), "r");
-    if (file && boost::filesystem::file_size(pathLog) > 10 * 1000000)
-    {
+    if (file && boost::filesystem::file_size(pathLog) > 10 * 1000000) {
         // Restart the file with some of the end
         char pch[200000];
         fseek(file, -sizeof(pch), SEEK_END);
@@ -703,16 +686,13 @@ void ShrinkDebugFile()
         fclose(file);
 
         file = fopen(pathLog.string().c_str(), "w");
-        if (file)
-        {
+        if (file) {
             fwrite(pch, 1, nBytes, file);
             fclose(file);
-        }
-        else if(file != NULL)
-	        fclose(file);
+        } else if (file != NULL)
+            fclose(file);
     }
 }
-
 
 
 #ifdef WIN32
@@ -722,8 +702,7 @@ boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate)
 
     char pszPath[MAX_PATH] = "";
 
-    if(SHGetSpecialFolderPathA(NULL, pszPath, nFolder, fCreate))
-    {
+    if (SHGetSpecialFolderPathA(NULL, pszPath, nFolder, fCreate)) {
         return fs::path(pszPath);
     }
 
@@ -770,7 +749,7 @@ void SetThreadPriority(int nPriority)
 #else // WIN32
 #ifdef PRIO_THREAD
     setpriority(PRIO_THREAD, 0, nPriority);
-#else // PRIO_THREAD
+#else  // PRIO_THREAD
     setpriority(PRIO_PROCESS, 0, nPriority);
 #endif // PRIO_THREAD
 #endif // WIN32

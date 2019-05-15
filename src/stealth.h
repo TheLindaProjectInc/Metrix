@@ -5,11 +5,11 @@
 #ifndef BITCOIN_STEALTH_H
 #define BITCOIN_STEALTH_H
 
-#include "util.h"
 #include "serialize.h"
+#include "util.h"
 
-#include <stdlib.h> 
-#include <stdio.h> 
+#include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 
 
@@ -19,13 +19,14 @@ const size_t ec_secret_size = 32;
 const size_t ec_compressed_size = 33;
 const size_t ec_uncompressed_size = 65;
 
-typedef struct ec_secret { uint8_t e[ec_secret_size]; } ec_secret;
+typedef struct ec_secret {
+    uint8_t e[ec_secret_size];
+} ec_secret;
 typedef data_chunk ec_point;
 
 typedef uint32_t stealth_bitfield;
 
-struct stealth_prefix
-{
+struct stealth_prefix {
     uint8_t number_bits;
     stealth_bitfield bitfield;
 };
@@ -59,31 +60,31 @@ public:
     {
         options = 0;
     }
-    
+
     uint8_t options;
     ec_point scan_pubkey;
     ec_point spend_pubkey;
     //std::vector<ec_point> spend_pubkeys;
     size_t number_signatures;
     stealth_prefix prefix;
-    
+
     mutable std::string label;
     data_chunk scan_secret;
     data_chunk spend_secret;
-    
+
     bool SetEncoded(const std::string& encodedAddress);
     std::string Encoded() const;
-    
-    bool operator <(const CStealthAddress& y) const
+
+    bool operator<(const CStealthAddress& y) const
     {
         return memcmp(&scan_pubkey[0], &y.scan_pubkey[0], ec_compressed_size) < 0;
     }
 
-    bool operator ==(const CStealthAddress& y) const
+    bool operator==(const CStealthAddress& y) const
     {
-	return Encoded() == y.Encoded();
+        return Encoded() == y.Encoded();
     }
-    
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -97,7 +98,6 @@ public:
         READWRITE(this->scan_secret);
         READWRITE(this->spend_secret);
     }
-    
 };
 
 void AppendChecksum(data_chunk& data);
@@ -115,4 +115,4 @@ int StealthSharedToSecretSpend(ec_secret& sharedS, ec_secret& spendSecret, ec_se
 bool IsStealthAddress(const std::string& encodedAddress);
 
 
-#endif  // BITCOIN_STEALTH_H
+#endif // BITCOIN_STEALTH_H

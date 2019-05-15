@@ -28,8 +28,7 @@ class uint160;
 class uint256;
 
 /** Error statuses for the wallet database */
-enum DBErrors
-{
+enum DBErrors {
     DB_LOAD_OK,
     DB_CORRUPT,
     DB_NONCRITICAL_ERROR,
@@ -41,7 +40,7 @@ enum DBErrors
 class CKeyMetadata
 {
 public:
-    static const int CURRENT_VERSION=1;
+    static const int CURRENT_VERSION = 1;
     int nVersion;
     int64_t nCreateTime; // 0 means unknown
 
@@ -74,16 +73,16 @@ public:
 
 class CStealthKeyMetadata
 {
-// -- used to get secret for keys created by stealth transaction with wallet locked
+    // -- used to get secret for keys created by stealth transaction with wallet locked
 public:
-    CStealthKeyMetadata() {};
-    
+    CStealthKeyMetadata(){};
+
     CStealthKeyMetadata(CPubKey pkEphem_, CPubKey pkScan_)
     {
         pkEphem = pkEphem_;
         pkScan = pkScan_;
     };
-    
+
     CPubKey pkEphem;
     CPubKey pkScan;
 
@@ -95,7 +94,6 @@ public:
         READWRITE(pkEphem);
         READWRITE(pkScan);
     }
-
 };
 
 
@@ -112,22 +110,22 @@ public:
 
     bool WritePurpose(const std::string& strAddress, const std::string& purpose);
     bool ErasePurpose(const std::string& strAddress);
-    
+
     bool WriteTx(uint256 hash, const CWalletTx& wtx);
     bool EraseTx(uint256 hash);
 
     bool WriteStealthKeyMeta(const CKeyID& keyId, const CStealthKeyMetadata& sxKeyMeta);
     bool EraseStealthKeyMeta(const CKeyID& keyId);
-    bool WriteStealthAddress(const CStealthAddress& sxAddr);    
+    bool WriteStealthAddress(const CStealthAddress& sxAddr);
     bool ReadStealthAddress(CStealthAddress& sxAddr);
 
-    bool WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata &keyMeta);
-    bool WriteCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, const CKeyMetadata &keyMeta);
+    bool WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta);
+    bool WriteCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, const CKeyMetadata& keyMeta);
     bool WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey);
 
     bool WriteCScript(const uint160& hash, const CScript& redeemScript);
 
-    bool WriteWatchOnly(const CScript &script);
+    bool WriteWatchOnly(const CScript& script);
 
     bool WriteBestBlock(const CBlockLocator& locator);
     bool ReadBestBlock(CBlockLocator& locator);
@@ -146,9 +144,9 @@ public:
     bool WriteAccount(const std::string& strAccount, const CAccount& account);
 
     // Write destination data key,value tuple to database
-    bool WriteDestData(const std::string &address, const std::string &key, const std::string &value);
+    bool WriteDestData(const std::string& address, const std::string& key, const std::string& value);
     // Erase destination data tuple from wallet database
-    bool EraseDestData(const std::string &address, const std::string &key);
+    bool EraseDestData(const std::string& address, const std::string& key);
 
     bool WriteAccountingEntry(const CAccountingEntry& acentry);
     int64_t GetAccountCreditDebit(const std::string& strAccount);

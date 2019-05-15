@@ -7,8 +7,8 @@
 #define BITCOIN_CHAIN_PARAMS_H
 
 #include "bignum.h"
-#include "core.h"
 #include "chainparamsbase.h"
+#include "core.h"
 #include "protocol.h"
 #include "uint256.h"
 
@@ -21,7 +21,7 @@ typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
 
 struct CDNSSeedData {
     std::string name, host;
-    CDNSSeedData(const std::string &strName, const std::string &strHost) : name(strName), host(strHost) {}
+    CDNSSeedData(const std::string& strName, const std::string& strHost) : name(strName), host(strHost) {}
 };
 
 /**
@@ -56,21 +56,22 @@ public:
     int RejectBlockOutdatedMajority() const { return nRejectBlockOutdatedMajority; }
     int ToCheckBlockUpgradeMajority() const { return nToCheckBlockUpgradeMajority; }
 
-	const CBlock& GenesisBlock() const { return genesis; }
-	bool RequireRPCPassword() const { return fRequireRPCPassword; }
+    const CBlock& GenesisBlock() const { return genesis; }
+    bool RequireRPCPassword() const { return fRequireRPCPassword; }
     /* Default value for -checkmempool argument */
-	bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
-	/* Make standard checks */
-	bool RequireStandard() const { return fRequireStandard; }
+    bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
+    /* Make standard checks */
+    bool RequireStandard() const { return fRequireStandard; }
     CBaseChainParams::Network NetworkID() const { return networkID; }
     /* Return the BIP70 network string (main, test or regtest) */
     std::string NetworkIDString() const { return strNetworkID; }
     const std::vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
-	const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
-	const std::vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
+    const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
+    const std::vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
     int LastPOWBlock() const { return nLastPOWBlock; }
+
 protected:
-    CChainParams() {};
+    CChainParams(){};
 
     uint256 hashGenesisBlock;
     MessageStartChars pchMessageStart;
@@ -87,18 +88,18 @@ protected:
     int nLastPOWBlock;
     CBaseChainParams::Network networkID;
     std::string strNetworkID;
-	CBlock genesis;
-	std::vector<CAddress> vFixedSeeds;
-	bool fRequireRPCPassword;
-	bool fDefaultCheckMemPool;
-	bool fRequireStandard;
+    CBlock genesis;
+    std::vector<CAddress> vFixedSeeds;
+    bool fRequireRPCPassword;
+    bool fDefaultCheckMemPool;
+    bool fRequireStandard;
 };
 
 /**
  * Return the currently selected parameters. This won't change after app startup
  * outside of the unit tests.
  */
-const CChainParams &Params();
+const CChainParams& Params();
 
 /** Return parameters for the given network. */
 CChainParams& Params(CBaseChainParams::Network network);

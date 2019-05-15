@@ -6,8 +6,8 @@
 
 #include "tinyformat.h"
 
-#include <string>
 #include <boost/algorithm/string/join.hpp>
+#include <string>
 
 // Name of client reported in the 'version' message. Report the same name
 // for both bitcoind and bitcoin-qt, to make it harder for attackers to
@@ -15,7 +15,7 @@
 const std::string CLIENT_NAME("Linda");
 
 // Client version number
-#define CLIENT_VERSION_SUFFIX   ""
+#define CLIENT_VERSION_SUFFIX ""
 
 
 // The following part of the code determines the CLIENT_BUILD variable.
@@ -34,36 +34,36 @@ const std::string CLIENT_NAME("Linda");
 
 // First, include build.h if requested
 #ifdef HAVE_BUILD_INFO
-#    include "build.h"
+#include "build.h"
 #endif
 
-// git will put "#define GIT_ARCHIVE 1" on the next line inside archives. 
+// git will put "#define GIT_ARCHIVE 1" on the next line inside archives.
 #define GIT_ARCHIVE 1
 #ifdef GIT_ARCHIVE
-#    define GIT_COMMIT_ID ""
-#    define GIT_COMMIT_DATE "$Format:%cD$"
+#define GIT_COMMIT_ID ""
+#define GIT_COMMIT_DATE "$Format:%cD$"
 #endif
 
-#define BUILD_DESC_FROM_COMMIT(maj,min,rev,build,commit) \
+#define BUILD_DESC_FROM_COMMIT(maj, min, rev, build, commit) \
     "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "-g" commit
 
-#define BUILD_DESC_FROM_UNKNOWN(maj,min,rev,build) \
+#define BUILD_DESC_FROM_UNKNOWN(maj, min, rev, build) \
     "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "-unk"
 
 #ifndef BUILD_DESC
-#    ifdef GIT_COMMIT_ID
-#        define BUILD_DESC BUILD_DESC_FROM_COMMIT(CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD, GIT_COMMIT_ID)
-#    else
-#        define BUILD_DESC BUILD_DESC_FROM_UNKNOWN(CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD)
-#    endif
+#ifdef GIT_COMMIT_ID
+#define BUILD_DESC BUILD_DESC_FROM_COMMIT(CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD, GIT_COMMIT_ID)
+#else
+#define BUILD_DESC BUILD_DESC_FROM_UNKNOWN(CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD)
+#endif
 #endif
 
 #ifndef BUILD_DATE
-#    ifdef GIT_COMMIT_DATE
-#        define BUILD_DATE GIT_COMMIT_DATE
-#    else
-#        define BUILD_DATE __DATE__ ", " __TIME__
-#    endif
+#ifdef GIT_COMMIT_DATE
+#define BUILD_DATE GIT_COMMIT_DATE
+#else
+#define BUILD_DATE __DATE__ ", " __TIME__
+#endif
 #endif
 
 const std::string CLIENT_BUILD(BUILD_DESC CLIENT_VERSION_SUFFIX);
@@ -71,10 +71,10 @@ const std::string CLIENT_DATE(BUILD_DATE);
 
 static std::string FormatVersion(int nVersion)
 {
-    if (nVersion%100 == 0)
-        return strprintf("%d.%d.%d", nVersion/1000000, (nVersion/10000)%100, (nVersion/100)%100);
+    if (nVersion % 100 == 0)
+        return strprintf("%d.%d.%d", nVersion / 1000000, (nVersion / 10000) % 100, (nVersion / 100) % 100);
     else
-        return strprintf("%d.%d.%d.%d", nVersion/1000000, (nVersion/10000)%100, (nVersion/100)%100, nVersion%100);
+        return strprintf("%d.%d.%d.%d", nVersion / 1000000, (nVersion / 10000) % 100, (nVersion / 100) % 100, nVersion % 100);
 }
 
 std::string FormatFullVersion()
