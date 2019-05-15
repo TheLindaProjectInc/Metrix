@@ -4,13 +4,13 @@
 
 
 #include "darksend.h"
-#include "main.h"
 #include "init.h"
-//#include "script/sign.h"
-#include "util.h"
-#include "masternode.h"
 #include "instantx.h"
+#include "main.h"
+#include "masternode.h"
+#include "script/sign.h"
 #include "ui_interface.h"
+#include "util.h"
 //#include "random.h"
 
 #include <openssl/rand.h>
@@ -918,7 +918,7 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin){
         int n = found;
         txNew.vin[n].scriptSig = newSig;
         if(fDebug) LogPrintf("CDarkSendPool::SignatureValid() - Sign with sig %s\n", newSig.ToString().substr(0,24));
-        if (!VerifyScript(txNew.vin[n].scriptSig, sigPubKey, txNew, n, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0)){
+        if (!VerifyScript(txNew.vin[n].scriptSig, sigPubKey, txNew, n, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC)){
             if(fDebug) LogPrintf("CDarkSendPool::SignatureValid() - Signing - Error signing input %u\n", n);
             return false;
         }

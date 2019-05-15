@@ -18,11 +18,12 @@
 #include <string>
 #include <vector>
 
-#include "chainparams.h"
-#include "bignum.h"
-#include "key.h"
-#include "script.h"
 #include "allocators.h"
+#include "bignum.h"
+#include "chainparams.h"
+#include "key.h"
+#include "script/script.h"
+#include "script/standard.h"
 #include "util.h"
 
 /**

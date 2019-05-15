@@ -4,16 +4,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-#include "bignum.h"
-#include "sync.h"
-#include "net.h"
-#include "key.h"
-#include "util.h"
-#include "script.h"
 #include "base58.h"
+#include "bignum.h"
+#include "key.h"
+#include "main.h"
+#include "net.h"
 #include "protocol.h"
 #include "spork.h"
-#include "main.h"
+#include "sync.h"
+#include "util.h"
+#include "wallet_ismine.h"
+
 #include <boost/lexical_cast.hpp>
 
 using namespace std;

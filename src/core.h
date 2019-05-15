@@ -9,7 +9,8 @@
 #include "uint256.h"
 #include "serialize.h"
 #include "util.h"
-#include "script.h"
+#include "script/compressor.h"
+#include "script/script.h"
 #include "scrypt.h"
 #include "timedata.h"
 
@@ -300,6 +301,9 @@ public:
     
     // Compute priority, given priority of inputs and (optionally) tx size
     double ComputePriority(double dPriorityInputs, unsigned int nTxSize=0) const;
+
+    // Compute modified tx size for priority calculation (optionally given tx size)
+    unsigned int CalculateModifiedSize(unsigned int nTxSize = 0) const;
     
     bool IsCoinBase() const
     {

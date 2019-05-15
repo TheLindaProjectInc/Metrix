@@ -4,19 +4,20 @@
 
 #include "core.h"
 #include "serialize.h"
-#include "script.h"
+#include "script/script.h"
 #include "util.h"
+#include "univalue/univalue.h"
 
-#include <boost/assign/list_of.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include "univalue/univalue.h"
+#include <boost/assign/list_of.hpp>
 
-using namespace std;
 using namespace boost;
 using namespace boost::algorithm;
+using namespace std;
+
 CScript ParseScript(std::string s)
 {
     CScript result;

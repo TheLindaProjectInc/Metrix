@@ -7,19 +7,18 @@
 #ifndef MASTERNODE_H
 #define MASTERNODE_H
 
-#include "uint256.h"
-#include "uint256.h"
-#include "sync.h"
-#include "net.h"
+#include "base58.h"
 #include "key.h"
+#include "main.h"
+#include "net.h"
 //#include "primitives/transaction.h"
 //#include "primitives/block.h"
-#include "util.h"
-//#include "script/script.h"
-#include "base58.h"
-#include "main.h"
+#include "script/script.h"
+#include "sync.h"
 #include "timedata.h"
-#include "script.h"
+#include "uint256.h"
+#include "util.h"
+#include "wallet_ismine.h"
 
 class CMasterNode;
 class CMasternodePayments;

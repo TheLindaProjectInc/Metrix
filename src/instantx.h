@@ -6,16 +6,16 @@
 #ifndef INSTANTX_H
 #define INSTANTX_H
 
-#include "uint256.h"
-#include "sync.h"
-#include "net.h"
-#include "key.h"
-//#include "primitives/transaction.h"
-#include "util.h"
-//#include "script/script.h"
-#include "script.h"
 #include "base58.h"
+#include "key.h"
+#include "net.h"
 #include "main.h"
+//#include "primitives/transaction.h"
+//#include "script/script.h"
+#include "sync.h"
+#include "uint256.h"
+#include "util.h"
+#include "wallet_ismine.h"
 
 using namespace std;
 using namespace boost;

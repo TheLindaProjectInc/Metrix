@@ -111,7 +111,11 @@ BITCOIN_CORE_H = \
   rpcclient.h \
   rpcprotocol.h \
   rpcserver.h \
-  script.h \
+  script/compressor.h \
+  script/interpreter.h \
+  script/script.h \
+  script/sign.h \
+  script/standard.h \
   scrypt.h \
   serialize.h \
   spork.h \
@@ -131,6 +135,7 @@ BITCOIN_CORE_H = \
   util.h \
   version.h \
   wallet.h \
+  wallet_ismine.h \
   walletdb.h \
   compat/sanity.h
 
@@ -191,6 +196,7 @@ libbitcoin_wallet_a_SOURCES = \
   rpcwallet.cpp \
   stealth.cpp \
   wallet.cpp \
+  wallet_ismine.cpp \
   walletdb.cpp \
   $(BITCOIN_CORE_H)
 
@@ -243,7 +249,11 @@ libbitcoin_common_a_SOURCES = \
   netbase.cpp \
   protocol.cpp \
   pbkdf2.cpp \
-  script.cpp \
+  script/compressor.cpp \
+  script/interpreter.cpp \
+  script/script.cpp \
+  script/sign.cpp \
+  script/standard.cpp \
   scrypt.cpp \
   stealth.cpp \
   timedata.cpp \

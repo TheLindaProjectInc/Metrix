@@ -17,7 +17,7 @@
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_reader_template.h"
 #include "rpcprotocol.h"
-#include "script.h"
+#include "wallet_ismine.h"
 //#include "script/script.h" // Necessary to prevent compile errors due to forward declaration of
 //CScript in serialize.h (included from crypter.h)
 #include "wallet.h"

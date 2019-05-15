@@ -2,7 +2,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
 
-#include "script.h"
+#include "scriptutils.h"
 #include "key.h"
 
 using namespace std;
