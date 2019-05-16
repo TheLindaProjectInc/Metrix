@@ -46,14 +46,11 @@ bool ParseMoney(const char* pszIn, int64_t& nRet)
     const char* p = pszIn;
     while (isspace(*p))
         p++;
-    for (; *p; p++)
-    {
-        if (*p == '.')
-        {
+    for (; *p; p++) {
+        if (*p == '.') {
             p++;
             int64_t nMult = CENT * 10;
-            while (isdigit(*p) && (nMult > 0))
-            {
+            while (isdigit(*p) && (nMult > 0)) {
                 nUnits += nMult * (*p++ - '0');
                 nMult /= 10;
             }

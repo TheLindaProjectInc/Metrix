@@ -7,33 +7,33 @@
 #define BITCOIN_UTIL_H
 
 #ifndef WIN32
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #endif
 
 #include "serialize.h"
 #include "tinyformat.h"
 
-#include <map>
 #include <list>
+#include <map>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
 
-#include <boost/version.hpp>
-#include <boost/thread.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/thread.hpp>
+#include <boost/version.hpp>
 
 #include <openssl/bio.h>
-#include <openssl/evp.h>
+#include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/crypto.h> // for OPENSSL_cleanse()
+#include <openssl/evp.h>
 #include <openssl/rand.h>
-#include <openssl/bn.h>
 
 #include <stdint.h>
 
@@ -44,19 +44,19 @@ static const int64_t CENT = 1000000;
 
 typedef int64_t CAmount;
 
-#define BEGIN(a)            ((char*)&(a))
-#define END(a)              ((char*)&((&(a))[1]))
-#define UBEGIN(a)           ((unsigned char*)&(a))
-#define UEND(a)             ((unsigned char*)&((&(a))[1]))
-#define ARRAYLEN(array)     (sizeof(array)/sizeof((array)[0]))
+#define BEGIN(a) ((char*)&(a))
+#define END(a) ((char*)&((&(a))[1]))
+#define UBEGIN(a) ((unsigned char*)&(a))
+#define UEND(a) ((unsigned char*)&((&(a))[1]))
+#define ARRAYLEN(array) (sizeof(array) / sizeof((array)[0]))
 
-#define UVOIDBEGIN(a)        ((void*)&(a))
-#define CVOIDBEGIN(a)        ((const void*)&(a))
-#define UINTBEGIN(a)        ((uint32_t*)&(a))
-#define CUINTBEGIN(a)        ((const uint32_t*)&(a))
+#define UVOIDBEGIN(a) ((void*)&(a))
+#define CVOIDBEGIN(a) ((const void*)&(a))
+#define UINTBEGIN(a) ((uint32_t*)&(a))
+#define CUINTBEGIN(a) ((const uint32_t*)&(a))
 
 // This is needed because the foreach macro can't get over the comma in pair<t1, t2>
-#define PAIRTYPE(t1, t2)    std::pair<t1, t2>
+#define PAIRTYPE(t1, t2) std::pair<t1, t2>
 
 boost::filesystem::path GetMasternodeConfigFile();
 
@@ -106,27 +106,28 @@ void SetupEnvironment();
 /* Return true if log accepts specified category */
 bool LogAcceptCategory(const char* category);
 /* Send a string to the log output */
-int LogPrintStr(const std::string &str);
+int LogPrintStr(const std::string& str);
 
 #define LogPrintf(...) LogPrint(NULL, __VA_ARGS__)
 
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
  */
-#define MAKE_ERROR_AND_LOG_FUNC(n)                                        \
-    /*   Print to debug.log if -debug=category switch is given OR category is NULL. */ \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline int LogPrint(const char* category, const char* format, TINYFORMAT_VARARGS(n))  \
-    {                                                                         \
-        if(!LogAcceptCategory(category)) return 0;                            \
-        return LogPrintStr(tfm::format(format, TINYFORMAT_PASSARGS(n))); \
-    }                                                                         \
-    /*   Log error and return false */                                        \
-    template<TINYFORMAT_ARGTYPES(n)>                                          \
-    static inline bool error(const char* format, TINYFORMAT_VARARGS(n))                     \
-    {                                                                         \
-        LogPrintStr("ERROR: " + tfm::format(format, TINYFORMAT_PASSARGS(n)) + "\n"); \
-        return false;                                                         \
+#define MAKE_ERROR_AND_LOG_FUNC(n)                                                              \
+    /*   Print to debug.log if -debug=category switch is given OR category is NULL. */          \
+    template <TINYFORMAT_ARGTYPES(n)>                                                           \
+    static inline int LogPrint(const char* category, const char* format, TINYFORMAT_VARARGS(n)) \
+    {                                                                                           \
+        if (!LogAcceptCategory(category))                                                       \
+            return 0;                                                                           \
+        return LogPrintStr(tfm::format(format, TINYFORMAT_PASSARGS(n)));                        \
+    }                                                                                           \
+    /*   Log error and return false */                                                          \
+    template <TINYFORMAT_ARGTYPES(n)>                                                           \
+    static inline bool error(const char* format, TINYFORMAT_VARARGS(n))                         \
+    {                                                                                           \
+        LogPrintStr("ERROR: " + tfm::format(format, TINYFORMAT_PASSARGS(n)) + "\n");            \
+        return false;                                                                           \
     }
 
 TINYFORMAT_FOREACH_ARGNUM(MAKE_ERROR_AND_LOG_FUNC)
@@ -136,7 +137,8 @@ TINYFORMAT_FOREACH_ARGNUM(MAKE_ERROR_AND_LOG_FUNC)
  */
 static inline int LogPrint(const char* category, const char* format)
 {
-    if(!LogAcceptCategory(category)) return 0;
+    if (!LogAcceptCategory(category))
+        return 0;
     return LogPrintStr(format);
 }
 static inline bool error(const char* format)
@@ -147,19 +149,19 @@ static inline bool error(const char* format)
 
 
 void PrintExceptionContinue(std::exception* pex, const char* pszThread);
-void ParseParameters(int argc, const char*const argv[]);
-void FileCommit(FILE *fileout);
+void ParseParameters(int argc, const char* const argv[]);
+void FileCommit(FILE* fileout);
 bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest);
 bool TryCreateDirectory(const boost::filesystem::path& p);
-bool TruncateFile(FILE *file, unsigned int length);
+bool TruncateFile(FILE* file, unsigned int length);
 int RaiseFileDescriptorLimit(int nMinFD);
-void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length);
+void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length);
 boost::filesystem::path GetDefaultDataDir();
-const boost::filesystem::path &GetDataDir(bool fNetSpecific = true);
+const boost::filesystem::path& GetDataDir(bool fNetSpecific = true);
 boost::filesystem::path GetConfigFile();
-boost::filesystem::path GetPidFile();
 #ifndef WIN32
-void CreatePidFile(const boost::filesystem::path &path, pid_t pid);
+boost::filesystem::path GetPidFile();
+void CreatePidFile(const boost::filesystem::path& path, pid_t pid);
 #endif
 void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet, std::map<std::string, std::vector<std::string> >& mapMultiSettingsRet);
 #ifdef WIN32
@@ -172,7 +174,7 @@ inline std::string leftTrim(std::string src, char chr)
 {
     std::string::size_type pos = src.find_first_not_of(chr, 0);
 
-    if(pos > 0)
+    if (pos > 0)
         src.erase(0, pos);
 
     return src;
@@ -242,54 +244,45 @@ void RenameThread(const char* name);
 // or maybe:
 //    boost::function<void()> f = boost::bind(&FunctionWithArg, argument);
 //    threadGroup.create_thread(boost::bind(&LoopForever<boost::function<void()> >, "nothing", f, milliseconds));
-template <typename Callable> void LoopForever(const char* name,  Callable func, int64_t msecs)
+template <typename Callable>
+void LoopForever(const char* name, Callable func, int64_t msecs)
 {
     std::string s = strprintf("Linda-%s", name);
     RenameThread(s.c_str());
     LogPrintf("%s thread start\n", name);
-    try
-    {
-        while (1)
-        {
+    try {
+        while (1) {
             MilliSleep(msecs);
             func();
         }
-    }
-    catch (boost::thread_interrupted)
-    {
+    } catch (boost::thread_interrupted) {
         LogPrintf("%s thread stop\n", name);
         throw;
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         PrintExceptionContinue(&e, name);
         throw;
-    }
-    catch (...) {
+    } catch (...) {
         PrintExceptionContinue(NULL, name);
         throw;
     }
 }
 // .. and a wrapper that just calls func once
-template <typename Callable> void TraceThread(const char* name,  Callable func)
+template <typename Callable>
+void TraceThread(const char* name, Callable func)
 {
     std::string s = strprintf("Linda-%s", name);
     RenameThread(s.c_str());
-    try
-    {
+    try {
         LogPrintf("%s thread start\n", name);
         func();
         LogPrintf("%s thread exit\n", name);
-    }
-    catch (boost::thread_interrupted)
-    {
+    } catch (boost::thread_interrupted) {
         LogPrintf("%s thread interrupt\n", name);
         throw;
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         PrintExceptionContinue(&e, name);
         throw;
-    }
-    catch (...) {
+    } catch (...) {
         PrintExceptionContinue(NULL, name);
         throw;
     }

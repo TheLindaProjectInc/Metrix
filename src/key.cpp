@@ -6,10 +6,10 @@
 //        so here, we include both openssl libs and libsecp256k1
 //        to at least gain what we can from it.
 
-#include <openssl/ecdsa.h>
 #include "random.h"
-#include <openssl/obj_mac.h>
 #include <openssl/bn.h>
+#include <openssl/ecdsa.h>
+#include <openssl/obj_mac.h>
 
 #include "key.h"
 
@@ -24,16 +24,19 @@
 //#endif
 
 // anonymous namespace with local implementation code (OpenSSL interaction)
-namespace {
-
+namespace
+{
 #ifdef USE_SECP256K1
-class CSecp256k1Init {
+class CSecp256k1Init
+{
 public:
     secp256k1_context_t* ctx;
-    CSecp256k1Init() {
+    CSecp256k1Init()
+    {
         ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
     }
-    ~CSecp256k1Init() {
+    ~CSecp256k1Init()
+    {
         secp256k1_context_destroy(ctx);
     }
 };
@@ -42,15 +45,16 @@ static CSecp256k1Init instance_of_csecp256k1;
 //#else
 
 // Generate a private key from just the secret parameter
-int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
+int EC_KEY_regenerate_key(EC_KEY* eckey, BIGNUM* priv_key)
 {
     int ok = 0;
-    BN_CTX *ctx = NULL;
-    EC_POINT *pub_key = NULL;
+    BN_CTX* ctx = NULL;
+    EC_POINT* pub_key = NULL;
 
-    if (!eckey) return 0;
+    if (!eckey)
+        return 0;
 
-    const EC_GROUP *group = EC_KEY_get0_group(eckey);
+    const EC_GROUP* group = EC_KEY_get0_group(eckey);
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
@@ -63,8 +67,8 @@ int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
     if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
         goto err;
 
-    EC_KEY_set_private_key(eckey,priv_key);
-    EC_KEY_set_public_key(eckey,pub_key);
+    EC_KEY_set_private_key(eckey, priv_key);
+    EC_KEY_set_public_key(eckey, pub_key);
 
     ok = 1;
 
@@ -75,69 +79,133 @@ err:
     if (ctx != NULL)
         BN_CTX_free(ctx);
 
-    return(ok);
+    return (ok);
 }
 
 // Perform ECDSA key recovery (see SEC1 4.1.6) for curves over (mod p)-fields
 // recid selects which key is recovered
 // if check is non-zero, additional checks are performed
-int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned char *msg, int msglen, int recid, int check)
+int ECDSA_SIG_recover_key_GFp(EC_KEY* eckey, ECDSA_SIG* ecsig, const unsigned char* msg, int msglen, int recid, int check)
 {
-    if (!eckey) return 0;
+    if (!eckey)
+        return 0;
 
     int ret = 0;
-    BN_CTX *ctx = NULL;
+    BN_CTX* ctx = NULL;
 
-    BIGNUM *x = NULL;
-    BIGNUM *e = NULL;
-    BIGNUM *order = NULL;
-    BIGNUM *sor = NULL;
-    BIGNUM *eor = NULL;
-    BIGNUM *field = NULL;
-    EC_POINT *R = NULL;
-    EC_POINT *O = NULL;
-    EC_POINT *Q = NULL;
-    BIGNUM *rr = NULL;
-    BIGNUM *zero = NULL;
+    BIGNUM* x = NULL;
+    BIGNUM* e = NULL;
+    BIGNUM* order = NULL;
+    BIGNUM* sor = NULL;
+    BIGNUM* eor = NULL;
+    BIGNUM* field = NULL;
+    EC_POINT* R = NULL;
+    EC_POINT* O = NULL;
+    EC_POINT* Q = NULL;
+    BIGNUM* rr = NULL;
+    BIGNUM* zero = NULL;
     int n = 0;
     int i = recid / 2;
 
-    const EC_GROUP *group = EC_KEY_get0_group(eckey);
-    if ((ctx = BN_CTX_new()) == NULL) { ret = -1; goto err; }
+    const EC_GROUP* group = EC_KEY_get0_group(eckey);
+    if ((ctx = BN_CTX_new()) == NULL) {
+        ret = -1;
+        goto err;
+    }
     BN_CTX_start(ctx);
     order = BN_CTX_get(ctx);
-    if (!EC_GROUP_get_order(group, order, ctx)) { ret = -2; goto err; }
-    x = BN_CTX_get(ctx);
-    if (!BN_copy(x, order)) { ret=-1; goto err; }
-    if (!BN_mul_word(x, i)) { ret=-1; goto err; }
-    if (!BN_add(x, x, ecsig->r)) { ret=-1; goto err; }
-    field = BN_CTX_get(ctx);
-    if (!EC_GROUP_get_curve_GFp(group, field, NULL, NULL, ctx)) { ret=-2; goto err; }
-    if (BN_cmp(x, field) >= 0) { ret=0; goto err; }
-    if ((R = EC_POINT_new(group)) == NULL) { ret = -2; goto err; }
-    if (!EC_POINT_set_compressed_coordinates_GFp(group, R, x, recid % 2, ctx)) { ret=0; goto err; }
-    if (check)
-    {
-        if ((O = EC_POINT_new(group)) == NULL) { ret = -2; goto err; }
-        if (!EC_POINT_mul(group, O, NULL, R, order, ctx)) { ret=-2; goto err; }
-        if (!EC_POINT_is_at_infinity(group, O)) { ret = 0; goto err; }
+    if (!EC_GROUP_get_order(group, order, ctx)) {
+        ret = -2;
+        goto err;
     }
-    if ((Q = EC_POINT_new(group)) == NULL) { ret = -2; goto err; }
+    x = BN_CTX_get(ctx);
+    if (!BN_copy(x, order)) {
+        ret = -1;
+        goto err;
+    }
+    if (!BN_mul_word(x, i)) {
+        ret = -1;
+        goto err;
+    }
+    if (!BN_add(x, x, ecsig->r)) {
+        ret = -1;
+        goto err;
+    }
+    field = BN_CTX_get(ctx);
+    if (!EC_GROUP_get_curve_GFp(group, field, NULL, NULL, ctx)) {
+        ret = -2;
+        goto err;
+    }
+    if (BN_cmp(x, field) >= 0) {
+        ret = 0;
+        goto err;
+    }
+    if ((R = EC_POINT_new(group)) == NULL) {
+        ret = -2;
+        goto err;
+    }
+    if (!EC_POINT_set_compressed_coordinates_GFp(group, R, x, recid % 2, ctx)) {
+        ret = 0;
+        goto err;
+    }
+    if (check) {
+        if ((O = EC_POINT_new(group)) == NULL) {
+            ret = -2;
+            goto err;
+        }
+        if (!EC_POINT_mul(group, O, NULL, R, order, ctx)) {
+            ret = -2;
+            goto err;
+        }
+        if (!EC_POINT_is_at_infinity(group, O)) {
+            ret = 0;
+            goto err;
+        }
+    }
+    if ((Q = EC_POINT_new(group)) == NULL) {
+        ret = -2;
+        goto err;
+    }
     n = EC_GROUP_get_degree(group);
     e = BN_CTX_get(ctx);
-    if (!BN_bin2bn(msg, msglen, e)) { ret=-1; goto err; }
-    if (8*msglen > n) BN_rshift(e, e, 8-(n & 7));
+    if (!BN_bin2bn(msg, msglen, e)) {
+        ret = -1;
+        goto err;
+    }
+    if (8 * msglen > n)
+        BN_rshift(e, e, 8 - (n & 7));
     zero = BN_CTX_get(ctx);
-    if (!BN_zero(zero)) { ret=-1; goto err; }
-    if (!BN_mod_sub(e, zero, e, order, ctx)) { ret=-1; goto err; }
+    if (!BN_zero(zero)) {
+        ret = -1;
+        goto err;
+    }
+    if (!BN_mod_sub(e, zero, e, order, ctx)) {
+        ret = -1;
+        goto err;
+    }
     rr = BN_CTX_get(ctx);
-    if (!BN_mod_inverse(rr, ecsig->r, order, ctx)) { ret=-1; goto err; }
+    if (!BN_mod_inverse(rr, ecsig->r, order, ctx)) {
+        ret = -1;
+        goto err;
+    }
     sor = BN_CTX_get(ctx);
-    if (!BN_mod_mul(sor, ecsig->s, rr, order, ctx)) { ret=-1; goto err; }
+    if (!BN_mod_mul(sor, ecsig->s, rr, order, ctx)) {
+        ret = -1;
+        goto err;
+    }
     eor = BN_CTX_get(ctx);
-    if (!BN_mod_mul(eor, e, rr, order, ctx)) { ret=-1; goto err; }
-    if (!EC_POINT_mul(group, Q, eor, R, sor, ctx)) { ret=-2; goto err; }
-    if (!EC_KEY_set_public_key(eckey, Q)) { ret=-2; goto err; }
+    if (!BN_mod_mul(eor, e, rr, order, ctx)) {
+        ret = -1;
+        goto err;
+    }
+    if (!EC_POINT_mul(group, Q, eor, R, sor, ctx)) {
+        ret = -2;
+        goto err;
+    }
+    if (!EC_KEY_set_public_key(eckey, Q)) {
+        ret = -2;
+        goto err;
+    }
 
     ret = 1;
 
@@ -146,37 +214,45 @@ err:
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    if (R != NULL) EC_POINT_free(R);
-    if (O != NULL) EC_POINT_free(O);
-    if (Q != NULL) EC_POINT_free(Q);
+    if (R != NULL)
+        EC_POINT_free(R);
+    if (O != NULL)
+        EC_POINT_free(O);
+    if (Q != NULL)
+        EC_POINT_free(Q);
     return ret;
 }
 
 // RAII Wrapper around OpenSSL's EC_KEY
-class CECKey {
+class CECKey
+{
 private:
-    EC_KEY *pkey;
+    EC_KEY* pkey;
 
 public:
-    CECKey() {
+    CECKey()
+    {
         pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
         assert(pkey != NULL);
     }
 
-    ~CECKey() {
+    ~CECKey()
+    {
         EC_KEY_free(pkey);
     }
 
-    void GetSecretBytes(unsigned char vch[32]) const {
-        const BIGNUM *bn = EC_KEY_get0_private_key(pkey);
+    void GetSecretBytes(unsigned char vch[32]) const
+    {
+        const BIGNUM* bn = EC_KEY_get0_private_key(pkey);
         assert(bn);
         int nBytes = BN_num_bytes(bn);
-        int n=BN_bn2bin(bn,&vch[32 - nBytes]);
+        int n = BN_bn2bin(bn, &vch[32 - nBytes]);
         assert(n == nBytes);
         memset(vch, 0, 32 - nBytes);
     }
 
-    void SetSecretBytes(const unsigned char vch[32]) {
+    void SetSecretBytes(const unsigned char vch[32])
+    {
         bool ret;
         BIGNUM bn;
         BN_init(&bn);
@@ -187,7 +263,8 @@ public:
         BN_clear_free(&bn);
     }
 
-    void GetPrivKey(CPrivKey &privkey, bool fCompressed) {
+    void GetPrivKey(CPrivKey& privkey, bool fCompressed)
+    {
         EC_KEY_set_conv_form(pkey, fCompressed ? POINT_CONVERSION_COMPRESSED : POINT_CONVERSION_UNCOMPRESSED);
         int nSize = i2d_ECPrivateKey(pkey, NULL);
         assert(nSize);
@@ -197,10 +274,11 @@ public:
         assert(nSize == nSize2);
     }
 
-    bool SetPrivKey(const CPrivKey &privkey, bool fSkipCheck=false) {
+    bool SetPrivKey(const CPrivKey& privkey, bool fSkipCheck = false)
+    {
         const unsigned char* pbegin = &privkey[0];
         if (d2i_ECPrivateKey(&pkey, &pbegin, privkey.size())) {
-            if(fSkipCheck)
+            if (fSkipCheck)
                 return true;
 
             // d2i_ECPrivateKey returns true if parsing succeeds.
@@ -211,33 +289,36 @@ public:
         return false;
     }
 
-    void GetPubKey(CPubKey &pubkey, bool fCompressed) {
+    void GetPubKey(CPubKey& pubkey, bool fCompressed)
+    {
         EC_KEY_set_conv_form(pkey, fCompressed ? POINT_CONVERSION_COMPRESSED : POINT_CONVERSION_UNCOMPRESSED);
         int nSize = i2o_ECPublicKey(pkey, NULL);
         assert(nSize);
         assert(nSize <= 65);
         unsigned char c[65];
-        unsigned char *pbegin = c;
+        unsigned char* pbegin = c;
         int nSize2 = i2o_ECPublicKey(pkey, &pbegin);
         assert(nSize == nSize2);
         pubkey.Set(&c[0], &c[nSize]);
     }
 
-    bool SetPubKey(const CPubKey &pubkey) {
+    bool SetPubKey(const CPubKey& pubkey)
+    {
         const unsigned char* pbegin = pubkey.begin();
         return o2i_ECPublicKey(&pkey, &pbegin, pubkey.size()) != NULL;
     }
 
-    bool Sign(const uint256 &hash, std::vector<unsigned char>& vchSig) {
+    bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig)
+    {
         vchSig.clear();
-        ECDSA_SIG *sig = ECDSA_do_sign((unsigned char*)&hash, sizeof(hash), pkey);
+        ECDSA_SIG* sig = ECDSA_do_sign((unsigned char*)&hash, sizeof(hash), pkey);
         if (sig == NULL)
             return false;
-        BN_CTX *ctx = BN_CTX_new();
+        BN_CTX* ctx = BN_CTX_new();
         BN_CTX_start(ctx);
-        const EC_GROUP *group = EC_KEY_get0_group(pkey);
-        BIGNUM *order = BN_CTX_get(ctx);
-        BIGNUM *halforder = BN_CTX_get(ctx);
+        const EC_GROUP* group = EC_KEY_get0_group(pkey);
+        BIGNUM* order = BN_CTX_get(ctx);
+        BIGNUM* halforder = BN_CTX_get(ctx);
         EC_GROUP_get_order(group, order, ctx);
         BN_rshift1(halforder, order);
         if (BN_cmp(sig->s, halforder) > 0) {
@@ -248,24 +329,26 @@ public:
         BN_CTX_free(ctx);
         unsigned int nSize = ECDSA_size(pkey);
         vchSig.resize(nSize); // Make sure it is big enough
-        unsigned char *pos = &vchSig[0];
+        unsigned char* pos = &vchSig[0];
         nSize = i2d_ECDSA_SIG(sig, &pos);
         ECDSA_SIG_free(sig);
         vchSig.resize(nSize); // Shrink to fit actual size
         return true;
     }
 
-    bool Verify(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
+    bool Verify(const uint256& hash, const std::vector<unsigned char>& vchSig)
+    {
         // -1 = error, 0 = bad sig, 1 = good
         if (ECDSA_verify(0, (unsigned char*)&hash, sizeof(hash), &vchSig[0], vchSig.size(), pkey) != 1)
             return false;
         return true;
     }
 
-    bool SignCompact(const uint256 &hash, unsigned char *p64, int &rec) {
+    bool SignCompact(const uint256& hash, unsigned char* p64, int& rec)
+    {
         bool fOk = false;
-        ECDSA_SIG *sig = ECDSA_do_sign((unsigned char*)&hash, sizeof(hash), pkey);
-        if (sig==NULL)
+        ECDSA_SIG* sig = ECDSA_do_sign((unsigned char*)&hash, sizeof(hash), pkey);
+        if (sig == NULL)
             return false;
         memset(p64, 0, 64);
         int nBitsR = BN_num_bits(sig->r);
@@ -273,7 +356,7 @@ public:
         if (nBitsR <= 256 && nBitsS <= 256) {
             CPubKey pubkey;
             GetPubKey(pubkey, true);
-            for (int i=0; i<4; i++) {
+            for (int i = 0; i < 4; i++) {
                 CECKey keyRec;
                 if (ECDSA_SIG_recover_key_GFp(keyRec.pkey, sig, (unsigned char*)&hash, sizeof(hash), i, 1) == 1) {
                     CPubKey pubkeyRec;
@@ -286,8 +369,8 @@ public:
                 }
             }
             assert(fOk);
-            BN_bn2bin(sig->r,&p64[32-(nBitsR+7)/8]);
-            BN_bn2bin(sig->s,&p64[64-(nBitsS+7)/8]);
+            BN_bn2bin(sig->r, &p64[32 - (nBitsR + 7) / 8]);
+            BN_bn2bin(sig->s, &p64[64 - (nBitsS + 7) / 8]);
         }
         ECDSA_SIG_free(sig);
         return fOk;
@@ -297,12 +380,12 @@ public:
     // This is only slightly more CPU intensive than just verifying it.
     // If this function succeeds, the recovered public key is guaranteed to be valid
     // (the signature is a valid signature of the given data for that key)
-    bool Recover(const uint256 &hash, const unsigned char *p64, int rec)
+    bool Recover(const uint256& hash, const unsigned char* p64, int rec)
     {
-        if (rec<0 || rec>=3)
+        if (rec < 0 || rec >= 3)
             return false;
-        ECDSA_SIG *sig = ECDSA_SIG_new();
-        BN_bin2bn(&p64[0],  32, sig->r);
+        ECDSA_SIG* sig = ECDSA_SIG_new();
+        BN_bin2bn(&p64[0], 32, sig->r);
         BN_bin2bn(&p64[32], 32, sig->s);
         bool ret = ECDSA_SIG_recover_key_GFp(pkey, sig, (unsigned char*)&hash, sizeof(hash), rec, 0) == 1;
         ECDSA_SIG_free(sig);
@@ -312,12 +395,12 @@ public:
     static bool TweakSecret(unsigned char vchSecretOut[32], const unsigned char vchSecretIn[32], const unsigned char vchTweak[32])
     {
         bool ret = true;
-        BN_CTX *ctx = BN_CTX_new();
+        BN_CTX* ctx = BN_CTX_new();
         BN_CTX_start(ctx);
-        BIGNUM *bnSecret = BN_CTX_get(ctx);
-        BIGNUM *bnTweak = BN_CTX_get(ctx);
-        BIGNUM *bnOrder = BN_CTX_get(ctx);
-        EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+        BIGNUM* bnSecret = BN_CTX_get(ctx);
+        BIGNUM* bnTweak = BN_CTX_get(ctx);
+        BIGNUM* bnOrder = BN_CTX_get(ctx);
+        EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
         EC_GROUP_get_order(group, bnOrder, ctx); // what a grossly inefficient way to get the (constant) group order...
         BN_bin2bn(vchTweak, 32, bnTweak);
         if (BN_cmp(bnTweak, bnOrder) >= 0)
@@ -329,26 +412,27 @@ public:
             ret = false; // ridiculously unlikely
         int nBits = BN_num_bits(bnSecret);
         memset(vchSecretOut, 0, 32);
-        BN_bn2bin(bnSecret, &vchSecretOut[32-(nBits+7)/8]);
+        BN_bn2bin(bnSecret, &vchSecretOut[32 - (nBits + 7) / 8]);
         EC_GROUP_free(group);
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
         return ret;
     }
 
-    bool TweakPublic(const unsigned char vchTweak[32]) {
+    bool TweakPublic(const unsigned char vchTweak[32])
+    {
         bool ret = true;
-        BN_CTX *ctx = BN_CTX_new();
+        BN_CTX* ctx = BN_CTX_new();
         BN_CTX_start(ctx);
-        BIGNUM *bnTweak = BN_CTX_get(ctx);
-        BIGNUM *bnOrder = BN_CTX_get(ctx);
-        BIGNUM *bnOne = BN_CTX_get(ctx);
-        const EC_GROUP *group = EC_KEY_get0_group(pkey);
+        BIGNUM* bnTweak = BN_CTX_get(ctx);
+        BIGNUM* bnOrder = BN_CTX_get(ctx);
+        BIGNUM* bnOne = BN_CTX_get(ctx);
+        const EC_GROUP* group = EC_KEY_get0_group(pkey);
         EC_GROUP_get_order(group, bnOrder, ctx); // what a grossly inefficient way to get the (constant) group order...
         BN_bin2bn(vchTweak, 32, bnTweak);
         if (BN_cmp(bnTweak, bnOrder) >= 0)
             ret = false; // extremely unlikely
-        EC_POINT *point = EC_POINT_dup(EC_KEY_get0_public_key(pkey), group);
+        EC_POINT* point = EC_POINT_dup(EC_KEY_get0_public_key(pkey), group);
         BN_one(bnOne);
         EC_POINT_mul(group, point, bnTweak, point, bnOne, ctx);
         if (EC_POINT_is_at_infinity(group, point))
@@ -363,7 +447,8 @@ public:
 
 //#endif
 
-int CompareBigEndian(const unsigned char *c1, size_t c1len, const unsigned char *c2, size_t c2len) {
+int CompareBigEndian(const unsigned char* c1, size_t c1len, const unsigned char* c2, size_t c2len)
+{
     while (c1len > c2len) {
         if (*c1)
             return 1;
@@ -390,43 +475,44 @@ int CompareBigEndian(const unsigned char *c1, size_t c1len, const unsigned char 
 
 // Order of secp256k1's generator minus 1.
 const unsigned char vchMaxModOrder[32] = {
-    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,
-    0xBA,0xAE,0xDC,0xE6,0xAF,0x48,0xA0,0x3B,
-    0xBF,0xD2,0x5E,0x8C,0xD0,0x36,0x41,0x40
-};
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE,
+    0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48, 0xA0, 0x3B,
+    0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x40};
 
 // Half of the order of secp256k1's generator minus 1.
 const unsigned char vchMaxModHalfOrder[32] = {
-    0x7F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-    0x5D,0x57,0x6E,0x73,0x57,0xA4,0x50,0x1D,
-    0xDF,0xE9,0x2F,0x46,0x68,0x1B,0x20,0xA0
-};
+    0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0x5D, 0x57, 0x6E, 0x73, 0x57, 0xA4, 0x50, 0x1D,
+    0xDF, 0xE9, 0x2F, 0x46, 0x68, 0x1B, 0x20, 0xA0};
 
 const unsigned char vchZero[1] = {0};
 
-} // anon namespace
+} // namespace
 
 
-bool CKey::Check(const unsigned char *vch) {
+bool CKey::Check(const unsigned char* vch)
+{
     return CompareBigEndian(vch, 32, vchZero, 0) > 0 &&
-        CompareBigEndian(vch, 32, vchMaxModOrder, 32) <= 0;
+           CompareBigEndian(vch, 32, vchMaxModOrder, 32) <= 0;
 }
 
-bool CKey::CheckSignatureElement(const unsigned char *vch, int len, bool half) {
+bool CKey::CheckSignatureElement(const unsigned char* vch, int len, bool half)
+{
     return CompareBigEndian(vch, len, vchZero, 0) > 0 &&
            CompareBigEndian(vch, len, half ? vchMaxModHalfOrder : vchMaxModOrder, 32) <= 0;
 }
 
-bool CKey::ReserealizeSignature(std::vector<unsigned char>& vchSig) {
-    unsigned char *pos;
+bool CKey::ReserealizeSignature(std::vector<unsigned char>& vchSig)
+{
+    unsigned char* pos;
 
     if (vchSig.empty())
         return false;
 
     pos = &vchSig[0];
-    ECDSA_SIG *sig = d2i_ECDSA_SIG(NULL, (const unsigned char **)&pos, vchSig.size());
+    ECDSA_SIG* sig = d2i_ECDSA_SIG(NULL, (const unsigned char**)&pos, vchSig.size());
     if (sig == NULL)
         return false;
 
@@ -445,7 +531,8 @@ bool CKey::ReserealizeSignature(std::vector<unsigned char>& vchSig) {
     return ret;
 }
 
-void CKey::MakeNewKey(bool fCompressedIn) {
+void CKey::MakeNewKey(bool fCompressedIn)
+{
     do {
         GetRandBytes(vch, sizeof(vch));
     } while (!Check(vch));
@@ -453,7 +540,8 @@ void CKey::MakeNewKey(bool fCompressedIn) {
     fCompressed = fCompressedIn;
 }
 
-bool CKey::SetPrivKey(const CPrivKey &privkey, bool fCompressedIn) {
+bool CKey::SetPrivKey(const CPrivKey& privkey, bool fCompressedIn)
+{
 #ifdef USE_SECP256K1
     if (!secp256k1_ec_privkey_import(instance_of_csecp256k1.ctx, (unsigned char*)begin(), &privkey[0], privkey.size()))
         return false;
@@ -468,7 +556,8 @@ bool CKey::SetPrivKey(const CPrivKey &privkey, bool fCompressedIn) {
     return true;
 }
 
-CPrivKey CKey::GetPrivKey() const {
+CPrivKey CKey::GetPrivKey() const
+{
     assert(fValid);
     CPrivKey privkey;
 #ifdef USE_SECP256K1
@@ -485,7 +574,8 @@ CPrivKey CKey::GetPrivKey() const {
     return privkey;
 }
 
-CPubKey CKey::GetPubKey() const {
+CPubKey CKey::GetPubKey() const
+{
     assert(fValid);
     CPubKey pubkey;
 #ifdef USE_SECP256K1
@@ -502,7 +592,8 @@ CPubKey CKey::GetPubKey() const {
     return pubkey;
 }
 
-bool CKey::Sign(const uint256 &hash, std::vector<unsigned char>& vchSig) const {
+bool CKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig) const
+{
     if (!fValid)
         return false;
 #ifdef USE_SECP256K1
@@ -512,12 +603,12 @@ bool CKey::Sign(const uint256 &hash, std::vector<unsigned char>& vchSig) const {
     do {
         nonce.MakeNewKey(true);
 
-        if (secp256k1_ecdsa_sign(instance_of_csecp256k1.ctx, hash.begin(), (unsigned char*)&vchSig[0], &nSigLen, begin(),  secp256k1_nonce_function_rfc6979, NULL))
-        //if (secp256k1_ecdsa_sign((const unsigned char*)&hash, 32, (unsigned char*)&vchSig[0], &nSigLen, begin(), nonce.begin()))
+        if (secp256k1_ecdsa_sign(instance_of_csecp256k1.ctx, hash.begin(), (unsigned char*)&vchSig[0], &nSigLen, begin(), secp256k1_nonce_function_rfc6979, NULL))
+            //if (secp256k1_ecdsa_sign((const unsigned char*)&hash, 32, (unsigned char*)&vchSig[0], &nSigLen, begin(), nonce.begin()))
 
-        //if (secp256k1_ecdsa_sign((const unsigned char*)&hash, 32, vchSig.begin(), &nSigLen, begin(), nonce.begin()))
+            //if (secp256k1_ecdsa_sign((const unsigned char*)&hash, 32, vchSig.begin(), &nSigLen, begin(), nonce.begin()))
             break;
-    } while(true);
+    } while (true);
     vchSig.resize(nSigLen);
     return true;
 #else
@@ -527,7 +618,8 @@ bool CKey::Sign(const uint256 &hash, std::vector<unsigned char>& vchSig) const {
 #endif
 }
 
-bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) const {
+bool CKey::SignCompact(const uint256& hash, std::vector<unsigned char>& vchSig) const
+{
     if (!fValid)
         return false;
     vchSig.resize(65);
@@ -538,7 +630,7 @@ bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) 
         nonce.MakeNewKey(true);
         if (int ret = secp256k1_ecdsa_sign_compact(instance_of_csecp256k1.ctx, hash.begin(), &vchSig[1], begin(), secp256k1_nonce_function_rfc6979, NULL, &rec))
             break;
-    } while(true);
+    } while (true);
 #else
     CECKey key;
     key.SetSecretBytes(vch);
@@ -550,7 +642,8 @@ bool CKey::SignCompact(const uint256 &hash, std::vector<unsigned char>& vchSig) 
     return true;
 }
 
-bool CKey::Load(CPrivKey &privkey, CPubKey &vchPubKey, bool fSkipCheck=false) {
+bool CKey::Load(CPrivKey& privkey, CPubKey& vchPubKey, bool fSkipCheck = false)
+{
 #ifdef USE_SECP256K1
     if (!secp256k1_ec_privkey_import(instance_of_csecp256k1.ctx, (unsigned char*)begin(), &privkey[0], privkey.size()))
         return false;
@@ -573,10 +666,11 @@ bool CKey::Load(CPrivKey &privkey, CPubKey &vchPubKey, bool fSkipCheck=false) {
     return true;
 }
 
-bool CPubKey::Verify(const uint256 &hash, const std::vector<unsigned char>& vchSig) const {
+bool CPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& vchSig) const
+{
     if (!IsValid())
         return false;
-/*#ifdef USE_SECP256K1
+    /*#ifdef USE_SECP256K1
     if (secp256k1_ecdsa_verify(hash.begin(), 32, &vchSig[0], vchSig.size(), begin(), size()) != 1)
         return false;
 #else*/
@@ -585,11 +679,12 @@ bool CPubKey::Verify(const uint256 &hash, const std::vector<unsigned char>& vchS
         return false;
     if (!key.Verify(hash, vchSig))
         return false;
-//#endif
+    //#endif
     return true;
 }
 
-bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
+bool CPubKey::RecoverCompact(const uint256& hash, const std::vector<unsigned char>& vchSig)
+{
     if (vchSig.size() != 65)
         return false;
     int recid = (vchSig[0] - 27) & 3;
@@ -606,11 +701,12 @@ bool CPubKey::RecoverCompact(const uint256 &hash, const std::vector<unsigned cha
         return false;
     //key.GetPubKey(*this, (vchSig[0] - 27) & 4);
     key.GetPubKey(*this, fComp);
-//#endif
+    //#endif
     return true;
 }
 
-bool CPubKey::IsFullyValid() const {
+bool CPubKey::IsFullyValid() const
+{
     if (!IsValid())
         return false;
 #ifdef USE_SECP256K1
@@ -624,7 +720,8 @@ bool CPubKey::IsFullyValid() const {
     return true;
 }
 
-bool CPubKey::Decompress() {
+bool CPubKey::Decompress()
+{
     if (!IsValid())
         return false;
 #ifdef USE_SECP256K1
@@ -641,19 +738,18 @@ bool CPubKey::Decompress() {
     return true;
 }
 
-void static BIP32Hash(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64]) {
+void static BIP32Hash(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64])
+{
     unsigned char num[4];
     num[0] = (nChild >> 24) & 0xFF;
     num[1] = (nChild >> 16) & 0xFF;
-    num[2] = (nChild >>  8) & 0xFF;
-    num[3] = (nChild >>  0) & 0xFF;
-    CHMAC_SHA512(chainCode, 32).Write(&header, 1)
-                               .Write(data, 32)
-                               .Write(num, 4)
-                               .Finalize(output);
+    num[2] = (nChild >> 8) & 0xFF;
+    num[3] = (nChild >> 0) & 0xFF;
+    CHMAC_SHA512(chainCode, 32).Write(&header, 1).Write(data, 32).Write(num, 4).Finalize(output);
 }
 
-bool CKey::Derive(CKey& keyChild, unsigned char ccChild[32], unsigned int nChild, const unsigned char cc[32]) const {
+bool CKey::Derive(CKey& keyChild, unsigned char ccChild[32], unsigned int nChild, const unsigned char cc[32]) const
+{
     assert(IsValid());
     assert(IsCompressed());
     unsigned char out[64];
@@ -661,12 +757,12 @@ bool CKey::Derive(CKey& keyChild, unsigned char ccChild[32], unsigned int nChild
     if ((nChild >> 31) == 0) {
         CPubKey pubkey = GetPubKey();
         assert(pubkey.begin() + 33 == pubkey.end());
-        BIP32Hash(cc, nChild, *pubkey.begin(), pubkey.begin()+1, out);
+        BIP32Hash(cc, nChild, *pubkey.begin(), pubkey.begin() + 1, out);
     } else {
         assert(begin() + 32 == end());
         BIP32Hash(cc, nChild, 0, begin(), out);
     }
-    memcpy(ccChild, out+32, 32);
+    memcpy(ccChild, out + 32, 32);
 #ifdef USE_SECP256K1
     memcpy((unsigned char*)keyChild.begin(), begin(), 32);
     bool ret = secp256k1_ec_privkey_tweak_add(instance_of_csecp256k1.ctx, (unsigned char*)keyChild.begin(), out);
@@ -679,13 +775,14 @@ bool CKey::Derive(CKey& keyChild, unsigned char ccChild[32], unsigned int nChild
     return ret;
 }
 
-bool CPubKey::Derive(CPubKey& pubkeyChild, unsigned char ccChild[32], unsigned int nChild, const unsigned char cc[32]) const {
+bool CPubKey::Derive(CPubKey& pubkeyChild, unsigned char ccChild[32], unsigned int nChild, const unsigned char cc[32]) const
+{
     assert(IsValid());
     assert((nChild >> 31) == 0);
     assert(begin() + 33 == end());
     unsigned char out[64];
-    BIP32Hash(cc, nChild, *begin(), begin()+1, out);
-    memcpy(ccChild, out+32, 32);
+    BIP32Hash(cc, nChild, *begin(), begin() + 1, out);
+    memcpy(ccChild, out + 32, 32);
 #ifdef USE_SECP256K1
     pubkeyChild = *this;
     bool ret = secp256k1_ec_pubkey_tweak_add(instance_of_csecp256k1.ctx, (unsigned char*)pubkeyChild.begin(), pubkeyChild.size(), out);
@@ -698,7 +795,8 @@ bool CPubKey::Derive(CPubKey& pubkeyChild, unsigned char ccChild[32], unsigned i
     return ret;
 }
 
-bool CExtKey::Derive(CExtKey &out, unsigned int nChild) const {
+bool CExtKey::Derive(CExtKey& out, unsigned int nChild) const
+{
     out.nDepth = nDepth + 1;
     CKeyID id = key.GetPubKey().GetID();
     memcpy(&out.vchFingerprint[0], &id, 4);
@@ -706,8 +804,9 @@ bool CExtKey::Derive(CExtKey &out, unsigned int nChild) const {
     return key.Derive(out.key, out.vchChainCode, nChild, vchChainCode);
 }
 
-void CExtKey::SetMaster(const unsigned char *seed, unsigned int nSeedLen) {
-    static const unsigned char hashkey[] = {'B','i','t','c','o','i','n',' ','s','e','e','d'};
+void CExtKey::SetMaster(const unsigned char* seed, unsigned int nSeedLen)
+{
+    static const unsigned char hashkey[] = {'B', 'i', 't', 'c', 'o', 'i', 'n', ' ', 's', 'e', 'e', 'd'};
     unsigned char out[64];
     LockObject(out);
     CHMAC_SHA512(hashkey, sizeof(hashkey)).Write(seed, nSeedLen).Finalize(out);
@@ -719,7 +818,8 @@ void CExtKey::SetMaster(const unsigned char *seed, unsigned int nSeedLen) {
     memset(vchFingerprint, 0, sizeof(vchFingerprint));
 }
 
-CExtPubKey CExtKey::Neuter() const {
+CExtPubKey CExtKey::Neuter() const
+{
     CExtPubKey ret;
     ret.nDepth = nDepth;
     memcpy(&ret.vchFingerprint[0], &vchFingerprint[0], 4);
@@ -729,44 +829,53 @@ CExtPubKey CExtKey::Neuter() const {
     return ret;
 }
 
-void CExtKey::Encode(unsigned char code[74]) const {
+void CExtKey::Encode(unsigned char code[74]) const
+{
     code[0] = nDepth;
-    memcpy(code+1, vchFingerprint, 4);
-    code[5] = (nChild >> 24) & 0xFF; code[6] = (nChild >> 16) & 0xFF;
-    code[7] = (nChild >>  8) & 0xFF; code[8] = (nChild >>  0) & 0xFF;
-    memcpy(code+9, vchChainCode, 32);
+    memcpy(code + 1, vchFingerprint, 4);
+    code[5] = (nChild >> 24) & 0xFF;
+    code[6] = (nChild >> 16) & 0xFF;
+    code[7] = (nChild >> 8) & 0xFF;
+    code[8] = (nChild >> 0) & 0xFF;
+    memcpy(code + 9, vchChainCode, 32);
     code[41] = 0;
     assert(key.size() == 32);
-    memcpy(code+42, key.begin(), 32);
+    memcpy(code + 42, key.begin(), 32);
 }
 
-void CExtKey::Decode(const unsigned char code[74]) {
+void CExtKey::Decode(const unsigned char code[74])
+{
     nDepth = code[0];
-    memcpy(vchFingerprint, code+1, 4);
+    memcpy(vchFingerprint, code + 1, 4);
     nChild = (code[5] << 24) | (code[6] << 16) | (code[7] << 8) | code[8];
-    memcpy(vchChainCode, code+9, 32);
-    key.Set(code+42, code+74, true);
+    memcpy(vchChainCode, code + 9, 32);
+    key.Set(code + 42, code + 74, true);
 }
 
-void CExtPubKey::Encode(unsigned char code[74]) const {
+void CExtPubKey::Encode(unsigned char code[74]) const
+{
     code[0] = nDepth;
-    memcpy(code+1, vchFingerprint, 4);
-    code[5] = (nChild >> 24) & 0xFF; code[6] = (nChild >> 16) & 0xFF;
-    code[7] = (nChild >>  8) & 0xFF; code[8] = (nChild >>  0) & 0xFF;
-    memcpy(code+9, vchChainCode, 32);
+    memcpy(code + 1, vchFingerprint, 4);
+    code[5] = (nChild >> 24) & 0xFF;
+    code[6] = (nChild >> 16) & 0xFF;
+    code[7] = (nChild >> 8) & 0xFF;
+    code[8] = (nChild >> 0) & 0xFF;
+    memcpy(code + 9, vchChainCode, 32);
     assert(pubkey.size() == 33);
-    memcpy(code+41, pubkey.begin(), 33);
+    memcpy(code + 41, pubkey.begin(), 33);
 }
 
-void CExtPubKey::Decode(const unsigned char code[74]) {
+void CExtPubKey::Decode(const unsigned char code[74])
+{
     nDepth = code[0];
-    memcpy(vchFingerprint, code+1, 4);
+    memcpy(vchFingerprint, code + 1, 4);
     nChild = (code[5] << 24) | (code[6] << 16) | (code[7] << 8) | code[8];
-    memcpy(vchChainCode, code+9, 32);
-    pubkey.Set(code+41, code+74);
+    memcpy(vchChainCode, code + 9, 32);
+    pubkey.Set(code + 41, code + 74);
 }
 
-bool CExtPubKey::Derive(CExtPubKey &out, unsigned int nChild) const {
+bool CExtPubKey::Derive(CExtPubKey& out, unsigned int nChild) const
+{
     out.nDepth = nDepth + 1;
     CKeyID id = pubkey.GetID();
     memcpy(&out.vchFingerprint[0], &id, 4);
@@ -774,12 +883,13 @@ bool CExtPubKey::Derive(CExtPubKey &out, unsigned int nChild) const {
     return pubkey.Derive(out.pubkey, out.vchChainCode, nChild, vchChainCode);
 }
 
-bool ECC_InitSanityCheck() {
+bool ECC_InitSanityCheck()
+{
 #ifdef USE_SECP256K1
     return true;
 #else
-    EC_KEY *pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
-    if(pkey == NULL)
+    EC_KEY* pkey = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (pkey == NULL)
         return false;
     EC_KEY_free(pkey);
 

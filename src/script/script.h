@@ -7,8 +7,8 @@
 #define H_BITCOIN_SCRIPT
 
 #include "key.h"
-#include "tinyformat.h"
 #include "script/standard.h"
+#include "tinyformat.h"
 #include "utilstrencodings.h"
 
 #include <stdexcept>
@@ -319,7 +319,6 @@ inline std::string ValueString(const std::vector<unsigned char>& vch)
     else
         return HexStr(vch);
 }
-
 
 
 /** Serialized script, used inside transaction inputs and outputs */

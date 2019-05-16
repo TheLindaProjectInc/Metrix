@@ -8,14 +8,14 @@
 
 #include "compat.h"
 
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_utils.h"
@@ -79,9 +79,10 @@ enum RPCErrorCode
 // IOStream device that speaks SSL but can also speak non-SSL
 //
 template <typename Protocol>
-class SSLIOStreamDevice : public boost::iostreams::device<boost::iostreams::bidirectional> {
+class SSLIOStreamDevice : public boost::iostreams::device<boost::iostreams::bidirectional>
+{
 public:
-    SSLIOStreamDevice(boost::asio::ssl::stream<typename Protocol::socket> &streamIn, bool fUseSSLIn) : stream(streamIn)
+    SSLIOStreamDevice(boost::asio::ssl::stream<typename Protocol::socket>& streamIn, bool fUseSSLIn) : stream(streamIn)
     {
         fUseSSL = fUseSSLIn;
         fNeedHandshake = fUseSSLIn;
@@ -89,20 +90,23 @@ public:
 
     void handshake(boost::asio::ssl::stream_base::handshake_type role)
     {
-        if (!fNeedHandshake) return;
+        if (!fNeedHandshake)
+            return;
         fNeedHandshake = false;
         stream.handshake(role);
     }
     std::streamsize read(char* s, std::streamsize n)
     {
         handshake(boost::asio::ssl::stream_base::server); // HTTPS servers read first
-        if (fUseSSL) return stream.read_some(boost::asio::buffer(s, n));
+        if (fUseSSL)
+            return stream.read_some(boost::asio::buffer(s, n));
         return stream.next_layer().read_some(boost::asio::buffer(s, n));
     }
     std::streamsize write(const char* s, std::streamsize n)
     {
         handshake(boost::asio::ssl::stream_base::client); // HTTPS clients write first
-        if (fUseSSL) return boost::asio::write(stream, boost::asio::buffer(s, n));
+        if (fUseSSL)
+            return boost::asio::write(stream, boost::asio::buffer(s, n));
         return boost::asio::write(stream.next_layer(), boost::asio::buffer(s, n));
     }
     bool connect(const std::string& server, const std::string& port)
@@ -119,8 +123,7 @@ public:
             tcp::resolver::query query(server.c_str(), port.c_str());
             endpoint_iterator = resolver.resolve(query);
 #if BOOST_VERSION >= 104300
-        } catch(boost::system::system_error &e)
-        {
+        } catch (boost::system::system_error& e) {
             // If we at first don't succeed, try blanket lookup (IPv4+IPv6 independent of configured interfaces)
             tcp::resolver::query query(server.c_str(), port.c_str(), resolver_query_base::flags());
             endpoint_iterator = resolver.resolve(query);
@@ -128,8 +131,7 @@ public:
 #endif
         boost::system::error_code error = boost::asio::error::host_not_found;
         tcp::resolver::iterator end;
-        while (error && endpoint_iterator != end)
-        {
+        while (error && endpoint_iterator != end) {
             stream.lowest_layer().close();
             stream.lowest_layer().connect(*endpoint_iterator++, error);
         }
@@ -144,20 +146,14 @@ private:
     boost::asio::ssl::stream<typename Protocol::socket>& stream;
 };
 
-std::string HTTPPost(const std::string& strMsg, const std::map<std::string,std::string>& mapRequestHeaders);
-std::string HTTPError(int nStatus, bool keepalive,
-                      bool headerOnly = false);
-std::string HTTPReplyHeader(int nStatus, bool keepalive, size_t contentLength,
-                      const char *contentType = "application/json");
-std::string HTTPReply(int nStatus, const std::string& strMsg, bool keepalive,
-                      bool headerOnly = false,
-                      const char *contentType = "application/json");
-bool ReadHTTPRequestLine(std::basic_istream<char>& stream, int &proto,
-                         std::string& http_method, std::string& http_uri);
-int ReadHTTPStatus(std::basic_istream<char>& stream, int &proto);
+std::string HTTPPost(const std::string& strMsg, const std::map<std::string, std::string>& mapRequestHeaders);
+std::string HTTPError(int nStatus, bool keepalive, bool headerOnly = false);
+std::string HTTPReplyHeader(int nStatus, bool keepalive, size_t contentLength, const char* contentType = "application/json");
+std::string HTTPReply(int nStatus, const std::string& strMsg, bool keepalive, bool headerOnly = false, const char* contentType = "application/json");
+bool ReadHTTPRequestLine(std::basic_istream<char>& stream, int& proto, std::string& http_method, std::string& http_uri);
+int ReadHTTPStatus(std::basic_istream<char>& stream, int& proto);
 int ReadHTTPHeaders(std::basic_istream<char>& stream, std::map<std::string, std::string>& mapHeadersRet);
-int ReadHTTPMessage(std::basic_istream<char>& stream, std::map<std::string, std::string>& mapHeadersRet,
-                    std::string& strMessageRet, int nProto, size_t max_size);
+int ReadHTTPMessage(std::basic_istream<char>& stream, std::map<std::string, std::string>& mapHeadersRet, std::string& strMessageRet, int nProto, size_t max_size);
 std::string JSONRPCRequest(const std::string& strMethod, const json_spirit::Array& params, const json_spirit::Value& id);
 json_spirit::Object JSONRPCReplyObj(const json_spirit::Value& result, const json_spirit::Value& error, const json_spirit::Value& id);
 std::string JSONRPCReply(const json_spirit::Value& result, const json_spirit::Value& error, const json_spirit::Value& id);

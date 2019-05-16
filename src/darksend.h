@@ -6,9 +6,9 @@
 #define DARKSEND_H
 
 //#include "primitives/transaction.h"
+#include "activemasternode.h"
 #include "main.h"
 #include "masternode.h"
-#include "activemasternode.h"
 
 class CTxIn;
 class CDarkSendPool;
@@ -49,7 +49,7 @@ extern CActiveMasternode activeMasternode;
 void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
 // get the darksend chain depth for a given input
-int GetInputDarksendRounds(CTxIn in, int rounds=0);
+int GetInputDarksendRounds(CTxIn in, int rounds = 0);
 
 
 // An input in the darksend pool
@@ -87,9 +87,11 @@ public:
 
     bool Add(const std::vector<CTxIn> vinIn, int64_t amountIn, const CTransaction collateralIn, const std::vector<CTxOut> voutIn)
     {
-        if(isSet){return false;}
+        if (isSet) {
+            return false;
+        }
 
-        BOOST_FOREACH(const CTxIn v, vinIn) {
+        BOOST_FOREACH (const CTxIn v, vinIn) {
             CDarkSendEntryVin s = CDarkSendEntryVin();
             s.vin = v;
             sev.push_back(s);
@@ -105,9 +107,11 @@ public:
 
     bool AddSig(const CTxIn& vin)
     {
-        BOOST_FOREACH(CDarkSendEntryVin& s, sev) {
-            if(s.vin.prevout == vin.prevout && s.vin.nSequence == vin.nSequence){
-                if(s.isSigSet){return false;}
+        BOOST_FOREACH (CDarkSendEntryVin& s, sev) {
+            if (s.vin.prevout == vin.prevout && s.vin.nSequence == vin.nSequence) {
+                if (s.isSigSet) {
+                    return false;
+                }
                 s.vin.scriptSig = vin.scriptSig;
                 s.vin.prevPubKey = vin.prevPubKey;
                 s.isSigSet = true;
@@ -121,7 +125,7 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > DARKSEND_QUEUE_TIMEOUT;// 120 seconds
+        return (GetTime() - addedTime) > DARKSEND_QUEUE_TIMEOUT; // 120 seconds
     }
 };
 
@@ -158,10 +162,10 @@ public:
         READWRITE(vchSig);
     }
 
-    bool GetAddress(CService &addr)
+    bool GetAddress(CService& addr)
     {
-        BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
-            if(mn.vin == vin){
+        BOOST_FOREACH (CMasterNode mn, vecMasternodes) {
+            if (mn.vin == vin) {
                 addr = mn.addr;
                 return true;
             }
@@ -169,10 +173,10 @@ public:
         return false;
     }
 
-    bool GetProtocolVersion(int &protocolVersion)
+    bool GetProtocolVersion(int& protocolVersion)
     {
-        BOOST_FOREACH(CMasterNode mn, vecMasternodes) {
-            if(mn.vin == vin){
+        BOOST_FOREACH (CMasterNode mn, vecMasternodes) {
+            if (mn.vin == vin) {
                 protocolVersion = mn.protocolVersion;
                 return true;
             }
@@ -185,11 +189,10 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - time) > DARKSEND_QUEUE_TIMEOUT;// 120 seconds
+        return (GetTime() - time) > DARKSEND_QUEUE_TIMEOUT; // 120 seconds
     }
 
     bool CheckSignature();
-
 };
 
 // store darksend tx signature information
@@ -216,7 +219,6 @@ public:
 
 class CDarksendSession
 {
-
 };
 
 //
@@ -255,10 +257,10 @@ public:
     CService submittedToMasternode;
 
     int sessionID;
-    int sessionDenom; //Users must submit an denom matching this
-    int sessionUsers; //N Users have said they'll join
+    int sessionDenom;            //Users must submit an denom matching this
+    int sessionUsers;            //N Users have said they'll join
     bool sessionFoundMasternode; //If we've found a compatible masternode
-    int64_t sessionTotalValue; //used for autoDenom
+    int64_t sessionTotalValue;   //used for autoDenom
     std::vector<CTransaction> vecSessionCollateral;
 
     int cachedLastSuccess;
@@ -290,19 +292,21 @@ public:
         SetNull();
     }
 
-    void InitCollateralAddress(){
+    void InitCollateralAddress()
+    {
         std::string strAddress = "";
-            strAddress = "8TSV23mk6whxTHjritUD1RotLxX6KG9yGN";
+        strAddress = "8TSV23mk6whxTHjritUD1RotLxX6KG9yGN";
         SetCollateralAddress(strAddress);
     }
 
-    void SetMinBlockSpacing(int minBlockSpacingIn){
+    void SetMinBlockSpacing(int minBlockSpacingIn)
+    {
         minBlockSpacing = minBlockSpacingIn;
     }
 
     bool SetCollateralAddress(std::string strAddress);
     void Reset();
-    void SetNull(bool clearEverything=false);
+    void SetNull(bool clearEverything = false);
 
     void UnlockCoins();
 
@@ -318,7 +322,7 @@ public:
 
     int GetEntriesCount() const
     {
-        if(fMasterNode){
+        if (fMasterNode) {
             return entries.size();
         } else {
             return entriesCount;
@@ -342,15 +346,15 @@ public:
 
     void UpdateState(unsigned int newState)
     {
-        if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)){
+        if (fMasterNode && (newState == POOL_STATUS_ERROR || newState == POOL_STATUS_SUCCESS)) {
             LogPrintf("CDarkSendPool::UpdateState() - Can't set state to ERROR or SUCCESS as a masternode. \n");
             return;
         }
 
         LogPrintf("CDarkSendPool::UpdateState() == %d | %d \n", state, newState);
-        if(state != newState){
+        if (state != newState) {
             lastTimeChanged = GetTimeMillis();
-            if(fMasterNode) {
+            if (fMasterNode) {
                 RelayDarkSendStatus(darkSendPool.sessionID, darkSendPool.GetState(), darkSendPool.GetEntriesCount(), MASTERNODE_RESET);
             }
         }
@@ -359,13 +363,13 @@ public:
 
     int GetMaxPoolTransactions()
     {
-        
         //use the production amount
         return POOL_MAX_TRANSACTIONS;
     }
 
     //Do we have enough users to take entries?
-    bool IsSessionReady(){
+    bool IsSessionReady()
+    {
         return sessionUsers >= GetMaxPoolTransactions();
     }
 
@@ -375,7 +379,7 @@ public:
     bool IsCompatibleWithSession(int64_t nAmount, CTransaction txCollateral, std::string& strReason);
 
     // Passively run Darksend in the background according to the configuration in settings (only for QT)
-    bool DoAutomaticDenominating(bool fDryRun=false, bool ready=false);
+    bool DoAutomaticDenominating(bool fDryRun = false, bool ready = false);
     bool PrepareDarksendDenominate();
 
 
@@ -399,13 +403,13 @@ public:
     // as a client, send a transaction to a masternode to start the denomination process
     void SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64_t amount);
     // get masternode updates about the progress of darksend
-    bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID=0);
+    bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID = 0);
 
     // as a client, check and sign the final transaction
     bool SignFinalTransaction(CMutableTransaction& finalTransactionNew, CNode* node);
 
     // get the last valid block hash for a given modulus
-    bool GetLastValidBlockHash(uint256& hash, int mod=1, int nBlockHeight=0);
+    bool GetLastValidBlockHash(uint256& hash, int mod = 1, int nBlockHeight = 0);
     // process a new block
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
@@ -419,7 +423,7 @@ public:
     int GetDenominations(const std::vector<CTxOut>& vout);
     void GetDenominationsToString(int nDenom, std::string& strDenom);
     // get the denominations for a specific amount of Linda.
-    int GetDenominationsByAmount(int64_t nAmount, int nDenomTarget=0);
+    int GetDenominationsByAmount(int64_t nAmount, int nDenomTarget = 0);
 
     int GetDenominationsByAmounts(std::vector<int64_t>& vecAmount);
 };

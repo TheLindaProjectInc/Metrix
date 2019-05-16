@@ -27,15 +27,14 @@ struct SeedSpec6 {
 //
 
 // Convert the pnSeeds6 array into usable address objects.
-static void convertSeed6(std::vector<CAddress> &vSeedsOut, const SeedSpec6 *data, unsigned int count)
+static void convertSeed6(std::vector<CAddress>& vSeedsOut, const SeedSpec6* data, unsigned int count)
 {
     // It'll only connect to one or two seed nodes because once it connects,
     // it'll get a pile of addresses with newer timestamps.
     // Seed nodes are given a random 'last seen time' of between one and two
     // weeks ago.
-    const int64_t nOneWeek = 7*24*60*60;
-    for (unsigned int i = 0; i < count; i++)
-    {
+    const int64_t nOneWeek = 7 * 24 * 60 * 60;
+    for (unsigned int i = 0; i < count; i++) {
         struct in6_addr ip;
         memcpy(&ip, data[i].addr, sizeof(ip));
         CAddress addr(CService(ip, data[i].port));
@@ -44,10 +43,12 @@ static void convertSeed6(std::vector<CAddress> &vSeedsOut, const SeedSpec6 *data
     }
 }
 
-class CMainParams : public CChainParams {
+class CMainParams : public CChainParams
+{
 public:
-    CMainParams() {
-		networkID = CBaseChainParams::MAIN;
+    CMainParams()
+    {
+        networkID = CBaseChainParams::MAIN;
         strNetworkID = "main";
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -83,9 +84,9 @@ public:
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         genesis.nVersion = 1;
-        genesis.nTime    = 1499037408;
-        genesis.nBits    = bnProofOfWorkLimit.GetCompact();
-        genesis.nNonce   = 7483051;
+        genesis.nTime = 1499037408;
+        genesis.nBits = bnProofOfWorkLimit.GetCompact();
+        genesis.nNonce = 7483051;
 
         hashGenesisBlock = genesis.GetHash();
 
@@ -93,9 +94,9 @@ public:
         assert(genesis.hashMerkleRoot == uint256("0x4080031d1fd26d68fa953d7a5c1dac3b2618b56d8a3fa35dd4678bdeb0946671"));
 
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,48);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,85);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,153);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 48);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 85);
+        base58Prefixes[SECRET_KEY] = std::vector<unsigned char>(1, 153);
         base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x88)(0xB2)(0x1E).convert_to_container<std::vector<unsigned char> >();
         base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x88)(0xAD)(0xE4).convert_to_container<std::vector<unsigned char> >();
 
@@ -103,10 +104,10 @@ public:
 
         nLastPOWBlock = 580000;
 
-		fRequireRPCPassword = true;
-		fDefaultCheckMemPool = false;
-		fRequireStandard = true;
-	}
+        fRequireRPCPassword = true;
+        fDefaultCheckMemPool = false;
+        fRequireStandard = true;
+    }
 };
 static CMainParams mainParams;
 
@@ -115,10 +116,12 @@ static CMainParams mainParams;
 // Testnet
 //
 
-class CTestNetParams : public CMainParams {
+class CTestNetParams : public CMainParams
+{
 public:
-    CTestNetParams() {
-		networkID = CBaseChainParams::TESTNET;
+    CTestNetParams()
+    {
+        networkID = CBaseChainParams::TESTNET;
         strNetworkID = "test";
         // The message start string is designed to be unlikely to occur in normal data.
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -135,9 +138,9 @@ public:
         nToCheckBlockUpgradeMajority = 100;
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.
-        genesis.nBits  = bnProofOfWorkLimit.GetCompact();
+        genesis.nBits = bnProofOfWorkLimit.GetCompact();
         genesis.nNonce = 566666;
-        
+
         hashGenesisBlock = genesis.GetHash();
 
         assert(hashGenesisBlock == uint256("0x00005862693a9c2692d3abb4d071f261c1c64db9824d89ae28d533e435f6d87c"));
@@ -145,9 +148,9 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,23);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,187);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 23);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 187);
+        base58Prefixes[SECRET_KEY] = std::vector<unsigned char>(1, 239);
         base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x35)(0x87)(0xCF).convert_to_container<std::vector<unsigned char> >();
         base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x35)(0x83)(0x94).convert_to_container<std::vector<unsigned char> >();
 
@@ -155,17 +158,18 @@ public:
 
         nLastPOWBlock = 0x7fffffff;
 
-		fRequireRPCPassword = true;
-		fDefaultCheckMemPool = false;
-		fRequireStandard = false;
-	}
+        fRequireRPCPassword = true;
+        fDefaultCheckMemPool = false;
+        fRequireStandard = false;
+    }
 };
 static CTestNetParams testNetParams;
 
 
 static CChainParams* pCurrentParams = &mainParams;
 
-const CChainParams &Params() {
+const CChainParams& Params()
+{
     assert(pCurrentParams);
     return *pCurrentParams;
 }
@@ -173,13 +177,13 @@ const CChainParams &Params() {
 CChainParams& Params(CBaseChainParams::Network network)
 {
     switch (network) {
-        case CBaseChainParams::MAIN:
-            return mainParams;
-        case CBaseChainParams::TESTNET:
-            return testNetParams;
-        default:
-            assert(false && "Unimplemented network");
-            return mainParams;
+    case CBaseChainParams::MAIN:
+        return mainParams;
+    case CBaseChainParams::TESTNET:
+        return testNetParams;
+    default:
+        assert(false && "Unimplemented network");
+        return mainParams;
     }
 }
 
@@ -189,7 +193,8 @@ void SelectParams(CBaseChainParams::Network network)
     pCurrentParams = &Params(network);
 }
 
-bool SelectParamsFromCommandLine() {
+bool SelectParamsFromCommandLine()
+{
     if (!SelectBaseParamsFromCommandLine())
         return false;
     SelectParams(BaseParams().NetworkID());

@@ -6,13 +6,13 @@
 #ifndef BITCOIN_CORE_H
 #define BITCOIN_CORE_H
 
-#include "uint256.h"
-#include "serialize.h"
-#include "util.h"
 #include "script/compressor.h"
 #include "script/script.h"
 #include "scrypt.h"
+#include "serialize.h"
 #include "timedata.h"
+#include "uint256.h"
+#include "util.h"
 
 #include <stdio.h>
 
@@ -33,7 +33,11 @@ public:
     unsigned int n;
 
     COutPoint() { SetNull(); }
-    COutPoint(uint256 hashIn, unsigned int nIn) { hash = hashIn; n = nIn; }
+    COutPoint(uint256 hashIn, unsigned int nIn)
+    {
+        hash = hashIn;
+        n = nIn;
+    }
 
     ADD_SERIALIZE_METHODS;
 
@@ -42,8 +46,12 @@ public:
     {
         READWRITE(FLATDATA(*this));
     }
-    void SetNull() { hash = 0; n = (unsigned int) -1; }
-    bool IsNull() const { return (hash == 0 && n == (unsigned int) -1); }
+    void SetNull()
+    {
+        hash = 0;
+        n = (unsigned int)-1;
+    }
+    bool IsNull() const { return (hash == 0 && n == (unsigned int)-1); }
 
     friend bool operator<(const COutPoint& a, const COutPoint& b)
     {
@@ -71,9 +79,17 @@ public:
     uint32_t n;
 
     CInPoint() { SetNull(); }
-    CInPoint(const CTransaction* ptxIn, uint32_t nIn) { ptx = ptxIn; n = nIn; }
-    void SetNull() { ptx = NULL; n = (uint32_t) -1; }
-    bool IsNull() const { return (ptx == NULL && n == (uint32_t) -1); }
+    CInPoint(const CTransaction* ptxIn, uint32_t nIn)
+    {
+        ptx = ptxIn;
+        n = nIn;
+    }
+    void SetNull()
+    {
+        ptx = NULL;
+        n = (uint32_t)-1;
+    }
+    bool IsNull() const { return (ptx == NULL && n == (uint32_t)-1); }
 };
 
 /** An input of a transaction.  It contains the location of the previous
@@ -114,7 +130,7 @@ public:
 
     friend bool operator==(const CTxIn& a, const CTxIn& b)
     {
-        return (a.prevout   == b.prevout &&
+        return (a.prevout == b.prevout &&
                 a.scriptSig == b.scriptSig &&
                 a.nSequence == b.nSequence);
     }
@@ -125,7 +141,6 @@ public:
     }
 
     std::string ToString() const;
-
 };
 
 /** Type-safe wrapper class to for fee rates
@@ -136,12 +151,12 @@ class CFeeRate
 private:
     int64_t nSatoshisPerK; // unit is satoshis-per-1,000-bytes
 public:
-    CFeeRate() : nSatoshisPerK(0) { }
-    explicit CFeeRate(int64_t _nSatoshisPerK) : nSatoshisPerK(_nSatoshisPerK) { }
+    CFeeRate() : nSatoshisPerK(0) {}
+    explicit CFeeRate(int64_t _nSatoshisPerK) : nSatoshisPerK(_nSatoshisPerK) {}
     CFeeRate(int64_t nFeePaid, size_t nSize);
     CFeeRate(const CFeeRate& other) { nSatoshisPerK = other.nSatoshisPerK; }
 
-    int64_t GetFee(size_t size) const; // unit returned is satoshis
+    int64_t GetFee(size_t size) const;                  // unit returned is satoshis
     int64_t GetFeePerK() const { return GetFee(1000); } // satoshis-per-1000-bytes
 
     friend bool operator<(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK < b.nSatoshisPerK; }
@@ -221,14 +236,13 @@ public:
         // A typical txout is 34 bytes big, and will
         // need a CTxIn of at least 148 bytes to spend:
         // with default minRelayTxFee.
-        size_t nSize = GetSerializeSize(SER_DISK,0)+148u;
-        return (nValue < 3*minRelayTxFee.GetFee(nSize));
-
+        size_t nSize = GetSerializeSize(SER_DISK, 0) + 148u;
+        return (nValue < 3 * minRelayTxFee.GetFee(nSize));
     }
 
     friend bool operator==(const CTxOut& a, const CTxOut& b)
     {
-        return (a.nValue       == b.nValue &&
+        return (a.nValue == b.nValue &&
                 a.scriptPubKey == b.scriptPubKey);
     }
 
@@ -269,7 +283,7 @@ public:
     CTransaction();
 
     /** Convert a CMutableTransaction into a CTransaction. */
-    CTransaction(const CMutableTransaction &tx);
+    CTransaction(const CMutableTransaction& tx);
 
     CTransaction& operator=(const CTransaction& tx);
 
@@ -292,19 +306,20 @@ public:
         return (vin.empty() && vout.empty());
     }
 
-    const uint256& GetHash() const {
+    const uint256& GetHash() const
+    {
         return hash;
     }
 
     // Return sum of txouts.
     int64_t GetValueOut() const;
-    
+
     // Compute priority, given priority of inputs and (optionally) tx size
-    double ComputePriority(double dPriorityInputs, unsigned int nTxSize=0) const;
+    double ComputePriority(double dPriorityInputs, unsigned int nTxSize = 0) const;
 
     // Compute modified tx size for priority calculation (optionally given tx size)
     unsigned int CalculateModifiedSize(unsigned int nTxSize = 0) const;
-    
+
     bool IsCoinBase() const
     {
         return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);
@@ -327,12 +342,10 @@ public:
     }
 
     std::string ToString() const;
-
 };
 
 /** A mutable version of CTransaction. */
-struct CMutableTransaction
-{
+struct CMutableTransaction {
     int32_t nVersion;
     unsigned int nTime;
     std::vector<CTxIn> vin;
@@ -382,19 +395,19 @@ struct CMutableTransaction
     {
         return !(a == b);
     }
-
 };
 
 /** wrapper for CTxOut that provides a more compact serialization */
 class CTxOutCompressor
 {
 private:
-    CTxOut &txout;
+    CTxOut& txout;
+
 public:
     static uint64_t CompressAmount(uint64_t nAmount);
     static uint64_t DecompressAmount(uint64_t nAmount);
 
-    CTxOutCompressor(CTxOut &txoutIn) : txout(txoutIn) { }
+    CTxOutCompressor(CTxOut& txoutIn) : txout(txoutIn) {}
 
     ADD_SERIALIZE_METHODS;
 
@@ -423,32 +436,35 @@ public:
 class CTxInUndo
 {
 public:
-    CTxOut txout;         // the txout data before being spent
-    bool fCoinBase;       // if the outpoint was the last unspent: whether it belonged to a coinbase
-    bool fCoinStake;      // ppcoin
+    CTxOut txout;    // the txout data before being spent
+    bool fCoinBase;  // if the outpoint was the last unspent: whether it belonged to a coinbase
+    bool fCoinStake; // ppcoin
     unsigned int nTime;
     unsigned int nHeight; // if the outpoint was the last unspent: its height
     int nVersion;         // if the outpoint was the last unspent: its version
 
     CTxInUndo() : txout(), fCoinBase(false), nHeight(0), nVersion(0) {}
-    CTxInUndo(const CTxOut &txoutIn, bool fCoinBaseIn = false, unsigned int nHeightIn = 0, int nVersionIn = 0) : txout(txoutIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), nVersion(nVersionIn) { }
+    CTxInUndo(const CTxOut& txoutIn, bool fCoinBaseIn = false, unsigned int nHeightIn = 0, int nVersionIn = 0) : txout(txoutIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), nVersion(nVersionIn) {}
 
-    unsigned int GetSerializeSize(int nType, int nVersion) const {
+    unsigned int GetSerializeSize(int nType, int nVersion) const
+    {
         return ::GetSerializeSize(VARINT(nHeight * 2 + (fCoinBase ? 1 : 0)), nType, nVersion) +
-            (nHeight > 0 ? ::GetSerializeSize(VARINT(this->nVersion), nType, nVersion) : 0) +
-            ::GetSerializeSize(CTxOutCompressor(REF(txout)), nType, nVersion);
+               (nHeight > 0 ? ::GetSerializeSize(VARINT(this->nVersion), nType, nVersion) : 0) +
+               ::GetSerializeSize(CTxOutCompressor(REF(txout)), nType, nVersion);
     }
 
-    template<typename Stream>
-    void Serialize(Stream &s, int nType, int nVersion) const {
+    template <typename Stream>
+    void Serialize(Stream& s, int nType, int nVersion) const
+    {
         ::Serialize(s, VARINT(nHeight * 2 + (fCoinBase ? 1 : 0)), nType, nVersion);
         if (nHeight > 0)
             ::Serialize(s, VARINT(this->nVersion), nType, nVersion);
         ::Serialize(s, CTxOutCompressor(REF(txout)), nType, nVersion);
     }
 
-    template<typename Stream>
-    void Unserialize(Stream &s, int nType, int nVersion) {
+    template <typename Stream>
+    void Unserialize(Stream& s, int nType, int nVersion)
+    {
         unsigned int nCode = 0;
         ::Unserialize(s, VARINT(nCode), nType, nVersion);
         nHeight = nCode / 2;
@@ -539,9 +555,7 @@ public:
     {
         return (int64_t)nTime;
     }
-
 };
-
 
 
 class CBlock : public CBlockHeader
@@ -559,7 +573,7 @@ public:
         SetNull();
     }
 
-    CBlock(const CBlockHeader &header)
+    CBlock(const CBlockHeader& header)
     {
         SetNull();
         *((CBlockHeader*)this) = header;
@@ -614,8 +628,7 @@ public:
     {
         return (
             IsProofOfStake() &&
-            (vtx[1].vout.size() == 4 || (vtx[1].vout.size() == 3 && vtx[1].vout[1].scriptPubKey != vtx[1].vout[2].scriptPubKey))
-            );
+            (vtx[1].vout.size() == 4 || (vtx[1].vout.size() == 3 && vtx[1].vout[1].scriptPubKey != vtx[1].vout[2].scriptPubKey)));
     }
 
     bool IsProofOfWork() const
@@ -632,7 +645,7 @@ public:
     int64_t GetMaxTransactionTime() const
     {
         int64_t maxTransactionTime = 0;
-        BOOST_FOREACH(const CTransaction& tx, vtx)
+        BOOST_FOREACH (const CTransaction& tx, vtx)
             maxTransactionTime = std::max(maxTransactionTime, (int64_t)tx.nTime);
         return maxTransactionTime;
     }
@@ -644,7 +657,6 @@ public:
     static uint256 CheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMerkleBranch, int nIndex);
 
     std::string ToString() const;
-
 };
 
 
@@ -652,12 +664,11 @@ public:
  * other node doesn't have the same branch, it can find a recent common trunk.
  * The further back it is, the further before the fork it may be.
  */
-struct CBlockLocator
-{
+struct CBlockLocator {
 protected:
     std::vector<uint256> vHave;
-public:
 
+public:
     CBlockLocator()
     {
     }
@@ -677,7 +688,7 @@ public:
         READWRITE(vHave);
     }
 
-        void SetNull()
+    void SetNull()
     {
         vHave.clear();
     }

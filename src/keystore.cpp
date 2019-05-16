@@ -8,7 +8,7 @@
 #include "util.h"
 
 
-bool CKeyStore::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
+bool CKeyStore::GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const
 {
     CKey key;
     if (!GetKey(address, key))
@@ -17,11 +17,12 @@ bool CKeyStore::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
     return true;
 }
 
-bool CKeyStore::AddKey(const CKey &key) {
+bool CKeyStore::AddKey(const CKey& key)
+{
     return AddKeyPubKey(key, key.GetPubKey());
 }
 
-bool CBasicKeyStore::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
+bool CBasicKeyStore::AddKeyPubKey(const CKey& key, const CPubKey& pubkey)
 {
     LOCK(cs_KeyStore);
     mapKeys[pubkey.GetID()] = key;
@@ -44,26 +45,25 @@ bool CBasicKeyStore::HaveCScript(const CScriptID& hash) const
     return mapScripts.count(hash) > 0;
 }
 
-bool CBasicKeyStore::GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const
+bool CBasicKeyStore::GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const
 {
     LOCK(cs_KeyStore);
     ScriptMap::const_iterator mi = mapScripts.find(hash);
-    if (mi != mapScripts.end())
-    {
+    if (mi != mapScripts.end()) {
         redeemScriptOut = (*mi).second;
         return true;
     }
     return false;
 }
 
-bool CBasicKeyStore::AddWatchOnly(const CScript &dest)
+bool CBasicKeyStore::AddWatchOnly(const CScript& dest)
 {
     LOCK(cs_KeyStore);
     setWatchOnly.insert(dest);
     return true;
 }
 
-bool CBasicKeyStore::HaveWatchOnly(const CScript &dest) const
+bool CBasicKeyStore::HaveWatchOnly(const CScript& dest) const
 {
     LOCK(cs_KeyStore);
     return setWatchOnly.count(dest) > 0;

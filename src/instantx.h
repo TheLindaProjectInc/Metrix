@@ -8,8 +8,8 @@
 
 #include "base58.h"
 #include "key.h"
-#include "net.h"
 #include "main.h"
+#include "net.h"
 //#include "primitives/transaction.h"
 //#include "script/script.h"
 #include "sync.h"

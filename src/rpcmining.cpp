@@ -3,14 +3,14 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "rpcserver.h"
 #include "chainparams.h"
-#include "db.h"
-#include "txdb.h"
-#include "init.h"
-#include "miner.h"
 #include "core_io.h"
+#include "db.h"
+#include "init.h"
 #include "kernel.h"
+#include "miner.h"
+#include "rpcserver.h"
+#include "txdb.h"
 #include "util.h"
 
 #include <boost/assign/list_of.hpp>
@@ -26,7 +26,7 @@ Value getsubsidy(const Array& params, bool fHelp)
             "getsubsidy [nTarget]\n"
             "Returns proof-of-work subsidy value for the specified value of target.");
 
-    uint64_t nReward = GetProofOfWorkReward(0); 
+    uint64_t nReward = GetProofOfWorkReward(0);
 
     return (uint64_t)nReward;
 }
@@ -45,8 +45,7 @@ Value getstakesubsidy(const Array& params, bool fHelp)
     CTransaction tx;
     try {
         ssData >> tx;
-    }
-    catch (std::exception &e) {
+    } catch (std::exception& e) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
 
@@ -73,28 +72,28 @@ Value getmininginfo(const Array& params, bool fHelp)
         nWeight = pwalletMain->GetStakeWeight();
 
     Object obj, diff, weight;
-    obj.push_back(Pair("blocks",        (int)chainActive.Height()));
-    obj.push_back(Pair("currentblocksize",(uint64_t)nLastBlockSize));
-    obj.push_back(Pair("currentblocktx",(uint64_t)nLastBlockTx));
+    obj.push_back(Pair("blocks", (int)chainActive.Height()));
+    obj.push_back(Pair("currentblocksize", (uint64_t)nLastBlockSize));
+    obj.push_back(Pair("currentblocktx", (uint64_t)nLastBlockTx));
 
-    diff.push_back(Pair("proof-of-work",        GetDifficulty()));
-    diff.push_back(Pair("proof-of-stake",       GetDifficulty(GetLastBlockIndex(chainActive.Tip(), true))));
-    diff.push_back(Pair("search-interval",      (int)nLastCoinStakeSearchInterval));
-    obj.push_back(Pair("difficulty",    diff));
-    obj.push_back(Pair("blockvalue",    (uint64_t)GetProofOfWorkReward(0)));
+    diff.push_back(Pair("proof-of-work", GetDifficulty()));
+    diff.push_back(Pair("proof-of-stake", GetDifficulty(GetLastBlockIndex(chainActive.Tip(), true))));
+    diff.push_back(Pair("search-interval", (int)nLastCoinStakeSearchInterval));
+    obj.push_back(Pair("difficulty", diff));
+    obj.push_back(Pair("blockvalue", (uint64_t)GetProofOfWorkReward(0)));
 
-    obj.push_back(Pair("netmhashps",     GetPoWMHashPS()));
+    obj.push_back(Pair("netmhashps", GetPoWMHashPS()));
     obj.push_back(Pair("netstakeweight", GetPoSKernelPS()));
-    obj.push_back(Pair("errors",        GetWarnings("statusbar")));
-    obj.push_back(Pair("pooledtx",      (uint64_t)mempool.size()));
+    obj.push_back(Pair("errors", GetWarnings("statusbar")));
+    obj.push_back(Pair("pooledtx", (uint64_t)mempool.size()));
     obj.push_back(Pair("chain", Params().NetworkIDString()));
 
-    weight.push_back(Pair("minimum",    (uint64_t)nWeight));
-    weight.push_back(Pair("maximum",    (uint64_t)0));
-    weight.push_back(Pair("combined",  (uint64_t)nWeight));
+    weight.push_back(Pair("minimum", (uint64_t)nWeight));
+    weight.push_back(Pair("maximum", (uint64_t)0));
+    weight.push_back(Pair("combined", (uint64_t)nWeight));
     obj.push_back(Pair("stakeweight", weight));
 
-    obj.push_back(Pair("testnet",       Params().NetworkID() == CBaseChainParams::TESTNET));
+    obj.push_back(Pair("testnet", Params().NetworkID() == CBaseChainParams::TESTNET));
     return obj;
 }
 
@@ -139,8 +138,7 @@ Value checkkernel(const Array& params, bool fHelp)
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
             "checkkernel [{\"txid\":txid,\"vout\":n},...] [createblocktemplate=false]\n"
-            "Check if one of given inputs is a kernel input at the moment.\n"
-        );
+            "Check if one of given inputs is a kernel input at the moment.\n");
 
     RPCTypeCheck(params, list_of(array_type)(bool_type));
 
@@ -159,8 +157,7 @@ Value checkkernel(const Array& params, bool fHelp)
     int64_t nTime = GetAdjustedTime();
     nTime &= ~STAKE_TIMESTAMP_MASK;
 
-    BOOST_FOREACH(Value& input, inputs)
-    {
+    BOOST_FOREACH (Value& input, inputs) {
         const Object& o = input.get_obj();
 
         const Value& txid_v = find_value(o, "txid");
@@ -178,8 +175,7 @@ Value checkkernel(const Array& params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, vout must be positive");
 
         COutPoint cInput(uint256(txid), nOutput);
-        if (CheckKernel(pindexPrev, nBits, nTime, cInput))
-        {
+        if (CheckKernel(pindexPrev, nBits, nTime, cInput)) {
             kernel = cInput;
             break;
         }
@@ -254,17 +250,14 @@ Value getblocktemplate(const Array& params, bool fHelp)
 
     std::string strMode = "template";
     Value lpval = Value::null;
-    if (params.size() > 0)
-    {
+    if (params.size() > 0) {
         const Object& oparam = params[0].get_obj();
         const Value& modeval = find_value(oparam, "mode");
         if (modeval.type() == str_type)
             strMode = modeval.get_str();
-        else if (modeval.type() == null_type)
-        {
+        else if (modeval.type() == null_type) {
             /* Do nothing */
-        }
-        else
+        } else
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
         lpval = find_value(oparam, "longpollid");
     }
@@ -282,23 +275,19 @@ Value getblocktemplate(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
 
     static unsigned int nTransactionsUpdatedLast;
-    if (lpval.type() != null_type)
-    {
+    if (lpval.type() != null_type) {
         // Wait to respond until either the best block changes, OR a minute has passed and there are more transactions
         uint256 hashWatchedChain;
         boost::system_time checktxtime;
         unsigned int nTransactionsUpdatedLastLP;
 
-        if (lpval.type() == str_type)
-        {
+        if (lpval.type() == str_type) {
             // Format: <hashBestChain><nTransactionsUpdatedLast>
             std::string lpstr = lpval.get_str();
 
             hashWatchedChain.SetHex(lpstr.substr(0, 64));
             nTransactionsUpdatedLastLP = atoi64(lpstr.substr(64));
-        }
-        else
-        {
+        } else {
             // NOTE: Spec does not specify behaviour for non-string longpollid, but this makes testing easier
             hashWatchedChain = chainActive.Tip()->GetBlockHash();
             nTransactionsUpdatedLastLP = nTransactionsUpdatedLast;
@@ -306,7 +295,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
 
         // Release the wallet and main lock while waiting
 #ifdef ENABLE_WALLET
-        if(pwalletMain)
+        if (pwalletMain)
             LEAVE_CRITICAL_SECTION(pwalletMain->cs_wallet);
 #endif
         LEAVE_CRITICAL_SECTION(cs_main);
@@ -314,10 +303,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
             checktxtime = boost::get_system_time() + boost::posix_time::minutes(1);
 
             boost::unique_lock<boost::mutex> lock(csBestBlock);
-            while (chainActive.Tip()->GetBlockHash() == hashWatchedChain && IsRPCRunning())
-            {
-                if (!cvBlockChange.timed_wait(lock, checktxtime))
-                {
+            while (chainActive.Tip()->GetBlockHash() == hashWatchedChain && IsRPCRunning()) {
+                if (!cvBlockChange.timed_wait(lock, checktxtime)) {
                     // Timeout: Check transactions for update
                     if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLastLP)
                         break;
@@ -327,7 +314,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         }
         ENTER_CRITICAL_SECTION(cs_main);
 #ifdef ENABLE_WALLET
-        if(pwalletMain)
+        if (pwalletMain)
             ENTER_CRITICAL_SECTION(pwalletMain->cs_wallet);
 #endif
 
@@ -341,8 +328,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     static int64_t nStart;
     static CBlockTemplate* pblocktemplate;
     if (pindexPrev != chainActive.Tip() ||
-        (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5))
-    {
+        (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5)) {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
         pindexPrev = NULL;
 
@@ -352,8 +338,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         nStart = GetTime();
 
         // Create new block
-        if(pblocktemplate)
-        {
+        if (pblocktemplate) {
             delete pblocktemplate;
             pblocktemplate = NULL;
         }
@@ -375,8 +360,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     map<uint256, int64_t> setTxIndex;
     int i = 0;
 
-    BOOST_FOREACH (CTransaction& tx, pblock->vtx)
-    {
+    BOOST_FOREACH (CTransaction& tx, pblock->vtx) {
         uint256 txHash = tx.GetHash();
         setTxIndex[txHash] = i++;
 
@@ -390,8 +374,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         entry.push_back(Pair("hash", txHash.GetHex()));
 
         Array deps;
-        BOOST_FOREACH (const CTxIn &in, tx.vin)
-        {
+        BOOST_FOREACH (const CTxIn& in, tx.vin) {
             if (setTxIndex.count(in.prevout.hash))
                 deps.push_back(setTxIndex[in.prevout.hash]);
         }
@@ -408,8 +391,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     uint256 hashTarget = uint256().SetCompact(pblock->nBits);
 
     static Array aMutable;
-    if (aMutable.empty())
-    {
+    if (aMutable.empty()) {
         aMutable.push_back("time");
         aMutable.push_back("transactions");
         aMutable.push_back("prevblock");
@@ -423,14 +405,14 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("coinbasevalue", (int64_t)pblock->vtx[0].vout[0].nValue));
     result.push_back(Pair("longpollid", chainActive.Tip()->GetBlockHash().GetHex() + i64tostr(nTransactionsUpdatedLast)));
     result.push_back(Pair("target", hashTarget.GetHex()));
-    result.push_back(Pair("mintime", (int64_t)pindexPrev->GetPastTimeLimit()+1));
+    result.push_back(Pair("mintime", (int64_t)pindexPrev->GetPastTimeLimit() + 1));
     result.push_back(Pair("mutable", aMutable));
     result.push_back(Pair("noncerange", "00000000ffffffff"));
     result.push_back(Pair("sigoplimit", (int64_t)MAX_BLOCK_SIGOPS));
     result.push_back(Pair("sizelimit", (int64_t)MAX_BLOCK_SIZE));
     result.push_back(Pair("curtime", pblock->GetBlockTime()));
     result.push_back(Pair("bits", strprintf("%08x", pblock->nBits)));
-    result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
+    result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight + 1)));
 
     return result;
 }
@@ -451,18 +433,15 @@ Value submitblock(const Array& params, bool fHelp)
             "      \"workid\" : \"id\"    (string, optional) if the server provided a workid, it MUST be included with submissions\n"
             "    }\n"
             "\nResult:\n"
-            "\nExamples:\n"
-            + HelpExampleCli("submitblock", "\"mydata\"")
-            + HelpExampleRpc("submitblock", "\"mydata\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("submitblock", "\"mydata\"") + HelpExampleRpc("submitblock", "\"mydata\""));
 
     vector<unsigned char> blockData(ParseHex(params[0].get_str()));
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION);
     CBlock pblock;
     try {
         ssBlock >> pblock;
-    }
-    catch (std::exception &e) {
+    } catch (const std::exception&) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 
@@ -489,9 +468,8 @@ Value estimatefee(const Array& params, bool fHelp)
             "\n"
             "-1.0 is returned if not enough transactions and\n"
             "blocks have been observed to make an estimate.\n"
-            "\nExample:\n"
-            + HelpExampleCli("estimatefee", "6")
-            );
+            "\nExample:\n" +
+            HelpExampleCli("estimatefee", "6"));
 
     RPCTypeCheck(params, boost::assign::list_of(int_type));
 
@@ -521,9 +499,8 @@ Value estimatepriority(const Array& params, bool fHelp)
             "\n"
             "-1.0 is returned if not enough transactions and\n"
             "blocks have been observed to make an estimate.\n"
-            "\nExample:\n"
-            + HelpExampleCli("estimatepriority", "6")
-            );
+            "\nExample:\n" +
+            HelpExampleCli("estimatepriority", "6"));
 
     RPCTypeCheck(params, boost::assign::list_of(int_type));
 

@@ -4,10 +4,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "core.h"
-#include "tinyformat.h"
 #include "scrypt.h"
-#include "utilstrencodings.h"
+#include "tinyformat.h"
 #include "utilmoneystr.h"
+#include "utilstrencodings.h"
 
 #include <boost/foreach.hpp>
 
@@ -58,14 +58,15 @@ uint256 CTxOut::GetHash() const
 
 std::string CTxOut::ToString() const
 {
-    if (IsEmpty()) return "CTxOut(empty)";
+    if (IsEmpty())
+        return "CTxOut(empty)";
     return strprintf("CTxOut(nValue=%s, scriptPubKey=%s)", FormatMoney(nValue), scriptPubKey.ToString());
 }
 
 CFeeRate::CFeeRate(int64_t nFeePaid, size_t nSize)
 {
     if (nSize > 0)
-        nSatoshisPerK = nFeePaid*1000/nSize;
+        nSatoshisPerK = nFeePaid * 1000 / nSize;
     else
         nSatoshisPerK = 0;
 }
@@ -98,13 +99,15 @@ void CTransaction::UpdateHash() const
     *const_cast<uint256*>(&hash) = SerializeHash(*this);
 }
 
-CTransaction::CTransaction() : hash(0), nVersion(CTransaction::CURRENT_VERSION), nTime(0), vin(), vout(), nLockTime(0) { }
+CTransaction::CTransaction() : hash(0), nVersion(CTransaction::CURRENT_VERSION), nTime(0), vin(), vout(), nLockTime(0) {}
 
-CTransaction::CTransaction(const CMutableTransaction &tx) : nVersion(tx.nVersion), nTime(tx.nTime), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime) {
+CTransaction::CTransaction(const CMutableTransaction& tx) : nVersion(tx.nVersion), nTime(tx.nTime), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime)
+{
     UpdateHash();
 }
 
-CTransaction& CTransaction::operator=(const CTransaction &tx) {
+CTransaction& CTransaction::operator=(const CTransaction& tx)
+{
     *const_cast<int*>(&nVersion) = tx.nVersion;
     *const_cast<unsigned int*>(&nTime) = tx.nTime;
     *const_cast<std::vector<CTxIn>*>(&vin) = tx.vin;
@@ -120,8 +123,7 @@ CTransaction& CTransaction::operator=(const CTransaction &tx) {
 int64_t CTransaction::GetValueOut() const
 {
     int64_t nValueOut = 0;
-    BOOST_FOREACH(const CTxOut& txout, vout)
-    {
+    BOOST_FOREACH (const CTxOut& txout, vout) {
         nValueOut += txout.nValue;
         if (!MoneyRange(txout.nValue) || !MoneyRange(nValueOut))
             throw std::runtime_error("GetValueOut() : value out of range");
@@ -148,8 +150,7 @@ unsigned int CTransaction::CalculateModifiedSize(unsigned int nTxSize) const
     if (nTxSize == 0)
         nTxSize = ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
 
-    BOOST_FOREACH(const CTxIn& txin, vin)
-    {
+    BOOST_FOREACH (const CTxIn& txin, vin) {
         unsigned int offset = 41U + std::min(110U, (unsigned int)txin.scriptSig.size());
         if (nTxSize > offset)
             nTxSize -= offset;
@@ -162,12 +163,12 @@ std::string CMutableTransaction::ToString() const
     std::string str;
     str += IsCoinBase() ? "Coinbase" : (IsCoinStake() ? "Coinstake" : "CTransaction");
     str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%u, vout.size=%u, nLockTime=%d)\n",
-        GetHash().ToString(),
-        nTime,
-        nVersion,
-        vin.size(),
-        vout.size(),
-        nLockTime);
+                     GetHash().ToString(),
+                     nTime,
+                     nVersion,
+                     vin.size(),
+                     vout.size(),
+                     nLockTime);
     for (unsigned int i = 0; i < vin.size(); i++)
         str += "    " + vin[i].ToString() + "\n";
     for (unsigned int i = 0; i < vout.size(); i++)
@@ -180,12 +181,12 @@ std::string CTransaction::ToString() const
     std::string str;
     str += IsCoinBase() ? "Coinbase" : (IsCoinStake() ? "Coinstake" : "CTransaction");
     str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%u, vout.size=%u, nLockTime=%d)\n",
-        GetHash().ToString(),
-        nTime,
-        nVersion,
-        vin.size(),
-        vout.size(),
-        nLockTime);
+                     GetHash().ToString(),
+                     nTime,
+                     nVersion,
+                     vin.size(),
+                     vout.size(),
+                     nLockTime);
     for (unsigned int i = 0; i < vin.size(); i++)
         str += "    " + vin[i].ToString() + "\n";
     for (unsigned int i = 0; i < vout.size(); i++)
@@ -216,8 +217,7 @@ uint64_t CTxOutCompressor::CompressAmount(uint64_t n)
         assert(d >= 1 && d <= 9);
         n /= 10;
         return 1 + (n * 9 + d - 1) * 10 + e;
-    }
-    else {
+    } else {
         return 1 + (n - 1) * 10 + 9;
     }
 }
@@ -238,8 +238,7 @@ uint64_t CTxOutCompressor::DecompressAmount(uint64_t x)
         x /= 9;
         // x = n
         n = x * 10 + d;
-    }
-    else {
+    } else {
         n = x + 1;
     }
     while (e) {
@@ -265,16 +264,14 @@ uint256 CBlockHeader::GetPoWHash() const
 uint256 CBlock::BuildMerkleTree() const
 {
     vMerkleTree.clear();
-    BOOST_FOREACH(const CTransaction& tx, vtx)
+    BOOST_FOREACH (const CTransaction& tx, vtx)
         vMerkleTree.push_back(tx.GetHash());
     int j = 0;
-    for (int nSize = vtx.size(); nSize > 1; nSize = (nSize + 1) / 2)
-    {
-        for (int i = 0; i < nSize; i += 2)
-        {
+    for (int nSize = vtx.size(); nSize > 1; nSize = (nSize + 1) / 2) {
+        for (int i = 0; i < nSize; i += 2) {
             int i2 = std::min(i + 1, nSize - 1);
             vMerkleTree.push_back(Hash(BEGIN(vMerkleTree[j + i]), END(vMerkleTree[j + i]),
-                BEGIN(vMerkleTree[j + i2]), END(vMerkleTree[j + i2])));
+                                       BEGIN(vMerkleTree[j + i2]), END(vMerkleTree[j + i2])));
         }
         j += nSize;
     }
@@ -287,8 +284,7 @@ std::vector<uint256> CBlock::GetMerkleBranch(int nIndex) const
         BuildMerkleTree();
     std::vector<uint256> vMerkleBranch;
     int j = 0;
-    for (int nSize = vtx.size(); nSize > 1; nSize = (nSize + 1) / 2)
-    {
+    for (int nSize = vtx.size(); nSize > 1; nSize = (nSize + 1) / 2) {
         int i = std::min(nIndex ^ 1, nSize - 1);
         vMerkleBranch.push_back(vMerkleTree[j + i]);
         nIndex >>= 1;
@@ -301,8 +297,7 @@ uint256 CBlock::CheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMer
 {
     if (nIndex == -1)
         return 0;
-    BOOST_FOREACH(const uint256& otherside, vMerkleBranch)
-    {
+    BOOST_FOREACH (const uint256& otherside, vMerkleBranch) {
         if (nIndex & 1)
             hash = Hash(BEGIN(otherside), END(otherside), BEGIN(hash), END(hash));
         else
@@ -316,15 +311,14 @@ std::string CBlock::ToString() const
 {
     std::stringstream s;
     s << strprintf("CBlock(hash=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, vtx=%u, vchBlockSig=%s)\n",
-        GetHash().ToString(),
-        nVersion,
-        hashPrevBlock.ToString(),
-        hashMerkleRoot.ToString(),
-        nTime, nBits, nNonce,
-        vtx.size(),
-        HexStr(vchBlockSig.begin(), vchBlockSig.end()));
-    for (unsigned int i = 0; i < vtx.size(); i++)
-    {
+                   GetHash().ToString(),
+                   nVersion,
+                   hashPrevBlock.ToString(),
+                   hashMerkleRoot.ToString(),
+                   nTime, nBits, nNonce,
+                   vtx.size(),
+                   HexStr(vchBlockSig.begin(), vchBlockSig.end()));
+    for (unsigned int i = 0; i < vtx.size(); i++) {
         s << "  " << vtx[i].ToString() << "\n";
     }
     s << "  vMerkleTree: ";
