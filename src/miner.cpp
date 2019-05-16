@@ -133,7 +133,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
     {
         LOCK2(cs_main, mempool.cs);
         CBlockIndex* pindexPrev = chainActive.Tip();
-        CCoinsViewCache view(*pcoinsTip, true);
+        CCoinsViewCache view(pcoinsTip);
         //>Linda<
         // Priority order to process transactions
         list<COrphan> vOrphan; // list memory doesn't move
@@ -325,7 +325,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         CBlockIndex indexDummy(*pblock);
         indexDummy.pprev = pindexPrev;
         indexDummy.nHeight = pindexPrev->nHeight + 1;
-        CCoinsViewCache viewNew(*pcoinsTip, true);
+        CCoinsViewCache viewNew(pcoinsTip);
         CValidationState state;
         if (!ConnectBlock(*pblock, state, &indexDummy, viewNew, true)) {
             error("CreateNewBlock() : ConnectBlock failed");
