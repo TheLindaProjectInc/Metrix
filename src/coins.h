@@ -89,10 +89,26 @@ public:
     // ppcoin: transaction timestamp
     unsigned int nTime;
 
-    // construct a CCoins from a CTransaction, at a given height
-    CCoins(const CTransaction& tx, int nHeightIn) : fCoinBase(tx.IsCoinBase()), vout(tx.vout), nHeight(nHeightIn), nVersion(tx.nVersion), fCoinStake(tx.IsCoinStake()), nTime(tx.nTime)
-    {
+    void FromTx(const CTransaction &tx, int nHeightIn) {
+        fCoinBase = tx.IsCoinBase();
+        vout = tx.vout;
+        nHeight = nHeightIn;
+        nVersion = tx.nVersion;
+        fCoinStake = tx.IsCoinStake();
+        nTime = tx.nTime;
         ClearUnspendable();
+    }
+
+    // construct a CCoins from a CTransaction, at a given height
+    CCoins(const CTransaction &tx, int nHeightIn) {
+        FromTx(tx, nHeightIn);
+    }
+
+    void Clear() {
+        fCoinBase = false;
+        std::vector<CTxOut>().swap(vout);
+        nHeight = 0;
+        nVersion = 0;
     }
 
     // empty constructor
@@ -364,11 +380,32 @@ public:
     bool GetStats(CCoinsStats& stats) const;
 };
 
+class CCoinsViewCache;
+
+/** A reference to a mutable cache entry. Encapsulating it allows us to run
+ *  cleanup code after the modification is finished, and keeping track of
+ *  concurrent modifications. */
+class CCoinsModifier
+{
+private:
+    CCoinsViewCache& cache;
+    CCoinsMap::iterator it;
+    CCoinsModifier(CCoinsViewCache& cache_, CCoinsMap::iterator it_);
+
+public:
+    CCoins* operator->() { return &it->second; }
+    CCoins& operator*() { return it->second; }
+    ~CCoinsModifier();
+    friend class CCoinsViewCache;
+};
 
 /** CCoinsView that adds a memory cache for transactions to another CCoinsView */
 class CCoinsViewCache : public CCoinsViewBacked
 {
 protected:
+    /* Whether this cache has an active modifier. */
+    bool hasModifier;
+
     /* Make mutable so that we can "fill the cache" even from Get-methods
        declared as "const".  */
     mutable uint256 hashBlock;
@@ -376,6 +413,7 @@ protected:
 
 public:
     CCoinsViewCache(CCoinsView *baseIn);
+    ~CCoinsViewCache();
 
     // Standard CCoinsView methods
     bool GetCoins(const uint256& txid, CCoins& coins) const;
@@ -390,8 +428,10 @@ public:
     // allowed while accessing the returned pointer.
     const CCoins* AccessCoins(const uint256& txid) const;
 
-    // Return a modifiable reference to a CCoins. Check HaveCoins first.
-    CCoins& GetCoins(const uint256& txid);
+    // Return a modifiable reference to a CCoins. If no entry with the given
+    // txid exists, a new one is created. Simultaneous modifications are not
+    // allowed.
+    CCoinsModifier ModifyCoins(const uint256 &txid);
 
     // Push the modifications applied to this cache to its base.
     // If false is returned, the state of this cache (and its backing view) will be undefined.
@@ -416,6 +456,8 @@ public:
     double GetPriority(const CTransaction& tx, int nHeight) const;
 
     const CTxOut& GetOutputFor(const CTxIn& input) const;
+
+    friend class CCoinsModifier;
 
 private:
     CCoinsMap::iterator FetchCoins(const uint256& txid);
