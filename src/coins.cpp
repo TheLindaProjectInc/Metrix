@@ -57,10 +57,8 @@ bool CCoins::Spend(int nPos)
 
 
 bool CCoinsView::GetCoins(const uint256& txid, CCoins& coins) const { return false; }
-bool CCoinsView::SetCoins(const uint256& txid, const CCoins& coins) { return false; }
 bool CCoinsView::HaveCoins(const uint256& txid) const { return false; }
 uint256 CCoinsView::GetBestBlock() const { return uint256(0); }
-bool CCoinsView::SetBestBlock(const uint256& hashBlock) { return false; }
 bool CCoinsView::BatchWrite(CCoinsMap& mapCoins, const uint256& hashBlock) { return false; }
 bool CCoinsView::GetStats(CCoinsStats& stats) const { return false; }
 
@@ -68,10 +66,8 @@ CCoinsKeyHasher::CCoinsKeyHasher() : salt(GetRandHash()) {}
 
 CCoinsViewBacked::CCoinsViewBacked(CCoinsView *viewIn) : base(viewIn) {}
 bool CCoinsViewBacked::GetCoins(const uint256& txid, CCoins& coins) const { return base->GetCoins(txid, coins); }
-bool CCoinsViewBacked::SetCoins(const uint256& txid, const CCoins& coins) { return base->SetCoins(txid, coins); }
 bool CCoinsViewBacked::HaveCoins(const uint256& txid) const { return base->HaveCoins(txid); }
-uint256 CCoinsViewBacked::GetBestBlock() const { return base->GetBestBlock(); }
-bool CCoinsViewBacked::SetBestBlock(const uint256& hashBlock) { return base->SetBestBlock(hashBlock); }
+uint256 CCoinsViewBacked::GetBestBlock() const { return base->GetBestBlock(); 
 void CCoinsViewBacked::SetBackend(CCoinsView& viewIn) { base = &viewIn; }
 bool CCoinsViewBacked::BatchWrite(CCoinsMap& mapCoins, const uint256& hashBlock) { return base->BatchWrite(mapCoins, hashBlock); }
 bool CCoinsViewBacked::GetStats(CCoinsStats& stats) const { return base->GetStats(stats); }
@@ -129,12 +125,6 @@ const CCoins* CCoinsViewCache::AccessCoins(const uint256& txid) const
     }
 }
 
-bool CCoinsViewCache::SetCoins(const uint256& txid, const CCoins& coins)
-{
-    cacheCoins[txid] = coins;
-    return true;
-}
-
 bool CCoinsViewCache::HaveCoins(const uint256& txid) const
 {
     CCoinsMap::const_iterator it = FetchCoins(txid);
@@ -152,10 +142,9 @@ uint256 CCoinsViewCache::GetBestBlock() const
     return hashBlock;
 }
 
-bool CCoinsViewCache::SetBestBlock(const uint256& hashBlockIn)
+void CCoinsViewCache::SetBestBlock(const uint256& hashBlockIn)
 {
     hashBlock = hashBlockIn;
-    return true;
 }
 
 bool CCoinsViewCache::BatchWrite(CCoinsMap& mapCoins, const uint256& hashBlockIn)
