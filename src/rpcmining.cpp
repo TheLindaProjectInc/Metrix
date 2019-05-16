@@ -50,7 +50,7 @@ Value getstakesubsidy(const Array& params, bool fHelp)
     }
 
     uint64_t nCoinAge;
-    CCoinsViewCache view(*pcoinsTip, true);
+    CCoinsViewCache view(pcoinsTip);
     CValidationState state;
     if (!GetCoinAge(tx, state, view, nCoinAge, chainActive.Height()))
         throw JSONRPCError(RPC_MISC_ERROR, "GetCoinAge failed");

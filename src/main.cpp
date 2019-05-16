@@ -1121,12 +1121,12 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
 
     {
         CCoinsView dummy;
-        CCoinsViewCache view(dummy);
+        CCoinsViewCache view(&dummy);
 
         int64_t nValueIn = 0;
         {
             LOCK(pool.cs);
-            CCoinsViewMemPool viewMemPool(*pcoinsTip, pool);
+            CCoinsViewMemPool viewMemPool(pcoinsTip, pool);
             view.SetBackend(viewMemPool);
 
             // do we already have it?

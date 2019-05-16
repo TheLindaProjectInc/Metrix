@@ -109,6 +109,8 @@ public:
         std::vector<CTxOut>().swap(vout);
         nHeight = 0;
         nVersion = 0;
+        fCoinStake = false;
+        nTime = 0;
     }
 
     // empty constructor
@@ -417,7 +419,7 @@ protected:
     mutable CCoinsMap cacheCoins;
 
 public:
-    CCoinsViewCache(CCoinsView *baseIn);
+    CCoinsViewCache(CCoinsView* baseIn);
     ~CCoinsViewCache();
 
     // Standard CCoinsView methods
