@@ -2181,7 +2181,7 @@ void static UpdateTip(CBlockIndex* pindexNew)
 
     uint256 nBestBlockTrust = chainActive.Height() != 0 ? (chainActive.Tip()->nChainTrust - chainActive.Tip()->pprev->nChainTrust) : chainActive.Tip()->nChainTrust;
 
-    LogPrintf("UpdateTip: new best=%s  height=%d  trust=%s  blocktrust=%d  tx=%lu  date=%s\n",
+    LogPrintf("UpdateTip: new best=%s  height=%d  trust=%s  blocktrust=%d  tx=%lu  date=%s cache=%u\n",
               chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(),
               (chainActive.Tip()->nChainTrust).ToString(),
               nBestBlockTrust.GetLow64(),
@@ -3690,8 +3690,7 @@ bool static LoadBlockIndexDB()
     LogPrintf("LoadBlockIndex(): hashBestChain=%s  height=%d date=%s  progress=%f\n",
               chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(),
               DateTimeStrFormat("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTime()),
-              Checkpoints::GuessVerificationProgress(chainActive.Tip()));
-
+              Checkpoints::GuessVerificationProgress(chainActive.Tip()), (unsigned int)pcoinsTip->GetCacheSize());
     return true;
 }
 
