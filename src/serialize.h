@@ -1283,7 +1283,7 @@ public:
 };
 
 
-/** RAII wrapper for FILE*.
+/** Non-refcounted RAII wrapper for FILE*.
  *
  * Will automatically close the file when it goes out of scope if not null.
  * If you're returning the file pointer, return file.release().
@@ -1291,6 +1291,10 @@ public:
  */
 class CAutoFile
 {
+private:
+    // Disallow copies
+    CAutoFile(const CAutoFile&);
+    CAutoFile& operator=(const CAutoFile&);
 protected:
     FILE* file;
     short state;
