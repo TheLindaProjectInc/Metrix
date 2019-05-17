@@ -180,6 +180,7 @@ public:
     {
         SetNull();
     }
+
     CWallet(std::string strWalletFileIn)
     {
         SetNull();
@@ -187,6 +188,13 @@ public:
         strWalletFile = strWalletFileIn;
         fFileBacked = true;
     }
+
+    ~CWallet()
+    {
+        delete pwalletdbEncryption;
+        pwalletdbEncryption = NULL;
+    }
+
 
     void SetNull()
     {
