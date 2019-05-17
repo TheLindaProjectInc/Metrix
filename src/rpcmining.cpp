@@ -26,9 +26,9 @@ Value getsubsidy(const Array& params, bool fHelp)
             "getsubsidy [nTarget]\n"
             "Returns proof-of-work subsidy value for the specified value of target.");
 
-    uint64_t nReward = GetProofOfWorkReward(0);
+    CAmount nReward = GetProofOfWorkReward(0);
 
-    return (uint64_t)nReward;
+    return (CAmount)nReward;
 }
 
 Value getstakesubsidy(const Array& params, bool fHelp)
@@ -55,9 +55,9 @@ Value getstakesubsidy(const Array& params, bool fHelp)
     if (!GetCoinAge(tx, state, view, nCoinAge, chainActive.Height()))
         throw JSONRPCError(RPC_MISC_ERROR, "GetCoinAge failed");
 
-    uint64_t nStakeReward = GetProofOfStakeReward(nCoinAge, 0, chainActive.Height());
+    CAmount nStakeReward = GetProofOfStakeReward(nCoinAge, 0, chainActive.Height());
 
-    return (uint64_t)nStakeReward;
+    return (CAmount)nStakeReward;
 }
 
 Value getmininginfo(const Array& params, bool fHelp)
@@ -196,7 +196,7 @@ Value checkkernel(const Array& params, bool fHelp)
     if (!fCreateBlockTemplate)
         return result;
     CReserveKey reservekey(pwalletMain);
-    int64_t nFees;
+    CAmount nFees;
     auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwalletMain, true));
     CBlock* pblock = &pblocktemplate->block; // pointer for convenience
     pblock->nTime = pblock->vtx[0].nTime = nTime;
