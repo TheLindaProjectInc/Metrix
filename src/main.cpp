@@ -1290,7 +1290,7 @@ bool GetTransaction(const uint256& hash, CTransaction& txOut, uint256& hashBlock
 bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
 {
     // Open history file to append
-    CAutoFile fileout = CAutoFile(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
+    CAutoFile fileout(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
     if (!fileout)
         return error("CBlock::WriteToDisk() : OpenBlockFile failed");
 
@@ -1318,7 +1318,7 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
     block.SetNull();
 
     // Open history file to read
-    CAutoFile filein = CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
+    CAutoFile filein(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
     if (!filein)
         return error("CBlock::ReadFromDisk() : OpenBlockFile failed");
 
@@ -5305,7 +5305,7 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
 bool CBlockUndo::WriteToDisk(CDiskBlockPos& pos, const uint256& hashBlock)
 {
     // Open history file to append
-    CAutoFile fileout = CAutoFile(OpenUndoFile(pos), SER_DISK, CLIENT_VERSION);
+    CAutoFile fileout(OpenUndoFile(pos), SER_DISK, CLIENT_VERSION);
     if (!fileout)
         return error("CBlockUndo::WriteToDisk() : OpenUndoFile failed");
 
@@ -5337,7 +5337,7 @@ bool CBlockUndo::WriteToDisk(CDiskBlockPos& pos, const uint256& hashBlock)
 bool CBlockUndo::ReadFromDisk(const CDiskBlockPos& pos, const uint256& hashBlock)
 {
     // Open history file to read
-    CAutoFile filein = CAutoFile(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
+    CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
     if (!filein)
         return error("CBlockUndo::ReadFromDisk() : OpenBlockFile failed");
 
