@@ -650,8 +650,12 @@ public:
         return maxTransactionTime;
     }
 
-    uint256 BuildMerkleTree() const;
-
+    // Build the in-memory merkle tree for this block and return the merkle root.
+    // If non-NULL, *mutated is set to whether mutation was detected in the merkle
+    // tree (a duplication of transactions in the block leading to an identical
+    // merkle root).
+    uint256 BuildMerkleTree(bool* mutated = NULL) const;
+    
     std::vector<uint256> GetMerkleBranch(int nIndex) const;
 
     static uint256 CheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMerkleBranch, int nIndex);
