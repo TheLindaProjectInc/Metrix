@@ -23,6 +23,8 @@
 #include "util.h"
 #include "utilmoneystr.h"
 
+#include <assert.h>
+
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/range/algorithm.hpp>
@@ -545,7 +547,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
             }
             // We now probably have half of our keys encrypted in memory, and half not...
             // die and let the user reload their unencrypted wallet.
-            exit(1);
+            assert(false);
         }
 
         std::set<CStealthAddress>::iterator it;
@@ -583,7 +585,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
                 delete pwalletdbEncryption;
                 // We now have keys encrypted in memory, but no on disk...
                 // die to avoid confusion and let the user reload their unencrypted wallet.
-                exit(1);
+                assert(false);
             }
 
             delete pwalletdbEncryption;
