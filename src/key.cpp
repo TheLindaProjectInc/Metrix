@@ -308,7 +308,7 @@ public:
         return o2i_ECPublicKey(&pkey, &pbegin, pubkey.size()) != NULL;
     }
 
-    bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig)
+    bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool lowS)
     {
         vchSig.clear();
         ECDSA_SIG* sig = ECDSA_do_sign((unsigned char*)&hash, sizeof(hash), pkey);
@@ -321,7 +321,7 @@ public:
         BIGNUM* halforder = BN_CTX_get(ctx);
         EC_GROUP_get_order(group, order, ctx);
         BN_rshift1(halforder, order);
-        if (BN_cmp(sig->s, halforder) > 0) {
+        if (lowS && BN_cmp(sig->s, halforder) > 0) {
             // enforce low S values, by negating the value (modulo the order) if above order/2.
             BN_sub(sig->s, order, sig->s);
         }
@@ -592,7 +592,7 @@ CPubKey CKey::GetPubKey() const
     return pubkey;
 }
 
-bool CKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig) const
+bool CKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool lowS) const
 {
     if (!fValid)
         return false;
@@ -614,7 +614,7 @@ bool CKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig) const
 #else
     CECKey key;
     key.SetSecretBytes(vch);
-    return key.Sign(hash, vchSig);
+    return key.Sign(hash, vchSig, lowS);
 #endif
 }
 
