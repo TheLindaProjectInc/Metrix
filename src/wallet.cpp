@@ -3397,7 +3397,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     int64_t nReward;
     {
         uint64_t nCoinAge;
-        CCoinsViewCache view(*pcoinsTip, true);
+        CCoinsViewCache view(pcoinsTip);
         CValidationState state;
         if (!GetCoinAge(txNew, state, view, nCoinAge, nHeight))
             return error("CreateCoinStake : failed to calculate coin age");
