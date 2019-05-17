@@ -73,6 +73,7 @@ BITCOIN_CORE_H = \
   base58.h \
   bignum.h \
   bloom.h \
+  chain.h \
   chainparams.h \
   chainparamsbase.h \
   chainparamsseeds.h \
@@ -165,6 +166,7 @@ libbitcoin_server_a_SOURCES = \
   alert.cpp \
   bitcoind.cpp \
   bloom.cpp \
+  chain.cpp \
   checkpoints.cpp \
   init.cpp \
   kernel.cpp \
