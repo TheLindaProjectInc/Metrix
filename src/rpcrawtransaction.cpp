@@ -682,13 +682,13 @@ Value signrawtransaction(const Array& params, bool fHelp)
                     err = err + coins->vout[nOut].scriptPubKey.ToString() + "\nvs:\n" + scriptPubKey.ToString();
                     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, err);
                 }
+                if ((unsigned int)nOut >= coins->vout.size())
+                    coins->vout.resize(nOut + 1);
+                coins->vout[nOut].scriptPubKey = scriptPubKey;
+                coins->vout[nOut].nValue = 0; // we don't know the actual output value
             }
 
-            if ((unsigned int)nOut >= coins.vout.size())
-                coins.vout.resize(nOut + 1);
-            coins.vout[nOut].scriptPubKey = scriptPubKey;
-            coins.vout[nOut].nValue = 0; // we don't know the actual output value
-            view.SetCoins(txid, coins);
+
 
             // if redeemScript given and not using the local wallet (private keys
             // given), add redeemScript to the tempKeystore so it can be signed:

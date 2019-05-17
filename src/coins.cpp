@@ -64,22 +64,23 @@ bool CCoinsView::GetStats(CCoinsStats& stats) const { return false; }
 
 CCoinsKeyHasher::CCoinsKeyHasher() : salt(GetRandHash()) {}
 
-CCoinsViewBacked::CCoinsViewBacked(CCoinsView *viewIn) : base(viewIn) {}
+CCoinsViewBacked::CCoinsViewBacked(CCoinsView* viewIn) : base(viewIn) {}
 bool CCoinsViewBacked::GetCoins(const uint256& txid, CCoins& coins) const { return base->GetCoins(txid, coins); }
 bool CCoinsViewBacked::HaveCoins(const uint256& txid) const { return base->HaveCoins(txid); }
-uint256 CCoinsViewBacked::GetBestBlock() const { return base->GetBestBlock(); 
+uint256 CCoinsViewBacked::GetBestBlock() const { return base->GetBestBlock(); }
 void CCoinsViewBacked::SetBackend(CCoinsView& viewIn) { base = &viewIn; }
 bool CCoinsViewBacked::BatchWrite(CCoinsMap& mapCoins, const uint256& hashBlock) { return base->BatchWrite(mapCoins, hashBlock); }
 bool CCoinsViewBacked::GetStats(CCoinsStats& stats) const { return base->GetStats(stats); }
 
-CCoinsViewCache::CCoinsViewCache(CCoinsView *baseIn) : CCoinsViewBacked(baseIn), hasModifier(false), hashBlock(0) {}
+CCoinsViewCache::CCoinsViewCache(CCoinsView* baseIn) : CCoinsViewBacked(baseIn), hasModifier(false), hashBlock(0) {}
 
 CCoinsViewCache::~CCoinsViewCache()
 {
     assert(!hasModifier);
 }
 
-CCoinsMap::const_iterator CCoinsViewCache::FetchCoins(const uint256 &txid) const {
+CCoinsMap::const_iterator CCoinsViewCache::FetchCoins(const uint256& txid) const
+{
     CCoinsMap::iterator it = cacheCoins.find(txid);
     if (it != cacheCoins.end())
         return it;
@@ -96,7 +97,8 @@ CCoinsMap::const_iterator CCoinsViewCache::FetchCoins(const uint256 &txid) const
     return ret;
 }
 
-bool CCoinsViewCache::GetCoins(const uint256 &txid, CCoins &coins) const {
+bool CCoinsViewCache::GetCoins(const uint256& txid, CCoins& coins) const
+{
     CCoinsMap::const_iterator it = FetchCoins(txid);
     if (it != cacheCoins.end()) {
         coins = it->second.coins;
@@ -105,7 +107,8 @@ bool CCoinsViewCache::GetCoins(const uint256 &txid, CCoins &coins) const {
     return false;
 }
 
-CCoinsModifier CCoinsViewCache::ModifyCoins(const uint256 &txid) {
+CCoinsModifier CCoinsViewCache::ModifyCoins(const uint256& txid)
+{
     assert(!hasModifier);
     hasModifier = true;
     std::pair<CCoinsMap::iterator, bool> ret = cacheCoins.insert(std::make_pair(txid, CCoinsCacheEntry()));
@@ -160,7 +163,7 @@ bool CCoinsViewCache::BatchWrite(CCoinsMap& mapCoins, const uint256& hashBlockIn
 {
     assert(!hasModifier);
     for (CCoinsMap::iterator it = mapCoins.begin(); it != mapCoins.end();) {
-if (it->second.flags & CCoinsCacheEntry::DIRTY) { // Ignore non-dirty entries (optimization).
+        if (it->second.flags & CCoinsCacheEntry::DIRTY) { // Ignore non-dirty entries (optimization).
             CCoinsMap::iterator itUs = cacheCoins.find(it->first);
             if (itUs == cacheCoins.end()) {
                 if (!it->second.coins.IsPruned()) {
@@ -185,7 +188,7 @@ if (it->second.flags & CCoinsCacheEntry::DIRTY) { // Ignore non-dirty entries (o
                     itUs->second.flags |= CCoinsCacheEntry::DIRTY;
                 }
             }
-        }        
+        }
         CCoinsMap::iterator itOld = it++;
         mapCoins.erase(itOld);
     }
@@ -257,7 +260,7 @@ double CCoinsViewCache::GetPriority(const CTransaction& tx, int nHeight) const
 
 CCoinsModifier::CCoinsModifier(CCoinsViewCache& cache_, CCoinsMap::iterator it_) : cache(cache_), it(it_) {}
 
-CCoinsModifier::~CCoinsModifier() 
+CCoinsModifier::~CCoinsModifier()
 {
     assert(cache.hasModifier);
     cache.hasModifier = false;

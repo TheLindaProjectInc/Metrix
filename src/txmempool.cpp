@@ -570,7 +570,7 @@ void CTxMemPool::ClearPrioritisation(const uint256 hash)
     mapDeltas.erase(hash);
 }
 
-CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView *baseIn, CTxMemPool& mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) {}
+CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView* baseIn, CTxMemPool& mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) {}
 
 bool CCoinsViewMemPool::GetCoins(const uint256& txid, CCoins& coins) const
 {
