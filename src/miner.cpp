@@ -266,7 +266,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             CValidationState state;
 
-            if (!CheckInputs(tx, state, view, true, SCRIPT_VERIFY_P2SH))
+            if (!CheckInputs(tx, state, view, true, SCRIPT_VERIFY_P2SH, true))
                 continue;
             CTxUndo txundo;
             UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight + 1);

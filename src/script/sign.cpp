@@ -119,7 +119,7 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutabl
     }
 
     // Test solution
-    return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC);
+    return VerifyScript(txin.scriptSig, fromPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC), SignatureChecker(txTo, nIn));
 }
 
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
@@ -164,7 +164,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CMutableTransaction& 
             if (sigs.count(pubkey))
                 continue; // Already got a sig for this pubkey
 
-            if (CheckSig(sig, pubkey, scriptPubKey, txTo, nIn, 0)) {
+            if (SignatureChecker(txTo, nIn).CheckSig(sig, pubkey, scriptPubKey))
                 sigs[pubkey] = sig;
                 break;
             }
@@ -235,9 +235,9 @@ CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsign
     Solver(scriptPubKey, txType, vSolutions);
 
     vector<valtype> stack1;
-    EvalScript(stack1, scriptSig1, CTransaction(), 0, SCRIPT_VERIFY_NONE);
+    EvalScript(stack1, scriptSig1, SCRIPT_VERIFY_NONE, BaseSignatureChecker());
     vector<valtype> stack2;
-    EvalScript(stack2, scriptSig2, CTransaction(), 0, SCRIPT_VERIFY_NONE);
+    EvalScript(stack2, scriptSig2, SCRIPT_VERIFY_NONE, BaseSignatureChecker());
 
     return CombineSignatures(scriptPubKey, txTo, nIn, txType, vSolutions, stack1, stack2);
 }
