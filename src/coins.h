@@ -89,7 +89,8 @@ public:
     // ppcoin: transaction timestamp
     unsigned int nTime;
 
-    void FromTx(const CTransaction &tx, int nHeightIn) {
+    void FromTx(const CTransaction& tx, int nHeightIn)
+    {
         fCoinBase = tx.IsCoinBase();
         vout = tx.vout;
         nHeight = nHeightIn;
@@ -100,11 +101,13 @@ public:
     }
 
     // construct a CCoins from a CTransaction, at a given height
-    CCoins(const CTransaction &tx, int nHeightIn) {
+    CCoins(const CTransaction& tx, int nHeightIn)
+    {
         FromTx(tx, nHeightIn);
     }
 
-    void Clear() {
+    void Clear()
+    {
         fCoinBase = false;
         std::vector<CTxOut>().swap(vout);
         nHeight = 0;
@@ -317,8 +320,7 @@ public:
     }
 };
 
-struct CCoinsCacheEntry
-{
+struct CCoinsCacheEntry {
     CCoins coins; // The actual cached data.
     unsigned char flags;
 
@@ -378,7 +380,7 @@ protected:
     CCoinsView* base;
 
 public:
-    CCoinsViewBacked(CCoinsView *viewIn);
+    CCoinsViewBacked(CCoinsView* viewIn);
     bool GetCoins(const uint256& txid, CCoins& coins) const;
     bool HaveCoins(const uint256& txid) const;
     uint256 GetBestBlock() const;
@@ -437,7 +439,7 @@ public:
     // Return a modifiable reference to a CCoins. If no entry with the given
     // txid exists, a new one is created. Simultaneous modifications are not
     // allowed.
-    CCoinsModifier ModifyCoins(const uint256 &txid);
+    CCoinsModifier ModifyCoins(const uint256& txid);
 
     // Push the modifications applied to this cache to its base.
     // If false is returned, the state of this cache (and its backing view) will be undefined.
