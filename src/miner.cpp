@@ -129,7 +129,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
 
     // Collect memory pool transactions into the block
-    int64_t nFees = 0;
+    CAmount nFees = 0;
     {
         LOCK2(cs_main, mempool.cs);
         CBlockIndex* pindexPrev = chainActive.Tip();
@@ -150,7 +150,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             COrphan* porphan = NULL;
             double dPriority = 0;
-            int64_t nTotalIn = 0;
+            CAmount nTotalIn = 0;
             bool fMissingInputs = false;
             BOOST_FOREACH (const CTxIn& txin, tx.vin) {
                 // Read prev transaction
@@ -181,7 +181,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
                 }
                 const CCoins* coins = view.AccessCoins(txin.prevout.hash);
                 assert(coins);
-                int64_t nValueIn = coins->vout[txin.prevout.n].nValue;
+                CAmount nValueIn = coins->vout[txin.prevout.n].nValue;
                 nTotalIn += nValueIn;
 
                 int nConf = pindexPrev->nHeight - coins->nHeight + 1;
@@ -258,7 +258,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             if (!view.HaveInputs(tx))
                 continue;
 
-            int64_t nTxFees = view.GetValueIn(tx) - tx.GetValueOut();
+            CAmount nTxFees = view.GetValueIn(tx) - tx.GetValueOut();
 
             nTxSigOps += GetP2SHSigOpCount(tx, view);
             if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
@@ -469,7 +469,7 @@ void ThreadStakeMiner(CWallet* pwallet, bool fProofOfStake)
         //
         // Create new block
         //
-        int64_t nFees = 0;
+        CAmount nFees = 0;
         auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwallet, fProofOfStake));
         if (!pblocktemplate.get()) {
             LogPrintf("Error in ThreadStakeMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");

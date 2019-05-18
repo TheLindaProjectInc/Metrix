@@ -686,7 +686,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     // 1-satoshi-fee transactions. It should be set above the real
     // cost to you of processing a transaction.
     if (mapArgs.count("-minrelaytxfee")) {
-        int64_t n = 0;
+        CAmount n = 0;
         if (ParseMoney(mapArgs["-minrelaytxfee"], n) && n > 0)
             ::minRelayTxFee = CFeeRate(n);
         else
@@ -695,14 +695,14 @@ bool AppInit2(boost::thread_group& threadGroup)
 
 #ifdef ENABLE_WALLET
     if (mapArgs.count("-mintxfee")) {
-        int64_t n = 0;
+        CAmount n = 0;
         if (ParseMoney(mapArgs["-mintxfee"], n) && n > 0)
             CWallet::minTxFee = CFeeRate(n);
         else
             return InitError(strprintf(_("Invalid amount for -mintxfee=<amount>: '%s'"), mapArgs["-mintxfee"]));
     }
     if (mapArgs.count("-paytxfee")) {
-        int64_t nFeePerK = 0;
+        CAmount nFeePerK = 0;
         if (!ParseMoney(mapArgs["-paytxfee"], nFeePerK))
             return InitError(strprintf(_("Invalid amount for -paytxfee=<amount>: '%s'"), mapArgs["-paytxfee"]));
         if (nFeePerK > nHighTransactionFeeWarning)

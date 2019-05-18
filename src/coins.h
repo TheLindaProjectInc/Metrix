@@ -341,7 +341,7 @@ struct CCoinsStats {
     uint64_t nTransactionOutputs;
     uint64_t nSerializedSize;
     uint256 hashSerialized;
-    int64_t nTotalAmount;
+    CAmount nTotalAmount;
 
     CCoinsStats() : nHeight(0), hashBlock(0), nTransactions(0), nTransactionOutputs(0), nSerializedSize(0), hashSerialized(0), nTotalAmount(0) {}
 };
@@ -455,7 +455,7 @@ public:
         @return	Sum of value of all inputs (scriptSigs)
         @see CTransaction::FetchInputs
      */
-    int64_t GetValueIn(const CTransaction& tx) const;
+    CAmount GetValueIn(const CTransaction& tx) const;
 
     // Check whether all prevouts of the transaction are present in the UTXO set represented by this view
     bool HaveInputs(const CTransaction& tx) const;
