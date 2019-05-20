@@ -311,53 +311,6 @@ bool GetNodeStateStats(NodeId nodeid, CNodeStateStats& stats)
     return true;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//
-// CChain implementation
-//
-
-CBlockIndex* CChain::SetTip(CBlockIndex* pindex)
-{
-    if (pindex == NULL) {
-        vChain.clear();
-        return NULL;
-    }
-    vChain.resize(pindex->nHeight + 1);
-    while (pindex && vChain[pindex->nHeight] != pindex) {
-        vChain[pindex->nHeight] = pindex;
-        pindex = pindex->pprev;
-    }
-    return pindex;
-}
-
-CBlockLocator CChain::GetLocator(const CBlockIndex* pindex) const
-{
-    int nStep = 1;
-    std::vector<uint256> vHave;
-    vHave.reserve(32);
-
-    if (!pindex)
-        pindex = Tip();
-    while (pindex) {
-        vHave.push_back(pindex->GetBlockHash());
-        // Stop when we have added the genesis block.
-        if (pindex->nHeight == 0)
-            break;
-        // Exponentially larger steps back, plus the genesis block.
-        int nHeight = std::max(pindex->nHeight - nStep, 0);
-        if (Contains(pindex)) {
-            // Use O(1) CChain index if possible.
-            pindex = (*this)[nHeight];
-        } else {
-            // Otherwise, use O(log n) skiplist.
-            pindex = pindex->GetAncestor(nHeight);
-        }
-        if (vHave.size() > 10)
-            nStep *= 2;
-    }
-    return CBlockLocator(vHave);
-}
-
 CBlockIndex* CChain::FindFork(const CBlockLocator& locator) const
 {
     // Find the first block the caller has in the main chain
@@ -370,15 +323,6 @@ CBlockIndex* CChain::FindFork(const CBlockLocator& locator) const
         }
     }
     return Genesis();
-}
-
-const CBlockIndex* CChain::FindFork(const CBlockIndex* pindex) const
-{
-    if (pindex->nHeight > Height())
-        pindex = pindex->GetAncestor(Height());
-    while (pindex && !Contains(pindex))
-        pindex = pindex->pprev;
-    return pindex;
 }
 
 // Requires cs_main.
@@ -814,7 +758,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
                          REJECT_INVALID, "bad-txns-oversize");
 
     // Check for negative or overflow output values
-    int64_t nValueOut = 0;
+    CAmount nValueOut = 0;
     for (unsigned int i = 0; i < tx.vout.size(); i++) {
         const CTxOut& txout = tx.vout[i];
         if (txout.IsEmpty() && !tx.IsCoinBase() && !tx.IsCoinStake())
@@ -856,19 +800,19 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 }
 
 
-int64_t GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree)
+CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree)
 {
     {
         LOCK(mempool.cs);
         uint256 hash = tx.GetHash();
         double dPriorityDelta = 0;
-        int64_t nFeeDelta = 0;
+        CAmount nFeeDelta = 0;
         mempool.ApplyDeltas(hash, dPriorityDelta, nFeeDelta);
         if (dPriorityDelta > 0 || nFeeDelta > 0)
             return 0;
     }
 
-    int64_t nMinFee;
+    CAmount nMinFee;
 
     if (chainActive.Height() < TX_FEE_V2_INCREASE_BLOCK) {
         nMinFee = MIN_TX_FEE_V1;
@@ -1013,16 +957,16 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                                    hash.ToString(), nSigOps, MAX_TX_SIGOPS));
         }
 
-        int64_t nValueIn = view.GetValueIn(tx);
-        int64_t nValueOut = tx.GetValueOut();
-        int64_t nFees = nValueIn - nValueOut;
+        CAmount nValueIn = view.GetValueIn(tx);
+        CAmount nValueOut = tx.GetValueOut();
+        CAmount nFees = nValueIn - nValueOut;
         double dPriority = view.GetPriority(tx, chainActive.Height());
 
         CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
         unsigned int nSize = entry.GetTxSize();
 
         // Don't accept it if it can't get into a block
-        int64_t txMinFee = GetMinRelayFee(tx, nSize, true);
+        CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
         if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",
@@ -1123,7 +1067,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         CCoinsView dummy;
         CCoinsViewCache view(&dummy);
 
-        int64_t nValueIn = 0;
+        CAmount nValueIn = 0;
         {
             LOCK(pool.cs);
             CCoinsViewMemPool viewMemPool(pcoinsTip, pool);
@@ -1156,8 +1100,8 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
             view.SetBackend(dummy);
         }
 
-        int64_t nValueOut = tx.GetValueOut();
-        int64_t nFees = nValueIn - nValueOut;
+        CAmount nValueOut = tx.GetValueOut();
+        CAmount nFees = nValueIn - nValueOut;
         double dPriority = view.GetPriority(tx, chainActive.Height());
 
         CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
@@ -1165,7 +1109,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
 
         // Don't accept it if it can't get into a block
         // MBK: Support the tx fee increase at blockheight
-        int64_t txMinFee = GetMinRelayFee(tx, nSize, true);
+        CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
         if (fLimitFree && nFees < txMinFee)
             return state.DoS(0, error("AcceptableInputs : not enough fees %s, %d < %d", hash.ToString(), nFees, txMinFee),
                              REJECT_INSUFFICIENTFEE, "insufficient fee");
@@ -1403,7 +1347,7 @@ static uint256 GetProofOfStakeLimit(int nHeight)
 }
 
 // miner's coin base reward
-int64_t GetProofOfWorkReward(int64_t nFees)
+CAmount GetProofOfWorkReward(const CAmount& nFees)
 {
     int64_t nSubsidy = 0;
 
@@ -1424,7 +1368,7 @@ int64_t GetProofOfWorkReward(int64_t nFees)
     return nSubsidy + nFees;
 }
 
-int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees, unsigned int nHeight)
+CAmount GetProofOfStakeReward(int64_t nCoinAge, const CAmount& nFees, unsigned int nHeight)
 {
     int64_t nSubsidy = 0;
     if (chainActive.Tip()->nMoneySupply < MAX_MONEY) {
@@ -1733,8 +1677,8 @@ bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsVi
         // This is also true for mempool checks.
         CBlockIndex* pindexPrev = mapBlockIndex.find(inputs.GetBestBlock())->second;
         int nSpendHeight = pindexPrev->nHeight + 1;
-        int64_t nValueIn = 0;
-        int64_t nFees = 0;
+        CAmount nValueIn = 0;
+        CAmount nFees = 0;
         for (unsigned int i = 0; i < tx.vin.size(); i++) {
             const COutPoint& prevout = tx.vin[i].prevout;
             const CCoins* coins = inputs.AccessCoins(prevout.hash);
@@ -1765,7 +1709,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsVi
                                  REJECT_INVALID, "bad-txns-in-belowout");
 
             // Tally transaction fees
-            int64_t nTxFee = nValueIn - tx.GetValueOut();
+            CAmount nTxFee = nValueIn - tx.GetValueOut();
             if (nTxFee < 0)
                 return state.DoS(100, error("CheckInputs() : %s nTxFee < 0", tx.GetHash().ToString()),
                                  REJECT_INVALID, "bad-txns-fee-negative");
@@ -1967,10 +1911,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     CCheckQueueControl<CScriptCheck> control(fScriptChecks && nScriptCheckThreads ? &scriptcheckqueue : NULL);
 
     int64_t nTimeStart = GetTimeMicros();
-    int64_t nFees = 0;
-    int64_t nValueIn = 0;
-    int64_t nValueOut = 0;
-    int64_t nStakeReward = 0;
+    CAmount nFees = 0;
+    CAmount nValueIn = 0;
+    CAmount nValueOut = 0;
+    CAmount nStakeReward = 0;
     unsigned int nSigOps = 0;
     int nInputs = 0;
     CDiskTxPos pos(pindex->GetBlockPos(), GetSizeOfCompactSize(block.vtx.size()));
@@ -2000,8 +1944,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                 return state.DoS(100, error("ConnectBlock() : too many sigops"),
                                  REJECT_INVALID, "bad-blk-sigops");
 
-            int64_t nTxValueIn = view.GetValueIn(tx);
-            int64_t nTxValueOut = tx.GetValueOut();
+            CAmount nTxValueIn = view.GetValueIn(tx);
+            CAmount nTxValueOut = tx.GetValueOut();
             nValueIn += nTxValueIn;
             nValueOut += nTxValueOut;
             if (!tx.IsCoinStake())
@@ -2030,7 +1974,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
 
     if (block.IsProofOfWork()) {
-        int64_t nReward = GetProofOfWorkReward(nFees);
+        CAmount nReward = GetProofOfWorkReward(nFees);
 
         // Check coinbase reward
         if (block.vtx[0].GetValueOut() > nReward)
@@ -2044,7 +1988,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         if (!GetCoinAge(block.vtx[1], state, view, nCoinAge, pindex->nHeight))
             return error("ConnectBlock() : %s unable to get coin age for coinstake", block.vtx[1].GetHash().ToString());
 
-        int64_t nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindex->nHeight);
+        CAmount nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindex->nHeight);
 
         if (pindex->nHeight >= V3_START_BLOCK) {
             // if we are paying a masternode we need to adjust the calculated stake reward
@@ -2517,7 +2461,7 @@ bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache
             if (header.GetBlockTime() + nStakeMinAge > tx.nTime)
                 continue; // only count coins meeting min age requirement
 
-            int64_t nValueIn = 0;
+            CAmount nValueIn = 0;
             int64_t nTimeWeight = 0;
 
             if (nHeight < V3_START_BLOCK) {
@@ -3481,7 +3425,7 @@ bool AbortNode(const std::string& strMessage)
 
 //#ifdef ENABLE_WALLET
 // Linda: attempt to generate suitable proof-of-stake
-bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
+bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
 {
     // if we are trying to sign
     //    something except proof-of-stake block template
