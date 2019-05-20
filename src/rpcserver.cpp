@@ -103,7 +103,7 @@ CAmount AmountFromValue(const Value& value)
     return nAmount;
 }
 
-Value ValueFromAmount(CAmount amount)
+Value ValueFromAmount(const CAmount& amount)
 {
     return (double)amount / (double)COIN;
 }
