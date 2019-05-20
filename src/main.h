@@ -16,6 +16,7 @@
 #include "core.h"
 #include "net.h"
 #include "script/script.h"
+#include "script/sigcache.h"
 #include "script/standard.h"
 #include "scrypt.h"
 #include "sync.h"
@@ -331,7 +332,8 @@ CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
 // Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)
 // This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
 // instead of being performed inline.
-bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& view, bool fScriptChecks = true, unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, std::vector<CScriptCheck>* pvChecks = NULL);
+bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &view, bool fScriptChecks,
+                 unsigned int flags, bool cacheStore, std::vector<CScriptCheck> *pvChecks = NULL);
 
 // Apply the effects of this transaction on the UTXO set represented by view
 void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCache& view, CTxUndo& txundo, int nHeight);
@@ -371,11 +373,13 @@ private:
     const CTransaction* ptxTo;
     unsigned int nIn;
     unsigned int nFlags;
+    bool cacheStore;
 
 public:
-    CScriptCheck() : ptxTo(0), nIn(0), nFlags(0) {}
-    CScriptCheck(const CCoins& txFromIn, const CTransaction& txToIn, unsigned int nInIn, unsigned int nFlagsIn) : scriptPubKey(txFromIn.vout[txToIn.vin[nInIn].prevout.n].scriptPubKey),
-                                                                                                                  ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn) {}
+    CScriptCheck(): ptxTo(0), nIn(0), nFlags(0), cacheStore(false) {}
+    CScriptCheck(const CCoins& txFromIn, const CTransaction& txToIn, unsigned int nInIn, unsigned int nFlagsIn, bool cacheIn) :
+        scriptPubKey(txFromIn.vout[txToIn.vin[nInIn].prevout.n].scriptPubKey),
+        ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn), cacheStore(cacheIn) { }
 
     bool operator()() const;
 
@@ -385,6 +389,8 @@ public:
         std::swap(ptxTo, check.ptxTo);
         std::swap(nIn, check.nIn);
         std::swap(nFlags, check.nFlags);
+        std::swap(cacheStore, check.cacheStore);
+
     }
 };
 

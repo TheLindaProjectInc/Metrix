@@ -289,7 +289,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -proxy=<ip:port>       " + _("Connect through SOCKS5 proxy") + "\n";
     strUsage += "  -seednode=<ip>         " + _("Connect to a node to retrieve peer addresses, and disconnect") + "\n";
     strUsage += "  -onion=<ip:port>       " + _("Use proxy to reach tor hidden services (default: same as -proxy)") + "\n";
-    strUsage += "  -timeout=<n>           " + _("Specify connection timeout in milliseconds (default: 5000)") + "\n";
+    strUsage += "  -timeout=<n>           " + strprintf(_("Specify connection timeout in milliseconds (minimum: 1, default: %d)"), DEFAULT_CONNECT_TIMEOUT) + "\n";
     strUsage += "  -whitebind=<addr>      " + _("Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6") + "\n";
     strUsage += "  -whitelist=<netmask>   " + _("Whitelist peers connecting from the given netmask or ip. Can be specified multiple times.") + "\n";
 #ifdef USE_UPNP
@@ -675,11 +675,9 @@ bool AppInit2(boost::thread_group& threadGroup)
     bool fDisableWallet = GetBoolArg("-disablewallet", false);
 #endif
 
-    if (mapArgs.count("-timeout")) {
-        int nNewTimeout = GetArg("-timeout", 5000);
-        if (nNewTimeout > 0 && nNewTimeout < 600000)
-            nConnectTimeout = nNewTimeout;
-    }
+    nConnectTimeout = GetArg("-timeout", DEFAULT_CONNECT_TIMEOUT);
+    if (nConnectTimeout <= 0)
+        nConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
 
     // Fee-per-kilobyte amount considered the same as "free"
     // If you are mining, be careful setting this:

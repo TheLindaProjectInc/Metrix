@@ -11,6 +11,7 @@
 #include <vector>
 
 class uint256;
+class CPubKey;
 class CScript;
 class CTransaction;
 
@@ -41,7 +42,7 @@ enum {
     SCRIPT_VERIFY_LOW_S = (1U << 3),
 
     // verify dummy stack item consumed by CHECKMULTISIG is of zero-length (softfork safe, BIP62 rule 7).
-    SCRIPT_VERIFY_NULLDUMMY = (1U << 4),
+    SCRIPT_VERIFY_NULLDUMMY = (1U << 3), // verify dummy stack item consumed by CHECKMULTISIG is of zero-length
 
     // Using a non-push operator in the scriptSig causes script failure (softfork safe, BIP62 rule 2).
     SCRIPT_VERIFY_SIGPUSHONLY = (1U << 5),
@@ -69,8 +70,33 @@ bool IsCanonicalPubKey(const std::vector<unsigned char>& vchPubKey, unsigned int
 bool IsCanonicalSignature(const std::vector<unsigned char>& vchSig, unsigned int flags);
 
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType);
-bool CheckSig(std::vector<unsigned char> vchSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int flags);
-bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, const CTransaction& txTo, unsigned int nIn, unsigned int flags);
-bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, unsigned int flags);
+
+class BaseSignatureChecker
+{
+public:
+    virtual bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode) const
+    {
+        return false;
+    }
+
+    virtual ~BaseSignatureChecker() {}
+};
+
+class SignatureChecker : public BaseSignatureChecker
+{
+private:
+    const CTransaction& txTo;
+    unsigned int nIn;
+
+protected:
+    virtual bool VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
+
+public:
+    SignatureChecker(const CTransaction& txToIn, unsigned int nInIn) : txTo(txToIn), nIn(nInIn) {}
+    bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode) const;
+};
+
+bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker);
+bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, unsigned int flags, const BaseSignatureChecker& checker);
 
 #endif // H_BITCOIN_SCRIPT_INTERPRETER
