@@ -119,8 +119,8 @@ public:
     // Verification status of this block. See enum BlockStatus
     unsigned int nStatus;
 
-    int64_t nMint;
-    int64_t nMoneySupply;
+    CAmount nMint;
+    CAmount nMoneySupply;
 
     unsigned int nFlags; // ppcoin: block index flags
     enum {

@@ -5,6 +5,7 @@ debug/
 
 *.P
 *.o
+*.Po
 *.o-*
 *.d
 *.a
@@ -48,10 +49,13 @@ configure
 !depends/Makefile
 *plugin_import.cpp
 depends/x86_64-*/*
+depends/i686-*/*
 depends/built/*
 depends/sources/*
 depends/SDKs/*
+depends/work/*
 libtool
+.dirstamp
 share/setup.nsi
 src/config/bitcoin-config.h
 src/config/bitcoin-config.h.in
