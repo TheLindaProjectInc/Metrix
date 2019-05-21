@@ -15,13 +15,6 @@
 typedef std::vector<unsigned char> valtype;
 
 class CKeyStore;
-class BaseSignatureChecker;
-
-template <typename T>
-std::vector<unsigned char> ToByteVector(const T& in)
-{
-    return std::vector<unsigned char>(in.begin(), in.end());
-}
 
 typedef enum ScriptError_t {
     SCRIPT_ERR_OK = 0,
@@ -88,30 +81,5 @@ isminetype IsMine(const CKeyStore& keystore, const CTxDestination& dest);
 
 CScript GetScriptForDestination(const CTxDestination& dest);
 CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
-
-class BaseSignatureChecker
-{
-public:
-    virtual bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode) const
-    {
-        return false;
-    }
-
-    virtual ~BaseSignatureChecker() {}
-};
-
-class SignatureChecker : public BaseSignatureChecker
-{
-private:
-    const CTransaction& txTo;
-    unsigned int nIn;
-
-protected:
-    virtual bool VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
-
-public:
-    SignatureChecker(const CTransaction& txToIn, unsigned int nInIn) : txTo(txToIn), nIn(nInIn) {}
-    bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode) const;
-};
 
 #endif // H_BITCOIN_WALLET_ISMINE

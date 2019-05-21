@@ -830,7 +830,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
 
                     bool fSuccess = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
                     if (fSuccess)
-                        fSuccess = CheckSig(vchSig, vchPubKey, scriptCode, txTo, nIn, flags);
+                        fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode);
 
 
                     popstack(stack);
@@ -891,7 +891,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                         // Check signature
                         bool fOk = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
                         if (fOk)
-                            fOk = checker(vchSig, vchPubKey, scriptCode);
+                            fOk = checker.CheckSig(vchSig, vchPubKey, scriptCode);
 
                         if (fOk) {
                             isig++;

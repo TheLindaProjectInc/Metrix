@@ -119,7 +119,7 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutabl
     }
 
     // Test solution
-    return VerifyScript(txin.scriptSig, fromPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC), SignatureChecker(txTo, nIn));
+    return VerifyScript(txin.scriptSig, fromPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, SignatureChecker(txTo, nIn));
 }
 
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)

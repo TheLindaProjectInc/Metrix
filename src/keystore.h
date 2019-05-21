@@ -43,6 +43,7 @@ public:
     virtual bool AddWatchOnly(const CScript& dest) = 0;
     virtual bool RemoveWatchOnly(const CScript &dest) =0;
     virtual bool HaveWatchOnly(const CScript& dest) const = 0;
+    virtual bool HaveWatchOnly() const =0;
 };
 
 typedef std::map<CKeyID, CKey> KeyMap;
@@ -99,6 +100,7 @@ public:
     virtual bool AddWatchOnly(const CScript& dest);
     virtual bool RemoveWatchOnly(const CScript &dest);
     virtual bool HaveWatchOnly(const CScript& dest) const;
+    virtual bool HaveWatchOnly() const;
 };
 
 typedef std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char> > > CryptedKeyMap;
