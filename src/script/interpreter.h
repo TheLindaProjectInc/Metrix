@@ -6,7 +6,7 @@
 #ifndef H_BITCOIN_SCRIPT_INTERPRETER
 #define H_BITCOIN_SCRIPT_INTERPRETER
 
-#include "script_error.h"
+#include "script/script_error.h"
 
 #include <stdint.h>
 #include <string>
