@@ -1,6 +1,4 @@
-[![CircleCI](https://circleci.com/gh/TheLindaProjectInc/Linda/tree/master.svg?style=svg)](https://circleci.com/gh/TheLindaProjectInc/Linda/tree/master)
-
-[![Build Status](https://travis-ci.org/TheLindaProjectInc/Linda.svg?branch=master)](https://travis-ci.org/TheLindaProjectInc/Linda)
+[![Build Status](https://travis-ci.com/TheLindaProjectInc/Linda.svg?branch=V3.4.0.0-dev)](https://travis-ci.com/TheLindaProjectInc/Linda)
 
 ![Linda](logo.png)
 
