@@ -62,6 +62,7 @@ public:
     bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
     /* Make standard checks */
     bool RequireStandard() const { return fRequireStandard; }
+    CBaseChainParams::Network NetworkID() const { return networkID; }
     /* Return the BIP70 network string (main, test or regtest) */
     std::string NetworkIDString() const { return strNetworkID; }
     const std::vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
