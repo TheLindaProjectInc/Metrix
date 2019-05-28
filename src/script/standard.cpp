@@ -187,7 +187,11 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
         return false;
 
     if (whichType == TX_PUBKEY) {
-        addressRet = CPubKey(vSolutions[0]).GetID();
+        CPubKey pubKey(vSolutions[0]);
+        if (!pubKey.IsValid())
+            return false;
+
+        addressRet = pubKey.GetID();        
         return true;
     } else if (whichType == TX_PUBKEYHASH) {
         addressRet = CKeyID(uint160(vSolutions[0]));
@@ -215,9 +219,15 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vecto
     if (typeRet == TX_MULTISIG) {
         nRequiredRet = vSolutions.front()[0];
         for (unsigned int i = 1; i < vSolutions.size() - 1; i++) {
-            CTxDestination address = CPubKey(vSolutions[i]).GetID();
+            CPubKey pubKey(vSolutions[i]);
+            if (!pubKey.IsValid())
+                continue;
+
+            CTxDestination address = pubKey.GetID();            
             addressRet.push_back(address);
         }
+        if (addressRet.empty())
+            return false;
     } else {
         nRequiredRet = 1;
         CTxDestination address;
