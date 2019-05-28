@@ -65,6 +65,9 @@ public:
         nRejectBlockOutdatedMajority = 950;
         nToCheckBlockUpgradeMajority = 1000;
 
+        nTargetTimespan = 10 * 60;
+        nTargetSpacing = 90;
+
         // Build the genesis block. Note that the output of the genesis coinbase cannot
         // be spent as it did not originally exist in the database.
         //

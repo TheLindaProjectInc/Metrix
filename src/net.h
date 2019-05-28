@@ -72,8 +72,8 @@ typedef int NodeId;
 
 struct QueuedBlock {
     uint256 hash;
+    CBlockIndex *pindex;  // Optional.
     int64_t nTime;     // Time of "getdata" request in microseconds.
-    int nQueuedBefore; // Number of blocks in flight at the time of request.
 };
 
 typedef int NodeId;
@@ -313,13 +313,6 @@ public:
     int64_t nPingUsecTime;
     // Whether a ping is requested.
     bool fPingQueued;
-
-    // DS: Peer block tracking
-    std::list<QueuedBlock> vBlocksInFlight;
-    int nBlocksInFlight;
-    std::list<uint256> vBlocksToDownload;
-    int nBlocksToDownload;
-    int64_t nLastBlockReceive;
 
     CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn = "", bool fInboundIn = false);
     ~CNode();

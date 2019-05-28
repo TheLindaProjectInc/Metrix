@@ -167,8 +167,6 @@ static const int DIFF_FORK_BLOCK = 100;
 
 inline int64_t FutureDrift(int64_t nTime) { return nTime + 15; }
 
-inline unsigned int GetTargetSpacing() { return 90; }
-
 static const int64_t STAKE_TIMESPAN_SWITCH_TIME = 1428537599;
 
 struct BlockHasher {
@@ -200,6 +198,9 @@ extern unsigned int nCoinCacheSize;
 extern CFeeRate minRelayTxFee;
 struct COrphanBlock;
 extern std::map<uint256, COrphanBlock*> mapOrphanBlocks;
+
+/** Best header we've seen so far (used for getheaders queries' starting points). */
+extern CBlockIndex *pindexBestHeader;
 
 // Settings
 extern unsigned int nDerivationMethodIndex;
@@ -302,6 +303,8 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue);
 struct CNodeStateStats {
     int nMisbehavior;
     int nSyncHeight;
+    int nCommonHeight;
+    std::vector<int> vHeightInFlight;
 };
 
 struct CDiskTxPos : public CDiskBlockPos {
@@ -549,6 +552,9 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 // Context-independent validity checks
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW = true);
 bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true, bool fCheckSig = true);
+
+
+bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex);
 
 // Store block on disk
 // if dbp is provided, the file is known to already reside on disk

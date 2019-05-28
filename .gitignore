@@ -9,6 +9,8 @@ debug/
 *.o-*
 *.d
 *.a
+*.Tpo
+*.in~
 
 #Dev tools & build testing
 .circleci/run-build-locally.sh

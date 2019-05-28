@@ -337,21 +337,28 @@ uint64_t ReadCompactSize(Stream& is)
     unsigned char chSize;
     READDATA(is, chSize);
     uint64_t nSizeRet = 0;
-    if (chSize < 253) {
+    if (chSize < 253)
+    {
         nSizeRet = chSize;
-    } else if (chSize == 253) {
+    }
+    else if (chSize == 253)
+    {
         unsigned short xSize;
         READDATA(is, xSize);
         nSizeRet = xSize;
         if (nSizeRet < 253)
             throw std::ios_base::failure("non-canonical ReadCompactSize()");
-    } else if (chSize == 254) {
+    }
+    else if (chSize == 254)
+    {
         unsigned int xSize;
         READDATA(is, xSize);
         nSizeRet = xSize;
         if (nSizeRet < 0x10000u)
             throw std::ios_base::failure("non-canonical ReadCompactSize()");
-    } else {
+    }
+    else
+    {
         uint64_t xSize;
         READDATA(is, xSize);
         nSizeRet = xSize;

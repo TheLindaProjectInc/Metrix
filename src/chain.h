@@ -343,17 +343,15 @@ public:
         // set the POS details of the block
         // so we must make sure we set these details
         // when we get the rest of the block
-        if (!POSDetailSet) {
-            if (block.IsProofOfStake()) {
-                SetProofOfStake();
-                prevoutStake = block.vtx[1].vin[0].prevout;
-                nStakeTime = block.vtx[1].nTime;
-            } else {
-                prevoutStake.SetNull();
-                nStakeTime = 0;
-            }
-            POSDetailSet = true;
+        if (block.IsProofOfStake()) {
+            SetProofOfStake();
+            prevoutStake = block.vtx[1].vin[0].prevout;
+            nStakeTime = block.vtx[1].nTime;
+        } else {
+            prevoutStake.SetNull();
+            nStakeTime = 0;
         }
+        POSDetailSet = true;
     }
 
     std::string ToString() const

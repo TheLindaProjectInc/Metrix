@@ -1930,9 +1930,6 @@ CNode::CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn, bool fIn
     nPingUsecStart = 0;
     nPingUsecTime = 0;
     fPingQueued = false;
-    nBlocksToDownload = 0;
-    nBlocksInFlight = 0;
-    nLastBlockReceive = 0;
     pfilter = new CBloomFilter();
 
     {
