@@ -191,22 +191,22 @@ nodist_libbitcoin_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
 #
 
 # Metrixd binary #
-Lindad_LDADD = \
+Metrixd_LDADD = \
   libbitcoin_server.a libbitcoin_cli.a libbitcoin_common.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
 if ENABLE_WALLET
-Lindad_LDADD += libbitcoin_wallet.a
+Metrixd_LDADD += libbitcoin_wallet.a
 endif
-Lindad_SOURCES = bitcoind.cpp
+Metrixd_SOURCES = bitcoind.cpp
 #
 
 if TARGET_WINDOWS
-Lindad_SOURCES += bitcoind-res.rc
+Metrixd_SOURCES += bitcoind-res.rc
 endif
 
 AM_CPPFLAGS += $(BDB_CPPFLAGS)
-Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
+Metrixd_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
 
 # Metrix-cli binary #
 Linda_cli_LDADD = \
