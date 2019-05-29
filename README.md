@@ -1,5 +1,3 @@
-[![CircleCI](https://circleci.com/gh/TheLindaProjectInc/Metrix/tree/master.svg?style=svg)](https://circleci.com/gh/TheLindaProjectInc/Metrix/tree/master)
-
 ![Metrix](logo.png)
 
 # Metrix Coin
