@@ -37,7 +37,7 @@ void SendMoney(const CTxDestination &address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
 
-    // Parse Linda address
+    // Parse Metrix address
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
@@ -90,7 +90,7 @@ Value darksend(const Array& params, bool fHelp)
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Linda address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Metrix address");
 
     // Amount
     int64_t nAmount = AmountFromValue(params[1]);

@@ -88,7 +88,7 @@ void EraseOrphansFor(NodeId peer);
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "Linda Signed Message:\n";
+const string strMessageMagic = "Metrix Signed Message:\n";
 
 std::set<uint256> setValidatedTx;
 
@@ -1086,7 +1086,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState &state, const CTransact
         return state.DoS(100, error("AcceptableInputs : coinstake as individual tx"));
 
     // Rather not work on nonstandard transactions (unless -testnet)
-    //alot of Linda transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
+    //alot of Metrix transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
     if (false && !TestNet() && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
@@ -2004,7 +2004,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("Linda-scriptch");
+    RenameThread("Metrix-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -3005,7 +3005,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
                     REJECT_CHECKPOINT, "pos check fialed");
         }
         // PoW is checked in CheckBlock()
-        // Linda adds POW block hashes to hash proof when confirming POS blocks
+        // Metrix adds POW block hashes to hash proof when confirming POS blocks
         if (block.IsProofOfWork())
             hashProof = block.GetPoWHash();
 
@@ -3385,7 +3385,7 @@ bool AbortNode(const std::string &strMessage) {
 }
 
 #ifdef ENABLE_WALLET
-// Linda: attempt to generate suitable proof-of-stake
+// Metrix: attempt to generate suitable proof-of-stake
 bool SignBlock(CBlock& block, CWallet& wallet, int64_t nFees)
 {
     // if we are trying to sign

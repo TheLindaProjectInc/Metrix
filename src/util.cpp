@@ -1003,7 +1003,7 @@ static std::string FormatException(std::exception* pex, const char* pszThread)
     char pszModule[MAX_PATH] = "";
     GetModuleFileNameA(NULL, pszModule, sizeof(pszModule));
 #else
-    const char* pszModule = "Linda";
+    const char* pszModule = "Metrix";
 #endif
     if (pex)
         return strprintf(
@@ -1024,13 +1024,13 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
 boost::filesystem::path GetDefaultDataDir()
 {
     namespace fs = boost::filesystem;
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Linda
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Linda
-    // Mac: ~/Library/Application Support/Linda
-    // Unix: ~/.Linda
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Metrix
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Metrix
+    // Mac: ~/Library/Application Support/Metrix
+    // Unix: ~/.Metrix
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Linda";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "Metrix";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -1042,10 +1042,10 @@ boost::filesystem::path GetDefaultDataDir()
     // Mac
     pathRet /= "Library/Application Support";
     TryCreateDirectory(pathRet);
-    return pathRet / "Linda";
+    return pathRet / "Metrix";
 #else
     // Unix
-    return pathRet / ".Linda";
+    return pathRet / ".Metrix";
 #endif
 #endif
 }
@@ -1125,7 +1125,7 @@ void ClearDatadirCache()
 
 boost::filesystem::path GetConfigFile()
 {
-    boost::filesystem::path pathConfigFile(GetArg("-conf", "Linda.conf"));
+    boost::filesystem::path pathConfigFile(GetArg("-conf", "Metrix.conf"));
     if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
 }
@@ -1141,7 +1141,7 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
                     map<string, vector<string> >& mapMultiSettingsRet)
 {
     boost::filesystem::ifstream streamConfig(GetConfigFile());
-    if (!streamConfig.good()) //Linda.conf doesn't exist
+    if (!streamConfig.good()) //Metrix.conf doesn't exist
     {
         createConf();
         new(&streamConfig) boost::filesystem::ifstream(GetConfigFile());
@@ -1170,7 +1170,7 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
 
 boost::filesystem::path GetPidFile()
 {
-    boost::filesystem::path pathPidFile(GetArg("-pid", "Lindad.pid"));
+    boost::filesystem::path pathPidFile(GetArg("-pid", "Metrixd.pid"));
     if (!pathPidFile.is_complete()) pathPidFile = GetDataDir() / pathPidFile;
     return pathPidFile;
 }

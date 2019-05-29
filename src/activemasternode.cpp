@@ -9,7 +9,7 @@
 #include "clientversion.h"
 
 //
-// Bootup the masternode, look for a 500 Linda input and register on the network
+// Bootup the masternode, look for a 500 Metrix input and register on the network
 //
 void CActiveMasternode::ManageStatus()
 {
@@ -383,7 +383,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
     vector<COutput> filteredCoins;
 
     // Retrieve all possible outputs
-    // Linda - start-many and start-alias should include locked coins as nodes in
+    // Metrix - start-many and start-alias should include locked coins as nodes in
     // the masternode.conf file coins are looked on startup. otherwise it wouldn't
     // be possible to start the node remotely as it would alywas fail to find vin
     pwalletMain->AvailableCoins(vCoins, true, NULL, ALL_COINS, false, includeLocked);

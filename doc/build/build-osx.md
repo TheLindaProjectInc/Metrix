@@ -121,14 +121,14 @@ make depend
 make
 ```
 
-### Building `Lindad`
+### Building `Metrixd`
 
 1. Clone the github tree to get the source code and go into the directory.
 ```
-git clone https://github.com/TheLindaProjectInc/linda.git
-cd linda
+git clone https://github.com/TheLindaProjectInc/metrix.git
+cd metrix
 ```
-2.  Build Lindad:
+2.  Build Metrixd:
 ```
 cd src
 make -f makefile.osx STATIC=1

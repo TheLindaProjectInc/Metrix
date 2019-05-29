@@ -10,12 +10,12 @@ if ENABLE_WALLET
 noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
-bin_PROGRAMS = Lindad Linda-cli
+bin_PROGRAMS = Metrixd Metrix-cli
 
 SUBDIRS = .
 DIST_SUBDIRS = .
 .PHONY: FORCE
-# Linda core #
+# Metrix core #
 BITCOIN_CORE_H = \
   activemasternode.h \
   addrman.h \
@@ -190,7 +190,7 @@ endif
 nodist_libbitcoin_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
 #
 
-# Lindad binary #
+# Metrixd binary #
 Lindad_LDADD = \
   libbitcoin_server.a libbitcoin_cli.a libbitcoin_common.a \
   $(LIBLEVELDB) \
@@ -208,7 +208,7 @@ endif
 AM_CPPFLAGS += $(BDB_CPPFLAGS)
 Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
 
-# Linda-cli binary #
+# Metrix-cli binary #
 Linda_cli_LDADD = \
   libbitcoin_cli.a libbitcoin_common.a \
   $(BOOST_LIBS)

@@ -766,7 +766,7 @@ void CDarkSendPool::ChargeRandomFees(){
                 Collateral Fee Charges:
                 Being that DarkSend has "no fees" we need to have some kind of cost associated
                 with using it to stop abuse. Otherwise it could serve as an attack vector and
-                allow endless transaction that would bloat Linda and make it unusable. To
+                allow endless transaction that would bloat Metrix and make it unusable. To
                 stop these kinds of attacks 1 in 50 successful transactions are charged. This
                 adds up to a cost of 0.002Linda per transaction on average.
             */
@@ -1459,7 +1459,7 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         if(sessionTotalValue > nBalanceNeedsAnonymized) sessionTotalValue = nBalanceNeedsAnonymized;
 
         double fLindaSubmitted = (sessionTotalValue / CENT);
-        LogPrintf("Submitting Darksend for %f Linda CENT - sessionTotalValue %d\n", fLindaSubmitted, sessionTotalValue);
+        LogPrintf("Submitting Darksend for %f Metrix CENT - sessionTotalValue %d\n", fLindaSubmitted, sessionTotalValue);
 
         if(pwalletMain->GetDenominatedBalance(true, true) > 0){ //get denominated unconfirmed inputs
             LogPrintf("DoAutomaticDenominating -- Found unconfirmed denominated outputs, will wait till they confirm to continue.\n");
@@ -2108,7 +2108,7 @@ void ThreadCheckDarkSendPool()
     if(fLiteMode) return; //disable all darksend/masternode related functionality
 
     // Make this thread recognisable as the wallet flushing thread
-    RenameThread("Linda-darksend");
+    RenameThread("Metrix-darksend");
 
     unsigned int c = 0;
     std::string errorMessage;

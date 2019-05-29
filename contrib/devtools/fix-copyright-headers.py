@@ -22,7 +22,7 @@ import time
 
 year = time.gmtime()[0]
 last_year = year - 1
-command = "perl -pi -e 's/%s The Linda/%s The Linda/' %s"
+command = "perl -pi -e 's/%s The Metrix/%s The Metrix/' %s"
 listFilesCommand = "find . | grep %s"
 
 extensions = [".cpp",".h"]
