@@ -1334,7 +1334,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("fLiteMode %d\n", fLiteMode);
     LogPrintf("nInstantXDepth %d\n", nInstantXDepth);
     LogPrintf("Darksend rounds %d\n", nDarksendRounds);
-    LogPrintf("Anonymize MRX Amount %d\n", nAnonymizeMetrixAmount);
+    LogPrintf("Anonymize Metrix Amount %d\n", nAnonymizeMetrixAmount);
 
     /* Denominations
        A note about convertability. Within Darksend pools, each denomination
