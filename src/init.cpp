@@ -1312,15 +1312,15 @@ bool AppInit2(boost::thread_group& threadGroup)
         nDarksendRounds = 99999;
     }
 
-    nAnonymizeLindaAmount = GetArg("-anonymizeMetrixamount", 0);
-    if(nAnonymizeLindaAmount > 999999) nAnonymizeLindaAmount = 999999;
-    if(nAnonymizeLindaAmount < 2) nAnonymizeLindaAmount = 2;
+    nAnonymizeMetrixAmount = GetArg("-anonymizeMetrixamount", 0);
+    if(nAnonymizeMetrixAmount > 999999) nAnonymizeMetrixAmount = 999999;
+    if(nAnonymizeMetrixAmount < 2) nAnonymizeMetrixAmount = 2;
 
     bool fEnableInstantX = GetBoolArg("-enableinstantx", true);
     if(fEnableInstantX){
         nInstantXDepth = GetArg("-instantxdepth", 5);
         if(nInstantXDepth > 60) nInstantXDepth = 60;
-        if(nInstantXDepth < 0) nAnonymizeLindaAmount = 0;
+        if(nInstantXDepth < 0) nAnonymizeMetrixAmount = 0;
     } else {
         nInstantXDepth = 0;
     }
@@ -1334,7 +1334,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("fLiteMode %d\n", fLiteMode);
     LogPrintf("nInstantXDepth %d\n", nInstantXDepth);
     LogPrintf("Darksend rounds %d\n", nDarksendRounds);
-    LogPrintf("Anonymize MRX Amount %d\n", nAnonymizeLindaAmount);
+    LogPrintf("Anonymize MRX Amount %d\n", nAnonymizeMetrixAmount);
 
     /* Denominations
        A note about convertability. Within Darksend pools, each denomination
