@@ -768,7 +768,7 @@ void CDarkSendPool::ChargeRandomFees(){
                 with using it to stop abuse. Otherwise it could serve as an attack vector and
                 allow endless transaction that would bloat Metrix and make it unusable. To
                 stop these kinds of attacks 1 in 50 successful transactions are charged. This
-                adds up to a cost of 0.002Linda per transaction on average.
+                adds up to a cost of 0.002MRX per transaction on average.
             */
             if(r <= 20)
             {
@@ -1458,8 +1458,8 @@ bool CDarkSendPool::DoAutomaticDenominating(bool fDryRun, bool ready)
         //randomize the amounts we mix
         if(sessionTotalValue > nBalanceNeedsAnonymized) sessionTotalValue = nBalanceNeedsAnonymized;
 
-        double fLindaSubmitted = (sessionTotalValue / CENT);
-        LogPrintf("Submitting Darksend for %f Metrix CENT - sessionTotalValue %d\n", fLindaSubmitted, sessionTotalValue);
+        double fMetrixSubmitted = (sessionTotalValue / CENT);
+        LogPrintf("Submitting Darksend for %f Metrix CENT - sessionTotalValue %d\n", fMetrixSubmitted, sessionTotalValue);
 
         if(pwalletMain->GetDenominatedBalance(true, true) > 0){ //get denominated unconfirmed inputs
             LogPrintf("DoAutomaticDenominating -- Found unconfirmed denominated outputs, will wait till they confirm to continue.\n");

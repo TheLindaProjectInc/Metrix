@@ -20,7 +20,7 @@
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>CFBundleURLName</key>
-            <string>co.Metrix.LindaPayment</string>
+            <string>co.Metrix.MetrixPayment</string>
             <key>CFBundleURLSchemes</key>
             <array>
               <string>Metrix</string>

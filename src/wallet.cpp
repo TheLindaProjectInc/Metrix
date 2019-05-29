@@ -992,7 +992,7 @@ void CWalletTx::GetAmounts(list<COutputEntry>& listReceived,
         if (nDebit > 0)
         {
             // Don't report 'change' txouts
-	    // LindaNOTE: CoinControl possible fix related... with HD wallet we need to report change?
+	    // MetrixNOTE: CoinControl possible fix related... with HD wallet we need to report change?
             //if (pwallet->IsChange(txout))
             //    continue;
             fIsMine = pwallet->IsMine(txout);
@@ -1419,7 +1419,7 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 continue;
 
             int nDepth = pcoin->GetDepthInMainChain();
-            if (nDepth <= 0) // LindaNOTE: coincontrol fix / ignore 0 confirm 
+            if (nDepth <= 0) // MetrixNOTE: coincontrol fix / ignore 0 confirm 
                 continue;
 
             // do not use IX for inputs that have less then 6 blockchain confirmations

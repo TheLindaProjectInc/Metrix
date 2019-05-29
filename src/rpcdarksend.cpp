@@ -59,8 +59,8 @@ Value darksend(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() == 0)
         throw runtime_error(
-            "darksend <Lindaaddress> <amount>\n"
-            "Lindaaddress, reset, or auto (AutoDenominate)"
+            "darksend <Metrixaddress> <amount>\n"
+            "Metrixaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and is rounded to the nearest 0.00000001"
             + HelpRequiringPassphrase());
 
@@ -83,8 +83,8 @@ Value darksend(const Array& params, bool fHelp)
 
     if (params.size() != 2)
         throw runtime_error(
-            "darksend <Lindaaddress> <amount>\n"
-            "Lindaaddress, denominate, or auto (AutoDenominate)"
+            "darksend <Metrixaddress> <amount>\n"
+            "Metrixaddress, denominate, or auto (AutoDenominate)"
             "<amount> is a real and is rounded to the nearest 0.00000001"
             + HelpRequiringPassphrase());
 

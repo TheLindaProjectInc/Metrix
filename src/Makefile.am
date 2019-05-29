@@ -209,14 +209,14 @@ AM_CPPFLAGS += $(BDB_CPPFLAGS)
 Metrixd_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
 
 # Metrix-cli binary #
-Linda_cli_LDADD = \
+Metrix_cli_LDADD = \
   libbitcoin_cli.a libbitcoin_common.a \
   $(BOOST_LIBS)
-Linda_cli_SOURCES = bitcoin-cli.cpp
+Metrix_cli_SOURCES = bitcoin-cli.cpp
 #
 
 if TARGET_WINDOWS
-Linda_cli_SOURCES += bitcoin-cli-res.rc
+Metrix_cli_SOURCES += bitcoin-cli-res.rc
 endif
 
 # NOTE: This dependency is not strictly necessary, but without it make may try to build both in parallel, which breaks the LevelDB build system in a race
