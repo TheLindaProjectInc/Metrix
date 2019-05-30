@@ -16,13 +16,13 @@ BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
             VALUE "CompanyName",        "Linda Projects Inc"
-            VALUE "FileDescription",    "Linda-cli (OSS RPC client for Linda)"
+            VALUE "FileDescription",    "Metrix-cli (OSS RPC client for Metrix)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "Linda-cli"
+            VALUE "InternalName",       "Metrix-cli"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT/X11 software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
-            VALUE "OriginalFilename",   "Linda-cli.exe"
-            VALUE "ProductName",        "Linda-cli"
+            VALUE "OriginalFilename",   "Metrix-cli.exe"
+            VALUE "ProductName",        "Metrix-cli"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END

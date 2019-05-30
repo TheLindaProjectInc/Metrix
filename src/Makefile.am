@@ -10,12 +10,12 @@ if ENABLE_WALLET
 noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
-bin_PROGRAMS = Lindad Linda-cli
+bin_PROGRAMS = Metrixd Metrix-cli
 
 SUBDIRS = .
 DIST_SUBDIRS = .
 .PHONY: FORCE
-# Linda core #
+# Metrix core #
 BITCOIN_CORE_H = \
   activemasternode.h \
   addrman.h \
@@ -190,33 +190,33 @@ endif
 nodist_libbitcoin_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
 #
 
-# Lindad binary #
-Lindad_LDADD = \
+# Metrixd binary #
+Metrixd_LDADD = \
   libbitcoin_server.a libbitcoin_cli.a libbitcoin_common.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
 if ENABLE_WALLET
-Lindad_LDADD += libbitcoin_wallet.a
+Metrixd_LDADD += libbitcoin_wallet.a
 endif
-Lindad_SOURCES = bitcoind.cpp
+Metrixd_SOURCES = bitcoind.cpp
 #
 
 if TARGET_WINDOWS
-Lindad_SOURCES += bitcoind-res.rc
+Metrixd_SOURCES += bitcoind-res.rc
 endif
 
 AM_CPPFLAGS += $(BDB_CPPFLAGS)
-Lindad_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
+Metrixd_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
 
-# Linda-cli binary #
-Linda_cli_LDADD = \
+# Metrix-cli binary #
+Metrix_cli_LDADD = \
   libbitcoin_cli.a libbitcoin_common.a \
   $(BOOST_LIBS)
-Linda_cli_SOURCES = bitcoin-cli.cpp
+Metrix_cli_SOURCES = bitcoin-cli.cpp
 #
 
 if TARGET_WINDOWS
-Linda_cli_SOURCES += bitcoin-cli-res.rc
+Metrix_cli_SOURCES += bitcoin-cli-res.rc
 endif
 
 # NOTE: This dependency is not strictly necessary, but without it make may try to build both in parallel, which breaks the LevelDB build system in a race

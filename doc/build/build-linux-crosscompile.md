@@ -81,7 +81,7 @@ Versions used in this release:
 
 Note.. In each instance we download the dependancies with the NO_QT=1 option added. We dont use QT so there is no need to download the large packages associated with it.
 
-This assumes your Linda source in located in your home drive.  
+This assumes your Metrix source in located in your home drive.  
 The system will download and build all the dependancies.  
 At the end it will give you a path that is used in during the build steps as your prefix directory.
 
@@ -90,13 +90,13 @@ At the end it will give you a path that is used in during the build steps as you
 ##### x86
 
 ```
-cd ~/Linda/depends
+cd ~/Metrix/depends
 make HOST=i686-w64-mingw32 NO_QT=1
 ```
 ##### x64
 
 ```
-cd ~/Linda/depends
+cd ~/Metrix/depends
 make HOST=x86_64-w64-mingw32 NO_QT=1
 ```
 
@@ -105,7 +105,7 @@ make HOST=x86_64-w64-mingw32 NO_QT=1
 ##### x86
 
 ```
-cd ~/Linda/depends
+cd ~/Metrix/depends
 make HOST="i686-pc-linux-gnu" NO_QT=1
 ```
 
@@ -114,7 +114,7 @@ make HOST="i686-pc-linux-gnu" NO_QT=1
 This one completes the dependancies for the current OS arch. Its assumed that its Linux x64.
 
 ```
-cd ~/Linda/depends
+cd ~/Metrix/depends
 make NO_QT=1
 ```
 
@@ -125,7 +125,7 @@ MacOS is slightly different to all others, in that we also need a copy of the Ma
 ##### x64
 
 ```
-cd ~/Linda/depends
+cd ~/Metrix/depends
 mkdir -p SDKs
 cd SDKs
 curl https://codeload.github.com/phracker/MacOSX-SDKs/tar.gz/MacOSX10.11.sdk -o MacOSX10.11.sdk.tar.gz
@@ -135,18 +135,18 @@ cd ..
 make HOST=x86_64-apple-darwin14 NO_QT=1 DARWIN_SDK_PATH=`pwd`/SDKs/MacOSX10.11.sdk
 ```
 
-Build Lindad
+Build Metrixd
 -------
 
-You will now go back to the root linda directory and begin compiling Linda.  
+You will now go back to the root metrix directory and begin compiling Metrix.  
 If you dont wish to use miniupnpc in the build you can change this to --without-miniupnpc.
 The CPPFLAGS will also not be required in this instance.
 
-In all builds the final executables will reside in the ~/Linda/src directory.
+In all builds the final executables will reside in the ~/Metrix/src directory.
 
 **These builds should be completed one at a time. To build for another OS/arch run the follwing:
 ```
-cd ~/Linda
+cd ~/Metrix
 make clean
 ```
 
@@ -158,7 +158,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/i686-w64-mingw32 --with-miniupnpc  --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB" LDFLAGS="-static-libgcc -static-libstdc++"
 make
-strip src/Lindad.exe && strip src/Linda-cli.exe
+strip src/Metrixd.exe && strip src/Metrix-cli.exe
 ```
 
 ##### x64
@@ -168,7 +168,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --with-miniupnpc --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB" LDFLAGS="-static-libgcc -static-libstdc++"
 make
-strip src/Lindad.exe && strip src/Linda-cli.exe
+strip src/Metrixd.exe && strip src/Metrix-cli.exe
 ```
 
 #### Linux
@@ -179,7 +179,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/i686-pc-linux-gnu --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
 make
-strip src/Lindad && strip src/Linda-cli
+strip src/Metrixd && strip src/Metrix-cli
 ```
 
 ##### x64
@@ -189,7 +189,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/x86_64-pc-linux-gnu --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
 make
-strip src/Lindad && strip src/Linda-cli
+strip src/Metrixd && strip src/Metrix-cli
 ```
 #### MacOS
 ##### x64

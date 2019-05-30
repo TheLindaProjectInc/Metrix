@@ -127,7 +127,7 @@ ifeq (${USE_WALLET}, 1)
         obj/walletdb.o
 endif
 
-all: Lindad.exe
+all: Metrixd.exe
 
 #
 # LevelDB support
@@ -154,15 +154,15 @@ obj/scrypt-x86.o: scrypt-x86.S
 obj/scrypt-x86_64.o: scrypt-x86_64.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
 
-Lindad.exe: $(OBJS:obj/%=obj/%)
+Metrixd.exe: $(OBJS:obj/%=obj/%)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS) -lshlwapi
-    $(STRIP) Lindad.exe
+    $(STRIP) Metrixd.exe
 
 clean:
 	-rm -f obj/*.o
     -rm -f obj/*.P
     -rm -f obj/crypto/*.o
-	-rm -f Lindad.exe
+	-rm -f Metrixd.exe
 	-rm -f obj/build.h
 	cd leveldb && TARGET_OS=OS_WINDOWS_CROSSCOMPILE $(MAKE) clean && cd ..
 

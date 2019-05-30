@@ -68,13 +68,13 @@ bool AppInit(int argc, char* argv[])
         if (mapArgs.count("-?") || mapArgs.count("--help"))
         {
             // First part of help message is specific to bitcoind / RPC client
-            std::string strUsage = _("Linda version") + " " + FormatFullVersion() + "\n\n" +
+            std::string strUsage = _("Metrix version") + " " + FormatFullVersion() + "\n\n" +
                 _("Usage:") + "\n" +
-                  "  Lindad [options]                     " + _("Start Lindad server") + "\n" +
-                  _("Usage (deprecated, use Lindad-cli):") + "\n" +
-                  "  Lindad [options] <command> [params]  " + _("Send command to Lindad server") + "\n" +
-                  "  Lindad [options] help                " + _("List commands") + "\n" +
-                  "  Lindad [options] help <command>      " + _("Get help for a command") + "\n";
+                  "  Metrixd [options]                     " + _("Start Metrixd server") + "\n" +
+                  _("Usage (deprecated, use Metrixd-cli):") + "\n" +
+                  "  Metrixd [options] <command> [params]  " + _("Send command to Metrixd server") + "\n" +
+                  "  Metrixd [options] help                " + _("List commands") + "\n" +
+                  "  Metrixd [options] help <command>      " + _("Get help for a command") + "\n";
 
             strUsage += "\n" + HelpMessage(HMM_BITCOIND);
             strUsage += "\n" + HelpMessageCli(false);
@@ -85,7 +85,7 @@ bool AppInit(int argc, char* argv[])
 
         // Command-line RPC
         for (int i = 1; i < argc; i++)
-            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "Linda:"))
+            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "Metrix:"))
                 fCommandLine = true;
 
         if (fCommandLine)
@@ -97,7 +97,7 @@ bool AppInit(int argc, char* argv[])
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon)
         {
-            fprintf(stdout, "Linda server starting\n");
+            fprintf(stdout, "Metrix server starting\n");
 
             // Daemonize
             pid_t pid = fork();
