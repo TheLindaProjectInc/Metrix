@@ -238,7 +238,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -datadir=<dir>         " + _("Specify data directory") + "\n";
     strUsage += "  -loadblock=<file>      " + _("Imports blocks from external blk000?.dat file") + "\n";
     strUsage += "  -par=<n>               " + strprintf(_("Set the number of script verification threads (%u to %d, 0 = auto, <0 = leave that many cores free, default: %d)"), -(int)boost::thread::hardware_concurrency(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS) + "\n";
-    strUsage += "  -pid=<file>            " + _("Specify pid file (default: Metrixd.pid)") + "\n";
+    strUsage += "  -pid=<file>            " + _("Specify pid file (default: metrixd.pid)") + "\n";
     strUsage += "  -reindex               " + _("Rebuild blockchain index from current blk000??.dat files") + "\n";
 
     strUsage += "\n" + _("Connection options:") + "\n";
@@ -454,7 +454,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
     }
 }
 
-/** Initialize Metrixcoin.
+/** Initialize Metrix.
  *  @pre Parameters should be parsed and config file should be read.
  */
 bool AppInit2(boost::thread_group& threadGroup)
@@ -678,7 +678,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
         return InitError(strprintf(_("Wallet %s resides outside data directory %s"), strWalletFile, strDataDir));
 #endif
-    // Make sure only a single Metrixcoin process is using the data directory.
+    // Make sure only a single Metrix process is using the data directory.
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
     FILE* file = fopen(pathLockFile.string().c_str(), "a"); // empty lock file; created if it doesn't exist.
     if (file) fclose(file);

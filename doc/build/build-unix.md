@@ -38,7 +38,7 @@ System requirements
 --------------------
 
 C++ compilers are memory-hungry. It is recommended to have at least 1 GB of
-memory available when compiling LindaCoin Core. With 512MB of memory or less
+memory available when compiling Metrix Core. With 512MB of memory or less
 compilation will take much longer due to swap thrashing.
 
 Dependency Build Instructions: Ubuntu & Debian
@@ -66,7 +66,7 @@ Use build in Ubuntu + Debian Berkley DB with this.
 
     sudo apt install libdb-dev libdb++-dev
 
-Alternatvely use the following to retain compatibility. Make a note of the library install location thats returned after "make install". you will need this for the Metrixd configure command.
+Alternatvely use the following to retain compatibility. Make a note of the library install location thats returned after "make install". you will need this for the metrixd configure command.
 
     cd ~  
     wget 'http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz'
@@ -93,17 +93,17 @@ Notes
 symbols, which reduces the executable size by about 90%.
 
 
-Build Metrixd
+Build metrixd
 ----
 
-This builds Metrixd and Metrix-cli using the dynamic dependancies of the current system. Change the DB version below to reflect the version you installed.
+This builds metrixd and metrix-cli using the dynamic dependancies of the current system. Change the DB version below to reflect the version you installed.
 
 ```
 ./autogen.sh
 ./configure --with-incompatible-bdb BDB_LIBS="-L/usr/local/BerkeleyDB.5.0/lib -ldb_cxx-5.0" BDB_CFLAGS="-I/usr/local/BerkeleyDB.5.0/include"
 make
-strip src/Metrixd
-strip src/Metrixd-cli
+strip src/metrixd
+strip src/metrixd-cli
 ```
 
 If you receive an error on x64 Linux machines during the configure command about missing boost libraries add the following configure flag. Boost libraries may be somewhere else on x64 machines.
@@ -136,7 +136,7 @@ sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg
 Get the Metrix source code
 ----
 
-Clone the Metrixcoin repository
+Clone the Metrix repository
 
 	git clone https://github.com/TheLindaProjectInc/metrix.git Metrix
 
@@ -153,7 +153,7 @@ To build dependencies for the current arch+OS:
     cd Metrix/depends
     make NO_QT=1
 
-### Compiling Metrixd
+### Compiling metrixd
 
 
 ```
@@ -161,7 +161,7 @@ cd ..
 ./autogen.sh
 ./configure
 make
-strip src/Metrixd
-strip src/Metrixd-cli
+strip src/metrixd
+strip src/metrixd-cli
 
 ```

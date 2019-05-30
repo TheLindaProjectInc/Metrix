@@ -31,7 +31,7 @@ System requirements
 --------------------
 
 C++ compilers are memory-hungry. It is recommended to have at least 1 GB of
-memory available when compiling LindaCoin Core. With 512MB of memory or less
+memory available when compiling Metrix Core. With 512MB of memory or less
 compilation will take much longer due to swap thrashing.
 
 These instructions have been tested on Ubuntu 16.04 x64. This guide was created using reference from the [depends/README.md](../depends/README.md)
@@ -135,7 +135,7 @@ cd ..
 make HOST=x86_64-apple-darwin14 NO_QT=1 DARWIN_SDK_PATH=`pwd`/SDKs/MacOSX10.11.sdk
 ```
 
-Build Metrixd
+Build metrixd
 -------
 
 You will now go back to the root metrix directory and begin compiling Metrix.  
@@ -158,7 +158,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/i686-w64-mingw32 --with-miniupnpc  --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB" LDFLAGS="-static-libgcc -static-libstdc++"
 make
-strip src/Metrixd.exe && strip src/Metrix-cli.exe
+strip src/metrixd.exe && strip src/metrix-cli.exe
 ```
 
 ##### x64
@@ -168,7 +168,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32 --with-miniupnpc --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DSTATICLIB -DMINIUPNP_STATICLIB" LDFLAGS="-static-libgcc -static-libstdc++"
 make
-strip src/Metrixd.exe && strip src/Metrix-cli.exe
+strip src/metrixd.exe && strip src/metrix-cli.exe
 ```
 
 #### Linux
@@ -179,7 +179,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/i686-pc-linux-gnu --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
 make
-strip src/Metrixd && strip src/Metrix-cli
+strip src/metrixd && strip src/metrix-cli
 ```
 
 ##### x64
@@ -189,7 +189,7 @@ cd ..
 ./autogen.sh
 ./configure --prefix=`pwd`/depends/x86_64-pc-linux-gnu --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
 make
-strip src/Metrixd && strip src/Metrix-cli
+strip src/metrixd && strip src/metrix-cli
 ```
 #### MacOS
 ##### x64

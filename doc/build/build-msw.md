@@ -1,12 +1,12 @@
 WINDOWS BUILD NOTES
 ====================
 
-Below are some notes on how to build Metrixd Core for Windows.
+Below are some notes on how to build metrixd Core for Windows.
 
-The options known to work for building Metrixd Core on Windows are:
+The options known to work for building metrixd Core on Windows are:
 
 * On Linux, using the [Mingw-w64](https://mingw-w64.org/doku.php) cross compiler tool chain. Ubuntu Xenial 16.04 minimum is required
-and is the platform used to build the Metrixd Core Windows release binaries.
+and is the platform used to build the metrixd Core Windows release binaries.
 * On Windows, using [Windows
 Subsystem for Linux (WSL)](https://msdn.microsoft.com/commandline/wsl/about) and the Mingw-w64 cross compiler tool chain.
 

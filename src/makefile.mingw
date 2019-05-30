@@ -140,7 +140,7 @@ ifeq (${USE_WALLET}, 1)
         obj/walletdb.o
 endif
 
-all: Metrixd.exe
+all: metrixd.exe
 
 #
 # LevelDB support
@@ -160,11 +160,11 @@ obj/scrypt-x86.o: scrypt-x86.S
 obj/scrypt-x86_64.o: scrypt-x86_64.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
 
-Metrixd.exe: $(OBJS:obj/%=obj/%)
+metrixd.exe: $(OBJS:obj/%=obj/%)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 clean:
-	-del /Q Metrixd
+	-del /Q metrixd
 	-del /Q obj/*.o
 	-del /Q obj/*.P
 	-del /Q obj/crypto/*.o

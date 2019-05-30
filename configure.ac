@@ -6,7 +6,7 @@ define(_CLIENT_VERSION_REVISION, 2)
 define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2019)
-AC_INIT([Metrixcoin],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[support@lindacoin.com],[lindacoin])
+AC_INIT([Metrix],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[support@lindacoin.com],[metrix])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 AC_CANONICAL_HOST
@@ -15,8 +15,8 @@ AH_TOP([#define BITCOIN_CONFIG_H])
 AH_BOTTOM([#endif //BITCOIN_CONFIG_H])
 
 
-BITCOIN_DAEMON_NAME=Metrixd
-BITCOIN_CLI_NAME=Metrix-cli
+BITCOIN_DAEMON_NAME=metrixd
+BITCOIN_CLI_NAME=metrix-cli
 
 # This m4 will only be used if a system copy cannot be found. This is helpful
 # on systems where autotools are installed but the pkg-config macros are not in

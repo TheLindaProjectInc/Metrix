@@ -70,11 +70,11 @@ bool AppInit(int argc, char* argv[])
             // First part of help message is specific to bitcoind / RPC client
             std::string strUsage = _("Metrix version") + " " + FormatFullVersion() + "\n\n" +
                 _("Usage:") + "\n" +
-                  "  Metrixd [options]                     " + _("Start Metrixd server") + "\n" +
-                  _("Usage (deprecated, use Metrixd-cli):") + "\n" +
-                  "  Metrixd [options] <command> [params]  " + _("Send command to Metrixd server") + "\n" +
-                  "  Metrixd [options] help                " + _("List commands") + "\n" +
-                  "  Metrixd [options] help <command>      " + _("Get help for a command") + "\n";
+                  "  metrixd [options]                     " + _("Start metrixd server") + "\n" +
+                  _("Usage (deprecated, use metrixd-cli):") + "\n" +
+                  "  metrixd [options] <command> [params]  " + _("Send command to metrixd server") + "\n" +
+                  "  metrixd [options] help                " + _("List commands") + "\n" +
+                  "  metrixd [options] help <command>      " + _("Get help for a command") + "\n";
 
             strUsage += "\n" + HelpMessage(HMM_BITCOIND);
             strUsage += "\n" + HelpMessageCli(false);

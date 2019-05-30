@@ -10,7 +10,7 @@ if ENABLE_WALLET
 noinst_LIBRARIES += libbitcoin_wallet.a
 endif
 
-bin_PROGRAMS = Metrixd Metrix-cli
+bin_PROGRAMS = metrixd metrix-cli
 
 SUBDIRS = .
 DIST_SUBDIRS = .
@@ -190,33 +190,33 @@ endif
 nodist_libbitcoin_common_a_SOURCES = $(top_srcdir)/src/obj/build.h
 #
 
-# Metrixd binary #
-Metrixd_LDADD = \
+# metrixd binary #
+metrixd_LDADD = \
   libbitcoin_server.a libbitcoin_cli.a libbitcoin_common.a \
   $(LIBLEVELDB) \
   $(LIBMEMENV)
 if ENABLE_WALLET
-Metrixd_LDADD += libbitcoin_wallet.a
+metrixd_LDADD += libbitcoin_wallet.a
 endif
-Metrixd_SOURCES = bitcoind.cpp
+metrixd_SOURCES = bitcoind.cpp
 #
 
 if TARGET_WINDOWS
-Metrixd_SOURCES += bitcoind-res.rc
+metrixd_SOURCES += bitcoind-res.rc
 endif
 
 AM_CPPFLAGS += $(BDB_CPPFLAGS)
-Metrixd_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
+metrixd_LDADD += $(BOOST_LIBS) $(BDB_LIBS)
 
-# Metrix-cli binary #
-Metrix_cli_LDADD = \
+# metrix-cli binary #
+metrix_cli_LDADD = \
   libbitcoin_cli.a libbitcoin_common.a \
   $(BOOST_LIBS)
-Metrix_cli_SOURCES = bitcoin-cli.cpp
+metrix_cli_SOURCES = bitcoin-cli.cpp
 #
 
 if TARGET_WINDOWS
-Metrix_cli_SOURCES += bitcoin-cli-res.rc
+metrix_cli_SOURCES += bitcoin-cli-res.rc
 endif
 
 # NOTE: This dependency is not strictly necessary, but without it make may try to build both in parallel, which breaks the LevelDB build system in a race

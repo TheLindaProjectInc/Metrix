@@ -157,7 +157,7 @@ ifneq (${USE_IPV6}, -)
 	DEFS += -DUSE_IPV6=$(USE_IPV6)
 endif
 
-all: Metrixd
+all: metrixd
 
 #
 # LevelDB support
@@ -190,11 +190,11 @@ obj/scrypt-x86.o: scrypt-x86.S
 obj/scrypt-x86_64.o: scrypt-x86_64.S
 	$(CXX) -c $(xCXXFLAGS) -MMD -o $@ $<
 
-Metrixd: $(OBJS:obj/%=obj/%)
+metrixd: $(OBJS:obj/%=obj/%)
 	$(CXX) $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 clean:
-	-rm -f Metrixd
+	-rm -f metrixd
 	-rm -f obj/*.o
 	-rm -f obj/*.P
 	-rm -f obj/build.h

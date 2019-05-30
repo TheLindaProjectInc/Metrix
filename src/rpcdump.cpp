@@ -108,10 +108,10 @@ Value importprivkey(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "importprivkey \"Metrixcoinprivkey\" ( \"label\" rescan )\n"
+            "importprivkey \"Metrixprivkey\" ( \"label\" rescan )\n"
             "\nAdds a private key (as returned by dumpprivkey) to your wallet.\n"
             "\nArguments:\n"
-            "1. \"Metrixcoinprivkey\"   (string, required) The private key (see dumpprivkey)\n"
+            "1. \"Metrixprivkey\"   (string, required) The private key (see dumpprivkey)\n"
             "2. \"label\"            (string, optional) an optional label\n"
             "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
             "\nExamples:\n"
@@ -272,11 +272,11 @@ Value dumpprivkey(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "dumpprivkey \"Metrixcoinaddress\"\n"
-            "\nReveals the private key corresponding to 'Metrixcoinaddress'.\n"
+            "dumpprivkey \"Metrixaddress\"\n"
+            "\nReveals the private key corresponding to 'Metrixaddress'.\n"
             "Then the importprivkey can be used with this output\n"
             "\nArguments:\n"
-            "1. \"Metrixcoinaddress\"   (string, required) The Metrixcoin address for the private key\n"
+            "1. \"Metrixaddress\"   (string, required) The Metrix address for the private key\n"
             "\nResult:\n"
             "\"key\"                (string) The private key\n"
             "\nExamples:\n"
@@ -290,7 +290,7 @@ Value dumpprivkey(const Array& params, bool fHelp)
     string strAddress = params[0].get_str();
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Metrixcoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Metrix address");
     if (fWalletUnlockStakingOnly)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Wallet is unlocked for staking only.");
     CKeyID keyID;
