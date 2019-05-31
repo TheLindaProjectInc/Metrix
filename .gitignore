@@ -13,8 +13,6 @@ debug/
 *.in~
 
 #Dev tools & build testing
-.circleci/run-build-locally.sh
-!.circleci/
 .vscode/
 .vs/
 
@@ -24,7 +22,7 @@ src/univalue/gen
 # daemons
 src/metrix-tx
 src/metrix-cli
-src/metrix
+src/metrixd
 
 # autotools
 Makefile
@@ -58,9 +56,8 @@ depends/work/*
 libtool
 .dirstamp
 share/setup.nsi
-src/config/bitcoin-config.h
-src/config/bitcoin-config.h.in
-src/config/stamp-h1
+**/bitcoin-config.*
+**/stamp-h1
 !src/config/.empty
 
 # Resources cpp

@@ -1,0 +1,56 @@
+# errata:
+# - A travis bug causes caches to trample eachother when using the same
+#   compiler key (which we don't use anyway). This is worked around for now by
+#   replacing the "compilers" with a build name prefixed by the no-op ":"
+#   command. See: https://github.com/travis-ci/casher/issues/6
+
+os: linux
+language: cpp
+env:
+  global:
+    - MAKEJOBS=-j3
+    - RUN_TESTS=false
+    - CCACHE_SIZE=100M
+    - CCACHE_TEMPDIR=/tmp/.ccache-temp
+    - CCACHE_COMPRESS=1
+    - BASE_OUTDIR=$TRAVIS_BUILD_DIR/out
+cache:
+  apt: true
+  directories:
+  - depends/built
+  - depends/sdk-sources
+  - $HOME/.ccache
+matrix:
+  fast_finish: true
+  include:
+    - compiler: ": ARM"
+      env: HOST=arm-linux-gnueabihf PACKAGES="g++-arm-linux-gnueabihf" DEP_OPTS="NO_QT=1" BITCOIN_CONFIG="--enable-glibc-back-compat"
+    - compiler: ": 64-bit"
+      env: HOST=x86_64-pc-linux-gnu PACKAGES="bc" DEP_OPTS="NO_QT=1"
+    - compiler: ": 32-bit"
+      env: HOST=i686-pc-linux-gnu PACKAGES="g++-multilib bc" DEP_OPTS="NO_QT=1" BITCOIN_CONFIG="--enable-glibc-back-compat"
+    - compiler: ": Win64"
+      env: HOST=x86_64-w64-mingw32 PACKAGES="nsis gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 binutils-mingw-w64-x86-64 bc" DEP_OPTS="NO_QT=1" MAKEJOBS="-j2"
+    - compiler: ": Win32"
+      env: HOST=i686-w64-mingw32 PACKAGES="nsis gcc-mingw-w64-i686 g++-mingw-w64-i686 binutils-mingw-w64-i686 bc" DEP_OPTS="NO_QT=1" MAKEJOBS="-j2"
+install:
+    - if [ -n "$PACKAGES" ]; then travis_retry sudo apt-get update; fi
+    - if [ -n "$PACKAGES" ]; then travis_retry sudo apt-get install --no-install-recommends --no-upgrade -qq $PACKAGES; fi
+before_script:
+    - unset CC; unset CXX
+    - make $MAKEJOBS -C depends HOST=$HOST $DEP_OPTS
+script:
+    - if [ -n "$USE_SHELL" ]; then export CONFIG_SHELL="$USE_SHELL"; fi
+    - OUTDIR=$BASE_OUTDIR/$TRAVIS_PULL_REQUEST/$TRAVIS_JOB_NUMBER-$HOST
+    - BITCOIN_CONFIG_ALL="--disable-dependency-tracking --prefix=$TRAVIS_BUILD_DIR/depends/$HOST --with-incompatible-bdb BDB_LIBS=\"-ldb_cxx-5.0\" --bindir=$OUTDIR/bin --libdir=$OUTDIR/lib"
+    - depends/$HOST/native/bin/ccache --max-size=$CCACHE_SIZE
+    - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export CCACHE_READONLY=1; fi
+    - test -n "$USE_SHELL" && eval '"$USE_SHELL" -c "./autogen.sh"' || ./autogen.sh
+    - ./configure --cache-file=config.cache $BITCOIN_CONFIG_ALL $BDB_LIBS $BITCOIN_CONFIG || ( cat config.log && false)
+    - make distdir PACKAGE=Linda VERSION=$HOST
+    - cd Linda-$HOST
+    - ./configure --cache-file=../config.cache $BITCOIN_CONFIG_ALL $BDB_LIBS $BITCOIN_CONFIG || ( cat config.log && false)
+    - make $MAKEJOBS $GOAL || ( echo "Build failure. Verbose build follows." && make $GOAL V=1 ; false )
+    - export LD_LIBRARY_PATH=$TRAVIS_BUILD_DIR/depends/$HOST/lib
+after_script:
+    - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then (echo "Upload goes here. Something like: scp -r $BASE_OUTDIR server" || echo "upload failed"); fi
