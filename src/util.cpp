@@ -1021,7 +1021,7 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
     strMiscWarning = message;
 }
 
-boost::filesystem::path GetDefaultDataDir()
+boost::filesystem::path GetDefaultDataDir(const std::string dirName)
 {
     namespace fs = boost::filesystem;
     // Windows < Vista: C:\Documents and Settings\Username\Application Data\Metrix
@@ -1030,7 +1030,7 @@ boost::filesystem::path GetDefaultDataDir()
     // Unix: ~/.Metrix
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Metrix";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / dirName;
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -1042,10 +1042,10 @@ boost::filesystem::path GetDefaultDataDir()
     // Mac
     pathRet /= "Library/Application Support";
     TryCreateDirectory(pathRet);
-    return pathRet / "Metrix";
+    return pathRet / dirName;
 #else
     // Unix
-    return pathRet / ".Metrix";
+    return pathRet / "." + dirName;
 #endif
 #endif
 }
@@ -1084,6 +1084,30 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
     fs::create_directories(path);
 
     return path;
+}
+
+void checkMigrateDataDir()
+{
+    // skip this if data dir is set by user
+    if (mapArgs.count("-datadir"))
+        return;
+    
+    const boost::filesystem::path lindaDir = GetDefaultDataDir("Linda");
+    const boost::filesystem::path metrixDir = GetDefaultDataDir();
+
+    if (!boost::filesystem::exists(metrixDir) && boost::filesystem::exists(lindaDir))
+    {
+        try {
+            boost::filesystem::rename(lindaDir, metrixDir);
+            // rename conf file
+            const boost::filesystem::path lindaConfigFile = metrixDir / "Linda.conf";
+            if (boost::filesystem::exists(lindaConfigFile))
+            {
+                boost::filesystem::rename(lindaConfigFile, metrixDir / "metrix.conf");
+            }    
+        } catch(boost::filesystem::filesystem_error &error) {
+        }
+    }
 }
 
 string randomStrGen(int length) {
@@ -1125,7 +1149,7 @@ void ClearDatadirCache()
 
 boost::filesystem::path GetConfigFile()
 {
-    boost::filesystem::path pathConfigFile(GetArg("-conf", "Metrix.conf"));
+    boost::filesystem::path pathConfigFile(GetArg("-conf", "metrix.conf"));
     if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
 }
@@ -1141,7 +1165,7 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
                     map<string, vector<string> >& mapMultiSettingsRet)
 {
     boost::filesystem::ifstream streamConfig(GetConfigFile());
-    if (!streamConfig.good()) //Metrix.conf doesn't exist
+    if (!streamConfig.good()) //metrix.conf doesn't exist
     {
         createConf();
         new(&streamConfig) boost::filesystem::ifstream(GetConfigFile());

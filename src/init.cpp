@@ -226,7 +226,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -blocknotify=<cmd>     " + _("Execute command when the best block changes (%s in cmd is replaced by block hash)") + "\n";
     strUsage += "  -checkblocks=<n>       " + _("How many blocks to check at startup (default: 500, 0 = all)") + "\n";
     strUsage += "  -checklevel=<n>        " + _("How thorough the block verification is (0-6, default: 1)") + "\n";
-    strUsage += "  -conf=<file>           " + _("Specify configuration file (default: Metrix.conf)") + "\n";
+    strUsage += "  -conf=<file>           " + _("Specify configuration file (default: metrix.conf)") + "\n";
 
     if (hmm == HMM_BITCOIND)
     {
