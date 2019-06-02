@@ -11,8 +11,6 @@
 #include "coins.h"
 #include "core.h"
 
-class CAutoFile;
-
 inline bool AllowFree(double dPriority)
 {
     // Large (in bytes) low-priority (new, small-coin) transactions

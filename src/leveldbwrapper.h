@@ -5,9 +5,9 @@
 #ifndef BITCOIN_LEVELDBWRAPPER_H
 #define BITCOIN_LEVELDBWRAPPER_H
 
-#include "serialize.h"
-#include "streams.h"
 #include "util.h"
+
+#include "serialize.h"
 
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
