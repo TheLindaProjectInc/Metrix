@@ -448,8 +448,13 @@ Value submitblock(const Array& params, bool fHelp)
     CValidationState state;
     bool fAccepted = ProcessBlock(state, NULL, &pblock);
     if (!fAccepted)
-        return "rejected"; // TODO: report validation state
-
+    {
+        std::string strRejectReason = state.GetRejectReason();
+        if (strRejectReason.empty())
+            return "rejected";
+        return strRejectReason;
+    }
+    
     return Value::null;
 }
 
