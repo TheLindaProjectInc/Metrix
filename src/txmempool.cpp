@@ -5,6 +5,7 @@
 
 #include "txmempool.h"
 #include "core.h"
+#include "streams.h"
 #include "main.h" // for CTransaction
 #include "util.h"
 #include "utilmoneystr.h"

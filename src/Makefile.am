@@ -122,6 +122,7 @@ BITCOIN_CORE_H = \
   script/standard.h \
   scrypt.h \
   serialize.h \
+  streams.h \
   spork.h \
   stealth.h \
   strlcpy.h \
