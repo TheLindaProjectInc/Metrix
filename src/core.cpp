@@ -9,8 +9,6 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 
-#include <boost/foreach.hpp>
-
 std::string COutPoint::ToString() const
 {
     return strprintf("COutPoint(%s, %u)", hash.ToString().substr(0, 10), n);
@@ -123,9 +121,10 @@ CTransaction& CTransaction::operator=(const CTransaction& tx)
 CAmount CTransaction::GetValueOut() const
 {
     CAmount nValueOut = 0;
-    BOOST_FOREACH (const CTxOut& txout, vout) {
-        nValueOut += txout.nValue;
-        if (!MoneyRange(txout.nValue) || !MoneyRange(nValueOut))
+    for (std::vector<CTxOut>::const_iterator it(vout.begin()); it != vout.end(); ++it)
+    {
+         nValueOut += it->nValue;
+        if (!MoneyRange(it->nValue) || !MoneyRange(nValueOut))
             throw std::runtime_error("GetValueOut() : value out of range");
     }
     return nValueOut;
@@ -150,8 +149,8 @@ unsigned int CTransaction::CalculateModifiedSize(unsigned int nTxSize) const
     if (nTxSize == 0)
         nTxSize = ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
 
-    BOOST_FOREACH (const CTxIn& txin, vin) {
-        unsigned int offset = 41U + std::min(110U, (unsigned int)txin.scriptSig.size());
+    for (std::vector<CTxIn>::const_iterator it(vin.begin()); it != vin.end(); ++it)
+        unsigned int offset = 41U + std::min(110U, (unsigned int)it->scriptSig.size());
         if (nTxSize > offset)
             nTxSize -= offset;
     }
@@ -296,8 +295,8 @@ uint256 CBlock::BuildMerkleTree(bool* fMutated) const
     */
     vMerkleTree.clear();
     vMerkleTree.reserve(vtx.size() * 2 + 16); // Safe upper bound for the number of total nodes.
-    BOOST_FOREACH (const CTransaction& tx, vtx)
-        vMerkleTree.push_back(tx.GetHash());
+    for (std::vector<CTransaction>::const_iterator it(vtx.begin()); it != vtx.end(); ++it)
+        vMerkleTree.push_back(it->GetHash());
     int j = 0;
     bool mutated = false;
     for (int nSize = vtx.size(); nSize > 1; nSize = (nSize + 1) / 2) {
@@ -337,11 +336,11 @@ uint256 CBlock::CheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMer
 {
     if (nIndex == -1)
         return 0;
-    BOOST_FOREACH (const uint256& otherside, vMerkleBranch) {
+    for (std::vector<uint256>::const_iterator it(vMerkleBranch.begin()); it != vMerkleBranch.end(); ++it)
         if (nIndex & 1)
-            hash = Hash(BEGIN(otherside), END(otherside), BEGIN(hash), END(hash));
+            hash = Hash(BEGIN(*it), END(*it), BEGIN(hash), END(hash));
         else
-            hash = Hash(BEGIN(hash), END(hash), BEGIN(otherside), END(otherside));
+            hash = Hash(BEGIN(hash), END(hash), BEGIN(*it), END(*it));
         nIndex >>= 1;
     }
     return hash;
