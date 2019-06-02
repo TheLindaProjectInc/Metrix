@@ -6,7 +6,6 @@
 
 #include "tinyformat.h"
 
-#include <boost/algorithm/string/join.hpp>
 #include <string>
 
 // Name of client reported in the 'version' message. Report the same name
@@ -89,7 +88,13 @@ std::string FormatSubVersion(const std::string& name, int nClientVersion, const 
     ss << "/";
     ss << name << ":" << FormatVersion(nClientVersion);
     if (!comments.empty())
-        ss << "(" << boost::algorithm::join(comments, "; ") << ")";
+    {
+        std::vector<std::string>::const_iterator it(comments.begin());
+        ss << "(" << *it;
+        for(++it; it != comments.end(); ++it)
+            ss << "; " << *it;
+        ss << ")";
+    }    
     ss << "/";
     return ss.str();
 }
