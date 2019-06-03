@@ -1045,7 +1045,9 @@ boost::filesystem::path GetDefaultDataDir(const std::string dirName)
     return pathRet / dirName;
 #else
     // Unix
-    return pathRet / "." + dirName;
+    std::string dirPath(".");
+    dirPath.append(dirName);
+    return pathRet / dirPath;
 #endif
 #endif
 }
