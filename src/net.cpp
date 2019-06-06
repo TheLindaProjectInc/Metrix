@@ -1137,7 +1137,7 @@ void MapPort(bool)
 
 
 static const char *strDNSSeed[][2] = {
-    {"lindacoin.com", "seed.lindacoin.com"}
+    {"metrixcoin.com", "seed.metrixcoin.com"}
 };
 
 

@@ -15,7 +15,7 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "Linda Projects Inc"
+            VALUE "CompanyName",        "Linda Project Inc"
             VALUE "FileDescription",    "metrix-cli (OSS RPC client for Metrix)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "metrix-cli"

@@ -70,7 +70,7 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 •	David Grunge - Lead Developer 
 
 ## Social
-[Website](https://www.lindacoin.com)
+[Website](https://metrixcoin.com)
 
 [Discord](https://discord.gg/SHNjQBv)
 
