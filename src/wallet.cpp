@@ -3353,69 +3353,76 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         bool fKernelFound = false;
         for (unsigned int n=0; n<min(nSearchInterval,(int64_t)nMaxStakeSearchInterval) && !fKernelFound && pindexPrev == chainActive.Tip(); n++)
         {
-            boost::this_thread::interruption_point();
-            // Search backward in time from the given txNew timestamp 
-            // Search nSearchInterval seconds back up to nMaxStakeSearchInterval
-            COutPoint prevoutStake = COutPoint(pcoin.first->GetHash(), pcoin.second);
-            int64_t nBlockTime;
-            if (CheckKernel(pindexPrev, nBits, txNew.nTime - n, prevoutStake, &nBlockTime))
+            // Metrix: make sure our coinstake search time satisfies the protocol
+            // it would be more efficient to increase n by (STAKE_TIMESTAMP_MASK+1)
+            // but this way will catch if txNew.nTime for some reason didn't start as a safe timestamp
+            unsigned int nCoinStaketime = txNew.nTime - n;
+            if (CheckCoinStakeTimestamp(nCoinStaketime, nCoinStaketime))
             {
-                // Found a kernel
-                LogPrint("coinstake", "CreateCoinStake : kernel found\n");
-                vector<valtype> vSolutions;
-                txnouttype whichType;
-                CScript scriptPubKeyOut;
-                scriptPubKeyKernel = pcoin.first->vout[pcoin.second].scriptPubKey;
-                if (!Solver(scriptPubKeyKernel, whichType, vSolutions))
+                boost::this_thread::interruption_point();
+                // Search backward in time from the given txNew timestamp 
+                // Search nSearchInterval seconds back up to nMaxStakeSearchInterval
+                COutPoint prevoutStake = COutPoint(pcoin.first->GetHash(), pcoin.second);
+                int64_t nBlockTime;
+                if (CheckKernel(pindexPrev, nBits, nCoinStaketime, prevoutStake, &nBlockTime))
                 {
-                    LogPrint("coinstake", "CreateCoinStake : failed to parse kernel\n");
+                    // Found a kernel
+                    LogPrint("coinstake", "CreateCoinStake : kernel found\n");
+                    vector<valtype> vSolutions;
+                    txnouttype whichType;
+                    CScript scriptPubKeyOut;
+                    scriptPubKeyKernel = pcoin.first->vout[pcoin.second].scriptPubKey;
+                    if (!Solver(scriptPubKeyKernel, whichType, vSolutions))
+                    {
+                        LogPrint("coinstake", "CreateCoinStake : failed to parse kernel\n");
+                        break;
+                    }
+                    LogPrint("coinstake", "CreateCoinStake : parsed kernel type=%d\n", whichType);
+                    if (whichType != TX_PUBKEY && whichType != TX_PUBKEYHASH)
+                    {
+                        LogPrint("coinstake", "CreateCoinStake : no support for kernel type=%d\n", whichType);
+                        break;  // only support pay to public key and pay to address
+                    }
+                    if (whichType == TX_PUBKEYHASH) // pay to address type
+                    {
+                        // convert to pay to public key type
+                        if (!keystore.GetKey(uint160(vSolutions[0]), key))
+                        {
+                            LogPrint("coinstake", "CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
+                            break;  // unable to find corresponding public key
+                        }
+                        scriptPubKeyOut << key.GetPubKey() << OP_CHECKSIG;
+                    }
+                    if (whichType == TX_PUBKEY)
+                    {
+                        valtype& vchPubKey = vSolutions[0];
+                        if (!keystore.GetKey(Hash160(vchPubKey), key))
+                        {
+                            LogPrint("coinstake", "CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
+                            break;  // unable to find corresponding public key
+                        }
+
+                        if (key.GetPubKey() != vchPubKey)
+                        {
+                            LogPrint("coinstake", "CreateCoinStake : invalid key for kernel type=%d\n", whichType);
+                            break; // keys mismatch
+                        }
+
+                        scriptPubKeyOut = scriptPubKeyKernel;
+                    }
+
+                    txNew.nTime = nCoinStaketime;
+                    txNew.vin.push_back(CTxIn(pcoin.first->GetHash(), pcoin.second));
+                    nCredit += pcoin.first->vout[pcoin.second].nValue;
+                    vwtxPrev.push_back(pcoin.first);
+                    txNew.vout.push_back(CTxOut(0, scriptPubKeyOut));
+
+                    if (nCredit > GetStakeSplitAmount())
+                        txNew.vout.push_back(CTxOut(0, scriptPubKeyOut)); //split stake
+                    LogPrint("coinstake", "CreateCoinStake : added kernel type=%d\n", whichType);
+                    fKernelFound = true;
                     break;
                 }
-                LogPrint("coinstake", "CreateCoinStake : parsed kernel type=%d\n", whichType);
-                if (whichType != TX_PUBKEY && whichType != TX_PUBKEYHASH)
-                {
-                    LogPrint("coinstake", "CreateCoinStake : no support for kernel type=%d\n", whichType);
-                    break;  // only support pay to public key and pay to address
-                }
-                if (whichType == TX_PUBKEYHASH) // pay to address type
-                {
-                    // convert to pay to public key type
-                    if (!keystore.GetKey(uint160(vSolutions[0]), key))
-                    {
-                        LogPrint("coinstake", "CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
-                        break;  // unable to find corresponding public key
-                    }
-                    scriptPubKeyOut << key.GetPubKey() << OP_CHECKSIG;
-                }
-                if (whichType == TX_PUBKEY)
-                {
-                    valtype& vchPubKey = vSolutions[0];
-                    if (!keystore.GetKey(Hash160(vchPubKey), key))
-                    {
-                        LogPrint("coinstake", "CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
-                        break;  // unable to find corresponding public key
-                    }
-
-                    if (key.GetPubKey() != vchPubKey)
-                    {
-                        LogPrint("coinstake", "CreateCoinStake : invalid key for kernel type=%d\n", whichType);
-                        break; // keys mismatch
-                    }
-
-                    scriptPubKeyOut = scriptPubKeyKernel;
-                }
-
-                txNew.nTime -= n;
-                txNew.vin.push_back(CTxIn(pcoin.first->GetHash(), pcoin.second));
-                nCredit += pcoin.first->vout[pcoin.second].nValue;
-                vwtxPrev.push_back(pcoin.first);
-                txNew.vout.push_back(CTxOut(0, scriptPubKeyOut));
-
-                if (nCredit > GetStakeSplitAmount())
-                    txNew.vout.push_back(CTxOut(0, scriptPubKeyOut)); //split stake
-                LogPrint("coinstake", "CreateCoinStake : added kernel type=%d\n", whichType);
-                fKernelFound = true;
-                break;
             }
         }
 
