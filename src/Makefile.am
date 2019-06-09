@@ -359,7 +359,6 @@ endif
 
   Linda_tx_LDADD += \
   $(BOOST_LIBS) \
-  $(SSL_LIBS) \
   $(CRYPTO_LIBS)
 Linda_tx_SOURCES = bitcoin-tx.cpp
 Linda_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
