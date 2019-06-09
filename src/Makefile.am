@@ -331,9 +331,7 @@ Lindad_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
 # Linda-cli binary #
 Linda_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
-  $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CRYPTO) \
   $(BOOST_LIBS) \
   $(SSL_LIBS) \
   $(CRYPTO_LIBS)

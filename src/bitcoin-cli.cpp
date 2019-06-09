@@ -4,7 +4,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chainparamsbase.h"
-#include "init.h"
 #include "rpcclient.h"
 #include "rpcprotocol.h"
 #include "util.h"
