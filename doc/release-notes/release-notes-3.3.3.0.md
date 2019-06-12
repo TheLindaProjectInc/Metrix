@@ -24,4 +24,7 @@ We are moving away from the metrixd executable functioning both as a server and 
 This release is offical rename of Lindacoin to Metrix! This release is completely compatabile with the Linda chain and is just a re-branding of the existing infrastructure.
 
 ### What's New
-- Fixed an issue that was causing some stakes not to satisfy the time protocol 
+- Fixed an issue that was causing some stakes not to satisfy the time protocol
+- Adjust coin splitting rules:
+    - Split coins if above 1,000,000 Metrix
+    - Join coins if below 500,000 Metrix
