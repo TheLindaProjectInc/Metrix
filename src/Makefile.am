@@ -1,7 +1,7 @@
 include Makefile.include
 AM_CPPFLAGS =  $(INCLUDES) -I$(top_builddir)/src/obj \
   -I$(top_srcdir)/src/leveldb/include -I$(top_srcdir)/src/leveldb/helpers \
-  -I$(builddir) $(BOOST_INCLUDES) $(BDB_CPPFLAGS)
+  -I$(builddir) $(BOOST_INCLUDES) $(BDB_CPPFLAGS) $(MINIUPNPC_CPPFLAGS)
 AM_LDFLAGS = $(PTHREAD_CFLAGS)
 
 noinst_LIBRARIES = libbitcoin_server.a libbitcoin_common.a libbitcoin_cli.a
