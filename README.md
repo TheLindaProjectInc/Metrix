@@ -29,17 +29,7 @@ If you need the Metrix daemon, download it from the current [Metrix Repository](
 </table>
 
 ## Masternode
-Metrix’s use of masternodes enables Metrix to have unique features that are not possible in other cryptocurrencies. The Metrix community will operate these masternodes to help keep the network flowing. Our masternodes perform all of the InstantX and private transactions, and are the heart of our blockchain. A masternode is simply a Metrix full node or a computer wallet that stores the complete copy of the blockchain in real time. But, the central nodes are considerably different - they perform more functionalities to give Metrix special features. One example of this is Metrix’s extraordinary speed and instant transactions. This makes Metrix transactions suitable for everyone. Some of the unique functions that these nodes perform are: 
-
-● Increasing the confidentiality of transactions 
-
-● Making instant transactions 
-
-● Participating in governance and voting 
-
-● Activating the budget and cash system in cryptos. 
-
-Masternodes have huge value in supporting the Metrix network. They are part of what defines Metrix from all of the other cryptocurrencies. Making Metrix more efficient, and more prepared for the future.
+Metrix’s use of masternodes enables Metrix to have unique features that are not possible in other cryptocurrencies. The Metrix community will operate these masternodes to help keep the network flowing. Masternodes have huge value in supporting the Metrix network. They are part of what defines Metrix from all of the other cryptocurrencies. Making Metrix more efficient, and more prepared for the future.
 
 *A masternode requires 2 million Metrix Coins.
 
@@ -49,7 +39,7 @@ Metrix’s new mobile wallet and mobile app offers a turnkey solution, changing 
 *This is for users who wish to have a more hands off approach to operating masternodes.
 
 ## Staking
-Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It ensures all wallets have a consensus on all transactions. It also weighs the economic stake of each wallet, so the more MRX a wallet has, the more it will have a say in the public blockchain. Unlike Bitcoin, where the algorithm rewards participants who solve cryptographic puzzles (Proof of Work), Metrix uses the PoS system. Each wallet votes on the next block and the voting weight of each validator depends on the amount of MRX they hold. One of the significant benefits of a PoS system is the energy efficiency. Instead of wasting huge amounts of energy to mine coins, Metrix is a more eco-friendly coin, which means it is more likely to be adopted in the future. Also, a PoS algorithm reduces the chance of centralization. Other coins are likely to be centralized as all their miners are controlled by a few people, but this is not possible with Metrix. Finally, a PoS algorithm increases security. Metrix allows all wallets to get involved in staking. By simply holding your coins in a wallet, Metrix will automatically stake your coins for you. Staking helps Metrix stabilize the blockchain and will help Metrix verify transactions.
+Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It ensures all wallets have a consensus on all transactions. It also weighs the economic stake of each wallet, so the more MRX a wallet has, the more it will have a say in the public blockchain. Unlike Bitcoin, where the algorithm rewards participants who solve cryptographic puzzles (Proof of Work), Metrix uses the PoS system. One of the significant benefits of a PoS system is the energy efficiency. Instead of wasting huge amounts of energy to mine coins, Metrix is a more eco-friendly coin, which means it is more likely to be adopted in the future. Also, a PoS algorithm reduces the chance of centralization. Other coins are likely to be centralized as all their miners are controlled by a few people, but this is not possible with Metrix. Metrix allows all wallets to get involved in staking. By simply holding your coins in a wallet, Metrix will automatically stake your coins for you. Staking helps Metrix stabilize the blockchain and will help Metrix verify transactions.
 
 
 ## Core Team
@@ -74,23 +64,17 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 [Discord](https://discord.gg/SHNjQBv)
 
-[Reddit](https://www.reddit.com/r/Lindacoin)
+[Reddit](https://www.reddit.com/r/Metrix_Official)
 
 [Twitter](https://twitter.com/lindaproject)
 
-[Facebook](https://www.facebook.com/lindacoincurrency)
-
 [GitHub](https://github.com/TheLindaProjectInc)
-
-[YouTube](https://www.youtube.com/channel/UCzfjb47BI9lx7Ih-K6VY-TA)
 
 
 ## Handy Links
 [FAQ, tips and tutorials](https://github.com/TheLindaProjectInc/Documentation)
 
 [Media](https://github.com/TheLindaProjectInc/Media)
-
-[Bootstrap for Metrix v3.2.0.0 and newer](https://drive.google.com/open?id=1vJr59oEIKlPWUMo8Uzf87HOPKPETdOcj)
 
 ## Realizations
 
