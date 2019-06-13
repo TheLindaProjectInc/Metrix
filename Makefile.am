@@ -4,7 +4,7 @@ SUBDIRS = src
 
 GZIP_ENV="-9n"
 
-BITCOIND_BIN=$(top_builddir)/src/Lindad$(EXEEXT)
+BITCOIND_BIN=$(top_builddir)/src/metrixd$(EXEEXT)
 BITCOIN_WIN_INSTALLER=$(PACKAGE)-$(PACKAGE_VERSION)-win32-setup$(EXEEXT)
 
 WINDOWS_PACKAGING = $(top_srcdir)/share/pixmaps/bitcoin.ico \
@@ -31,13 +31,13 @@ distcleancheck:
 $(BITCOIN_WIN_INSTALLER): $(BITCOIND_BIN)
 	$(MAKE) distdir
 	$(MKDIR_P) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(top_builddir)/src/Lindad$(EXEEXT) $(top_builddir)/release
-    STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(top_builddir)/src/Linda-cli$(EXEEXT) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(top_builddir)/src/metrixd$(EXEEXT) $(top_builddir)/release
+    STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(top_builddir)/src/metrix-cli$(EXEEXT) $(top_builddir)/release
 	@test -f $(MAKENSIS) && $(MAKENSIS) $(top_builddir)/share/setup.nsi || \
 	  echo error: could not build $@
 
 $(BITCOIND_BIN):
-	make -C $(top_srcdir)/src Lindad$(EXEEXT)
+	make -C $(top_srcdir)/src metrixd$(EXEEXT)
 
 if TARGET_WINDOWS
 deploy: $(BITCOIN_WIN_INSTALLER)

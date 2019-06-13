@@ -1,5 +1,5 @@
 
-### A list of past and current Lindacoin alerts
+### A list of past and current Metrix alerts
 
 | ID     | Sent (UTC)  | Expires (UTC)        | Versions    | Priority  | Message   |
 | ------ | ----------- | -------------------- | ----------- |---------- | --------- |

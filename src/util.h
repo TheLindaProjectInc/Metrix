@@ -104,7 +104,7 @@ extern bool fMasterNode;
 extern bool fLiteMode;
 extern int nInstantXDepth;
 extern int nDarksendRounds;
-extern int nAnonymizeLindaAmount;
+extern int nAnonymizeMetrixAmount;
 extern int nLiquidityProvider;
 extern bool fEnableDarksend;
 extern int64_t enforceMasternodePaymentsTime;
@@ -199,7 +199,7 @@ bool TryCreateDirectory(const boost::filesystem::path& p);
 bool TruncateFile(FILE *file, unsigned int length);
 int RaiseFileDescriptorLimit(int nMinFD);
 void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length);
-boost::filesystem::path GetDefaultDataDir();
+boost::filesystem::path GetDefaultDataDir(const std::string dirName="metrix");
 const boost::filesystem::path &GetDataDir(bool fNetSpecific = true);
 boost::filesystem::path GetConfigFile();
 boost::filesystem::path GetPidFile();
@@ -220,6 +220,7 @@ void SetMockTime(int64_t nMockTimeIn);
 std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 void runCommand(std::string strCommand);
+void checkMigrateDataDir();
 
 
 
@@ -545,7 +546,7 @@ inline uint32_t ByteReverse(uint32_t value)
 //    threadGroup.create_thread(boost::bind(&LoopForever<boost::function<void()> >, "nothing", f, milliseconds));
 template <typename Callable> void LoopForever(const char* name,  Callable func, int64_t msecs)
 {
-    std::string s = strprintf("Linda-%s", name);
+    std::string s = strprintf("Metrix-%s", name);
     RenameThread(s.c_str());
     LogPrintf("%s thread start\n", name);
     try
@@ -573,7 +574,7 @@ template <typename Callable> void LoopForever(const char* name,  Callable func, 
 // .. and a wrapper that just calls func once
 template <typename Callable> void TraceThread(const char* name,  Callable func)
 {
-    std::string s = strprintf("Linda-%s", name);
+    std::string s = strprintf("Metrix-%s", name);
     RenameThread(s.c_str());
     try
     {

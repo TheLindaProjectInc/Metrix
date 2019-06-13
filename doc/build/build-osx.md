@@ -58,7 +58,7 @@ System requirements
 --------------------
 
 C++ compilers are memory-hungry. It is recommended to have at least 1 GB of
-memory available when compiling LindaCoin Core. With 512MB of memory or less
+memory available when compiling Metrix Core. With 512MB of memory or less
 compilation will take much longer due to swap thrashing.
 
 # STATIC BUILD INSTRUCTIONS
@@ -121,14 +121,14 @@ make depend
 make
 ```
 
-### Building `Lindad`
+### Building `metrixd`
 
 1. Clone the github tree to get the source code and go into the directory.
 ```
-git clone https://github.com/TheLindaProjectInc/linda.git
-cd linda
+git clone https://github.com/TheLindaProjectInc/metrix.git
+cd metrix
 ```
-2.  Build Lindad:
+2.  Build metrixd:
 ```
 cd src
 make -f makefile.osx STATIC=1

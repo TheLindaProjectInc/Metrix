@@ -4,7 +4,7 @@
 #define VER_PRODUCTVERSION_STR STRINGIZE(CLIENT_VERSION_MAJOR) "." STRINGIZE(CLIENT_VERSION_MINOR) "." STRINGIZE(CLIENT_VERSION_REVISION) "." STRINGIZE(CLIENT_VERSION_BUILD)
 #define VER_FILEVERSION        VER_PRODUCTVERSION
 #define VER_FILEVERSION_STR    VER_PRODUCTVERSION_STR
-#define COPYRIGHT_STR          "2018-" STRINGIZE(COPYRIGHT_YEAR) " The Linda Project Inc developers"
+#define COPYRIGHT_STR          "2019-" STRINGIZE(COPYRIGHT_YEAR) " The Metrix developers"
  VS_VERSION_INFO VERSIONINFO
 FILEVERSION     VER_FILEVERSION
 PRODUCTVERSION  VER_PRODUCTVERSION
@@ -15,14 +15,14 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "Linda Projects Inc"
-            VALUE "FileDescription",    "Lindad (OSS RPC server for Linda)"
+            VALUE "CompanyName",        "Linda Project Inc"
+            VALUE "FileDescription",    "metrixd (OSS RPC server for Metrix)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "Lindad"
+            VALUE "InternalName",       "metrixd"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT/X11 software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
-            VALUE "OriginalFilename",   "Lindad.exe"
-            VALUE "ProductName",        "Lindad"
+            VALUE "OriginalFilename",   "metrixd.exe"
+            VALUE "ProductName",        "metrixd"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END

@@ -119,7 +119,7 @@ void Shutdown()
     static CCriticalSection cs_Shutdown;
     TRY_LOCK(cs_Shutdown, lockShutdown);
     if (!lockShutdown) return;
-    RenameThread("Linda-shutoff");
+    RenameThread("Metrix-shutoff");
     mempool.AddTransactionsUpdated(1);
     StopRPCThreads();
 #ifdef ENABLE_WALLET
@@ -226,7 +226,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -blocknotify=<cmd>     " + _("Execute command when the best block changes (%s in cmd is replaced by block hash)") + "\n";
     strUsage += "  -checkblocks=<n>       " + _("How many blocks to check at startup (default: 500, 0 = all)") + "\n";
     strUsage += "  -checklevel=<n>        " + _("How thorough the block verification is (0-6, default: 1)") + "\n";
-    strUsage += "  -conf=<file>           " + _("Specify configuration file (default: Linda.conf)") + "\n";
+    strUsage += "  -conf=<file>           " + _("Specify configuration file (default: metrix.conf)") + "\n";
 
     if (hmm == HMM_BITCOIND)
     {
@@ -238,7 +238,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -datadir=<dir>         " + _("Specify data directory") + "\n";
     strUsage += "  -loadblock=<file>      " + _("Imports blocks from external blk000?.dat file") + "\n";
     strUsage += "  -par=<n>               " + strprintf(_("Set the number of script verification threads (%u to %d, 0 = auto, <0 = leave that many cores free, default: %d)"), -(int)boost::thread::hardware_concurrency(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS) + "\n";
-    strUsage += "  -pid=<file>            " + _("Specify pid file (default: Lindad.pid)") + "\n";
+    strUsage += "  -pid=<file>            " + _("Specify pid file (default: metrixd.pid)") + "\n";
     strUsage += "  -reindex               " + _("Rebuild blockchain index from current blk000??.dat files") + "\n";
 
     strUsage += "\n" + _("Connection options:") + "\n";
@@ -361,7 +361,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "\n" + _("Darksend options:") + "\n";
     strUsage += "  -enabledarksend=<n>          " + _("Enable use of automated darksend for funds stored in this wallet (0-1, default: 0)") + "\n";
     strUsage += "  -darksendrounds=<n>          " + _("Use N separate masternodes to anonymize funds  (2-8, default: 2)") + "\n";
-    strUsage += "  -anonymizeLindaamount=<n> " + _("Keep N Linda anonymized (default: 0)") + "\n";
+    strUsage += "  -anonymizeMetrixamount=<n> " + _("Keep N MRX anonymized (default: 0)") + "\n";
     strUsage += "  -liquidityprovider=<n>       " + _("Provide liquidity to Darksend by infrequently mixing coins on a continual basis (0-100, default: 0, 1=very frequent, high fees, 100=very infrequent, low fees)") + "\n";
 
     strUsage += "\n" + _("InstantX options:") + "\n";
@@ -401,7 +401,7 @@ struct CImportingNow
 };
 
 void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
-    RenameThread("Linda-loadblk");
+    RenameThread("Metrix-loadblk");
 
      // -reindex
     if (fReindex) {
@@ -454,7 +454,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles) {
     }
 }
 
-/** Initialize Lindacoin.
+/** Initialize Metrix.
  *  @pre Parameters should be parsed and config file should be read.
  */
 bool AppInit2(boost::thread_group& threadGroup)
@@ -670,7 +670,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // Sanity check
     if (!InitSanityCheck())
-        return InitError(_("Initialization sanity check failed. Linda is shutting down."));
+        return InitError(_("Initialization sanity check failed. Metrix is shutting down."));
 
     std::string strDataDir = GetDataDir().string();
 #ifdef ENABLE_WALLET
@@ -678,18 +678,18 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
         return InitError(strprintf(_("Wallet %s resides outside data directory %s"), strWalletFile, strDataDir));
 #endif
-    // Make sure only a single Lindacoin process is using the data directory.
+    // Make sure only a single Metrix process is using the data directory.
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
     FILE* file = fopen(pathLockFile.string().c_str(), "a"); // empty lock file; created if it doesn't exist.
     if (file) fclose(file);
     static boost::interprocess::file_lock lock(pathLockFile.string().c_str());
     if (!lock.try_lock())
-        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. Linda Core is probably already running."), strDataDir));
+        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. Metrix Core is probably already running."), strDataDir));
 
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
     LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    LogPrintf("Linda version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
+    LogPrintf("Metrix version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
     LogPrintf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
 #ifdef ENABLE_WALLET
     LogPrintf("Using BerkeleyDB version %s\n", DbEnv::version(0, 0, 0));
@@ -1102,10 +1102,10 @@ bool AppInit2(boost::thread_group& threadGroup)
                 InitWarning(msg);
             }
             else if (nLoadWalletRet == DB_TOO_NEW)
-                strErrors << _("Error loading wallet.dat: Wallet requires newer version of Linda") << "\n";
+                strErrors << _("Error loading wallet.dat: Wallet requires newer version of Metrix") << "\n";
             else if (nLoadWalletRet == DB_NEED_REWRITE)
             {
-                strErrors << _("Wallet needed to be rewritten: restart Linda to complete") << "\n";
+                strErrors << _("Wallet needed to be rewritten: restart Metrix to complete") << "\n";
                 LogPrintf("%s", strErrors.str());
                 return InitError(strErrors.str());
             }
@@ -1312,15 +1312,15 @@ bool AppInit2(boost::thread_group& threadGroup)
         nDarksendRounds = 99999;
     }
 
-    nAnonymizeLindaAmount = GetArg("-anonymizeLindaamount", 0);
-    if(nAnonymizeLindaAmount > 999999) nAnonymizeLindaAmount = 999999;
-    if(nAnonymizeLindaAmount < 2) nAnonymizeLindaAmount = 2;
+    nAnonymizeMetrixAmount = GetArg("-anonymizeMetrixamount", 0);
+    if(nAnonymizeMetrixAmount > 999999) nAnonymizeMetrixAmount = 999999;
+    if(nAnonymizeMetrixAmount < 2) nAnonymizeMetrixAmount = 2;
 
     bool fEnableInstantX = GetBoolArg("-enableinstantx", true);
     if(fEnableInstantX){
         nInstantXDepth = GetArg("-instantxdepth", 5);
         if(nInstantXDepth > 60) nInstantXDepth = 60;
-        if(nInstantXDepth < 0) nAnonymizeLindaAmount = 0;
+        if(nInstantXDepth < 0) nAnonymizeMetrixAmount = 0;
     } else {
         nInstantXDepth = 0;
     }
@@ -1334,14 +1334,14 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("fLiteMode %d\n", fLiteMode);
     LogPrintf("nInstantXDepth %d\n", nInstantXDepth);
     LogPrintf("Darksend rounds %d\n", nDarksendRounds);
-    LogPrintf("Anonymize Linda Amount %d\n", nAnonymizeLindaAmount);
+    LogPrintf("Anonymize Metrix Amount %d\n", nAnonymizeMetrixAmount);
 
     /* Denominations
        A note about convertability. Within Darksend pools, each denomination
        is convertable to another.
        For example:
-       1Linda+1000 == (.1Linda+100)*10
-       10Linda+10000 == (1Linda+1000)*10
+       1Metrix+1000 == (.1Metrix+100)*10
+       10Metrix+10000 == (1Metrix+1000)*10
     */
     darkSendDenominations.push_back( (100000      * COIN)+100000000 );    
     darkSendDenominations.push_back( (10000       * COIN)+10000000 );

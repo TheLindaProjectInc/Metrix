@@ -139,11 +139,11 @@ cd ..
 
 **Note**: When sudo asks for a password, enter the password for the user `gitianuser` not for `root`.
 
-Clone the git repositories for Linda and Gitian.
+Clone the git repositories for Metrix and Gitian.
 
 ```bash
 git clone https://github.com/devrandom/gitian-builder.git
-git clone https://github.com/TheLindaProjectInc/linda.git
+git clone https://github.com/TheLindaProjectInc/metrix.git
 ```
 
 Setting up the Gitian image
@@ -195,7 +195,7 @@ bin/gbuild <package>.yml
 ```
 e.g.
 ```
-bin/gbuild ../linda/contrib/gitian-descriptors/gitian-linux.yml
+bin/gbuild ../metrix/contrib/gitian-descriptors/gitian-linux.yml
 ```
 or if you need to specify a commit for one of the git remotes:
 ```
@@ -203,7 +203,7 @@ bin/gbuild --commit <dir>=<hash/branch> <package>.yml
 ```
 e.g.
 ```
-bin/gbuild --commit linda=master ../linda/contrib/gitian-descriptors/gitian-linux.yml
+bin/gbuild --commit metrix=master ../metrix/contrib/gitian-descriptors/gitian-linux.yml
 ```
 
 The build stage may take some time to complete depending on the speed your machine can compile.

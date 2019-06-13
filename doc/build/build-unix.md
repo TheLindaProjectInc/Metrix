@@ -1,5 +1,5 @@
 Copyright (c) 2009-2012 Bitcoin Developers  
-Copyright (c) 2017-2019 The Linda Project Inc Developers  
+Copyright (c) 2017-2019 Metrix Developers  
 Distributed under the MIT/X11 software license, see the accompanying
 file license.txt or http://www.opensource.org/licenses/mit-license.php.
 This product includes software developed by the OpenSSL Project for use in
@@ -38,7 +38,7 @@ System requirements
 --------------------
 
 C++ compilers are memory-hungry. It is recommended to have at least 1 GB of
-memory available when compiling LindaCoin Core. With 512MB of memory or less
+memory available when compiling Metrix Core. With 512MB of memory or less
 compilation will take much longer due to swap thrashing.
 
 Dependency Build Instructions: Ubuntu & Debian
@@ -66,7 +66,7 @@ Use build in Ubuntu + Debian Berkley DB with this.
 
     sudo apt install libdb-dev libdb++-dev
 
-Alternatvely use the following to retain compatibility. Make a note of the library install location thats returned after "make install". you will need this for the Lindad configure command.
+Alternatvely use the following to retain compatibility. Make a note of the library install location thats returned after "make install". you will need this for the metrixd configure command.
 
     cd ~  
     wget 'http://download.oracle.com/berkeley-db/db-5.0.32.NC.tar.gz'
@@ -93,17 +93,17 @@ Notes
 symbols, which reduces the executable size by about 90%.
 
 
-Build Lindad
+Build metrixd
 ----
 
-This builds Lindad and Linda-cli using the dynamic dependancies of the current system. Change the DB version below to reflect the version you installed.
+This builds metrixd and metrix-cli using the dynamic dependancies of the current system. Change the DB version below to reflect the version you installed.
 
 ```
 ./autogen.sh
 ./configure --with-incompatible-bdb BDB_LIBS="-L/usr/local/BerkeleyDB.5.0/lib -ldb_cxx-5.0" BDB_CFLAGS="-I/usr/local/BerkeleyDB.5.0/include"
 make
-strip src/Lindad
-strip src/Lindad-cli
+strip src/metrixd
+strip src/metrixd-cli
 ```
 
 If you receive an error on x64 Linux machines during the configure command about missing boost libraries add the following configure flag. Boost libraries may be somewhere else on x64 machines.
@@ -133,27 +133,27 @@ Install Linux development tools
 sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg-config libgmp3-dev libevent-dev bsdmainutils
 ```
   
-Get the Linda source code
+Get the Metrix source code
 ----
 
-Clone the Lindacoin repository
+Clone the Metrix repository
 
-	git clone https://github.com/TheLindaProjectInc/linda.git Linda
+	git clone https://github.com/TheLindaProjectInc/metrix.git Metrix
 
 
 ## The depends build systems
 
-The depends build system will automatically download and compile the static packages needed to complete a build of the Linda executables.
+The depends build system will automatically download and compile the static packages needed to complete a build of the Metrix executables.
 
 In its simplest form it will download and compile the packages for the system host type its being run from. E.g. Linux x64  
 The same depends system can be used to cross-compile binaries for other operating systems. See the [build-linux-crosscompile.md](build-linux-crosscompile.md) doc for full instruction on this.
 
 To build dependencies for the current arch+OS:
 
-    cd Linda/depends
+    cd Metrix/depends
     make NO_QT=1
 
-### Compiling Lindad
+### Compiling metrixd
 
 
 ```
@@ -161,7 +161,7 @@ cd ..
 ./autogen.sh
 ./configure
 make
-strip src/Lindad
-strip src/Lindad-cli
+strip src/metrixd
+strip src/metrixd-cli
 
 ```
