@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/TheLindaProjectInc/Linda.svg?branch=master)](https://travis-ci.com/TheLindaProjectInc/Linda)
+[![Build Status](https://travis-ci.com/TheLindaProjectInc/Metrix.svg?branch=master)](https://travis-ci.com/TheLindaProjectInc/Metrix)
 <p align="center">
     <img src="logo.png">
 </p>
