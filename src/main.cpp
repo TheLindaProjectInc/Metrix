@@ -3861,6 +3861,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
 
     int nLoaded = 0;
     try {
+        // This takes over fileIn and calls fclose() on it in the CBufferedFile destructor
         CBufferedFile blkdat(fileIn, 2 * MAX_BLOCK_SIZE, MAX_BLOCK_SIZE + 8, SER_DISK, CLIENT_VERSION);
         uint64_t nRewind = blkdat.GetPos();
         while (!blkdat.eof()) {
@@ -3943,7 +3944,6 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
                 LogPrintf("%s() : Deserialize or I/O error caught during load:%s\n", __func__, e.what());
             }
         }
-        fclose(fileIn);
     } catch (std::runtime_error& e) {
         AbortNode(std::string("System error: ") + e.what());
     }
