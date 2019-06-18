@@ -2961,7 +2961,7 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
         if (ppindex)
             *ppindex = pindex;
         if (pindex->nStatus & BLOCK_FAILED_MASK)
-            return state.Invalid(error("AcceptBlock() : block is marked invalid"), 0, "duplicate");
+            return state.Invalid(error("%s : block is marked invalid", __func__), 0, "duplicate");
             return true;
     }
 
@@ -2971,24 +2971,24 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
         // Get prev block index
         BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
         if (mi == mapBlockIndex.end())
-            return state.DoS(10, error("AcceptBlock() : prev block not found"), 0, "bad-prevblk");
+            return state.DoS(10, error("%s : prev block not found", __func__), 0, "bad-prevblk");
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight + 1;
 
         // Check timestamp against prev
         if (block.GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(block.GetBlockTime()) < pindexPrev->GetBlockTime())
-            return state.Invalid(error("AcceptBlock() : block's timestamp is too early"),
+            return state.Invalid(error("%s : block's timestamp is too early", __func__),
                                  REJECT_INVALID, "time-too-old");
 
         // Check that the block chain matches the known block chain up to a checkpoint
         if (!Checkpoints::CheckBlock(nHeight, hash))
-            return state.DoS(100, error("AcceptBlock() : rejected by hardened checkpoint lock-in at %d", nHeight),
+            return state.DoS(100, error("%s : rejected by hardened checkpoint lock-in at %d", __func__, nHeight),
                              REJECT_CHECKPOINT, "checkpoint mismatch");
 
         // Don't accept any forks from the main chain prior to last checkpoint
         CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint();
         if (pcheckpoint && nHeight < pcheckpoint->nHeight)
-            return state.DoS(100, error("AcceptBlock() : forked chain older than last checkpoint (height %d)", nHeight));
+            return state.DoS(100, error("%s : forked chain older than last checkpoint (height %d)", __func__, nHeight));
     }
     if (pindex == NULL)
         pindex = AddToBlockIndex(block);
