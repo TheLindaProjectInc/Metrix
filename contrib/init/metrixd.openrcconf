@@ -1,7 +1,7 @@
 # /etc/conf.d/metrixd: config file for /etc/init.d/metrixd
 
 # Config file location
-#METRIXD_CONFIGFILE="/etc/Linda/Linda.conf"
+#METRIXD_CONFIGFILE="/etc/Metrix/Metrix.conf"
 
 # What directory to write pidfile to?  (created and owned by $METRIXD_USER)
 #METRIXD_PIDDIR="/var/run/metrixd"
@@ -13,8 +13,8 @@
 #METRIXD_DATADIR="/var/lib/metrixd"
 
 # User and group to own metrixd process
-#METRIXD_USER="Linda"
-#METRIXD_GROUP="Linda"
+#METRIXD_USER="Metrix"
+#METRIXD_GROUP="Metrix"
 
 # Path to metrixd executable
 #METRIXD_BIN="/usr/bin/metrixd"
