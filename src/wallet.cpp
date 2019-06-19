@@ -1495,7 +1495,7 @@ void CWallet::AvailableCoins(
                 continue;
 
             int nDepth = pcoin->GetDepthInMainChain();
-            if (nDepth <= 0) // LindaNOTE: coincontrol fix / ignore 0 confirm
+            if (nDepth <= 0) // MetrixNOTE: coincontrol fix / ignore 0 confirm
                 continue;
 
             // do not use IX for inputs that have less then 6 blockchain confirmations
@@ -2012,14 +2012,14 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, unsigned int nSpendTime, 
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true, coinControl, false, coin_type);
 
-    //if we're doing only denominated, we need to round up to the nearest .1Linda
+    //if we're doing only denominated, we need to round up to the nearest .1Metrix
     if (coin_type == ONLY_DENOMINATED) {
         // Make outputs by looping through denominations, from large to small
         BOOST_FOREACH (int64_t v, darkSendDenominations) {
             int added = 0;
             BOOST_FOREACH (const COutput& out, vCoins) {
                 if (out.tx->vout[out.i].nValue == v                                               //make sure it's the denom we're looking for
-                    && nValueRet + out.tx->vout[out.i].nValue < nTargetValue + (0.1 * COIN) + 100 //round the amount up to .1Linda over
+                    && nValueRet + out.tx->vout[out.i].nValue < nTargetValue + (0.1 * COIN) + 100 //round the amount up to .1Metrix over
                     && added <= 100) {                                                            //don't add more than 100 of one denom type
                     CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
                     int rounds = GetInputDarksendRounds(vin);
@@ -2147,10 +2147,10 @@ bool CWallet::SelectCoinsByDenominations(int nDenom, CAmount nValueMin, CAmount 
 
             // Function returns as follows:
             //
-            // bit 0 - 100Linda+1 ( bit on if present )
-            // bit 1 - 10Linda+1
-            // bit 2 - 1Linda+1
-            // bit 3 - .1Linda+1
+            // bit 0 - 100Metrix+1 ( bit on if present )
+            // bit 1 - 10Metrix+1
+            // bit 2 - 1Metrix+1
+            // bit 3 - .1Metrix+1
 
             CTxIn vin = CTxIn(out.tx->GetHash(), out.i);
 
@@ -2479,7 +2479,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
                     } else if (coin_type == ONLY_NONDENOMINATED) {
                         strFailReason = _("Unable to locate enough Darksend non-denominated funds for this transaction.");
                     } else if (coin_type == ONLY_NONDENOMINATED_NOTMN) {
-                        strFailReason = _("Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 Linda.");
+                        strFailReason = _("Unable to locate enough Darksend non-denominated funds for this transaction that are not equal 1000 MRX.");
                     } else {
                         strFailReason = _("Unable to locate enough Darksend denominated funds for this transaction.");
                         strFailReason += _("Darksend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.");

@@ -15,13 +15,13 @@ BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
             VALUE "CompanyName",        "Linda Projects Inc"
-            VALUE "FileDescription",    "Lindad (OSS RPC server for Linda)"
+            VALUE "FileDescription",    "metrixd (OSS RPC server for Metrix)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "Lindad"
+            VALUE "InternalName",       "metrixd"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT/X11 software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
-            VALUE "OriginalFilename",   "Lindad.exe"
-            VALUE "ProductName",        "Lindad"
+            VALUE "OriginalFilename",   "metrixd.exe"
+            VALUE "ProductName",        "metrixd"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END

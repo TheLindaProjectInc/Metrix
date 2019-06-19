@@ -134,7 +134,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         LOCK2(cs_main, mempool.cs);
         CBlockIndex* pindexPrev = chainActive.Tip();
         CCoinsViewCache view(pcoinsTip);
-        //>Linda<
+        //>Metrix<
         // Priority order to process transactions
         list<COrphan> vOrphan; // list memory doesn't move
         map<uint256, vector<COrphan*> > mapDependers;
@@ -305,7 +305,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
         if (fDebug && GetBoolArg("-printpriority", false))
             LogPrintf("CreateNewBlock(): total size %u\n", nBlockSize);
-        // >Linda<
+        // >Metrix<
         txNew.vin[0].scriptSig = CScript() << nHeight << OP_0;
         // Compute final coinbase transaction.
         if (!fProofOfStake) {
@@ -391,7 +391,7 @@ bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     // Process this block the same as if we had received it from another node
     CValidationState state;
     if (!ProcessBlock(state, NULL, pblock))
-        return error("LindacoinMiner : ProcessBlock, block not accepted");
+        return error("MetrixcoinMiner : ProcessBlock, block not accepted");
 
     return true;
 }
@@ -440,7 +440,7 @@ void ThreadStakeMiner(CWallet* pwallet, bool fProofOfStake)
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
     // Make this thread recognisable as the mining thread
-    RenameThread("Linda-miner");
+    RenameThread("Metrix-miner");
 
     CReserveKey reservekey(pwallet);
 

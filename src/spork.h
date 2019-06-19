@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The Linda developers
+// Copyright (c) 2015 The Metrix developers
 // Copyright (c) 2009-2012 The Darkcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -30,7 +30,7 @@ using namespace boost;
 
 
 #define SPORK_1_MASTERNODE_PAYMENTS_ENFORCEMENT_DEFAULT       2428537599  //2046-4-8 1:46:39 GMT
-#define SPORK_2_MAX_VALUE_DEFAULT                             112        //500 Linda
+#define SPORK_2_MAX_VALUE_DEFAULT                             112        //500 Metrix
 #define SPORK_3_REPLAY_BLOCKS_DEFAULT                         0
 #define SPORK_4_RECONVERGE_DEFAULT                            1420070400  //2047-1-1
 

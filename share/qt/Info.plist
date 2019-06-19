@@ -7,23 +7,23 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Linda-Qt</string>
+	<string>metrix-Qt</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleExecutable</key>
-	<string>Linda-Qt</string>
+	<string>metrix-Qt</string>
 	<key>CFBundleIdentifier</key>
-	<string>co.Linda.Linda-Qt</string>
+	<string>co.metrix.metrix-Qt</string>
         <key>CFBundleURLTypes</key>
         <array>
           <dict>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>CFBundleURLName</key>
-            <string>co.Linda.LindaPayment</string>
+            <string>co.Metrix.MetrixPayment</string>
             <key>CFBundleURLSchemes</key>
             <array>
-              <string>Linda</string>
+              <string>Metrix</string>
             </array>
           </dict>
         </array>

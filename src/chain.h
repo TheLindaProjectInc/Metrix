@@ -338,7 +338,7 @@ public:
 
     void SetPOSDetail(const CBlock& block)
     {
-        // lindacoin
+        // metrix
         // when doin head first sync we cannot
         // set the POS details of the block
         // so we must make sure we set these details

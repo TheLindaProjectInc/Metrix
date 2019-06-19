@@ -44,11 +44,14 @@ bool AppInit(int argc, char* argv[])
         //
         // If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
         ParseParameters(argc, argv);
+        // check migrate linda datadir to metrix datadir
+        checkMigrateDataDir();
         if (!boost::filesystem::is_directory(GetDataDir(false))) {
             fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
             return false;
         }
-        try {
+        try 
+        {
             ReadConfigFile(mapArgs, mapMultiArgs);
         } catch (std::exception& e) {
             fprintf(stderr, "Error reading configuration file: %s\n", e.what());
@@ -61,13 +64,13 @@ bool AppInit(int argc, char* argv[])
         }
 
         if (mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
-            std::string strUsage = _("Linda Version") + " " + _("version") + " " + FormatFullVersion() + "\n";
+            std::string strUsage = _("Metrix Version") + " " + _("version") + " " + FormatFullVersion() + "\n";
 
             if (!mapArgs.count("-version")) {
                 strUsage += LicenseInfo();
             } else {
                 strUsage += "\n" + _("Usage:") + "\n" +
-                            "  Lindad [options]                     " + _("Start Linda Core Daemon") + "\n";
+                            "  metrixd [options]                     " + _("Start Metrix Core Daemon") + "\n";
 
                 strUsage += "\n" + HelpMessage(HMM_BITCOIND);
             }
@@ -77,17 +80,17 @@ bool AppInit(int argc, char* argv[])
 
         // Command-line RPC
         for (int i = 1; i < argc; i++)
-            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "Linda:"))
+            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "Metrix:"))
                 fCommandLine = true;
 
         if (fCommandLine) {
-            fprintf(stderr, "Error: There is no RPC client functionality in Lindad anymore. Use the Linda-cli utility instead.\n");
+            fprintf(stderr, "Error: There is no RPC client functionality in metrixd anymore. Use the metrix-cli utility instead.\n");
             exit(1);
         }
 #ifndef WIN32
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon) {
-            fprintf(stdout, "Linda server starting\n");
+            fprintf(stdout, "Metrix server starting\n");
 
             // Daemonize
             pid_t pid = fork();

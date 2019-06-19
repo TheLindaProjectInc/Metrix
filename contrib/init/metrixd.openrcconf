@@ -1,0 +1,26 @@
+# /etc/conf.d/metrixd: config file for /etc/init.d/metrixd
+
+# Config file location
+#METRIXD_CONFIGFILE="/etc/Linda/Linda.conf"
+
+# What directory to write pidfile to?  (created and owned by $METRIXD_USER)
+#METRIXD_PIDDIR="/var/run/metrixd"
+
+# What filename to give the pidfile
+#METRIXD_PIDFILE="${METRIXD_PIDDIR}/metrixd.pid"
+
+# Where to write metrixd data (be mindful that the blockchain is large)
+#METRIXD_DATADIR="/var/lib/metrixd"
+
+# User and group to own metrixd process
+#METRIXD_USER="Linda"
+#METRIXD_GROUP="Linda"
+
+# Path to metrixd executable
+#METRIXD_BIN="/usr/bin/metrixd"
+
+# Nice value to run metrixd under
+#METRIXD_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+METRIXD_OPTS="-disablewallet"

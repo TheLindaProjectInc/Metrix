@@ -113,4 +113,4 @@ void static inline WriteBE64(unsigned char* ptr, uint64_t x)
 #endif
 }
 
-#endif // Linda_CRYPTO_COMMON_H
+#endif // Metrix_CRYPTO_COMMON_H

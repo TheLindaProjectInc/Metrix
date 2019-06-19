@@ -193,7 +193,7 @@ ifeq (${USE_WALLET}, 1)
         obj/walletdb.o
 endif
 
-all: Lindad
+all: metrixd
 
 #
 # LevelDB support
@@ -229,11 +229,11 @@ obj/%.o: %.cpp
 	      -e '/^$$/ d' -e 's/$$/ :/' < $(@:%.o=%.d) >> $(@:%.o=%.P); \
 	  rm -f $(@:%.o=%.d)
 
-Lindad: $(OBJS:obj/%=obj/%)
+metrixd: $(OBJS:obj/%=obj/%)
 	$(LINK) $(xCXXFLAGS) -o $@ $^ $(xLDFLAGS) $(LIBS)
 
 clean:
-	-rm -f Lindad
+	-rm -f metrixd
 	-rm -f obj/*.o
 	-rm -f obj/*.P
 	-rm -f obj/build.h

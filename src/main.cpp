@@ -84,7 +84,7 @@ void EraseOrphansFor(NodeId peer);
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "Linda Signed Message:\n";
+const string strMessageMagic = "Metrix Signed Message:\n";
 
 std::set<uint256> setValidatedTx;
 
@@ -1108,7 +1108,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         return state.DoS(100, error("AcceptableInputs : coinstake as individual tx"));
 
     // Rather not work on nonstandard transactions (unless -testnet)
-    //alot of Linda transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
+    //alot of Metrix transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
     if (false && !(Params().NetworkID() == CBaseChainParams::TESTNET) && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
@@ -1876,7 +1876,7 @@ static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck()
 {
-    RenameThread("Linda-scriptch");
+    RenameThread("Metrix-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -2583,7 +2583,7 @@ bool ReceivedBlockTransactions(const CBlock& block, CValidationState& state, CBl
          pindexNew->nSequenceId = nBlockSequenceId++;
     }
 
-    // lindacoin: SetExtractionSource
+    // metrix: SetExtractionSource
     pindexNew->SetPOSDetail(block);
 
     // ppcoin: compute stake entropy bit for stake modifier
@@ -3079,7 +3079,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
     return true;
 }
 
-// lindacoin perform POS checks on block during connect tip
+// metrix perform POS checks on block during connect tip
 // to ensure we have all the transactions and prev blocks
 bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex)
 {
@@ -3102,7 +3102,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
                                      REJECT_CHECKPOINT, "pos check fialed");
         }
         // PoW is checked in CheckBlock()
-        // Linda adds POW block hashes to hash proof when confirming POS blocks
+        // Metrix adds POW block hashes to hash proof when confirming POS blocks
         if (block.IsProofOfWork())
             hashProof = block.GetPoWHash();
             
@@ -3416,7 +3416,7 @@ bool AbortNode(const std::string &strMessage, const std::string &userMessage)
 }
 
 //#ifdef ENABLE_WALLET
-// Linda: attempt to generate suitable proof-of-stake
+// Metrix: attempt to generate suitable proof-of-stake
 bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
 {
     // if we are trying to sign
@@ -4677,7 +4677,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         for (unsigned int n = 0; n < nCount; n++) {
             vRecv >> headers[n];
             ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
-            // lindacoin: ignore vchBlockSig this shouldn't be sent and should be removed in the future
+            // metrix: ignore vchBlockSig this shouldn't be sent and should be removed in the future
             ReadCompactSize(vRecv); 
         }
 

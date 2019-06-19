@@ -59,7 +59,7 @@ static const int POW_REWARD_V2_FULL = 13726; // ~3% reduction from V1 block rewa
 static const int V3_START_BLOCK = 580000; // (April 7, 2018)
 static const int64_t COIN_YEAR_REWARD_V3 = (50 * CENT);
 static const int64_t MASTERNODE_REWARD_V3 = (3200 * COIN);     // ~60% ROI over 12 months
-static const int64_t MAX_STAKE_VALUE = (100 * 1000000 * COIN); // POS rewards will be capped to 100 million Linda
+static const int64_t MAX_STAKE_VALUE = (100 * 1000000 * COIN); // POS rewards will be capped to 100 million MRX
 
 /*
     At 15 signatures, 1/2 of the masternode network can be owned by
@@ -561,7 +561,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
 bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** pindex, CDiskBlockPos* dbp = NULL);
 bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBlockIndex** ppindex= NULL);
 
-// Linda: attempt to generate suitable proof-of-stake
+// Metrix: attempt to generate suitable proof-of-stake
 bool SignBlock(CBlock& block, CWallet& keystore, int64_t nFees);
 
 //UTXO: The public key that signs must match the public key associated with the first utxo of the coinstake tx.

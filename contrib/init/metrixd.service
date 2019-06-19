@@ -1,0 +1,22 @@
+[Unit]
+Description=Metrix's distributed currency daemon
+After=network.target
+
+[Service]
+User=Metrix
+Group=Metrix
+
+Type=forking
+PIDFile=/var/lib/metrixd/metrixd.pid
+ExecStart=/usr/bin/metrixd -daemon -pid=/var/lib/metrixd/metrixd.pid \
+-conf=/etc/Metrix/Metrix.conf -datadir=/var/lib/metrixd -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
