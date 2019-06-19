@@ -359,6 +359,7 @@ endif
 
   metrix_tx_LDADD += \
   $(BOOST_LIBS) \
+  $(SSL_LIBS) \
   $(CRYPTO_LIBS)
 metrix_tx_SOURCES = bitcoin-tx.cpp
 metrix_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
