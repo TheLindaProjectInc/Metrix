@@ -246,7 +246,8 @@ case $host in
          dnl add default homebrew paths
          openssl_prefix=`$BREW --prefix openssl`
          bdb_prefix=`$BREW --prefix berkeley-db4`
-         export PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+         PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+         export PKG_CONFIG_PATH
          CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
          LIBS="$LIBS -L/$bdb_prefix/lib"
        fi
@@ -266,7 +267,7 @@ case $host in
      ;;
 esac
 
-if test x$use_debug == xyes; then
+if test x$use_debug = xyes; then
   CXXFLAGS="$DEBUG_CXXFLAGS $CXXFLAGS"
 else
   CXXFLAGS="$RELEASE_CXXFLAGS $CXXFLAGS"
@@ -276,20 +277,20 @@ if test x$use_comparison_tool != xno; then
   AC_SUBST(JAVA_COMPARISON_TOOL, $use_comparison_tool)
 fi
 
-if test x$use_lcov == xyes; then
-  if test x$LCOV == x; then
+if test x$use_lcov = xyes; then
+  if test x$LCOV = x; then
     AC_MSG_ERROR("lcov testing requested but lcov not found")
   fi
-  if test x$GCOV == x; then
+  if test x$GCOV = x; then
     AC_MSG_ERROR("lcov testing requested but gcov not found")
   fi
-  if test x$JAVA == x; then
+  if test x$JAVA = x; then
     AC_MSG_ERROR("lcov testing requested but java not found")
   fi
-  if test x$GENHTML == x; then
+  if test x$GENHTML = x; then
     AC_MSG_ERROR("lcov testing requested but genhtml not found")
   fi
-  if test x$use_comparison_tool == x; then
+  if test x$use_comparison_tool = x; then
     AC_MSG_ERROR("lcov testing requested but comparison tool was not specified")
   fi
   LCOV="$LCOV --gcov-tool=$GCOV"
@@ -550,7 +551,7 @@ AC_ARG_WITH([daemon],
 
 if test x$use_pkgconfig = xyes; then
 
-  if test x$PKG_CONFIG == x; then
+  if test x$PKG_CONFIG = x; then
     AC_MSG_ERROR(pkg-config not found.)]
   fi
 
@@ -595,13 +596,13 @@ else
       LIBS="$QT_LIBS"
     fi
 
-    if test x$TARGET_OS == xwindows; then
+    if test x$TARGET_OS = xwindows; then
       AC_CHECK_LIB([imm32],      [main],, AC_MSG_ERROR(libimm32 not found. Install it or use --without-qt.))
     fi
 
     #TODO: These are only needed when they're linked directly to parent libs. It really has nothing to do with windows.
     #Instead, check for missing functions in parent libs and assume static if they're absent.
-    if test x$TARGET_OS == xwindows; then
+    if test x$TARGET_OS = xwindows; then
       AC_CHECK_LIB([qcncodecs],      [main],, AC_MSG_ERROR(libqcncodecs not found. Install it or use --without-qt.))
       AC_CHECK_LIB([qjpcodecs],      [main],, AC_MSG_ERROR(libqjpcodecs not found. Install it or use --without-qt.))
       AC_CHECK_LIB([qkrcodecs],      [main],, AC_MSG_ERROR(libqkrcodecs not found. Install it or use --without-qt.))
@@ -773,7 +774,7 @@ if test x$use_qt = xyes; then
   dnl enable qr support
   AC_MSG_CHECKING([if qr should be enabled])
   if test x$have_qrencode = xno; then
-    if test x$use_qr == xyes; then
+    if test x$use_qr = xyes; then
      AC_MSG_ERROR("QR support requested but cannot be built. use --without-qrencode")
     fi
     AC_MSG_RESULT(no)
@@ -809,9 +810,9 @@ fi
 
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
-AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet == xyes])
+AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
 AM_CONDITIONAL([USE_QRCODE], [test x$use_qr = xyes])
-AM_CONDITIONAL([USE_LCOV],[test x$use_lcov == xyes])
+AM_CONDITIONAL([USE_LCOV],[test x$use_lcov = xyes])
 AM_CONDITIONAL([USE_COMPARISON_TOOL],[test x$use_comparison_tool != xno])
 AM_CONDITIONAL([EMBEDDED_LEVELDB],[true])
 AM_CONDITIONAL([GLIBC_BACK_COMPAT],[test x$use_glibc_compat = xyes])
