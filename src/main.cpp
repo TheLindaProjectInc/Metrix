@@ -3438,8 +3438,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
 
     if (nSearchTime > nLastCoinStakeSearchTime) {
-        int64_t nSearchInterval = 1;
-        if (wallet.CreateCoinStake(wallet, block.nBits, nSearchInterval, nFees, txCoinStake, key)) {
+        if (wallet.CreateCoinStake(wallet, block.nBits, nSearchTime-nLastCoinStakeSearchTime, nFees, txCoinStake, key)) {
             if (txCoinStake.nTime >= chainActive.Tip()->GetPastTimeLimit() + 1) {
                 // make sure coinstake would meet timestamp protocol
                 //    as it would be the same as the block timestamp
