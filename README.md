@@ -3,10 +3,10 @@
 ![Metrix](logo.png)
 
 # Metrix Coin
-Metrixcoin is a peer to peer hybrid digital currency. It creates utility products that allow Metrix to be used in everyday scenarios. It also offers partnership opportunities to other cryptocurrencies to use the Metrixcoin platform. As the Metrix wallet technology evolves, we strive to simplify the processes of staking or masternode ownership as well as improve your overall wallet experience
+Metrix is a peer to peer hybrid digital currency. It creates utility products that allow Metrix to be used in everyday scenarios. It also offers partnership opportunities to other cryptocurrencies to use the Metrix platform. As the Metrix wallet technology evolves, we strive to simplify the processes of staking or masternode ownership as well as improve your overall wallet experience
 
 ## Wallet Information
-The new Metrixcoin wallet Altitude can be downloaded from the [Altitude Repository](https://github.com/TheLindaProjectInc/Altitude/releases/latest).
+The new Metrix wallet Altitude can be downloaded from the [Altitude Repository](https://github.com/TheLindaProjectInc/Altitude/releases/latest).
 
 If you need the Metrix daemon, download it from the current [Metrix Repository](https://github.com/TheLindaProjectInc/Metrix/releases/latest).
 
@@ -28,7 +28,7 @@ If you need the Metrix daemon, download it from the current [Metrix Repository](
 </table>
 
 ## Masternode
-Metrixcoin’s use of masternodes enables Metrix to have unique features that are not possible in other cryptocurrencies. The Metrix community will operate these masternodes to help keep the network flowing. Our masternodes perform all of the InstantX and private transactions, and are the heart of our blockchain. A masternode is simply a Metrix full node or a computer wallet that stores the complete copy of the blockchain in real time. But, the central nodes are considerably different - they perform more functionalities to give Metrix special features. One example of this is Metrix’s extraordinary speed and instant transactions. This makes Metrix transactions suitable for everyone. Some of the unique functions that these nodes perform are: 
+Metrix’s use of masternodes enables Metrix to have unique features that are not possible in other cryptocurrencies. The Metrix community will operate these masternodes to help keep the network flowing. Our masternodes perform all of the InstantX and private transactions, and are the heart of our blockchain. A masternode is simply a Metrix full node or a computer wallet that stores the complete copy of the blockchain in real time. But, the central nodes are considerably different - they perform more functionalities to give Metrix special features. One example of this is Metrix’s extraordinary speed and instant transactions. This makes Metrix transactions suitable for everyone. Some of the unique functions that these nodes perform are:
 
 ● Increasing the confidentiality of transactions 
 
@@ -38,7 +38,7 @@ Metrixcoin’s use of masternodes enables Metrix to have unique features that ar
 
 ● Activating the budget and cash system in cryptos. 
 
-Masternodes have huge value in supporting the Metrix network. They are part of what defines Metrixcoin from all of the other cryptocurrencies. Making Metrix more efficient, and more prepared for the future.
+Masternodes have huge value in supporting the Metrix network. They are part of what defines Metrix from all of the other cryptocurrencies. Making Metrix more efficient, and more prepared for the future.
 
 *A masternode requires 2 million Metrix Coins.
 

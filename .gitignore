@@ -18,8 +18,7 @@ debug/
 
 src/obj/build.h
 src/univalue/gen
-object_script.metrix-qt.*
-
+    
 # daemons
 src/metrix-tx
 src/metrix-cli
