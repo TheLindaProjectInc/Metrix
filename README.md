@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.com/TheLindaProjectInc/Metrix.svg?branch=V3.4.0.0-dev)](https://travis-ci.com/TheLindaProjectInc/Metrix)
-
-![Metrix](logo.png)
+<p align="center">
+    <img src="logo.png">
+</p>
 
 # Metrix Coin
 Metrix is a peer to peer hybrid digital currency. It creates utility products that allow Metrix to be used in everyday scenarios. It also offers partnership opportunities to other cryptocurrencies to use the Metrix platform. As the Metrix wallet technology evolves, we strive to simplify the processes of staking or masternode ownership as well as improve your overall wallet experience
