@@ -39,8 +39,9 @@ int64_t nMinimumInputValue = 0;
 unsigned int nTxConfirmTarget = 1;
 bool bSpendZeroConfChange = true;
 
-static int64_t GetStakeSplitAmount() { return 100000 * COIN; }
-static int64_t GetStakeCombineThreshold() { return 10000 * COIN; }
+static int64_t GetStakeSplitAmount() { return 1000000 * COIN; }
+static unsigned int GetStakeMaxCombineInputs() { return 100; }
+static int64_t GetStakeCombineThreshold() { return 500000 * COIN; }
 
 int64_t gcd(int64_t n, int64_t m) { return m == 0 ? n : gcd(m, n % m); }
 
@@ -3422,7 +3423,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
             int64_t nTimeWeight = GetWeight((int64_t)pcoin.first->nTime, (int64_t)txNew.nTime);
 
             // Stop adding more inputs if already too many inputs
-            if (txNew.vin.size() >= 100)
+            if (txNew.vin.size() >= GetStakeMaxCombineInputs())
                 break;
             // Stop adding more inputs if value is already pretty significant
             if (nCredit >= GetStakeCombineThreshold())
