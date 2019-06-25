@@ -13,19 +13,16 @@ debug/
 *.in~
 
 #Dev tools & build testing
-.circleci/run-build-locally.sh
-!.circleci/
 .vscode/
 .vs/
 
 src/obj/build.h
 src/univalue/gen
-object_script.Linda-qt.*
-
+    
 # daemons
-src/Linda-tx
-src/Linda-cli
-src/Lindad
+src/metrix-tx
+src/metrix-cli
+src/metrixd
 
 # autotools
 Makefile
@@ -59,9 +56,8 @@ depends/work/*
 libtool
 .dirstamp
 share/setup.nsi
-src/config/bitcoin-config.h
-src/config/bitcoin-config.h.in
-src/config/stamp-h1
+**/bitcoin-config.*
+**/stamp-h1
 !src/config/.empty
 
 # Resources cpp

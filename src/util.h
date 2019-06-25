@@ -76,7 +76,7 @@ extern bool fMasterNode;
 extern bool fLiteMode;
 extern int nInstantXDepth;
 extern int nDarksendRounds;
-extern int nAnonymizeLindaAmount;
+extern int nAnonymizeMetrixAmount;
 extern int nLiquidityProvider;
 extern bool fEnableDarksend;
 extern int64_t enforceMasternodePaymentsTime;
@@ -154,7 +154,7 @@ bool TryCreateDirectory(const boost::filesystem::path& p);
 bool TruncateFile(FILE* file, unsigned int length);
 int RaiseFileDescriptorLimit(int nMinFD);
 void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length);
-boost::filesystem::path GetDefaultDataDir();
+boost::filesystem::path GetDefaultDataDir(const std::string dirName="metrix");
 const boost::filesystem::path& GetDataDir(bool fNetSpecific = true);
 boost::filesystem::path GetConfigFile();
 #ifndef WIN32
@@ -167,6 +167,7 @@ boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate = true);
 #endif
 void ShrinkDebugFile();
 void runCommand(std::string strCommand);
+void checkMigrateDataDir();
 
 inline std::string leftTrim(std::string src, char chr)
 {
@@ -245,7 +246,7 @@ void RenameThread(const char* name);
 template <typename Callable>
 void LoopForever(const char* name, Callable func, int64_t msecs)
 {
-    std::string s = strprintf("Linda-%s", name);
+    std::string s = strprintf("Metrix-%s", name);
     RenameThread(s.c_str());
     LogPrintf("%s thread start\n", name);
     try {
@@ -268,7 +269,7 @@ void LoopForever(const char* name, Callable func, int64_t msecs)
 template <typename Callable>
 void TraceThread(const char* name, Callable func)
 {
-    std::string s = strprintf("Linda-%s", name);
+    std::string s = strprintf("Metrix-%s", name);
     RenameThread(s.c_str());
     try {
         LogPrintf("%s thread start\n", name);

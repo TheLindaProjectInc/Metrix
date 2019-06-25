@@ -147,6 +147,6 @@ Threads
 
 - ThreadRPCServer : Remote procedure call handler, listens on port 8332 for connections and services them.
 
-- ThreadStakeMiner : Linda Staking Thread Miner
+- ThreadStakeMiner : Metrix Staking Thread Miner
 
 - Shutdown : Does an orderly shutdown of everything.

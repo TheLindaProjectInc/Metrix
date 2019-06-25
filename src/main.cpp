@@ -84,7 +84,7 @@ void EraseOrphansFor(NodeId peer);
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "Linda Signed Message:\n";
+const string strMessageMagic = "Metrix Signed Message:\n";
 
 std::set<uint256> setValidatedTx;
 
@@ -1108,7 +1108,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         return state.DoS(100, error("AcceptableInputs : coinstake as individual tx"));
 
     // Rather not work on nonstandard transactions (unless -testnet)
-    //alot of Linda transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
+    //alot of Metrix transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
     if (false && !(Params().NetworkID() == CBaseChainParams::TESTNET) && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
@@ -1876,7 +1876,7 @@ static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck()
 {
-    RenameThread("Linda-scriptch");
+    RenameThread("Metrix-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -2583,7 +2583,7 @@ bool ReceivedBlockTransactions(const CBlock& block, CValidationState& state, CBl
          pindexNew->nSequenceId = nBlockSequenceId++;
     }
 
-    // lindacoin: SetExtractionSource
+    // metrix: SetExtractionSource
     pindexNew->SetPOSDetail(block);
 
     // ppcoin: compute stake entropy bit for stake modifier
@@ -3031,7 +3031,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
                              REJECT_INVALID, "coinbase timestamp too early");
 
         // Check coinstake timestamp
-        if (block.IsProofOfStake() && !CheckCoinStakeTimestamp(nHeight, block.GetBlockTime(), (int64_t)block.vtx[1].nTime))
+        if (block.IsProofOfStake() && !CheckCoinStakeTimestamp(block.GetBlockTime(), (int64_t)block.vtx[1].nTime))
             return state.DoS(50, error("AcceptBlock() : coinstake timestamp violation nTimeBlock=%d nTimeTx=%u", block.GetBlockTime(), block.vtx[1].nTime),
                              REJECT_INVALID, "coinbase timestamp violation");
 
@@ -3079,7 +3079,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
     return true;
 }
 
-// lindacoin perform POS checks on block during connect tip
+// metrix perform POS checks on block during connect tip
 // to ensure we have all the transactions and prev blocks
 bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex)
 {
@@ -3102,7 +3102,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
                                      REJECT_CHECKPOINT, "pos check fialed");
         }
         // PoW is checked in CheckBlock()
-        // Linda adds POW block hashes to hash proof when confirming POS blocks
+        // Metrix adds POW block hashes to hash proof when confirming POS blocks
         if (block.IsProofOfWork())
             hashProof = block.GetPoWHash();
             
@@ -3416,7 +3416,7 @@ bool AbortNode(const std::string &strMessage, const std::string &userMessage)
 }
 
 //#ifdef ENABLE_WALLET
-// Linda: attempt to generate suitable proof-of-stake
+// Metrix: attempt to generate suitable proof-of-stake
 bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
 {
     // if we are trying to sign
@@ -3438,8 +3438,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
 
     if (nSearchTime > nLastCoinStakeSearchTime) {
-        int64_t nSearchInterval = 1;
-        if (wallet.CreateCoinStake(wallet, block.nBits, nSearchInterval, nFees, txCoinStake, key)) {
+        if (wallet.CreateCoinStake(wallet, block.nBits, nSearchTime-nLastCoinStakeSearchTime, nFees, txCoinStake, key)) {
             if (txCoinStake.nTime >= chainActive.Tip()->GetPastTimeLimit() + 1) {
                 // make sure coinstake would meet timestamp protocol
                 //    as it would be the same as the block timestamp
@@ -4677,7 +4676,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         for (unsigned int n = 0; n < nCount; n++) {
             vRecv >> headers[n];
             ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
-            // lindacoin: ignore vchBlockSig this shouldn't be sent and should be removed in the future
+            // metrix: ignore vchBlockSig this shouldn't be sent and should be removed in the future
             ReadCompactSize(vRecv); 
         }
 

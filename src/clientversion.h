@@ -32,6 +32,6 @@
 #define STRINGIZE(X) DO_STRINGIZE(X)
 #define DO_STRINGIZE(X) #X
 
-#define COPYRIGHT_STR          "2018-" STRINGIZE(COPYRIGHT_YEAR) " The Linda Project Inc developers"
+#define COPYRIGHT_STR          "2018-" STRINGIZE(COPYRIGHT_YEAR) " Metrix developers"
 
 #endif // CLIENTVERSION_H

@@ -102,7 +102,7 @@ string strMasterNodeAddr = "";
 bool fLiteMode = false;
 int nInstantXDepth = 1;
 int nDarksendRounds = 2;
-int nAnonymizeLindaAmount = 500;
+int nAnonymizeMetrixAmount = 500;
 int nLiquidityProvider = 0;
 /** Spork enforcement enabled time */
 int64_t enforceMasternodePaymentsTime = 4085657524;
@@ -371,7 +371,7 @@ static std::string FormatException(std::exception* pex, const char* pszThread)
     char pszModule[MAX_PATH] = "";
     GetModuleFileNameA(NULL, pszModule, sizeof(pszModule));
 #else
-    const char* pszModule = "Linda";
+    const char* pszModule = "Metrix";
 #endif
     if (pex)
         return strprintf(
@@ -389,16 +389,16 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
     strMiscWarning = message;
 }
 
-boost::filesystem::path GetDefaultDataDir()
+boost::filesystem::path GetDefaultDataDir(const std::string dirName)
 {
     namespace fs = boost::filesystem;
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Linda
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Linda
-    // Mac: ~/Library/Application Support/Linda
-    // Unix: ~/.Linda
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Metrix
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Metrix
+    // Mac: ~/Library/Application Support/Metrix
+    // Unix: ~/.Metrix
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Linda";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / dirName;
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -410,10 +410,12 @@ boost::filesystem::path GetDefaultDataDir()
     // Mac
     pathRet /= "Library/Application Support";
     TryCreateDirectory(pathRet);
-    return pathRet / "Linda";
+    return pathRet / dirName;
 #else
     // Unix
-    return pathRet / ".Linda";
+    std::string dirPath(".");
+    dirPath.append(dirName);
+    return pathRet / dirPath;
 #endif
 #endif
 }
@@ -455,6 +457,30 @@ const boost::filesystem::path& GetDataDir(bool fNetSpecific)
     return path;
 }
 
+void checkMigrateDataDir()
+{
+    // skip this if data dir is set by user
+    if (mapArgs.count("-datadir"))
+        return;
+
+    const boost::filesystem::path lindaDir = GetDefaultDataDir("Linda");
+    const boost::filesystem::path metrixDir = GetDefaultDataDir();
+
+    if (!boost::filesystem::exists(metrixDir) && boost::filesystem::exists(lindaDir))
+    {
+        try {
+            boost::filesystem::rename(lindaDir, metrixDir);
+            // rename conf file
+            const boost::filesystem::path lindaConfigFile = metrixDir / "Linda.conf";
+            if (boost::filesystem::exists(lindaConfigFile))
+            {
+                boost::filesystem::rename(lindaConfigFile, metrixDir / "metrix.conf");
+            }    
+        } catch(boost::filesystem::filesystem_error &error) {
+        }
+    }
+}
+
 string randomStrGen(int length)
 {
     static string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
@@ -491,7 +517,7 @@ void ClearDatadirCache()
 
 boost::filesystem::path GetConfigFile()
 {
-    boost::filesystem::path pathConfigFile(GetArg("-conf", "Linda.conf"));
+    boost::filesystem::path pathConfigFile(GetArg("-conf", "metrix.conf"));
     if (!pathConfigFile.is_complete())
         pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
@@ -509,7 +535,7 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
                     map<string, vector<string> >& mapMultiSettingsRet)
 {
     boost::filesystem::ifstream streamConfig(GetConfigFile());
-    if (!streamConfig.good()) //Linda.conf doesn't exist
+    if (!streamConfig.good()) //metrix.conf doesn't exist
     {
         createConf();
         new (&streamConfig) boost::filesystem::ifstream(GetConfigFile());
@@ -537,7 +563,7 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
 #ifndef WIN32
 boost::filesystem::path GetPidFile()
 {
-    boost::filesystem::path pathPidFile(GetArg("-pid", "Lindad.pid"));
+    boost::filesystem::path pathPidFile(GetArg("-pid", "metrixd.pid"));
     if (!pathPidFile.is_complete())
         pathPidFile = GetDataDir() / pathPidFile;
     return pathPidFile;

@@ -45,10 +45,10 @@ static bool AppInitRawTx(int argc, char* argv[])
 
     if (argc < 2 || mapArgs.count("-?") || mapArgs.count("-help")) {
         // First part of help message is specific to this utility
-        std::string strUsage = _("Lindacoin Linda-tx utility version") + " " + FormatFullVersion() + "\n\n" +
+        std::string strUsage = _("Metrix metrix-tx utility version") + " " + FormatFullVersion() + "\n\n" +
                                _("Usage:") + "\n" +
-                               "  Linda-tx [options] <hex-tx> [commands]  " + _("Update hex-encoded Lindacoin transaction") + "\n" +
-                               "  Linda-tx [options] -create [commands]   " + _("Create hex-encoded Lindacoin transaction") + "\n" +
+                               "  metrix-tx [options] <hex-tx> [commands]  " + _("Update hex-encoded Metrix transaction") + "\n" +
+                               "  metrix-tx [options] -create [commands]   " + _("Create hex-encoded Metrix transaction") + "\n" +
                                "\n";
 
         fprintf(stdout, "%s", strUsage.c_str());

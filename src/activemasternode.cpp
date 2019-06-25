@@ -10,7 +10,7 @@
 #include <boost/lexical_cast.hpp>
 
 //
-// Bootup the masternode, look for a 500 Linda input and register on the network
+// Bootup the masternode, look for a 500 MRX input and register on the network
 //
 void CActiveMasternode::ManageStatus()
 {
@@ -49,7 +49,7 @@ void CActiveMasternode::ManageStatus()
 
         LogPrintf("CActiveMasternode::ManageStatus() - Checking inbound connection to '%s'\n", service.ToString());
 
-        // LindaNOTE: There is no logical reason to restrict this to a specific port.  Its a peer, what difference does it make.
+        // MetrixNOTE: There is no logical reason to restrict this to a specific port.  Its a peer, what difference does it make.
         /*  if(service.GetPort() != 9999) {
                 notCapableReason = "Invalid port: " + boost::lexical_cast<string>(service.GetPort()) + " -only 9999 is supported on mainnet.";
                 status = MASTERNODE_NOT_CAPABLE;
@@ -378,7 +378,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
     vector<COutput> filteredCoins;
 
     // Retrieve all possible outputs
-    // Linda - start-many and start-alias should include locked coins as nodes in
+    // Metrix - start-many and start-alias should include locked coins as nodes in
     // the masternode.conf file coins are looked on startup. otherwise it wouldn't
     // be possible to start the node remotely as it would alywas fail to find vin
     pwalletMain->AvailableCoins(vCoins, true, NULL, false, ALL_COINS, false, (int)1, includeLocked);
