@@ -12,10 +12,10 @@
 #include <string>
 #include <vector>
 
-class uint256;
 class CPubKey;
 class CScript;
 class CTransaction;
+class uint256;
 
 /** Signature hash types/flags */
 enum {
