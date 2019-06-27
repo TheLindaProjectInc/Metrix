@@ -68,9 +68,6 @@ enum {
 
 };
 
-bool IsCanonicalPubKey(const std::vector<unsigned char>& vchPubKey, unsigned int flags);
-bool IsCanonicalSignature(const std::vector<unsigned char>& vchSig, unsigned int flags);
-
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType);
 
 class BaseSignatureChecker
