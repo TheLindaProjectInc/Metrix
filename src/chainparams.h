@@ -8,6 +8,7 @@
 
 #include "bignum.h"
 #include "chainparamsbase.h"
+#include "checkpoints.h"
 #include "core.h"
 #include "protocol.h"
 #include "uint256.h"
@@ -65,13 +66,15 @@ public:
     int64_t TargetTimespan() const { return nTargetTimespan; }
     int64_t TargetSpacing() const { return nTargetSpacing; }
     int64_t Interval() const { return nTargetTimespan / nTargetSpacing; }
-    CBaseChainParams::Network NetworkID() const { return networkID; }
+    /* In the future use NetworkIDString() for RPC fields */
+    bool TestnetToBeDeprecatedFieldRPC() const { return fTestnetToBeDeprecatedFieldRPC; }
     /* Return the BIP70 network string (main, test or regtest) */
     std::string NetworkIDString() const { return strNetworkID; }
     const std::vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
     int LastPOWBlock() const { return nLastPOWBlock; }
+    virtual const Checkpoints::CCheckpointData& Checkpoints() const = 0;
 
 protected:
     CChainParams(){};
@@ -98,6 +101,7 @@ protected:
     bool fRequireRPCPassword;
     bool fDefaultCheckMemPool;
     bool fRequireStandard;
+    bool fTestnetToBeDeprecatedFieldRPC;
 };
 
 /**

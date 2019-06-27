@@ -6,7 +6,8 @@
 
 #include <map>
 
-class uint256;
+#include "uint256.h"
+
 class CBlockIndex;
 
 /** Block-chain checkpoints are compiled-in sanity checks.
@@ -14,6 +15,15 @@ class CBlockIndex;
  */
 namespace Checkpoints
 {
+typedef std::map<int, uint256> MapCheckpoints;
+
+struct CCheckpointData {
+    const MapCheckpoints *mapCheckpoints;
+    int64_t nTimeLastCheckpoint;
+    int64_t nTransactionsLastCheckpoint;
+    double fTransactionsPerDay;
+};
+
 // Returns true if block passes checkpoint checks
 bool CheckBlock(int nHeight, const uint256& hash);
 
