@@ -160,58 +160,22 @@ bool static IsDefinedHashtypeSignature(const valtype& vchSig)
     return true;
 }
 
-bool static IsLowDERSignature(const valtype& vchSig, ScriptError* serror)
-{
-    if (!IsDERSignature(vchSig)) {
-        return set_error(serror, SCRIPT_ERR_SIG_DER);
-    }
-    unsigned int nLenR = vchSig[3];
-    unsigned int nLenS = vchSig[5 + nLenR];
-    const unsigned char* S = &vchSig[6 + nLenR];
-    // If the S value is above the order of the curve divided by two, its
-    // complement modulo the order could have been used instead, which is
-    // one byte shorter when encoded correctly.
-    if (!eccrypto::CheckSignatureElement(S, nLenS, true))
-        return set_error(serror, SCRIPT_ERR_SIG_HIGH_S);
-
-    return true;
-}
-
-bool static CheckSignatureEncoding(const valtype& vchSig)
-{
-    if (!IsLowDERSignature(vchSig)) {
-        return false;
-    } else if (!IsDefinedHashtypeSignature(vchSig)) {
-        return false;
-    }
-    return true;
-}
-
-bool static CheckPubKeyEncoding(const valtype& vchSig)
-{
-    if (!IsCompressedOrUncompressedPubKey(vchSig)) {
-        return false;
-    }
-    return true;
-}
-
-bool static CheckSignatureEncoding(const valtype& vchSig, unsigned int flags, ScriptError* serror)
+bool static CheckSignatureEncoding(const valtype& vchSig, unsigned int flags)
 {
     if ((flags & (SCRIPT_VERIFY_DERSIG | SCRIPT_VERIFY_LOW_S | SCRIPT_VERIFY_STRICTENC)) != 0 && !IsDERSignature(vchSig)) {
-        return set_error(serror, SCRIPT_ERR_SIG_DER);
-    } else if ((flags & SCRIPT_VERIFY_LOW_S) != 0 && !IsLowDERSignature(vchSig, serror)) {
-        // serror is set
+        return false;
+    } else if ((flags & SCRIPT_VERIFY_LOW_S) != 0 && !IsLowDERSignature(vchSig)) {
         return false;
     } else if ((flags & SCRIPT_VERIFY_STRICTENC) != 0 && !IsDefinedHashtypeSignature(vchSig)) {
-        return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
+        return false;
     }
     return true;
 }
 
-bool static CheckPubKeyEncoding(const valtype& vchSig, unsigned int flags, ScriptError* serror)
+bool static CheckPubKeyEncoding(const valtype& vchSig, unsigned int flags)
 {
     if ((flags & SCRIPT_VERIFY_STRICTENC) != 0 && !IsCompressedOrUncompressedPubKey(vchSig)) {
-        return set_error(serror, SCRIPT_ERR_PUBKEYTYPE);
+        return false;
     }
     return true;
 }
@@ -240,71 +204,6 @@ bool static CheckMinimalPush(const valtype& data, opcodetype opcode)
     return true;
 }
 
-
-bool IsCanonicalPubKey(const valtype& vchPubKey)
-{
-    if (vchPubKey.size() < 33)
-        return error("Non-canonical public key: too short");
-    if (vchPubKey[0] == 0x04) {
-        if (vchPubKey.size() != 65)
-            return error("Non-canonical public key: invalid length for uncompressed key");
-    } else if (vchPubKey[0] == 0x02 || vchPubKey[0] == 0x03) {
-        if (vchPubKey.size() != 33)
-            return error("Non-canonical public key: invalid length for compressed key");
-    } else {
-        return error("Non-canonical public key: neither compressed nor uncompressed");
-    }
-    return true;
-}
-
-bool IsCanonicalSignature(const valtype& vchSig)
-{
-    // See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
-    // A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
-    // Where R and S are not negative (their first byte has its highest bit not set), and not
-    // excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
-    // in which case a single 0 byte is necessary and even required).
-    if (vchSig.size() < 9)
-        return error("Non-canonical signature: too short");
-    if (vchSig.size() > 73)
-        return error("Non-canonical signature: too long");
-    unsigned char nHashType = vchSig[vchSig.size() - 1] & (~(SIGHASH_ANYONECANPAY));
-    if (nHashType < SIGHASH_ALL || nHashType > SIGHASH_SINGLE)
-        return error("Non-canonical signature: unknown hashtype byte");
-    if (vchSig[0] != 0x30)
-        return error("Non-canonical signature: wrong type");
-    if (vchSig[1] != vchSig.size() - 3)
-        return error("Non-canonical signature: wrong length marker");
-    unsigned int nLenR = vchSig[3];
-    if (5 + nLenR >= vchSig.size())
-        return error("Non-canonical signature: S length misplaced");
-    unsigned int nLenS = vchSig[5 + nLenR];
-    if ((unsigned long)(nLenR + nLenS + 7) != vchSig.size())
-        return error("Non-canonical signature: R+S length mismatch");
-
-    const unsigned char* R = &vchSig[4];
-    if (R[-2] != 0x02)
-        return error("Non-canonical signature: R value type mismatch");
-    if (nLenR == 0)
-        return error("Non-canonical signature: R length is zero");
-    if (R[0] & 0x80)
-        return error("Non-canonical signature: R value negative");
-    if (nLenR > 1 && (R[0] == 0x00) && !(R[1] & 0x80))
-        return error("Non-canonical signature: R value excessively padded");
-
-    const unsigned char* S = &vchSig[6 + nLenR];
-    if (S[-2] != 0x02)
-        return error("Non-canonical signature: S value type mismatch");
-    if (nLenS == 0)
-        return error("Non-canonical signature: S length is zero");
-    if (S[0] & 0x80)
-        return error("Non-canonical signature: S value negative");
-    if (nLenS > 1 && (S[0] == 0x00) && !(S[1] & 0x80))
-        return error("Non-canonical signature: S value excessively padded");
-
-    return true;
-}
-
 bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker)
 {
     CScript::const_iterator pc = script.begin();
@@ -317,7 +216,6 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
     if (script.size() > 10000)
         return false;
     int nOpCount = 0;
-    bool fStrictEncodings = flags & SCRIPT_VERIFY_STRICTENC;
 
     try {
         while (pc < pend) {
@@ -828,10 +726,10 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     // Drop the signature, since there's no way for a signature to sign itself
                     scriptCode.FindAndDelete(CScript(vchSig));
 
-                    bool fSuccess = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
-                    if (fSuccess)
-                        fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode);
-
+                    if (!CheckSignatureEncoding(vchSig, flags) || !CheckPubKeyEncoding(vchPubKey, flags)) {
+                        return false;
+                    }
+                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode);
 
                     popstack(stack);
                     popstack(stack);
@@ -885,13 +783,15 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                         valtype& vchSig = stacktop(-isig);
                         valtype& vchPubKey = stacktop(-ikey);
 
-                        if ((flags & SCRIPT_VERIFY_STRICTENC) && (!CheckSignatureEncoding(vchSig) || !CheckPubKeyEncoding(vchPubKey)))
+                        // Note how this makes the exact order of pubkey/signature evaluation
+                        // distinguishable by CHECKMULTISIG NOT if the STRICTENC flag is set.
+                        // See the script_(in)valid tests for details.
+                        if (!CheckSignatureEncoding(vchSig, flags) || !CheckPubKeyEncoding(vchPubKey, flags)) {
                             return false;
+                        }
 
                         // Check signature
-                        bool fOk = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
-                        if (fOk)
-                            fOk = checker.CheckSig(vchSig, vchPubKey, scriptCode);
+                        bool fOk = checker.CheckSig(vchSig, vchPubKey, scriptCode);
 
                         if (fOk) {
                             isig++;

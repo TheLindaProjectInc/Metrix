@@ -101,7 +101,7 @@ Value getinfo(const Array& params, bool fHelp)
     diff.push_back(Pair("proof-of-stake", GetDifficulty(GetLastBlockIndex(chainActive.Tip(), true))));
     obj.push_back(Pair("difficulty", diff));
 
-    obj.push_back(Pair("testnet", Params().NetworkID() == CBaseChainParams::TESTNET));
+    obj.push_back(Pair("testnet", Params().TestnetToBeDeprecatedFieldRPC()));
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
         obj.push_back(Pair("keypoololdest", pwalletMain->GetOldestKeyPoolTime()));
