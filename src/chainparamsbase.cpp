@@ -66,15 +66,27 @@ void SelectBaseParams(CBaseChainParams::Network network)
     }
 }
 
-bool SelectBaseParamsFromCommandLine()
+CBaseChainParams::Network NetworkIdFromCommandLine()
 {
+    bool fRegTest = GetBoolArg("-regtest", false);
     bool fTestNet = GetBoolArg("-testnet", false);
 
-    if (fTestNet) {
-        SelectBaseParams(CBaseChainParams::TESTNET);
-    } else {
-        SelectBaseParams(CBaseChainParams::MAIN);
-    }
+    if (fTestNet && fRegTest)
+            return CBaseChainParams::MAX_NETWORK_TYPES;
+    if (fRegTest)
+            return CBaseChainParams::REGTEST;
+    if (fTestNet)
+            return CBaseChainParams::TESTNET;
+    return CBaseChainParams::MAIN;
+}
+
+bool SelectBaseParamsFromCommandLine()
+{
+    CBaseChainParams::Network network = NetworkIdFromCommandLine();
+    if (network == CBaseChainParams::MAX_NETWORK_TYPES)
+        return false;
+
+    SelectBaseParams(network);
     return true;
 }
 

@@ -241,8 +241,11 @@ void SelectParams(CBaseChainParams::Network network)
 
 bool SelectParamsFromCommandLine()
 {
-    if (!SelectBaseParamsFromCommandLine())
+    CBaseChainParams::Network network = NetworkIdFromCommandLine();
+    if (network == CBaseChainParams::MAX_NETWORK_TYPES)
         return false;
-    SelectParams(BaseParams().NetworkID());
+
+    SelectBaseParams(network);
+    SelectParams(network);
     return true;
 }
