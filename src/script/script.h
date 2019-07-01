@@ -588,29 +588,8 @@ public:
         return (size() > 0 && *begin() == OP_RETURN);
     }
 
-    std::string CScript::ToString() const
-    {
-        std::string str;
-        opcodetype opcode;
-        std::vector<unsigned char> vch;
-        const_iterator pc = begin();
-        while (pc < end())
-        {
-            if (!str.empty())
-                str += " ";
-            if (!GetOp(pc, opcode, vch))
-            {
-                str += "[error]";
-                return str;
-            }
-            if (0 <= opcode && opcode <= OP_PUSHDATA4)
-                str += ValueString(vch);
-            else
-                str += GetOpName(opcode);
-        }
-        return str;
-    }
-    
+    std::string ToString() const;
+        
     CScriptID GetID() const
     {
         return CScriptID(Hash160(*this));
