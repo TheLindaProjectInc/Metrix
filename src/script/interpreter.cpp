@@ -216,6 +216,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
     if (script.size() > 10000)
         return false;
     int nOpCount = 0;
+    bool fRequireMinimal = (flags & SCRIPT_VERIFY_MINIMALDATA) != 0;
 
     try {
         while (pc < pend) {
@@ -248,9 +249,12 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                 opcode == OP_RSHIFT)
                 return false; // Disabled opcodes.
 
-            if (fExec && 0 <= opcode && opcode <= OP_PUSHDATA4)
+            if (fExec && 0 <= opcode && opcode <= OP_PUSHDATA4) {
+                if (fRequireMinimal && !CheckMinimalPush(vchPushValue, opcode)) {
+                    return false;
+                }
                 stack.push_back(vchPushValue);
-            else if (fExec || (OP_IF <= opcode && opcode <= OP_ENDIF))
+            } else if (fExec || (OP_IF <= opcode && opcode <= OP_ENDIF))
                 switch (opcode) {
                 //
                 // Push value
@@ -275,6 +279,8 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     // ( -- value)
                     CScriptNum bn((int)opcode - (int)(OP_1 - 1));
                     stack.push_back(bn.getvch());
+                    // The result of these opcodes should always be the minimal way to push the data
+                    // they push, so no need for a CheckMinimalPush here.
                 } break;
 
 
@@ -470,7 +476,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     // (xn ... x2 x1 x0 n - ... x2 x1 x0 xn)
                     if (stack.size() < 2)
                         return false;
-                    int n = CScriptNum(stacktop(-1)).getint();
+                    int n = CScriptNum(stacktop(-1), fRequireMinimal).getint();
                     popstack(stack);
                     if (n < 0 || n >= (int)stack.size())
                         return false;
@@ -558,7 +564,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     // (in -- out)
                     if (stack.size() < 1)
                         return false;
-                    CScriptNum bn = CScriptNum(stacktop(-1));
+                    CScriptNum bn = CScriptNum(stacktop(-1), fRequireMinimal);
                     switch (opcode) {
                     case OP_1ADD:
                         bn += bnOne;
@@ -603,8 +609,8 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     // (x1 x2 -- out)
                     if (stack.size() < 2)
                         return false;
-                    CScriptNum bn1(stacktop(-2));
-                    CScriptNum bn2(stacktop(-1));
+                    CScriptNum bn1(stacktop(-2), fRequireMinimal);
+                    CScriptNum bn2(stacktop(-1), fRequireMinimal);
                     CScriptNum bn(0);
                     switch (opcode) {
                     case OP_ADD:
@@ -668,9 +674,9 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     // (x min max -- out)
                     if (stack.size() < 3)
                         return false;
-                    CScriptNum bn1(stacktop(-3));
-                    CScriptNum bn2(stacktop(-2));
-                    CScriptNum bn3(stacktop(-1));
+                    CScriptNum bn1(stacktop(-3), fRequireMinimal);
+                    CScriptNum bn2(stacktop(-2), fRequireMinimal);
+                    CScriptNum bn3(stacktop(-1), fRequireMinimal);
                     bool fValue = (bn2 <= bn1 && bn1 < bn3);
                     popstack(stack);
                     popstack(stack);
@@ -750,7 +756,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     if ((int)stack.size() < i)
                         return false;
 
-                    int nKeysCount = CScriptNum(stacktop(-i)).getint();
+                    int nKeysCount = CScriptNum(stacktop(-i), fRequireMinimal).getint();
                     if (nKeysCount < 0 || nKeysCount > 20)
                         return false;
                     nOpCount += nKeysCount;
@@ -761,7 +767,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     if ((int)stack.size() < i)
                         return false;
 
-                    int nSigsCount = CScriptNum(stacktop(-i)).getint();
+                    int nSigsCount = CScriptNum(stacktop(-i), fRequireMinimal).getint();
                     if (nSigsCount < 0 || nSigsCount > nKeysCount)
                         return false;
                     int isig = ++i;
@@ -1001,6 +1007,10 @@ bool SignatureChecker::CheckSig(const vector<unsigned char>& vchSigIn, const vec
 
 bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, unsigned int flags, const BaseSignatureChecker& checker)
 {
+    if ((flags & SCRIPT_VERIFY_SIGPUSHONLY) != 0 && !scriptSig.IsPushOnly()) {
+        return false;
+    }
+
     vector<vector<unsigned char> > stack, stackCopy;
     if (!EvalScript(stack, scriptSig, flags, checker))
         return false;
