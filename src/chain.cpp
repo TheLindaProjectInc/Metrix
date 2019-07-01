@@ -7,8 +7,9 @@
 
 using namespace std;
 
-// CChain implementation
-
+/**
+*  CChain implementation
+*/
 void CChain::SetTip(CBlockIndex* pindex)
 {
     if (pindex == NULL) {
@@ -32,16 +33,16 @@ CBlockLocator CChain::GetLocator(const CBlockIndex* pindex) const
         pindex = Tip();
     while (pindex) {
         vHave.push_back(pindex->GetBlockHash());
-        // Stop when we have added the genesis block.
+        //! Stop when we have added the genesis block.
         if (pindex->nHeight == 0)
             break;
-        // Exponentially larger steps back, plus the genesis block.
+        //! Exponentially larger steps back, plus the genesis block.
         int nHeight = std::max(pindex->nHeight - nStep, 0);
         if (Contains(pindex)) {
-            // Use O(1) CChain index if possible.
+            //! Use O(1) CChain index if possible.
             pindex = (*this)[nHeight];
         } else {
-            // Otherwise, use O(log n) skiplist.
+            //! Otherwise, use O(log n) skiplist.
             pindex = pindex->GetAncestor(nHeight);
         }
         if (vHave.size() > 10)
