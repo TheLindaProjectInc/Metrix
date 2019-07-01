@@ -12,6 +12,7 @@
 #include "utilstrencodings.h"
 
 #include <stdexcept>
+#include <string>
 
 #include <boost/variant.hpp>
 
