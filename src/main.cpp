@@ -683,10 +683,6 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             reason = "dust";
             return false;
         }
-        if (!txout.scriptPubKey.HasCanonicalPushes()) {
-            reason = "scriptpubkey-non-canonical-push";
-            return false;
-        }
     }
 
     // not more than one data txout per non-data txout is permitted
