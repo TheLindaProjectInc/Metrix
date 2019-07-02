@@ -664,10 +664,6 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             reason = "scriptsig-not-pushonly";
             return false;
         }
-        if (!txin.scriptSig.HasCanonicalPushes()) {
-            reason = "scriptsig-non-canonical-push";
-            return false;
-        }
     }
 
     unsigned int nDataOut = 0;
@@ -685,10 +681,6 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             return false;
         } else if (txout.IsDust(::minRelayTxFee)) {
             reason = "dust";
-            return false;
-        }
-        if (!txout.scriptPubKey.HasCanonicalPushes()) {
-            reason = "scriptpubkey-non-canonical-push";
             return false;
         }
     }
@@ -1303,7 +1295,7 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
 {
     // Open history file to append
     CAutoFile fileout(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
-    if (!fileout)
+    if (fileout.IsNull())
         return error("CBlock::WriteToDisk() : OpenBlockFile failed");
 
     // Write index header
@@ -1331,7 +1323,7 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
 
     // Open history file to read
     CAutoFile filein(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
-    if (!filein)
+    if (filein.IsNull())
         return error("CBlock::ReadFromDisk() : OpenBlockFile failed");
 
     // Read block
@@ -5307,7 +5299,7 @@ bool CBlockUndo::WriteToDisk(CDiskBlockPos& pos, const uint256& hashBlock)
 {
     // Open history file to append
     CAutoFile fileout(OpenUndoFile(pos), SER_DISK, CLIENT_VERSION);
-    if (!fileout)
+    if (fileout.IsNull())
         return error("CBlockUndo::WriteToDisk() : OpenUndoFile failed");
 
     // Write index header
@@ -5339,7 +5331,7 @@ bool CBlockUndo::ReadFromDisk(const CDiskBlockPos& pos, const uint256& hashBlock
 {
     // Open history file to read
     CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
-    if (!filein)
+    if (filein.IsNull())
         return error("CBlockUndo::ReadFromDisk() : OpenBlockFile failed");
 
     // Read block

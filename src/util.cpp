@@ -420,7 +420,8 @@ boost::filesystem::path GetDefaultDataDir(const std::string dirName)
 #endif
 }
 
-static boost::filesystem::path pathCached[CBaseChainParams::MAX_NETWORK_TYPES + 1];
+static boost::filesystem::path pathCached;
+static boost::filesystem::path pathCachedNetSpecific;
 static CCriticalSection csPathCached;
 
 const boost::filesystem::path& GetDataDir(bool fNetSpecific)
@@ -429,11 +430,7 @@ const boost::filesystem::path& GetDataDir(bool fNetSpecific)
 
     LOCK(csPathCached);
 
-    int nNet = CBaseChainParams::MAX_NETWORK_TYPES;
-    if (fNetSpecific)
-        nNet = BaseParams().NetworkID();
-
-    fs::path& path = pathCached[nNet];
+    fs::path& path = fNetSpecific ? pathCachedNetSpecific : pathCached;
 
     // This can be called during exceptions by LogPrintf(), so we cache the
     // value so we don't have to do memory allocations after that.
@@ -511,8 +508,8 @@ void createConf() //Automatic BitcoinDark.conf generation
 
 void ClearDatadirCache()
 {
-    std::fill(&pathCached[0], &pathCached[CBaseChainParams::MAX_NETWORK_TYPES + 1],
-              boost::filesystem::path());
+    pathCached = boost::filesystem::path();
+    pathCachedNetSpecific = boost::filesystem::path();
 }
 
 boost::filesystem::path GetConfigFile()
