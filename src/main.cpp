@@ -84,7 +84,7 @@ void EraseOrphansFor(NodeId peer);
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "Metrix Signed Message:\n";
+const string strMessageMagic = "Linda Signed Message:\n";
 
 std::set<uint256> setValidatedTx;
 
@@ -664,10 +664,6 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             reason = "scriptsig-not-pushonly";
             return false;
         }
-        if (!txin.scriptSig.HasCanonicalPushes()) {
-            reason = "scriptsig-non-canonical-push";
-            return false;
-        }
     }
 
     unsigned int nDataOut = 0;
@@ -685,10 +681,6 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             return false;
         } else if (txout.IsDust(::minRelayTxFee)) {
             reason = "dust";
-            return false;
-        }
-        if (!txout.scriptPubKey.HasCanonicalPushes()) {
-            reason = "scriptpubkey-non-canonical-push";
             return false;
         }
     }
@@ -1110,7 +1102,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
     // Rather not work on nonstandard transactions (unless -testnet)
     //alot of Metrix transactions seem non standard, its a bug so we have to accept these, the transactions have still been checekd to be valid and unspent.
     string reason;
-    if (false && !(Params().NetworkID() == CBaseChainParams::TESTNET) && !IsStandardTx(tx, reason))
+    if (false && !(Params().TestnetToBeDeprecatedFieldRPC()) && !IsStandardTx(tx, reason))
         return error("AcceptableInputs : nonstandard transaction: %s",
                      reason);
 
@@ -1303,7 +1295,7 @@ bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos)
 {
     // Open history file to append
     CAutoFile fileout(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
-    if (!fileout)
+    if (fileout.IsNull())
         return error("CBlock::WriteToDisk() : OpenBlockFile failed");
 
     // Write index header
@@ -1331,7 +1323,7 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
 
     // Open history file to read
     CAutoFile filein(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
-    if (!filein)
+    if (filein.IsNull())
         return error("CBlock::ReadFromDisk() : OpenBlockFile failed");
 
     // Read block
@@ -3738,7 +3730,7 @@ bool LoadBlockIndex()
 {
     LOCK(cs_main);
 
-    if (Params().NetworkID() == CBaseChainParams::TESTNET) {
+    if (Params().TestnetToBeDeprecatedFieldRPC()) {
         nStakeMinAge = 1 * 60 * 60; // test net min age is 1 hour
         nCoinbaseMaturity = 10;     // test maturity is 10 blocks
     }
@@ -5307,7 +5299,7 @@ bool CBlockUndo::WriteToDisk(CDiskBlockPos& pos, const uint256& hashBlock)
 {
     // Open history file to append
     CAutoFile fileout(OpenUndoFile(pos), SER_DISK, CLIENT_VERSION);
-    if (!fileout)
+    if (fileout.IsNull())
         return error("CBlockUndo::WriteToDisk() : OpenUndoFile failed");
 
     // Write index header
@@ -5339,7 +5331,7 @@ bool CBlockUndo::ReadFromDisk(const CDiskBlockPos& pos, const uint256& hashBlock
 {
     // Open history file to read
     CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
-    if (!filein)
+    if (filein.IsNull())
         return error("CBlockUndo::ReadFromDisk() : OpenBlockFile failed");
 
     // Read block

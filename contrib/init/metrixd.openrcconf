@@ -1,7 +1,7 @@
 # /etc/conf.d/metrixd: config file for /etc/init.d/metrixd
 
 # Config file location
-#METRIXD_CONFIGFILE="/etc/Metrix/Metrix.conf"
+#METRIXD_CONFIGFILE="/etc/metrix/metrix.conf"
 
 # What directory to write pidfile to?  (created and owned by $METRIXD_USER)
 #METRIXD_PIDDIR="/var/run/metrixd"

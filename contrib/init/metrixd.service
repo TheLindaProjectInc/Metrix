@@ -9,7 +9,7 @@ Group=Metrix
 Type=forking
 PIDFile=/var/lib/metrixd/metrixd.pid
 ExecStart=/usr/bin/metrixd -daemon -pid=/var/lib/metrixd/metrixd.pid \
--conf=/etc/Metrix/Metrix.conf -datadir=/var/lib/metrixd -disablewallet
+-conf=/etc/metrix/metrix.conf -datadir=/var/lib/metrixd -disablewallet
 
 Restart=always
 PrivateTmp=true

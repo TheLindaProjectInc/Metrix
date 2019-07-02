@@ -12,10 +12,10 @@
 #include <string>
 #include <vector>
 
-class uint256;
 class CPubKey;
 class CScript;
 class CTransaction;
+class uint256;
 
 /** Signature hash types/flags */
 enum {
@@ -67,9 +67,6 @@ enum {
     SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS = (1U << 7)
 
 };
-
-bool IsCanonicalPubKey(const std::vector<unsigned char>& vchPubKey, unsigned int flags);
-bool IsCanonicalSignature(const std::vector<unsigned char>& vchSig, unsigned int flags);
 
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType);
 

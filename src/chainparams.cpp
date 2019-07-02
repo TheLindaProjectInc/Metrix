@@ -43,6 +43,38 @@ static void convertSeed6(std::vector<CAddress>& vSeedsOut, const SeedSpec6* data
     }
 }
 
+// What makes a good checkpoint block?
+// + Is surrounded by blocks with reasonable timestamps
+//   (no blocks before with a timestamp after, none after with
+//    timestamp before)
+// + Contains no strange transactions
+//
+static Checkpoints::MapCheckpoints mapCheckpoints =
+    boost::assign::map_list_of
+    ( 0,     Params().HashGenesisBlock())
+    ( 10,    uint256("0xe653e137fcf430648f4e02172be2926fa60cf2d2b408c5c127fb0d3c8a384051"))
+    ( 20,    uint256("0x22f69c926e860df361f25857beef751b90b8cb8811757ca804467d449b67c313"))
+    (35425,  uint256("0xe417f9c423b3f37171e3f5597bbe8b05183d22b62d302b660c934e701e2380b7"))
+    (580000, uint256("0xaf1e55ba27f4e595ff9a5faf6bf1e91899966676e817cd32c5f66d793467bc71"))
+    ;
+
+static const Checkpoints::CCheckpointData data = {
+    &mapCheckpoints,
+    1536312976, // * UNIX timestamp of last checkpoint block
+    1194687,      // * total number of transactions between genesis and last checkpoint
+                //   (the tx=... number in the SetBestChain debug.log lines)
+    960.0       // * estimated number of transactions per day after checkpoint
+};
+
+static Checkpoints::MapCheckpoints mapCheckpointsTestnet;
+
+static const Checkpoints::CCheckpointData dataTestnet = {
+    &mapCheckpointsTestnet,
+    0,
+    0,
+    300
+};
+
 class CMainParams : public CChainParams
 {
 public:
@@ -110,6 +142,12 @@ public:
         fRequireRPCPassword = true;
         fDefaultCheckMemPool = false;
         fRequireStandard = true;
+        fTestnetToBeDeprecatedFieldRPC = false;
+    }
+
+    const Checkpoints::CCheckpointData& Checkpoints() const 
+    {
+        return data;
     }
 };
 static CMainParams mainParams;
@@ -164,6 +202,11 @@ public:
         fRequireRPCPassword = true;
         fDefaultCheckMemPool = false;
         fRequireStandard = false;
+        fTestnetToBeDeprecatedFieldRPC = true;
+    }
+    const Checkpoints::CCheckpointData& Checkpoints() const 
+    {
+        return dataTestnet;
     }
 };
 static CTestNetParams testNetParams;
@@ -198,8 +241,11 @@ void SelectParams(CBaseChainParams::Network network)
 
 bool SelectParamsFromCommandLine()
 {
-    if (!SelectBaseParamsFromCommandLine())
+    CBaseChainParams::Network network = NetworkIdFromCommandLine();
+    if (network == CBaseChainParams::MAX_NETWORK_TYPES)
         return false;
-    SelectParams(BaseParams().NetworkID());
+
+    SelectBaseParams(network);
+    SelectParams(network);
     return true;
 }

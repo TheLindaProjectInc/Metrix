@@ -1312,12 +1312,12 @@ public:
         file = NULL;
         return ret;
     }
-    operator FILE*() { return file; }
-    FILE* operator->() { return file; }
-    FILE& operator*() { return *file; }
-    FILE** operator&() { return &file; }
+    operator FILE*()            { return file; }
+    FILE* operator->()          { return file; }
+    FILE& operator*()           { return *file; }
+    FILE** operator&()          { return &file; }
     FILE* operator=(FILE* pnew) { return file = pnew; }
-    bool operator!() { return (file == NULL); }
+    bool IsNull() const         { return (file == NULL); }
 
 
     //
