@@ -342,7 +342,7 @@ Value sendtoaddress(const Array& params, bool fHelp)
     if (fHelp || params.size() < 2 || params.size() > 5)
         throw runtime_error(
             "sendtoaddress \"Metrixaddress\" amount ( \"comment\" \"comment-to\" )\n"
-            "\nSent an amount to a given address. The amount is a real and is rounded to the nearest 0.000001\n" +
+            "\nSend an amount to a given address. The amount is a real and is rounded to the nearest 0.000001\n" +
             HelpRequiringPassphrase() +
             "\nArguments:\n"
             "1. \"Metrixaddress\"  (string, required) The Metrix address to send to.\n"
