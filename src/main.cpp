@@ -436,6 +436,10 @@ namespace
             // are not yet downloaded and not in flight to vBlocks. In the mean time, update
             // pindexLastCommonBlock as long as all ancestors are already downloaded.
             BOOST_FOREACH(CBlockIndex* pindex, vToFetch) {
+                if (!pindex->IsValid(BLOCK_VALID_TREE)) {
+                    // We consider the chain that this peer is on invalid.
+                    return;
+                }
                 if (pindex->nStatus & BLOCK_HAVE_DATA) {
                     if (pindex->nChainTx)
                         state->pindexLastCommonBlock = pindex;
@@ -3039,6 +3043,8 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
         if (mi == mapBlockIndex.end())
             return state.DoS(10, error("%s : prev block not found", __func__), 0, "bad-prevblk");
         pindexPrev = (*mi).second;
+        if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
+            return state.DoS(100, error("%s : prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
         nHeight = pindexPrev->nHeight + 1;
 
         // Check timestamp against prev
