@@ -167,7 +167,7 @@ string CRPCTable::help(string strCommand) const
         // We already filter duplicates, but these deprecated screw up the sort order
         if (strMethod.find("label") != string::npos)
             continue;
-        if (strCommand != "" && strMethod != strCommand)
+        if ((strCommand != "" || pcmd->category == "hidden") && strMethod != strCommand)
             continue;
 #ifdef ENABLE_WALLET
         if (pcmd->reqWallet && !pwalletMain)
@@ -272,8 +272,6 @@ static const CRPCCommand vRPCCommands[] =
         {"blockchain", "getrawmempool", &getrawmempool, true, false, false},
         {"blockchain", "gettxout", &gettxout, true, false, false},
         {"blockchain", "gettxoutsetinfo", &gettxoutsetinfo, true, false, false},
-        {"blockchain", "invalidateblock", &invalidateblock, true, true, false },
-        {"blockchain", "reconsiderblock", &reconsiderblock, true, true, false },
 
         /* Staking */
         {"staking", "getblocktemplate", &getblocktemplate, true, false, false},
@@ -296,6 +294,10 @@ static const CRPCCommand vRPCCommands[] =
         {"util", "validateaddress", &validateaddress, true, false, false},
         {"util", "validatepubkey", &validatepubkey, true, false, false},
         {"util", "verifymessage", &verifymessage, true, false, false},
+
+        /* Not shown in help */
+        {"hidden", "invalidateblock", &invalidateblock, true, true, false },
+        {"hidden", "reconsiderblock", &reconsiderblock, true, true, false },
 
         /* Dark features */
         {"dark", "darksend", &darksend, false, false, true},
