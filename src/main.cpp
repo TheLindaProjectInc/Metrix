@@ -2530,13 +2530,17 @@ bool InvalidateBlock(CValidationState& state, CBlockIndex *pindex) {
 
     // Mark the block itself as invalid.
     pindex->nStatus |= BLOCK_FAILED_VALID;
-    setDirtyBlockIndex.insert(pindex);
+    if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+        return state.Abort("Failed to update block index");
+    }
     setBlockIndexCandidates.erase(pindex);
 
     while (chainActive.Contains(pindex)) {
         CBlockIndex *pindexWalk = chainActive.Tip();
         pindexWalk->nStatus |= BLOCK_FAILED_CHILD;
-        setDirtyBlockIndex.insert(pindex);
+        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindexWalk))) {
+            return state.Abort("Failed to update block index");
+        }
         setBlockIndexCandidates.erase(pindexWalk);
         // ActivateBestChain considers blocks already in chainActive
         // unconditionally valid already, so force disconnect away from it.
@@ -2569,7 +2573,9 @@ bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex) {
     while (it != mapBlockIndex.end()) {
         if (!it->second->IsValid() && it->second->GetAncestor(nHeight) == pindex) {
             it->second->nStatus &= ~BLOCK_FAILED_MASK;
-            setDirtyBlockIndex.insert(it->second);
+            if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+                return state.Abort("Failed to update block index");
+            }
             if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && setBlockIndexCandidates.value_comp()(chainActive.Tip(), it->second)) {
                 setBlockIndexCandidates.insert(it->second);
             }
@@ -2583,9 +2589,9 @@ bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex) {
 
     // Remove the invalidity flag from all ancestors too.
     while (pindex != NULL) {
-        if (pindex->nStatus & BLOCK_FAILED_MASK) {
-            pindex->nStatus &= ~BLOCK_FAILED_MASK;
-            setDirtyBlockIndex.insert(pindex);
+        pindex->nStatus &= ~BLOCK_FAILED_MASK;
+        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+            return state.Abort("Failed to update block index");
         }
         pindex = pindex->pprev;
     }
