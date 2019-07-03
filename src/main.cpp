@@ -436,6 +436,10 @@ namespace
             // are not yet downloaded and not in flight to vBlocks. In the mean time, update
             // pindexLastCommonBlock as long as all ancestors are already downloaded.
             BOOST_FOREACH(CBlockIndex* pindex, vToFetch) {
+                if (!pindex->IsValid(BLOCK_VALID_TREE)) {
+                    // We consider the chain that this peer is on invalid.
+                    return;
+                }
                 if (pindex->nStatus & BLOCK_HAVE_DATA) {
                     if (pindex->nChainTx)
                         state->pindexLastCommonBlock = pindex;
@@ -1529,12 +1533,12 @@ void CheckForkWarningConditions()
         pindexBestForkTip = NULL;
 
     if (pindexBestForkTip || (pindexBestInvalid && pindexBestInvalid->nChainTrust > chainActive.Tip()->nChainTrust + (chainActive.Tip()->GetBlockTrust() * 6))) {
-        if (!fLargeWorkForkFound) {
+        if (!fLargeWorkForkFound && pindexBestForkBase) {
             std::string warning = std::string("'Warning: Large-work fork detected, forking after block ") +
                 pindexBestForkBase->phashBlock->ToString() + std::string("'");
             CAlert::Notify(warning, true);
         }
-        if (pindexBestForkTip) {
+        if (pindexBestForkTip && pindexBestForkBase) {
             LogPrintf("CheckForkWarningConditions: Warning: Large valid fork found\n  forking the chain at height %d (%s)\n  lasting to height %d (%s).\nChain state database corruption likely.\n",
                       pindexBestForkBase->nHeight, pindexBestForkBase->phashBlock->ToString(),
                       pindexBestForkTip->nHeight, pindexBestForkTip->phashBlock->ToString());
@@ -2525,6 +2529,80 @@ bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache
     return true;
 }
 
+bool InvalidateBlock(CValidationState& state, CBlockIndex *pindex) {
+    AssertLockHeld(cs_main);
+
+    // Mark the block itself as invalid.
+    pindex->nStatus |= BLOCK_FAILED_VALID;
+    if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+        return state.Abort("Failed to update block index");
+    }
+    setBlockIndexCandidates.erase(pindex);
+
+    while (chainActive.Contains(pindex)) {
+        CBlockIndex *pindexWalk = chainActive.Tip();
+        pindexWalk->nStatus |= BLOCK_FAILED_CHILD;
+        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindexWalk))) {
+            return state.Abort("Failed to update block index");
+        }
+        setBlockIndexCandidates.erase(pindexWalk);
+        // ActivateBestChain considers blocks already in chainActive
+        // unconditionally valid already, so force disconnect away from it.
+        if (!DisconnectTip(state)) {
+            return false;
+        }
+    }
+
+    // The resulting new best tip may not be in setBlockIndexCandidates anymore, so
+    // add them again.
+    BlockMap::iterator it = mapBlockIndex.begin();
+    while (it != mapBlockIndex.end()) {
+        if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && setBlockIndexCandidates.value_comp()(chainActive.Tip(), it->second)) {
+            setBlockIndexCandidates.insert(pindex);
+        }
+        it++;
+    }
+
+    InvalidChainFound(pindex);
+    return true;
+}
+
+bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex) {
+    AssertLockHeld(cs_main);
+
+    int nHeight = pindex->nHeight;
+
+    // Remove the invalidity flag from this block and all its descendants.
+    BlockMap::iterator it = mapBlockIndex.begin();
+    while (it != mapBlockIndex.end()) {
+        if (!it->second->IsValid() && it->second->GetAncestor(nHeight) == pindex) {
+            it->second->nStatus &= ~BLOCK_FAILED_MASK;
+            if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+                return state.Abort("Failed to update block index");
+            }
+            if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && setBlockIndexCandidates.value_comp()(chainActive.Tip(), it->second)) {
+                setBlockIndexCandidates.insert(it->second);
+            }
+            if (it->second == pindexBestInvalid) {
+                // Reset invalid block marker if it was pointing to one of those.
+                pindexBestInvalid = NULL;
+            }
+        }
+        it++;
+    }
+
+    // Remove the invalidity flag from all ancestors too.
+    while (pindex != NULL) {
+        pindex->nStatus &= ~BLOCK_FAILED_MASK;
+        if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(pindex))) {
+            return state.Abort("Failed to update block index");
+        }
+        pindex = pindex->pprev;
+    }
+    return true;
+}
+
+
 CBlockIndex* AddToBlockIndex(const CBlockHeader& block)
 {
     // Check for duplicate
@@ -2965,6 +3043,8 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
         if (mi == mapBlockIndex.end())
             return state.DoS(10, error("%s : prev block not found", __func__), 0, "bad-prevblk");
         pindexPrev = (*mi).second;
+        if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
+            return state.DoS(100, error("%s : prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
         nHeight = pindexPrev->nHeight + 1;
 
         // Check timestamp against prev
@@ -3899,7 +3979,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
                     continue;
                 }
                 // process in case the block isn't known yet
-                if (mapBlockIndex.count(hash) == 0) {
+                if (mapBlockIndex.count(hash) == 0 || (mapBlockIndex[hash]->nStatus & BLOCK_HAVE_DATA) == 0) {
                     CValidationState state;
                     if (ProcessBlock(state, NULL, &block, dbp))
                         nLoaded++;
@@ -4461,8 +4541,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                     // doing this will result in the received block being rejected as an orphan in case it is
                     // not a direct successor.
                     pfrom->PushMessage("getheaders", chainActive.GetLocator(pindexBestHeader), inv.hash);
-                    if (chainActive.Tip()->GetBlockTime() > GetAdjustedTime() - Params().TargetSpacing() * 20) {
-                        vToFetch.push_back(inv);
+                    CNodeState *nodestate = State(pfrom->GetId());
+                    if (chainActive.Tip()->GetBlockTime() > GetAdjustedTime() - Params().TargetSpacing() * 20 &&
+                        nodestate->nBlocksInFlight < MAX_BLOCKS_IN_TRANSIT_PER_PEER) {                        vToFetch.push_back(inv);
                         // Mark block as in flight already, even though the actual "getdata" message only goes out
                         // later (within the same cs_main lock, though).
                         MarkBlockAsInFlight(pfrom->GetId(), inv.hash);

@@ -760,6 +760,12 @@ public:
     }
 };
 
+/** Mark a block as invalid. */
+bool InvalidateBlock(CValidationState& state, CBlockIndex *pindex);
+
+/** Remove invalidity status from a block and its descendants. */
+bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex);
+
 /** The currently-connected chain of blocks. */
 extern CChain chainActive;
 
