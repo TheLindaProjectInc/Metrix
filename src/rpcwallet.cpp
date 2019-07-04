@@ -46,7 +46,7 @@ std::string HelpRequiringPassphrase()
 
 std::string HelpExampleCli(string methodname, string args)
 {
-    return "> bitcoin-cli " + methodname + " " + args + "\n";
+    return "> metrix-cli " + methodname + " " + args + "\n";
 }
 
 std::string HelpExampleRpc(string methodname, string args)
