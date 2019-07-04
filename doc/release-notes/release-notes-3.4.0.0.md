@@ -35,13 +35,13 @@ We are moving away from the metrixd executable functioning both as a server and 
 
 #### Faster synchronization
 Metrix Core now uses 'headers-first synchronization'. This means that we first
-ask peers for block headers (a total of 27 megabytes, as of December 2014) and
+ask peers for block headers (a total of ? megabytes, as of RELEASE DATE HERE) and
 validate those. In a second stage, when the headers have been discovered, we
 download the blocks. However, as we already know about the whole chain in
 advance, the blocks can be downloaded in parallel from all available peers.
 
 In practice, this means a much faster and more robust synchronization. On
-recent hardware with a decent network link, it can be as little as 3 hours
+recent hardware with a decent network link, it can be as little as 1 hour
 for an initial full synchronization. You may notice a slower progress in the
 very first few minutes, when headers are still being fetched and verified, but
 it should gain speed afterwards.
