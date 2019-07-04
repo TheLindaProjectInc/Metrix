@@ -90,6 +90,7 @@ BITCOIN_CORE_H = \
   crypter.h \
   darksend.h \
   db.h \
+  ecwrapper.h \
   eccryptoverify.h \
   hash.h \
   init.h \
@@ -245,6 +246,7 @@ libbitcoin_common_a_SOURCES = \
   core_read.cpp \
   core_write.cpp \
   darksend.cpp \
+  ecwrapper.cpp \
   eccryptoverify.cpp \
   hash.cpp \
   instantx.cpp \
