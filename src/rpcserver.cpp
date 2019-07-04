@@ -608,7 +608,7 @@ void StartRPCThreads()
     const bool fUseSSL = GetBoolArg("-rpcssl", false);
 
     if (fUseSSL) {
-        rpc_ssl_context->set_options(ssl::context::no_sslv2);
+        rpc_ssl_context->set_options(ssl::context::no_sslv2 | ssl::context::no_sslv3);
 
         filesystem::path pathCertFile(GetArg("-rpcsslcertificatechainfile", "server.cert"));
         if (!pathCertFile.is_complete())
