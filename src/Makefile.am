@@ -38,12 +38,12 @@ LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
 noinst_LIBRARIES = \
-  crypto/libbitcoin_crypto.a
+  crypto/libbitcoin_crypto.a \
   libbitcoin_util.a \
   libbitcoin_common.a \
   univalue/libbitcoin_univalue.a \
   libbitcoin_server.a \
-  libbitcoin_cli.a \
+  libbitcoin_cli.a 
   
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
