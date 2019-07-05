@@ -21,6 +21,7 @@ class CScript;
 class CStealthAddress;
 
 static const unsigned int MAX_OP_RETURN_RELAY = 40; // bytes
+extern unsigned nMaxDatacarrierBytes;
 
 // Mandatory script verification flags that all new blocks must comply with for
 // them to be valid. (but old blocks may not comply with)
