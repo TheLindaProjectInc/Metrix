@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chainparams.h"
@@ -22,17 +22,19 @@ struct SeedSpec6 {
 
 #include "chainparamsseeds.h"
 
-//
-// Main network
-//
+/**
+* Main network
+*/
 
-// Convert the pnSeeds6 array into usable address objects.
+//! Convert the pnSeeds6 array into usable address objects.
 static void convertSeed6(std::vector<CAddress>& vSeedsOut, const SeedSpec6* data, unsigned int count)
 {
-    // It'll only connect to one or two seed nodes because once it connects,
-    // it'll get a pile of addresses with newer timestamps.
-    // Seed nodes are given a random 'last seen time' of between one and two
-    // weeks ago.
+    /**
+    * It'll only connect to one or two seed nodes because once it connects,
+    * it'll get a pile of addresses with newer timestamps.
+    * Seed nodes are given a random 'last seen time' of between one and two
+    * weeks ago.
+    */
     const int64_t nOneWeek = 7 * 24 * 60 * 60;
     for (unsigned int i = 0; i < count; i++) {
         struct in6_addr ip;
@@ -43,12 +45,13 @@ static void convertSeed6(std::vector<CAddress>& vSeedsOut, const SeedSpec6* data
     }
 }
 
-// What makes a good checkpoint block?
-// + Is surrounded by blocks with reasonable timestamps
-//   (no blocks before with a timestamp after, none after with
-//    timestamp before)
-// + Contains no strange transactions
-//
+/**
+* What makes a good checkpoint block?
+* + Is surrounded by blocks with reasonable timestamps
+*   (no blocks before with a timestamp after, none after with
+*    timestamp before)
+* + Contains no strange transactions
+*/
 static Checkpoints::MapCheckpoints mapCheckpoints =
     boost::assign::map_list_of
     ( 0,     Params().HashGenesisBlock())
@@ -60,10 +63,10 @@ static Checkpoints::MapCheckpoints mapCheckpoints =
 
 static const Checkpoints::CCheckpointData data = {
     &mapCheckpoints,
-    1536312976, // * UNIX timestamp of last checkpoint block
-    1194687,      // * total number of transactions between genesis and last checkpoint
-                //   (the tx=... number in the SetBestChain debug.log lines)
-    960.0       // * estimated number of transactions per day after checkpoint
+    1536312976, //! * UNIX timestamp of last checkpoint block
+    1194687,      //! * total number of transactions between genesis and last checkpoint
+                //!   (the tx=... number in the SetBestChain debug.log lines)
+    960.0       //! * estimated number of transactions per day after checkpoint
 };
 
 static Checkpoints::MapCheckpoints mapCheckpointsTestnet;
@@ -82,10 +85,12 @@ public:
     {
         networkID = CBaseChainParams::MAIN;
         strNetworkID = "main";
-        // The message start string is designed to be unlikely to occur in normal data.
-        // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
-        // a large 4-byte int at any alignment.
-        //add 1 to the start message for Metrix 1.0.1 so we dont talk to old wallets, and change the default port's
+        /**
+        * The message start string is designed to be unlikely to occur in normal data.
+        * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
+        * a large 4-byte int at any alignment.
+        * add 1 to the start message for Metrix 1.0.1 so we dont talk to old wallets, and change the default port's
+         */
         pchMessageStart[0] = 0x9c;
         pchMessageStart[1] = 0xd3;
         pchMessageStart[2] = 0x17;
@@ -100,14 +105,16 @@ public:
         nTargetTimespan = 10 * 60;
         nTargetSpacing = 90;
 
-        // Build the genesis block. Note that the output of the genesis coinbase cannot
-        // be spent as it did not originally exist in the database.
-        //
-        //CBlock(hash=000001faef25dec4fbcf906e6242621df2c183bf232f263d0ba5b101911e4563, ver=1, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=12630d16a97f24b287c8c2594dda5fb98c9e6c70fc61d44191931ea2aa08dc90, nTime=1393221600, nBits=1e0fffff, nNonce=164482, vtx=1, vchBlockSig=)
-        //  Coinbase(hash=12630d16a9, nTime=1393221600, ver=1, vin.size=1, vout.size=1, nLockTime=0)
-        //    CTxIn(COutPoint(0000000000, 4294967295), coinbase 00012a24323020466562203230313420426974636f696e2041544d7320636f6d6520746f20555341)
-        //    CTxOut(empty)
-        //  vMerkleTree: 12630d16a9
+        /**
+        * Build the genesis block. Note that the output of the genesis coinbase cannot
+        * be spent as it did not originally exist in the database.
+        *
+        *  CBlock(hash=000001faef25dec4fbcf906e6242621df2c183bf232f263d0ba5b101911e4563, ver=1, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=12630d16a97f24b287c8c2594dda5fb98c9e6c70fc61d44191931ea2aa08dc90, nTime=1393221600, nBits=1e0fffff, nNonce=164482, vtx=1, vchBlockSig=)
+        *  Coinbase(hash=12630d16a9, nTime=1393221600, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+        *    CTxIn(COutPoint(0000000000, 4294967295), coinbase 00012a24323020466562203230313420426974636f696e2041544d7320636f6d6520746f20555341)
+        *    CTxOut(empty)
+        *  vMerkleTree: 12630d16a9
+         */
         const char* pszTimestamp = "Laptop ban on Etihad flights from Abu Dhabi lifted";
         CMutableTransaction txNew;
         txNew.nTime = 1499037408;
@@ -153,9 +160,9 @@ public:
 static CMainParams mainParams;
 
 
-//
-// Testnet
-//
+/**
+* Testnet
+*/
 
 class CTestNetParams : public CMainParams
 {
