@@ -4,6 +4,8 @@
 
 #include "key.h"
 
+#include <openssl/ecdsa.h>
+
 #include "crypto/hmac_sha512.h"
 #include "random.h"
 
