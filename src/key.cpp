@@ -167,19 +167,21 @@ CPrivKey CKey::GetPrivKey() const
 CPubKey CKey::GetPubKey() const
 {
     assert(fValid);
-    CPubKey pubkey;
+    CPubKey result;
 #ifdef USE_SECP256K1
     int clen = 65;
-    int ret = secp256k1_ec_pubkey_create(instance_of_csecp256k1.ctx, (unsigned char*)pubkey.begin(), &clen, begin(), fCompressed);
+    int ret = secp256k1_ecdsa_pubkey_create((unsigned char*)result.begin(), &clen, begin(), fCompressed);
+    assert((int)result.size() == clen);
     assert(ret);
-    assert(pubkey.IsValid());
-    assert((int)pubkey.size() == clen);
 #else
+    std::vector<unsigned char> pubkey;
     CECKey key;
     key.SetSecretBytes(vch);
     key.GetPubKey(pubkey, fCompressed);
+    result.Set(pubkey.begin(), pubkey.end());
 #endif
-    return pubkey;
+    assert(result.IsValid());
+    return result;
 }
 
 bool CKey::Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool lowS) const
@@ -265,7 +267,7 @@ bool CPubKey::Verify(const uint256& hash, const std::vector<unsigned char>& vchS
         return false;
 #else*/
     CECKey key;
-    if (!key.SetPubKey(*this))
+    if (!key.SetPubKey(begin(), size()))
         return false;
     if (!key.Verify(hash, vchSig))
         return false;
@@ -290,7 +292,9 @@ bool CPubKey::RecoverCompact(const uint256& hash, const std::vector<unsigned cha
     if (!key.Recover(hash, &vchSig[1], recid))
         return false;
     //key.GetPubKey(*this, (vchSig[0] - 27) & 4);
-    key.GetPubKey(*this, fComp);
+    std::vector<unsigned char> pubkey;
+    key.GetPubKey(pubkey, fComp);
+    Set(pubkey.begin(), pubkey.end());
     //#endif
     return true;
 }
@@ -304,7 +308,7 @@ bool CPubKey::IsFullyValid() const
         return false;
 #else
     CECKey key;
-    if (!key.SetPubKey(*this))
+    if (!key.SetPubKey(begin(), size()))
         return false;
 #endif
     return true;
@@ -321,9 +325,11 @@ bool CPubKey::Decompress()
     assert(clen == (int)size());
 #else
     CECKey key;
-    if (!key.SetPubKey(*this))
+    if (!key.SetPubKey(begin(), size()))
         return false;
-    key.GetPubKey(*this, false);
+    std::vector<unsigned char> pubkey;
+    key.GetPubKey(pubkey, false);
+    Set(pubkey.begin(), pubkey.end());
 #endif
     return true;
 }
@@ -378,9 +384,11 @@ bool CPubKey::Derive(CPubKey& pubkeyChild, unsigned char ccChild[32], unsigned i
     bool ret = secp256k1_ec_pubkey_tweak_add(instance_of_csecp256k1.ctx, (unsigned char*)pubkeyChild.begin(), pubkeyChild.size(), out);
 #else
     CECKey key;
-    bool ret = key.SetPubKey(*this);
+    bool ret = key.SetPubKey(begin(), size());
     ret &= key.TweakPublic(out);
-    key.GetPubKey(pubkeyChild, true);
+    std::vector<unsigned char> pubkey;
+    key.GetPubKey(pubkey, true);
+    pubkeyChild.Set(pubkey.begin(), pubkey.end());
 #endif
     return ret;
 }
