@@ -10,10 +10,12 @@
 #include "config/bitcoin-config.h"
 #endif
 
+#include "amount.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "coins.h"
-#include "core.h"
+#include "core/block.h"
+#include "core/transaction.h"
 #include "net.h"
 #include "script/script.h"
 #include "script/sigcache.h"
@@ -22,6 +24,7 @@
 #include "sync.h"
 #include "txmempool.h"
 #include "utilmoneystr.h"
+#include "undo.h"
 
 #include <algorithm>
 #include <exception>
@@ -213,7 +216,6 @@ static const uint64_t nMinDiskSpace = 52428800;
 class CReserveKey;
 class CBlockTreeDB;
 class CCoins;
-class CTxUndo;
 class CScriptCheck;
 class CValidationState;
 struct CBlockTemplate;

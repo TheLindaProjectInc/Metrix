@@ -7,6 +7,7 @@
 
 #include "random.h"
 #include "util.h"
+#include "utiltime.h"
 
 #include <assert.h>
 

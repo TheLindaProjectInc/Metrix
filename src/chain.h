@@ -6,8 +6,9 @@
 #ifndef H_BITCOIN_CHAIN
 #define H_BITCOIN_CHAIN
 
-#include "core.h"
+#include "core/block.h"
 #include "init.h"
+#include "timedata.h"
 #include "uint256.h"
 #include "utilmoneystr.h"
 

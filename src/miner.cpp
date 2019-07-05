@@ -6,6 +6,9 @@
 
 #include <inttypes.h>
 
+#include "amount.h"
+#include "core/block.h"
+#include "core/transaction.h"
 #include "hash.h"
 #include "kernel.h"
 #include "masternode.h"

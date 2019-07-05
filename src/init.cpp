@@ -4,7 +4,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "init.h"
+
 #include "activemasternode.h"
+#include "amount.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "db.h"

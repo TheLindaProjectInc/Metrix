@@ -3,8 +3,9 @@
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
 #include "stealth.h"
-#include "base58.h"
 
+#include "base58.h"
+#include "random.h"
 
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
