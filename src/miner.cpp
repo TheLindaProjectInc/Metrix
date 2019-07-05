@@ -393,8 +393,8 @@ bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 
     // Process this block the same as if we had received it from another node
     CValidationState state;
-    if (!ProcessBlock(state, NULL, pblock))
-        return error("MetrixMiner : ProcessBlock, block not accepted");
+    if (!ProcessNewBlock(state, NULL, pblock))
+        return error("MetrixMiner : ProcessNewBlock, block not accepted");
 
     return true;
 }
@@ -431,8 +431,8 @@ bool CheckStake(CBlock* pblock, CWallet& wallet)
 
         // Process this block the same as if we had received it from another node
         CValidationState state;
-        if (!ProcessBlock(state, NULL, pblock))
-            return error("CheckStake() : ProcessBlock, block not accepted");
+        if (!ProcessNewBlock(state, NULL, pblock))
+            return error("CheckStake() : ProcessNewBlock, block not accepted");
     }
 
     return true;
