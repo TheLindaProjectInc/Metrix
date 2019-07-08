@@ -55,7 +55,7 @@ static uint64_t CoinWeightCost(const COutput& out)
 }
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-CFeeRate CWallet::minTxFee = CFeeRate(10000); // Override with -mintxfee
+CFeeRate CWallet::minTxFee = CFeeRate(100000); // Override with -mintxfee
 
 /** @defgroup mapWallet
  *
