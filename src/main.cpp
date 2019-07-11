@@ -877,20 +877,17 @@ CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
 
     CAmount nMinFee;
 
-    if (chainActive.Height() < TX_FEE_V2_INCREASE_BLOCK) {
-        nMinFee = MIN_TX_FEE_V1;
-    } else {
-        nMinFee = ::minRelayTxFee.GetFee(nBytes);
+    nMinFee = ::minRelayTxFee.GetFee(nBytes);
 
-        if (fAllowFree) {
-            // There is a free transaction area in blocks created by most miners,
-            // * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
-            //   to be considered to fall into this category. We don't want to encourage sending
-            //   multiple transactions instead of one big transaction to avoid fees.
-            if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
-                nMinFee = 0;
-        }
+    if (fAllowFree) {
+        // There is a free transaction area in blocks created by most miners,
+        // * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
+        //   to be considered to fall into this category. We don't want to encourage sending
+        //   multiple transactions instead of one big transaction to avoid fees.
+        if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
+            nMinFee = 0;
     }
+
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
     return nMinFee;
