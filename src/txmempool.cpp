@@ -4,7 +4,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "txmempool.h"
-#include "core.h"
 #include "main.h" // for CTransaction
 #include "util.h"
 #include "utilmoneystr.h"

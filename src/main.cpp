@@ -877,20 +877,17 @@ CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
 
     CAmount nMinFee;
 
-    if (chainActive.Height() < TX_FEE_V2_INCREASE_BLOCK) {
-        nMinFee = MIN_TX_FEE_V1;
-    } else {
-        nMinFee = ::minRelayTxFee.GetFee(nBytes);
+    nMinFee = ::minRelayTxFee.GetFee(nBytes);
 
-        if (fAllowFree) {
-            // There is a free transaction area in blocks created by most miners,
-            // * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
-            //   to be considered to fall into this category. We don't want to encourage sending
-            //   multiple transactions instead of one big transaction to avoid fees.
-            if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
-                nMinFee = 0;
-        }
+    if (fAllowFree) {
+        // There is a free transaction area in blocks created by most miners,
+        // * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
+        //   to be considered to fall into this category. We don't want to encourage sending
+        //   multiple transactions instead of one big transaction to avoid fees.
+        if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
+            nMinFee = 0;
     }
+
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
     return nMinFee;
@@ -3287,7 +3284,7 @@ bool static IsCanonicalBlockSignature(CBlock* pblock)
     return IsDERSignature(pblock->vchBlockSig, false);
 }
 
-bool ProcessBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
+bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
 {
     // ppcoin: check proof-of-stake
     if (pblock->IsProofOfStake()) {
@@ -3297,7 +3294,7 @@ bool ProcessBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBl
         // allow the best blocks stake to be reused just incase we are in a fork
         if (!(chainActive.Tip()->IsProofOfStake() && proofOfStake.first == chainActive.Tip()->prevoutStake) &&
             setStakeSeen.count(proofOfStake))
-            return state.Invalid(error("ProcessBlock() : duplicate proof-of-stake (%s, %d) for block %s", proofOfStake.first.ToString(), proofOfStake.second, pblock->GetHash().ToString()));
+            return state.Invalid(error("ProcessNewBlock() : duplicate proof-of-stake (%s, %d) for block %s", proofOfStake.first.ToString(), proofOfStake.second, pblock->GetHash().ToString()));
     }
 
     // Preliminary checks
@@ -3307,13 +3304,13 @@ bool ProcessBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBl
     // For now we just strip garbage from newly received blocks
     if (!IsCanonicalBlockSignature(pblock)) {
         if (!ReserealizeBlockSignature(pblock))
-            LogPrintf("WARNING: ProcessBlock() : ReserealizeBlockSignature FAILED\n");
+            LogPrintf("WARNING: ProcesNewsBlock() : ReserealizeBlockSignature FAILED\n");
     }
     
     LOCK(cs_main);
     MarkBlockAsReceived(pblock->GetHash());
     if (!checked) {
-        return error("ProcessBlock() : CheckBlock FAILED");
+        return error("$s : CheckBlock FAILED", __func__);
     }
 
     // Store to disk
@@ -3323,10 +3320,10 @@ bool ProcessBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBl
         mapBlockSource[pindex->GetBlockHash()] = pfrom->GetId();
     }
     if (!ret)
-        return error("ProcessBlock() : AcceptBlock FAILED");
+        return error("%s : AcceptBlock FAILED", __func__);
 
     if (!ActivateBestChain(state, pblock))
-        return error("ProcessBlock() : ActivateBestChain failed");
+        return error("%s : ActivateBestChain failed", __func__);
 
     return true;
 }
@@ -3981,7 +3978,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
                 // process in case the block isn't known yet
                 if (mapBlockIndex.count(hash) == 0 || (mapBlockIndex[hash]->nStatus & BLOCK_HAVE_DATA) == 0) {
                     CValidationState state;
-                    if (ProcessBlock(state, NULL, &block, dbp))
+                    if (ProcessNewBlock(state, NULL, &block, dbp))
                         nLoaded++;
                     if (state.IsError())
                         break;
@@ -4001,7 +3998,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
                             LogPrintf("%s: Processing out of order child %s of %s\n", __func__, block.GetHash().ToString(),
                                     head.ToString());
                             CValidationState dummy;
-                            if (ProcessBlock(dummy, NULL, &block, &it->second))
+                            if (ProcessNewBlock(dummy, NULL, &block, &it->second))
                             {
                                 nLoaded++;
                                 queue.push_back(block.GetHash());
@@ -4800,7 +4797,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         LogPrint("net", "received block %s peer=%d\n", inv.hash.ToString(), pfrom->id);
         pfrom->AddInventoryKnown(inv);
         CValidationState state;
-        ProcessBlock(state, pfrom, &block);
+        ProcessNewBlock(state, pfrom, &block);
         int nDoS;
         if (state.IsInvalid(nDoS)) {
             pfrom->PushMessage("reject", strCommand, state.GetRejectCode(),

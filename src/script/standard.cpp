@@ -15,6 +15,8 @@ using namespace std;
 
 typedef vector<unsigned char> valtype;
 
+unsigned nMaxDatacarrierBytes = MAX_OP_RETURN_RELAY;
+
 const char* GetTxnOutputType(txnouttype t)
 {
     switch (t) {
@@ -125,8 +127,8 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                 } else
                     break;
             } else if (opcode2 == OP_SMALLDATA) {
-                // small pushdata, <= MAX_OP_RETURN_RELAY bytes
-                if (vch1.size() > MAX_OP_RETURN_RELAY)
+                // small pushdata, <= nMaxDatacarrierBytes
+                if (vch1.size() > nMaxDatacarrierBytes)
                     break;
             } else if (opcode1 != opcode2 || vch1 != vch2) {
                 // Others must match exactly

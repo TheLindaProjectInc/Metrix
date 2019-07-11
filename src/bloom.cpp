@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "bloom.h"
-#include "core.h"
+#include "core/transaction.h"
 #include "script/script.h"
 #include "script/standard.h"
 

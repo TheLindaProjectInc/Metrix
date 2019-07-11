@@ -5,6 +5,7 @@
 
 #include <boost/assign/list_of.hpp>
 
+#include "amount.h"
 #include "base58.h"
 #include "core_io.h"
 #include "init.h"

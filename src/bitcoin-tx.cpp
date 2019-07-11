@@ -5,7 +5,7 @@
 #include "base58.h"
 #include "clientversion.h"
 #include "coins.h"
-#include "core.h"
+#include "core/transaction.h"
 #include "core_io.h"
 #include "keystore.h"
 #include "main.h" // for MAX_BLOCK_SIZE

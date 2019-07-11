@@ -9,6 +9,7 @@
 
 #include "addrman.h"
 #include "chainparams.h"
+#include "core/transaction.h"
 #include "darksend.h"
 #include "db.h"
 #include "net.h"

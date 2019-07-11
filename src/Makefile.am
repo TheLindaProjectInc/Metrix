@@ -84,13 +84,16 @@ BITCOIN_CORE_H = \
   coincontrol.h \
   compat.h \
   compat/sanity.h \
-  core.h \
+  compressor.h \
+  core/block.h \
+  core/transaction.h \
   core_io.h \
   coins.h \
   crypter.h \
   darksend.h \
   db.h \
   eccryptoverify.h \
+  ecwrapper.h \
   hash.h \
   init.h \
   instantx.h \
@@ -114,7 +117,6 @@ BITCOIN_CORE_H = \
   rpcclient.h \
   rpcprotocol.h \
   rpcserver.h \
-  script/compressor.h \
   script/interpreter.h \
   script/script.h \
   script/script_error.h \
@@ -133,6 +135,7 @@ BITCOIN_CORE_H = \
   txdb.h \
   txmempool.h \
   uint256.h \
+  undo.h \
   ui_interface.h \
   utilstrencodings.h \
   utilmoneystr.h \
@@ -238,14 +241,18 @@ univalue_libbitcoin_univalue_a_SOURCES = \
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   allocators.cpp \
+  amount.cpp \
   base58.cpp \
   chainparams.cpp \
   coins.cpp \
-  core.cpp \
+  compressor.cpp \
+  core/block.cpp \
+  core/transaction.cpp \
   core_read.cpp \
   core_write.cpp \
   darksend.cpp \
   eccryptoverify.cpp \
+  ecwrapper.cpp \
   hash.cpp \
   instantx.cpp \
   key.cpp \
@@ -255,7 +262,6 @@ libbitcoin_common_a_SOURCES = \
   netbase.cpp \
   protocol.cpp \
   pbkdf2.cpp \
-  script/compressor.cpp \
   script/interpreter.cpp \
   script/script.cpp \
   script/script_error.cpp \

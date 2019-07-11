@@ -10,10 +10,12 @@
 #include "config/bitcoin-config.h"
 #endif
 
+#include "amount.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "coins.h"
-#include "core.h"
+#include "core/block.h"
+#include "core/transaction.h"
 #include "net.h"
 #include "script/script.h"
 #include "script/sigcache.h"
@@ -22,6 +24,7 @@
 #include "sync.h"
 #include "txmempool.h"
 #include "utilmoneystr.h"
+#include "undo.h"
 
 #include <algorithm>
 #include <exception>
@@ -130,10 +133,6 @@ static const unsigned int MAX_BLOCKFILE_SIZE = 0x8000000; // 128 MiB
 static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; // 16 MiB
 /** The pre-allocation chunk size for rev?????.dat files (since 0.8) */
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
-/** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-static const int64_t MIN_TX_FEE_V1 = 10000;
-/** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-static const int64_t MIN_RELAY_TX_FEE_V1 = MIN_TX_FEE_V1;
 /** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
 static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 /** Maximum number of script-checking threads allowed */
@@ -213,7 +212,6 @@ static const uint64_t nMinDiskSpace = 52428800;
 class CReserveKey;
 class CBlockTreeDB;
 class CCoins;
-class CTxUndo;
 class CScriptCheck;
 class CValidationState;
 struct CBlockTemplate;
@@ -236,8 +234,16 @@ void RegisterNodeSignals(CNodeSignals& nodeSignals);
 /** Unregister a network node */
 void UnregisterNodeSignals(CNodeSignals& nodeSignals);
 
-/** Process an incoming block */
-bool ProcessBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp = NULL);
+/** Process an incoming block. This only returns after the best known valid
+    block is made active. Note that it does not, however, guarantee that the
+    specific block passed to it has been checked for validity!
+    @param[out]  state   This may be set to an Error state if any error occurred processing it, including during validation/connection/etc of otherwise unrelated blocks during reorganisation; or it may be set to an Invalid state iff pblock is itself invalid (but this is not guaranteed even when the block is checked). If you want to *possibly* get feedback on whether pblock is valid, you must also install a CValidationInterface - this will have its BlockChecked method called whenever *any* block completes validation.
+    @param[in]   pfrom   The node which we are receiving the block from; it is added to mapBlockSource and may be penalised if the block is invalid.
+    @param[in]   pblock  The block we want to process.
+    @param[out]  dbp     If pblock is stored to disk (or already there), this will be set to its location.
+    @return True if state.IsValid()
+*/
+bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos *dbp = NULL);
 /** Check whether enough disk space is available for an incoming block */
 bool CheckDiskSpace(uint64_t nAdditionalBytes = 0);
 /** Open a block file (blk?????.dat) */

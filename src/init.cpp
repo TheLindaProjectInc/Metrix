@@ -4,7 +4,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "init.h"
+
 #include "activemasternode.h"
+#include "amount.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "db.h"
@@ -14,6 +16,7 @@
 #include "masternodeconfig.h"
 #include "net.h"
 #include "rpcserver.h"
+#include "script/standard.h"
 #include "spork.h"
 #include "txdb.h"
 #include "ui_interface.h"
@@ -347,6 +350,7 @@ std::string HelpMessage(HelpMessageMode mode)
 
     strUsage += "\n" + _("Node relay options:") + "\n";
     strUsage += "  -datacarrier           " + strprintf(_("Relay and mine data carrier transactions (default: %u)"),1) + "\n";
+    strUsage += "  -datacarriersize       " + strprintf(_("Maximum size of data in data carrier transactions we relay and mine (default: %u)"), MAX_OP_RETURN_RELAY) + "\n";
 
     strUsage += "\n" + _("Block creation options:") + "\n";
     strUsage += "  -blockminsize=<n>      " + strprintf(_("Set minimum block size in bytes (default: %u)"),0) + "\n";
@@ -719,6 +723,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif // ENABLE_WALLET
 
     fIsBareMultisigStd = GetArg("-permitbaremultisig", true) != 0;
+    nMaxDatacarrierBytes = GetArg("-datacarriersize", nMaxDatacarrierBytes);
 
     fConfChange = GetBoolArg("-confchange", false);
     fMinimizeCoinAge = GetBoolArg("-minimizecoinage", false);

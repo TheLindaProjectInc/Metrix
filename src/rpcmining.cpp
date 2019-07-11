@@ -3,6 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "amount.h"
 #include "chainparams.h"
 #include "core_io.h"
 #include "db.h"
@@ -446,7 +447,7 @@ Value submitblock(const Array& params, bool fHelp)
     }
 
     CValidationState state;
-    bool fAccepted = ProcessBlock(state, NULL, &pblock);
+    bool fAccepted = ProcessNewBlock(state, NULL, &pblock);
     if (!fAccepted)
         return "rejected"; // TODO: report validation state
 
