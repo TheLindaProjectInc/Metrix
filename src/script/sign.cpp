@@ -140,7 +140,7 @@ static CScript PushAll(const vector<valtype>& values)
     return result;
 }
 
-static CScript CombineMultisig(CScript scriptPubKey, const CMutableTransaction& txTo, unsigned int nIn, const vector<valtype>& vSolutions, vector<valtype>& sigs1, vector<valtype>& sigs2)
+static CScript CombineMultisig(const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, const vector<valtype>& vSolutions,const vector<valtype>& sigs1,const vector<valtype>& sigs2)
 {
     // Combine all the signatures we've got:
     set<valtype> allsigs;
@@ -187,7 +187,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CMutableTransaction& 
     return result;
 }
 
-static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const txnouttype txType, const vector<valtype>& vSolutions, vector<valtype>& sigs1, vector<valtype>& sigs2)
+static CScript CombineSignatures(const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, const txnouttype txType, const vector<valtype>& vSolutions, vector<valtype>& sigs1, vector<valtype>& sigs2)
 {
     switch (txType) {
     case TX_NONSTANDARD:
@@ -228,7 +228,7 @@ static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo,
     return CScript();
 }
 
-CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2)
+CScript CombineSignatures(const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2)
 {
     txnouttype txType;
     vector<vector<unsigned char> > vSolutions;
