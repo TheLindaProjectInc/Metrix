@@ -7,6 +7,7 @@
 
 #include "clientversion.h"
 #include "main.h" // for CTransaction
+#include "streams.h"
 #include "util.h"
 #include "utilmoneystr.h"
 

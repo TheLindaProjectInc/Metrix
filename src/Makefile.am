@@ -128,6 +128,7 @@ BITCOIN_CORE_H = \
   serialize.h \
   spork.h \
   stealth.h \
+  streams.h \
   strlcpy.h \
   sync.h \
   threadsafety.h \

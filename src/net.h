@@ -16,6 +16,7 @@
 #include "protocol.h"
 #include "pubkey.h"
 #include "random.h"
+#include "streams.h"
 #include "sync.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
