@@ -192,7 +192,6 @@ libbitcoin_server_a_SOURCES = \
   rpcserver.cpp \
   script/sigcache.cpp \
   spork.cpp \
-  timedata.cpp \
   txdb.cpp \
   txmempool.cpp \
   $(JSON_H) \
@@ -274,6 +273,7 @@ libbitcoin_common_a_SOURCES = \
   script/standard.cpp \
   scrypt.cpp \
   stealth.cpp \
+  timedata.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.
@@ -334,9 +334,9 @@ if TARGET_WINDOWS
 metrixd_SOURCES += bitcoind-res.rc
 endif
 
-metrixd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS)
+metrixd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
 metrixd_CPPFLAGS = $(BITCOIN_INCLUDES)
-metrixd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
+metrixd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 # metrix-cli binary #
 metrix_cli_LDADD = \
@@ -360,7 +360,9 @@ metrix_tx_LDADD = \
   $(LIBBITCOIN_UNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CRYPTO)
+  $(LIBBITCOIN_CRYPTO) \
+  $(BOOST_LIBS) \
+  $(CRYPTO_LIBS)
 
 if USE_LIBSECP256K1
   metrix_tx_LDADD += secp256k1/libsecp256k1.la
@@ -373,13 +375,13 @@ endif
 metrix_tx_SOURCES = bitcoin-tx.cpp
 metrix_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
-metrix_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
+metrix_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 
 if TARGET_WINDOWS
 metrix_cli_SOURCES += bitcoin-cli-res.rc
 endif
-metrix_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS)
+metrix_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
 
