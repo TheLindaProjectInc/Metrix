@@ -14,6 +14,7 @@
 #include "mruset.h"
 #include "netbase.h"
 #include "protocol.h"
+#include "pubkey.h"
 #include "random.h"
 #include "sync.h"
 #include "uint256.h"

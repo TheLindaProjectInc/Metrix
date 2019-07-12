@@ -6,9 +6,10 @@
 #define __CRYPTER_H__
 
 #include "allocators.h" /* for SecureString */
-#include "key.h"
 #include "keystore.h"
 #include "serialize.h"
+
+class uint256;
 
 const unsigned int WALLET_CRYPTO_KEY_SIZE = 32;
 const unsigned int WALLET_CRYPTO_SALT_SIZE = 8;

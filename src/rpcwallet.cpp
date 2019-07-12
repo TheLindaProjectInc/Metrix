@@ -987,7 +987,7 @@ Value addmultisigaddress(const Array& params, bool fHelp)
 
     // Construct using pay-to-script-hash:
     CScript inner = _createmultisig_redeemScript(params);
-    CScriptID innerID = inner.GetID();
+    CScriptID innerID(inner);
     pwalletMain->AddCScript(inner);
 
     pwalletMain->SetAddressBook(innerID, strAccount, "send");
@@ -1024,7 +1024,7 @@ Value createmultisig(const Array& params, bool fHelp)
 
     // Construct using pay-to-script-hash:
     CScript inner = _createmultisig_redeemScript(params);
-    CScriptID innerID = inner.GetID();
+    CScriptID innerID(inner);
     CBitcoinAddress address(innerID);
 
     Object result;
@@ -1051,7 +1051,7 @@ Value addredeemscript(const Array& params, bool fHelp)
     // Construct using pay-to-script-hash:
     vector<unsigned char> innerData = ParseHexV(params[0], "redeemScript");
     CScript inner(innerData.begin(), innerData.end());
-    CScriptID innerID = inner.GetID();
+    CScriptID innerID(inner);
     if (!pwalletMain->AddCScript(inner))
         throw runtime_error("AddCScript() failed");
 

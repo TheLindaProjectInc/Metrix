@@ -10,6 +10,10 @@
 #include "script/script.h"
 #include "serialize.h"
 
+class CKeyID;
+class CPubKey;
+class CScriptID;
+
 /** Compact serializer for scripts.
  *
  *  It detects common cases and encodes them much more efficiently.

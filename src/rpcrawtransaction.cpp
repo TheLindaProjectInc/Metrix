@@ -8,6 +8,7 @@
 #include "core_io.h"
 #include "init.h"
 #include "keystore.h"
+#include "main.h"
 #include "net.h"
 #include "rpcserver.h"
 #include "script/script.h"
@@ -545,7 +546,7 @@ Value decodescript(const Array& params, bool fHelp)
     }
     ScriptPubKeyToJSON(script, r, false);
 
-    r.push_back(Pair("p2sh", CBitcoinAddress(script.GetID()).ToString()));
+    r.push_back(Pair("p2sh", CBitcoinAddress(CScriptID(script)).ToString()));
     return r;
 }
 

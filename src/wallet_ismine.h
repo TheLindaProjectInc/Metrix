@@ -7,7 +7,7 @@
 #define H_BITCOIN_WALLET_ISMINE
 
 #include "key.h"
-#include "script/script.h"
+#include "script/standard.h"
 #include "stealth.h"
 
 #include <stdint.h>
@@ -15,6 +15,7 @@
 typedef std::vector<unsigned char> valtype;
 
 class CKeyStore;
+class CScript;
 
 /** IsMine() return codes */
 enum isminetype {

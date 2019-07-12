@@ -6,6 +6,7 @@
 #ifndef BITCOIN_HASH_H
 #define BITCOIN_HASH_H
 
+#include "crypto/hmac_sha512.h"
 #include "crypto/ripemd160.h"
 #include "crypto/sha256.h"
 #include "serialize.h"
@@ -159,5 +160,7 @@ inline uint160 Hash160(const std::vector<unsigned char>& vch)
 }
 
 unsigned int MurmurHash3(unsigned int nHashSeed, const std::vector<unsigned char>& vDataToHash);
+
+void BIP32Hash(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64]);
 
 #endif // BITCOIN_HASH_H

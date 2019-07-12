@@ -22,6 +22,7 @@
 #include "bignum.h"
 #include "chainparams.h"
 #include "key.h"
+#include "pubkey.h"
 #include "script/script.h"
 #include "script/standard.h"
 #include "util.h"

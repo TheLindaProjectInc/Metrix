@@ -113,6 +113,7 @@ BITCOIN_CORE_H = \
   netbase.h \
   pbkdf2.h \
   protocol.h \
+  pubkey.h \
   random.h \
   rpcclient.h \
   rpcprotocol.h \
@@ -261,6 +262,7 @@ libbitcoin_common_a_SOURCES = \
   masternodeconfig.cpp \
   netbase.cpp \
   protocol.cpp \
+  pubkey.cpp \
   pbkdf2.cpp \
   script/interpreter.cpp \
   script/script.cpp \
