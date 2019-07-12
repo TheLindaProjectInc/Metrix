@@ -7,6 +7,7 @@
 
 #include "util.h"
 
+#include "clientversion.h"
 #include "serialize.h"
 
 #include <leveldb/db.h>
