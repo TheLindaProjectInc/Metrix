@@ -189,7 +189,9 @@ libbitcoin_server_a_SOURCES = \
   rpcnet.cpp \
   rpcrawtransaction.cpp \
   rpcserver.cpp \
+  script/sigcache.cpp \
   spork.cpp \
+  timedata.cpp \
   txdb.cpp \
   txmempool.cpp \
   $(JSON_H) \
@@ -267,12 +269,10 @@ libbitcoin_common_a_SOURCES = \
   script/interpreter.cpp \
   script/script.cpp \
   script/script_error.cpp \
-  script/sigcache.cpp \
   script/sign.cpp \
   script/standard.cpp \
   scrypt.cpp \
   stealth.cpp \
-  timedata.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.
@@ -359,7 +359,6 @@ metrix_tx_LDADD = \
   $(LIBBITCOIN_UNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CRYPTO) \
   $(LIBBITCOIN_CRYPTO)
 
 if USE_LIBSECP256K1
@@ -368,8 +367,8 @@ endif
 
   metrix_tx_LDADD += \
   $(BOOST_LIBS) \
-  $(SSL_LIBS) \
   $(CRYPTO_LIBS)
+  
 metrix_tx_SOURCES = bitcoin-tx.cpp
 metrix_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
