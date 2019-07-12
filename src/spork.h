@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SPORK_H
-#define SPORK_H
+#ifndef BITCOIN_SPORK_H
+#define BITCOIN_SPORK_H
 
 #include "base58.h"
 #include "bignum.h"
@@ -103,4 +103,4 @@ public:
     void Relay(CSporkMessage& msg);
 };
 
-#endif // SPORK_H
+#endif // BITCOIN_SPORK_H

@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef _BITCOINRPC_SERVER_H_
-#define _BITCOINRPC_SERVER_H_
+#ifndef BITCOIN_RPC_SERVER_H
+#define BITCOIN_RPC_SERVER_H
 
 #include "amount.h"
 #include "rpcprotocol.h"
@@ -240,4 +240,4 @@ extern json_spirit::Value listaddressbook(const json_spirit::Array& params, bool
 extern json_spirit::Value addressbookadd(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value addressbookremove(const json_spirit::Array& params, bool fHelp);
 
-#endif // _BITCOINRPC_SERVER_H_
+#endif // BITCOIN_RPC_SERVER_H

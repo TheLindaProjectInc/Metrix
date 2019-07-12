@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPT
-#define H_BITCOIN_SCRIPT
+#ifndef BITCOIN_SCRIPT_H
+#define BITCOIN_SCRIPT_H
 
 #include <assert.h>
 #include <climits>
@@ -579,4 +579,4 @@ public:
     }
 };
 
-#endif
+#endif // BITCOIN_SCRIPT_H
