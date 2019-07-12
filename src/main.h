@@ -102,11 +102,19 @@ static const unsigned char REJECT_CHECKPOINT = 0x43;
 
 class CBlock;
 class CBlockIndex;
+class CBlockTreeDB;
+class CCoins;
 class CInv;
 class CKeyItem;
 class CNode;
 class CReserveKey;
+class CScriptCheck;
 class CWallet;
+class CWalletInterface;
+class CValidationState;
+
+struct CBlockTemplate;
+struct CNodeStateStats;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
 static const unsigned int MAX_BLOCK_SIZE = 4000000;
@@ -208,15 +216,6 @@ extern bool fMinimizeCoinAge;
 
 // Minimum disk space required - used in CheckDiskSpace()
 static const uint64_t nMinDiskSpace = 52428800;
-
-class CReserveKey;
-class CBlockTreeDB;
-class CCoins;
-class CScriptCheck;
-class CValidationState;
-struct CBlockTemplate;
-class CWalletInterface;
-struct CNodeStateStats;
 
 /** Register a wallet to receive updates from core */
 void RegisterWallet(CWalletInterface* pwalletIn);
