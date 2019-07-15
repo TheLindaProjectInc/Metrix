@@ -2,8 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DARKSEND_H
-#define DARKSEND_H
+#ifndef METRIX_DARKSEND_H
+#define METRIX_DARKSEND_H
 
 //#include "primitives/transaction.h"
 #include "activemasternode.h"
@@ -433,4 +433,4 @@ void ConnectToDarkSendMasterNodeWinner();
 
 void ThreadCheckDarkSendPool();
 
-#endif // DARKSEND_H
+#endif // METRIX_DARKSEND_H

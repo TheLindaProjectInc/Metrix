@@ -183,7 +183,7 @@ bool CWallet::LoadCScript(const CScript& redeemScript)
      * that never can be redeemed. However, old wallets may still contain
      * these. Do not add them to the wallet and warn. */
     if (redeemScript.size() > MAX_SCRIPT_ELEMENT_SIZE) {
-        std::string strAddr = CBitcoinAddress(redeemScript.GetID()).ToString();
+        std::string strAddr = CBitcoinAddress(CScriptID(redeemScript)).ToString();
         LogPrintf("%s: Warning: This wallet contains a redeemScript of size %u which exceeds maximum size %i thus can never be redeemed. Do not use address %s.\n",
                   __func__, redeemScript.size(), MAX_SCRIPT_ELEMENT_SIZE, strAddr);
         return true;
@@ -3385,7 +3385,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                             LogPrint("coinstake", "CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
                             break;  //! unable to find corresponding public key
                         }
-                        scriptPubKeyOut << key.GetPubKey() << OP_CHECKSIG;
+                        scriptPubKeyOut << ToByteVector(key.GetPubKey()) << OP_CHECKSIG;
                     }
                     if (whichType == TX_PUBKEY)
                     {

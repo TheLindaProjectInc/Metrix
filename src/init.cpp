@@ -784,9 +784,8 @@ bool AppInit2(boost::thread_group& threadGroup)
     //ignore masternodes below protocol version
     CMasterNode::minProtoVersion = GetArg("-masternodeminprotocol", MIN_MN_PROTO_VERSION);
 
-
+    LogPrintf("Using %u threads for script verification\n", nScriptCheckThreads);
     if (nScriptCheckThreads) {
-        LogPrintf("Using %u threads for script verification\n", nScriptCheckThreads);
         for (int i = 0; i < nScriptCheckThreads - 1; i++)
             threadGroup.create_thread(&ThreadScriptCheck);
     }

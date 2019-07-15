@@ -1,8 +1,8 @@
 // Copyright (c) 2012 Pieter Wuille
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef _BITCOIN_ADDRMAN
-#define _BITCOIN_ADDRMAN
+#ifndef BITCOIN_ADDRMAN_H
+#define BITCOIN_ADDRMAN_H
 
 #include "netbase.h"
 #include "protocol.h"
@@ -509,4 +509,4 @@ public:
     }
 };
 
-#endif // _BITCOIN_ADDRMAN
+#endif // BITCOIN_ADDRMAN_H

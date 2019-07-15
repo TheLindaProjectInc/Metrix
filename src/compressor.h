@@ -3,12 +3,16 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_COMPRESSOR
-#define H_BITCOIN_COMPRESSOR
+#ifndef BITCOIN_COMPRESSOR_H
+#define BITCOIN_COMPRESSOR_H
 
 #include "core/transaction.h"
 #include "script/script.h"
 #include "serialize.h"
+
+class CKeyID;
+class CPubKey;
+class CScriptID;
 
 /** Compact serializer for scripts.
  *
@@ -117,4 +121,4 @@ public:
     }
 };
 
-#endif // H_BITCOIN_COMPRESSOR
+#endif // BITCOIN_COMPRESSOR_H

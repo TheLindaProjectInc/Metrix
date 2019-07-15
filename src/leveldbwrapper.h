@@ -7,7 +7,9 @@
 
 #include "util.h"
 
+#include "clientversion.h"
 #include "serialize.h"
+#include "streams.h"
 
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>

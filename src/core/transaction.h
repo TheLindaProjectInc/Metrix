@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_CORE_TRANSACTION
-#define H_BITCOIN_CORE_TRANSACTION
+#ifndef BITCOIN_CORE_TRANSACTION_H
+#define BITCOIN_CORE_TRANSACTION_H
 
 #include "amount.h"
 #include "script/script.h"
@@ -55,27 +55,6 @@ public:
     }
 
     std::string ToString() const;
-};
-
-/** An inpoint - a combination of a transaction and an index n into its vin */
-class CInPoint
-{
-public:
-    const CTransaction* ptx;
-    uint32_t n;
-
-    CInPoint() { SetNull(); }
-    CInPoint(const CTransaction* ptxIn, uint32_t nIn)
-    {
-        ptx = ptxIn;
-        n = nIn;
-    }
-    void SetNull()
-    {
-        ptx = NULL;
-        n = (uint32_t)-1;
-    }
-    bool IsNull() const { return (ptx == NULL && n == (uint32_t)-1); }
 };
 
 /** An input of a transaction.  It contains the location of the previous
@@ -349,4 +328,4 @@ struct CMutableTransaction {
     }
 };
 
-#endif  //H_BITCOIN_CORE_TRANSACTION
+#endif  // BITCOIN_CORE_TRANSACTION_H

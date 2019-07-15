@@ -5,8 +5,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef MASTERNODE_H
-#define MASTERNODE_H
+#ifndef METRIX_MASTERNODE_H
+#define METRIX_MASTERNODE_H
 
 #include "base58.h"
 #include "key.h"
@@ -235,4 +235,4 @@ public:
 };
 
 
-#endif // MASTERNODE_H
+#endif // METRIX_MASTERNODE_H

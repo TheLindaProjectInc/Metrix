@@ -1,8 +1,8 @@
 // Copyright (c) 2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef CHECKQUEUE_H
-#define CHECKQUEUE_H
+#ifndef BITCOIN_CHECKQUEUE_H
+#define BITCOIN_CHECKQUEUE_H
 
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
@@ -202,4 +202,4 @@ public:
     }
 };
 
-#endif // CHECKQUEUE_H
+#endif // BITCOIN_CHECKQUEUE_H

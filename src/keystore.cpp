@@ -4,9 +4,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "keystore.h"
-#include "script/script.h"
-#include "util.h"
 
+#include "crypter.h"
+#include "key.h"
+#include "script/script.h"
+#include "script/standard.h"
+#include "util.h"
 
 bool CKeyStore::GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const
 {
@@ -35,7 +38,7 @@ bool CBasicKeyStore::AddCScript(const CScript& redeemScript)
         return error("CBasicKeyStore::AddCScript() : redeemScripts > %i bytes are invalid", MAX_SCRIPT_ELEMENT_SIZE);
 
     LOCK(cs_KeyStore);
-    mapScripts[redeemScript.GetID()] = redeemScript;
+    mapScripts[CScriptID(redeemScript)] = redeemScript;
     return true;
 }
 

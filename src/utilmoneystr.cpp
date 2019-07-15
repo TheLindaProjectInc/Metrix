@@ -7,6 +7,7 @@
 
 #include "core/transaction.h"
 #include "tinyformat.h"
+#include "utilstrencodings.h"
 
 using namespace std;
 

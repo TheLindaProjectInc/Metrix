@@ -4,12 +4,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chainparamsbase.h"
-#include "init.h"
+#include "clientversion.h"
 #include "rpcclient.h"
 #include "rpcprotocol.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "version.h"
 
 #define _(x) std::string(x) /* Keep the _() around in case gettext or such will be used later to translate non-UI */
 

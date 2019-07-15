@@ -3,12 +3,13 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_CORE_BLOCK
-#define H_BITCOIN_CORE_BLOCK
+#ifndef BITCOIN_CORE_BLOCK_H
+#define BITCOIN_CORE_BLOCK_H
 
 #include "core/transaction.h"
 #include "serialize.h"
 #include "uint256.h"
+#include "util.h"
 
 #include <boost/foreach.hpp>
 
@@ -226,4 +227,4 @@ public:
     friend class CChain;
 };
 
-#endif // H_BITCOIN_CORE_BLOCK
+#endif // BITCOIN_CORE_BLOCK_H

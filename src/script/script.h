@@ -3,18 +3,23 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPT
-#define H_BITCOIN_SCRIPT
+#ifndef BITCOIN_SCRIPT_H
+#define BITCOIN_SCRIPT_H
 
-#include "key.h"
-#include "script/standard.h"
-#include "tinyformat.h"
-#include "utilstrencodings.h"
-
+#include <assert.h>
+#include <climits>
+#include <limits>
 #include <stdexcept>
+#include <stdint.h>
+#include <string.h>
 #include <string>
+#include <vector>
 
-#include <boost/variant.hpp>
+template <typename T>
+std::vector<unsigned char> ToByteVector(const T& in)
+{
+    return std::vector<unsigned char>(in.begin(), in.end());
+}
 
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
 
@@ -379,7 +384,6 @@ public:
     CScript(int64_t b) { operator<<(b); }
 
     explicit CScript(opcodetype b) { operator<<(b); }
-    explicit CScript(const uint256& b) { operator<<(b); }
     explicit CScript(const CScriptNum& b) { operator<<(b); }
     explicit CScript(const std::vector<unsigned char>& b) { operator<<(b); }
 
@@ -391,28 +395,6 @@ public:
         if (opcode < 0 || opcode > 0xff)
             throw std::runtime_error("CScript::operator<<() : invalid opcode");
         insert(end(), (unsigned char)opcode);
-        return *this;
-    }
-
-    CScript& operator<<(const uint160& b)
-    {
-        insert(end(), sizeof(b));
-        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
-        return *this;
-    }
-
-    CScript& operator<<(const uint256& b)
-    {
-        insert(end(), sizeof(b));
-        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
-        return *this;
-    }
-
-    CScript& operator<<(const CPubKey& key)
-    {
-        assert(key.size() < OP_PUSHDATA1);
-        insert(end(), (unsigned char)key.size());
-        insert(end(), key.begin(), key.end());
         return *this;
     }
 
@@ -590,11 +572,6 @@ public:
 
     std::string ToString() const;
         
-    CScriptID GetID() const
-    {
-        return CScriptID(Hash160(*this));
-    }
-
     void clear()
     {
         // The default std::vector::clear() does not release memory.
@@ -602,4 +579,4 @@ public:
     }
 };
 
-#endif
+#endif // BITCOIN_SCRIPT_H

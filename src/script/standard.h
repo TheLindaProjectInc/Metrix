@@ -3,13 +3,12 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPT_STANDARD
-#define H_BITCOIN_SCRIPT_STANDARD
+#ifndef BITCOIN_SCRIPT_STANDARD_H
+#define BITCOIN_SCRIPT_STANDARD_H
 
 #include "script/interpreter.h"
-#include "script/script.h"
+#include "uint256.h"
 
-#include <key.h>
 #include <stealth.h>
 
 #include <stdint.h>
@@ -19,6 +18,15 @@
 class CKeyID;
 class CScript;
 class CStealthAddress;
+
+/** A reference to a CScript: the Hash160 of its serialization (see script.h) */
+class CScriptID : public uint160
+{
+public:
+    CScriptID() : uint160(0) {}
+    CScriptID(const CScript& in);
+    CScriptID(const uint160& in) : uint160(in) {}
+};
 
 static const unsigned int MAX_OP_RETURN_RELAY = 40; // bytes
 extern unsigned nMaxDatacarrierBytes;
@@ -77,4 +85,4 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::
 CScript GetScriptForDestination(const CTxDestination& dest);
 CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
-#endif // H_BITCOIN_SCRIPT_STANDARD
+#endif // BITCOIN_SCRIPT_STANDARD_H
