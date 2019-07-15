@@ -45,12 +45,12 @@ bool SignN(const vector<valtype>& multisigdata, const CKeyStore& keystore, uint2
     return nSigned == nRequired;
 }
 
-//
-// Sign scriptPubKey with private keys stored in keystore, given transaction hash and hash type.
-// Signatures are returned in scriptSigRet (or returns false if scriptPubKey can't be signed),
-// unless whichTypeRet is TX_SCRIPTHASH, in which case scriptSigRet is the redemption script.
-// Returns false if scriptPubKey could not be completely satisfied.
-//
+/**
+ * Sign scriptPubKey with private keys stored in keystore, given transaction hash and hash type.
+ * Signatures are returned in scriptSigRet (or returns false if scriptPubKey can't be signed),
+ * unless whichTypeRet is TX_SCRIPTHASH, in which case scriptSigRet is the redemption script.
+ * Returns false if scriptPubKey could not be completely satisfied.
+ */
 bool Solver(const CKeyStore& keystore, const CScript& scriptPubKey, uint256 hash, int nHashType, CScript& scriptSigRet, txnouttype& whichTypeRet)
 {
     scriptSigRet.clear();
@@ -81,7 +81,7 @@ bool Solver(const CKeyStore& keystore, const CScript& scriptPubKey, uint256 hash
         return keystore.GetCScript(uint160(vSolutions[0]), scriptSigRet);
 
     case TX_MULTISIG:
-        scriptSigRet << OP_0; // workaround CHECKMULTISIG bug
+        scriptSigRet << OP_0; //! workaround CHECKMULTISIG bug
         return (SignN(vSolutions, keystore, hash, nHashType, scriptSigRet));
     }
     return false;
@@ -92,8 +92,10 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutabl
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
 
-    // Leave out the signature from the hash, since a signature can't sign itself.
-    // The checksig op will also drop the signatures from its hash.
+    /**
+     * Leave out the signature from the hash, since a signature can't sign itself.
+     * The checksig op will also drop the signatures from its hash.
+     */
     uint256 hash = SignatureHash(fromPubKey, txTo, nIn, nHashType);
 
     txnouttype whichType;
@@ -101,24 +103,26 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutabl
         return false;
 
     if (whichType == TX_SCRIPTHASH) {
-        // Solver returns the subscript that need to be evaluated;
-        // the final scriptSig is the signatures from that
-        // and then the serialized subscript:
+        /**
+         * Solver returns the subscript that need to be evaluated;
+         * the final scriptSig is the signatures from that
+         * and then the serialized subscript:
+         */
         CScript subscript = txin.scriptSig;
 
-        // Recompute txn hash using subscript in place of scriptPubKey:
+        //! Recompute txn hash using subscript in place of scriptPubKey:
         uint256 hash2 = SignatureHash(subscript, txTo, nIn, nHashType);
 
         txnouttype subType;
         bool fSolved =
             Solver(keystore, subscript, hash2, nHashType, txin.scriptSig, subType) && subType != TX_SCRIPTHASH;
-        // Append serialized subscript whether or not it is completely signed:
+        //! Append serialized subscript whether or not it is completely signed:
         txin.scriptSig << static_cast<valtype>(subscript);
         if (!fSolved)
             return false;
     }
 
-    // Test solution
+    //! Test solution
     return VerifyScript(txin.scriptSig, fromPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, SignatureChecker(txTo, nIn));
 }
 
@@ -142,7 +146,7 @@ static CScript PushAll(const vector<valtype>& values)
 
 static CScript CombineMultisig(const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, const vector<valtype>& vSolutions,const vector<valtype>& sigs1,const vector<valtype>& sigs2)
 {
-    // Combine all the signatures we've got:
+    //! Combine all the signatures we've got:
     set<valtype> allsigs;
     BOOST_FOREACH (const valtype& v, sigs1) {
         if (!v.empty())
@@ -153,7 +157,7 @@ static CScript CombineMultisig(const CScript& scriptPubKey, const CTransaction& 
             allsigs.insert(v);
     }
 
-    // Build a map of pubkey -> signature by matching sigs to pubkeys:
+    //! Build a map of pubkey -> signature by matching sigs to pubkeys:
     assert(vSolutions.size() > 1);
     unsigned int nSigsRequired = vSolutions.front()[0];
     unsigned int nPubKeys = vSolutions.size() - 2;
@@ -162,7 +166,7 @@ static CScript CombineMultisig(const CScript& scriptPubKey, const CTransaction& 
         for (unsigned int i = 0; i < nPubKeys; i++) {
             const valtype& pubkey = vSolutions[i + 1];
             if (sigs.count(pubkey))
-                continue; // Already got a sig for this pubkey
+                continue; //! Already got a sig for this pubkey
 
             if (SignatureChecker(txTo, nIn).CheckSig(sig, pubkey, scriptPubKey)) {
                 sigs[pubkey] = sig;
@@ -170,17 +174,17 @@ static CScript CombineMultisig(const CScript& scriptPubKey, const CTransaction& 
             }
         }
     }
-    // Now build a merged CScript:
+    //! Now build a merged CScript:
     unsigned int nSigsHave = 0;
     CScript result;
-    result << OP_0; // pop-one-too-many workaround
+    result << OP_0; //! pop-one-too-many workaround
     for (unsigned int i = 0; i < nPubKeys && nSigsHave < nSigsRequired; i++) {
         if (sigs.count(vSolutions[i + 1])) {
             result << sigs[vSolutions[i + 1]];
             ++nSigsHave;
         }
     }
-    // Fill any missing with OP_0:
+    //! Fill any missing with OP_0:
     for (unsigned int i = nSigsHave; i < nSigsRequired; i++)
         result << OP_0;
 
@@ -192,13 +196,13 @@ static CScript CombineSignatures(const CScript& scriptPubKey, const CTransaction
     switch (txType) {
     case TX_NONSTANDARD:
     case TX_NULL_DATA:
-        // Don't know anything about this, assume bigger one is correct:
+        //! Don't know anything about this, assume bigger one is correct:
         if (sigs1.size() >= sigs2.size())
             return PushAll(sigs1);
         return PushAll(sigs2);
     case TX_PUBKEY:
     case TX_PUBKEYHASH:
-        // Signatures are bigger than placeholders or empty scripts:
+        //! Signatures are bigger than placeholders or empty scripts:
         if (sigs1.empty() || sigs1[0].empty())
             return PushAll(sigs2);
         return PushAll(sigs1);
@@ -208,7 +212,7 @@ static CScript CombineSignatures(const CScript& scriptPubKey, const CTransaction
         else if (sigs2.empty() || sigs2.back().empty())
             return PushAll(sigs1);
         else {
-            // Recur to combine:
+            //! Recur to combine:
             valtype spk = sigs1.back();
             CScript pubKey2(spk.begin(), spk.end());
 
