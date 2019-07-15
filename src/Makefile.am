@@ -30,7 +30,7 @@ LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 
-secp256k1/libsecp256k1.la: $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
+$(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
@@ -59,8 +59,6 @@ if BUILD_BITCOIN_UTILS
   bin_PROGRAMS += metrix-cli metrix-tx
 endif
 
-SUBDIRS = .
-DIST_SUBDIRS = .
 .PHONY: FORCE
 # Metrix core #
 BITCOIN_CORE_H = \
