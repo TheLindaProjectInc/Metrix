@@ -1,3 +1,4 @@
+DIST_SUBDIRS = secp256k1
 AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS)
 
 if EMBEDDED_LEVELDB
@@ -31,7 +32,7 @@ LIBSECP256K1=secp256k1/libsecp256k1.la
 
 if USE_LIBSECP256K1
 secp256k1/libsecp256k1.la: $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
-	@$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 endif
 
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
@@ -374,7 +375,7 @@ CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
 
 DISTCLEANFILES = obj/build.h
 
-EXTRA_DIST = leveldb secp256k1
+EXTRA_DIST = leveldb
 
 clean-local:
 	-$(MAKE) -C leveldb clean
