@@ -777,7 +777,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     //! Drop the signature, since there's no way for a signature to sign itself
                     scriptCode.FindAndDelete(CScript(vchSig));
 
-                    if (!CheckSignatureEncoding(vchSig, flags) || !CheckPubKeyEncoding(vchPubKey, flags)) {
+                    if (!CheckSignatureEncoding(vchSig, flags, serror) || !CheckPubKeyEncoding(vchPubKey, flags)) {
                         return false;
                     }
                     bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode);
@@ -838,7 +838,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                          * distinguishable by CHECKMULTISIG NOT if the STRICTENC flag is set.
                          * See the script_(in)valid tests for details.
                          */
-                        if (!CheckSignatureEncoding(vchSig, flags) || !CheckPubKeyEncoding(vchPubKey, flags)) {
+                        if (!CheckSignatureEncoding(vchSig, flags, serror) || !CheckPubKeyEncoding(vchPubKey, flags)) {
                             return false;
                         }
 
