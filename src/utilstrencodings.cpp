@@ -63,7 +63,7 @@ bool IsHex(const string& str)
 
 vector<unsigned char> ParseHex(const char* psz)
 {
-    // convert hex dump to vector
+    //! convert hex dump to vector
     vector<unsigned char> vch;
     while (true) {
         while (isspace(*psz))
@@ -99,19 +99,19 @@ string EncodeBase64(const unsigned char* pch, size_t len)
     while (pch < pchEnd) {
         int enc = *(pch++);
         switch (mode) {
-        case 0: // we have no bits
+        case 0: //! we have no bits
             strRet += pbase64[enc >> 2];
             left = (enc & 3) << 4;
             mode = 1;
             break;
 
-        case 1: // we have two bits
+        case 1: //! we have two bits
             strRet += pbase64[left | (enc >> 4)];
             left = (enc & 15) << 2;
             mode = 2;
             break;
 
-        case 2: // we have four bits
+        case 2: //! we have four bits
             strRet += pbase64[left | (enc >> 6)];
             strRet += pbase64[enc & 63];
             mode = 0;
@@ -168,24 +168,24 @@ vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
             break;
         p++;
         switch (mode) {
-        case 0: // we have no bits and get 6
+        case 0: //! we have no bits and get 6
             left = dec;
             mode = 1;
             break;
 
-        case 1: // we have 6 bits and keep 4
+        case 1: //! we have 6 bits and keep 4
             vchRet.push_back((left << 2) | (dec >> 4));
             left = dec & 15;
             mode = 2;
             break;
 
-        case 2: // we have 4 bits and get 6, we keep 2
+        case 2: //! we have 4 bits and get 6, we keep 2
             vchRet.push_back((left << 4) | (dec >> 2));
             left = dec & 3;
             mode = 3;
             break;
 
-        case 3: // we have 2 bits and get 6
+        case 3: //! we have 2 bits and get 6
             vchRet.push_back((left << 6) | dec);
             mode = 0;
             break;
@@ -194,19 +194,19 @@ vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
 
     if (pfInvalid)
         switch (mode) {
-        case 0: // 4n base64 characters processed: ok
+        case 0: //! 4n base64 characters processed: ok
             break;
 
-        case 1: // 4n+1 base64 character processed: impossible
+        case 1: //! 4n+1 base64 character processed: impossible
             *pfInvalid = true;
             break;
 
-        case 2: // 4n+2 base64 characters processed: require '=='
+        case 2: //! 4n+2 base64 characters processed: require '=='
             if (left || p[0] != '=' || p[1] != '=' || decode64_table[(unsigned char)p[2]] != -1)
                 *pfInvalid = true;
             break;
 
-        case 3: // 4n+3 base64 characters processed: require '='
+        case 3: //! 4n+3 base64 characters processed: require '='
             if (left || p[0] != '=' || decode64_table[(unsigned char)p[1]] != -1)
                 *pfInvalid = true;
             break;
@@ -221,58 +221,58 @@ string DecodeBase64(const string& str)
     return (vchRet.size() == 0) ? string() : string((const char*)&vchRet[0], vchRet.size());
 }
 
-// Base64 encoding with secure memory allocation
+//! Base64 encoding with secure memory allocation
 SecureString EncodeBase64Secure(const SecureString& input)
 {
-    // Init openssl BIO with base64 filter and memory output
+    //! Init openssl BIO with base64 filter and memory output
     BIO *b64, *mem;
     b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); // No newlines in output
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); //! No newlines in output
     mem = BIO_new(BIO_s_mem());
     BIO_push(b64, mem);
 
-    // Decode the string
+    //! Decode the string
     BIO_write(b64, &input[0], input.size());
     (void)BIO_flush(b64);
 
-    // Create output variable from buffer mem ptr
+    //! Create output variable from buffer mem ptr
     BUF_MEM* bptr;
     BIO_get_mem_ptr(b64, &bptr);
     SecureString output(bptr->data, bptr->length);
 
-    // Cleanse secure data buffer from memory
+    //! Cleanse secure data buffer from memory
     OPENSSL_cleanse((void*)bptr->data, bptr->length);
 
-    // Free memory
+    //! Free memory
     BIO_free_all(b64);
     return output;
 }
 
-// Base64 decoding with secure memory allocation
+//! Base64 decoding with secure memory allocation
 SecureString DecodeBase64Secure(const SecureString& input)
 {
     SecureString output;
 
-    // Init openssl BIO with base64 filter and memory input
+    //! Init openssl BIO with base64 filter and memory input
     BIO *b64, *mem;
     b64 = BIO_new(BIO_f_base64());
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); //! Do not use newlines to flush buffer
     mem = BIO_new_mem_buf((void*)&input[0], input.size());
     BIO_push(b64, mem);
 
-    // Prepare buffer to receive decoded data
+    //! Prepare buffer to receive decoded data
     if (input.size() % 4 != 0) {
         throw runtime_error("Input length should be a multiple of 4");
     }
-    size_t nMaxLen = input.size() / 4 * 3; // upper bound, guaranteed divisible by 4
+    size_t nMaxLen = input.size() / 4 * 3; //! upper bound, guaranteed divisible by 4
     output.resize(nMaxLen);
 
-    // Decode the string
+    //! Decode the string
     size_t nLen;
     nLen = BIO_read(b64, (void*)&output[0], input.size());
     output.resize(nLen);
 
-    // Free memory
+    //! Free memory
     BIO_free_all(b64);
     return output;
 }
@@ -291,33 +291,33 @@ string EncodeBase32(const unsigned char* pch, size_t len)
     while (pch < pchEnd) {
         int enc = *(pch++);
         switch (mode) {
-        case 0: // we have no bits
+        case 0: //! we have no bits
             strRet += pbase32[enc >> 3];
             left = (enc & 7) << 2;
             mode = 1;
             break;
 
-        case 1: // we have three bits
+        case 1: //! we have three bits
             strRet += pbase32[left | (enc >> 6)];
             strRet += pbase32[(enc >> 1) & 31];
             left = (enc & 1) << 4;
             mode = 2;
             break;
 
-        case 2: // we have one bit
+        case 2: //! we have one bit
             strRet += pbase32[left | (enc >> 4)];
             left = (enc & 15) << 1;
             mode = 3;
             break;
 
-        case 3: // we have four bits
+        case 3: //! we have four bits
             strRet += pbase32[left | (enc >> 7)];
             strRet += pbase32[(enc >> 2) & 31];
             left = (enc & 3) << 3;
             mode = 4;
             break;
 
-        case 4: // we have two bits
+        case 4: //! we have two bits
             strRet += pbase32[left | (enc >> 5)];
             strRet += pbase32[enc & 31];
             mode = 0;
@@ -373,46 +373,46 @@ vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
             break;
         p++;
         switch (mode) {
-        case 0: // we have no bits and get 5
+        case 0: //! we have no bits and get 5
             left = dec;
             mode = 1;
             break;
 
-        case 1: // we have 5 bits and keep 2
+        case 1: //! we have 5 bits and keep 2
             vchRet.push_back((left << 3) | (dec >> 2));
             left = dec & 3;
             mode = 2;
             break;
 
-        case 2: // we have 2 bits and keep 7
+        case 2: //! we have 2 bits and keep 7
             left = left << 5 | dec;
             mode = 3;
             break;
 
-        case 3: // we have 7 bits and keep 4
+        case 3: //! we have 7 bits and keep 4
             vchRet.push_back((left << 1) | (dec >> 4));
             left = dec & 15;
             mode = 4;
             break;
 
-        case 4: // we have 4 bits, and keep 1
+        case 4: //! we have 4 bits, and keep 1
             vchRet.push_back((left << 4) | (dec >> 1));
             left = dec & 1;
             mode = 5;
             break;
 
-        case 5: // we have 1 bit, and keep 6
+        case 5: //! we have 1 bit, and keep 6
             left = left << 5 | dec;
             mode = 6;
             break;
 
-        case 6: // we have 6 bits, and keep 3
+        case 6: //! we have 6 bits, and keep 3
             vchRet.push_back((left << 2) | (dec >> 3));
             left = dec & 7;
             mode = 7;
             break;
 
-        case 7: // we have 3 bits, and keep 0
+        case 7: //! we have 3 bits, and keep 0
             vchRet.push_back((left << 5) | dec);
             mode = 0;
             break;
@@ -421,31 +421,31 @@ vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
 
     if (pfInvalid)
         switch (mode) {
-        case 0: // 8n base32 characters processed: ok
+        case 0: //! 8n base32 characters processed: ok
             break;
 
-        case 1: // 8n+1 base32 characters processed: impossible
-        case 3: //   +3
-        case 6: //   +6
+        case 1: //! 8n+1 base32 characters processed: impossible
+        case 3: //!   +3
+        case 6: //!   +6
             *pfInvalid = true;
             break;
 
-        case 2: // 8n+2 base32 characters processed: require '======'
+        case 2: //! 8n+2 base32 characters processed: require '======'
             if (left || p[0] != '=' || p[1] != '=' || p[2] != '=' || p[3] != '=' || p[4] != '=' || p[5] != '=' || decode32_table[(unsigned char)p[6]] != -1)
                 *pfInvalid = true;
             break;
 
-        case 4: // 8n+4 base32 characters processed: require '===='
+        case 4: //! 8n+4 base32 characters processed: require '===='
             if (left || p[0] != '=' || p[1] != '=' || p[2] != '=' || p[3] != '=' || decode32_table[(unsigned char)p[4]] != -1)
                 *pfInvalid = true;
             break;
 
-        case 5: // 8n+5 base32 characters processed: require '==='
+        case 5: //! 8n+5 base32 characters processed: require '==='
             if (left || p[0] != '=' || p[1] != '=' || p[2] != '=' || decode32_table[(unsigned char)p[3]] != -1)
                 *pfInvalid = true;
             break;
 
-        case 7: // 8n+7 base32 characters processed: require '='
+        case 7: //! 8n+7 base32 characters processed: require '='
             if (left || p[0] != '=' || decode32_table[(unsigned char)p[1]] != -1)
                 *pfInvalid = true;
             break;
@@ -463,13 +463,15 @@ string DecodeBase32(const string& str)
 bool ParseInt32(const std::string& str, int32_t* out)
 {
     char* endp = NULL;
-    errno = 0; // strtol will not set errno if valid
+    errno = 0; //! strtol will not set errno if valid
     long int n = strtol(str.c_str(), &endp, 10);
     if (out)
         *out = (int)n;
-    // Note that strtol returns a *long int*, so even if strtol doesn't report a over/underflow
-    // we still have to check that the returned value is within the range of an *int32_t*. On 64-bit
-    // platforms the size of these types may be different.
+    /**
+     * Note that strtol returns a *long int*, so even if strtol doesn't report a over/underflow
+     * we still have to check that the returned value is within the range of an *int32_t*. On 64-bit
+     * platforms the size of these types may be different.
+     */
     return endp && *endp == 0 && !errno &&
            n >= std::numeric_limits<int32_t>::min() &&
            n <= std::numeric_limits<int32_t>::max();
@@ -481,15 +483,15 @@ std::string FormatParagraph(const std::string in, size_t width, size_t indent)
     size_t col = 0;
     size_t ptr = 0;
     while (ptr < in.size()) {
-        // Find beginning of next word
+        //! Find beginning of next word
         ptr = in.find_first_not_of(' ', ptr);
         if (ptr == std::string::npos)
             break;
-        // Find end of next word
+        //! Find end of next word
         size_t endword = in.find_first_of(' ', ptr);
         if (endword == std::string::npos)
             endword = in.size();
-        // Add newline and indentation if this wraps over the allowed width
+        //! Add newline and indentation if this wraps over the allowed width
         if (col > 0) {
             if ((col + endword - ptr) > width) {
                 out << '\n';
@@ -499,7 +501,7 @@ std::string FormatParagraph(const std::string in, size_t width, size_t indent)
             } else
                 out << ' ';
         }
-        // Append word
+        //! Append word
         out << in.substr(ptr, endword - ptr);
         col += endword - ptr + 1;
         ptr = endword;

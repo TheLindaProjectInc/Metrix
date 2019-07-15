@@ -31,7 +31,7 @@
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
-#include <openssl/crypto.h> // for OPENSSL_cleanse()
+#include <openssl/crypto.h> //! for OPENSSL_cleanse()
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
@@ -50,7 +50,7 @@ class uint256;
 #define UINTBEGIN(a) ((uint32_t*)&(a))
 #define CUINTBEGIN(a) ((const uint32_t*)&(a))
 
-// This is needed because the foreach macro can't get over the comma in pair<t1, t2>
+//! This is needed because the foreach macro can't get over the comma in pair<t1, t2>
 #define PAIRTYPE(t1, t2) std::pair<t1, t2>
 
 boost::filesystem::path GetMasternodeConfigFile();
@@ -62,12 +62,12 @@ inline void MilliSleep(int64_t n)
 #elif defined(HAVE_WORKING_BOOST_SLEEP)
     boost::this_thread::sleep(boost::posix_time::milliseconds(n));
 #else
-    //should never get here
+    //! should never get here
 #error missing boost sleep implementation
 #endif
 }
 
-//Dark features
+//! Dark features
 
 extern bool fMasterNode;
 extern bool fLiteMode;
@@ -233,13 +233,15 @@ bool SoftSetBoolArg(const std::string& strArg, bool fValue);
 void SetThreadPriority(int nPriority);
 void RenameThread(const char* name);
 
-// Standard wrapper for do-something-forever thread functions.
-// "Forever" really means until the thread is interrupted.
-// Use it like:
-//   new boost::thread(boost::bind(&LoopForever<void (*)()>, "dumpaddr", &DumpAddresses, 900000));
-// or maybe:
-//    boost::function<void()> f = boost::bind(&FunctionWithArg, argument);
-//    threadGroup.create_thread(boost::bind(&LoopForever<boost::function<void()> >, "nothing", f, milliseconds));
+/**
+ * Standard wrapper for do-something-forever thread functions.
+ * "Forever" really means until the thread is interrupted.
+ * Use it like:
+ *   new boost::thread(boost::bind(&LoopForever<void (*)()>, "dumpaddr", &DumpAddresses, 900000));
+ * or maybe:
+ *    boost::function<void()> f = boost::bind(&FunctionWithArg, argument);
+ *    threadGroup.create_thread(boost::bind(&LoopForever<boost::function<void()> >, "nothing", f, milliseconds));
+ */
 template <typename Callable>
 void LoopForever(const char* name, Callable func, int64_t msecs)
 {
@@ -262,7 +264,7 @@ void LoopForever(const char* name, Callable func, int64_t msecs)
         throw;
     }
 }
-// .. and a wrapper that just calls func once
+//! .. and a wrapper that just calls func once
 template <typename Callable>
 void TraceThread(const char* name, Callable func)
 {
@@ -284,4 +286,4 @@ void TraceThread(const char* name, Callable func)
     }
 }
 
-#endif // BITCOIN_UTIL_H
+#endif //! BITCOIN_UTIL_H
