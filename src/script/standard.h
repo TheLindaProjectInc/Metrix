@@ -47,6 +47,7 @@ static const unsigned int MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_NONE;
  */
 static const unsigned int STANDARD_SCRIPT_VERIFY_FLAGS = MANDATORY_SCRIPT_VERIFY_FLAGS |
                                                          SCRIPT_VERIFY_STRICTENC |
+                                                         SCRIPT_VERIFY_MINIMALDATA |
                                                          SCRIPT_VERIFY_NULLDUMMY |
                                                          SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
 
