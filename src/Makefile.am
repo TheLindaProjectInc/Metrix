@@ -183,6 +183,7 @@ libbitcoin_server_a_SOURCES = \
   miner.cpp \
   net.cpp \
   noui.cpp \
+  rest.cpp \
   rpcblockchain.cpp \
   rpcdarksend.cpp \
   rpcmining.cpp \
