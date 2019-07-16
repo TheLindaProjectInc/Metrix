@@ -1884,8 +1884,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 {
     AssertLockHeld(cs_main);
     // Check it again in case a previous version let a bad block in, but skip BlockSig checking
-    if (!CheckBlock(block, state, !fJustCheck, !fJustCheck, false))
+    if (!CheckBlock(block, state, !fJustCheck, !fJustCheck, false)){
+        LogPrintf("ERROR ConnectBlock() : CheckBlock failed");
         return false;
+    }
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == NULL ? uint256(0) : pindex->pprev->GetBlockHash();
@@ -3506,7 +3508,8 @@ bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
     txCoinStake.nTime &= ~STAKE_TIMESTAMP_MASK;
 
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
-
+    if (fDebug)
+        LogPrintf("DEBUG : nSearchTime=%i, nLastCoinStakeSearchTime=$i\n", nSearchTime, nLastCoinStakeSearchTime);
     if (nSearchTime > nLastCoinStakeSearchTime) {
         if (wallet.CreateCoinStake(wallet, block.nBits, nSearchTime-nLastCoinStakeSearchTime, nFees, txCoinStake, key)) {
             if (txCoinStake.nTime >= chainActive.Tip()->GetPastTimeLimit() + 1) {

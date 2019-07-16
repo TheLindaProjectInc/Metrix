@@ -106,6 +106,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
         assert(txNew.vin[0].scriptSig.size() <= 100);
 
         txNew.vout[0].SetEmpty();
+        if (fDebug)
+            LogPrintf("CreateNewBlock() : Coinbase vin=%s, height=%i\n", txNew.vin[0].scriptSig.ToString(), nHeight);
     }
 
     // Add dummy coinbase tx as first transaction
