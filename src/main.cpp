@@ -1646,7 +1646,7 @@ bool CScriptCheck::operator()()
 {
     const CScript& scriptSig = ptxTo->vin[nIn].scriptSig;
     if (!VerifyScript(scriptSig, scriptPubKey, nFlags, CachingSignatureChecker(*ptxTo, nIn, cacheStore), &error)) {
-        return ::error("CScriptCheck() : %s:%d VerifyScript failed", ptxTo->GetHash().ToString(), nIn, ScriptErrorString(error));
+        return ::error("CScriptCheck() : %s:%d VerifyScript failed %s", ptxTo->GetHash().ToString(), nIn, ScriptErrorString(error));
     }
     return true;
 }
