@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2012 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Copyright (c) 2009-2014 The Bitcoin developers
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
@@ -19,12 +19,12 @@
 
 #include <stdarg.h>
 
-#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
+#include <boost/algorithm/string/case_conv.hpp> //! for to_lower()
 #include <boost/algorithm/string/join.hpp>
-#include <boost/algorithm/string/predicate.hpp> // for startswith() and endswith()
+#include <boost/algorithm/string/predicate.hpp> //! for startswith() and endswith()
 
 #ifndef WIN32
-// for posix_fallocate
+//! for posix_fallocate
 #ifdef __linux__
 #ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
@@ -32,7 +32,7 @@
 
 #define _POSIX_C_SOURCE 200112L
 
-#endif // __linux__
+#endif //! __linux__
 
 #include <algorithm>
 #include <fcntl.h>
@@ -80,10 +80,12 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-// Work around clang compilation problem in Boost 1.46:
-// /usr/include/boost/program_options/detail/config_file.hpp:163:17: error: call to function 'to_internal' that is neither visible in the template definition nor found by argument-dependent lookup
-// See also: http://stackoverflow.com/questions/10020179/compilation-fail-in-boost-librairies-program-options
-//           http://clang.debian.net/status.php?version=3.0&key=CANNOT_FIND_FUNCTION
+/**
+ * Work around clang compilation problem in Boost 1.46:
+ * /usr/include/boost/program_options/detail/config_file.hpp:163:17: error: call to function 'to_internal' that is neither visible in the template definition nor found by argument-dependent lookup
+ * See also: http://stackoverflow.com/questions/10020179/compilation-fail-in-boost-librairies-program-options
+ *           http://clang.debian.net/status.php?version=3.0&key=CANNOT_FIND_FUNCTION
+ */
 namespace boost
 {
 namespace program_options
@@ -91,11 +93,11 @@ namespace program_options
 std::string to_internal(const std::string&);
 }
 
-} // namespace boost
+} //! namespace boost
 
 using namespace std;
 
-//Dark  features
+//! Dark  features
 bool fMasterNode = false;
 string strMasterNodePrivKey = "";
 string strMasterNodeAddr = "";
@@ -124,7 +126,7 @@ bool fLogTimestamps = false;
 bool fLogIPs = false;
 volatile bool fReopenDebugLog = false;
 
-// Init OpenSSL library multithreading support
+/** Init OpenSSL library multithreading support */
 static CCriticalSection** ppmutexOpenSSL;
 void locking_callback(int mode, int i, const char* file, int line)
 {
@@ -135,31 +137,31 @@ void locking_callback(int mode, int i, const char* file, int line)
     }
 }
 
-// Init
+//! Init
 class CInit
 {
 public:
     CInit()
     {
-        // Init OpenSSL library multithreading support
+        //! Init OpenSSL library multithreading support
         ppmutexOpenSSL = (CCriticalSection**)OPENSSL_malloc(CRYPTO_num_locks() * sizeof(CCriticalSection*));
         for (int i = 0; i < CRYPTO_num_locks(); i++)
             ppmutexOpenSSL[i] = new CCriticalSection();
         CRYPTO_set_locking_callback(locking_callback);
 
 #ifdef WIN32
-        // Seed OpenSSL PRNG with current contents of the screen
+        //! Seed OpenSSL PRNG with current contents of the screen
         RAND_screen();
 #endif
 
-        // Seed OpenSSL PRNG with performance counter
+        //! Seed OpenSSL PRNG with performance counter
         RandAddSeed();
     }
     ~CInit()
     {
-        // Securely erase the memory used by the PRNG
+        //! Securely erase the memory used by the PRNG
         RAND_cleanup();
-        // Shutdown OpenSSL library multithreading support
+        //! Shutdown OpenSSL library multithreading support
         CRYPTO_set_locking_callback(NULL);
         for (int i = 0; i < CRYPTO_num_locks(); i++)
             delete ppmutexOpenSSL[i];
@@ -194,7 +196,7 @@ static void DebugPrintInit()
     boost::filesystem::path pathDebug = GetDataDir() / "debug.log";
     fileout = fopen(pathDebug.string().c_str(), "a");
     if (fileout)
-        setbuf(fileout, NULL); // unbuffered
+        setbuf(fileout, NULL); //! unbuffered
 
     mutexDebugLog = new boost::mutex();
 }
@@ -205,19 +207,21 @@ bool LogAcceptCategory(const char* category)
         if (!fDebug)
             return false;
 
-        // Give each thread quick access to -debug settings.
-        // This helps prevent issues debugging global destructors,
-        // where mapMultiArgs might be deleted before another
-        // global destructor calls LogPrint()
+        /**
+         * Give each thread quick access to -debug settings.
+         * This helps prevent issues debugging global destructors,
+         * where mapMultiArgs might be deleted before another
+         * global destructor calls LogPrint()
+         */
         static boost::thread_specific_ptr<set<string> > ptrCategory;
         if (ptrCategory.get() == NULL) {
             const vector<string>& categories = mapMultiArgs["-debug"];
             ptrCategory.reset(new set<string>(categories.begin(), categories.end()));
-            // thread_specific_ptr automatically deletes the set when the thread ends.
+            //! thread_specific_ptr automatically deletes the set when the thread ends.
         }
         const set<string>& setCategories = *ptrCategory.get();
 
-        // if not debugging everything and not debugging specific category, LogPrint does nothing.
+        //! if not debugging everything and not debugging specific category, LogPrint does nothing.
         if (setCategories.count(string("")) == 0 &&
             setCategories.count(string(category)) == 0)
             return false;
@@ -227,9 +231,9 @@ bool LogAcceptCategory(const char* category)
 
 int LogPrintStr(const std::string& str)
 {
-    int ret = 0; // Returns total number of characters written
+    int ret = 0; //! Returns total number of characters written
     if (fPrintToConsole) {
-        // print to console
+        //! print to console
         ret = fwrite(str.data(), 1, str.size(), stdout);
         fflush(stdout);
     } else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
@@ -241,7 +245,7 @@ int LogPrintStr(const std::string& str)
 
         boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
 
-        // reopen the log file, if requested
+        //! reopen the log file, if requested
         if (fReopenDebugLog) {
             fReopenDebugLog = false;
             boost::filesystem::path pathDebug = GetDataDir() / "debug.log";
@@ -249,7 +253,7 @@ int LogPrintStr(const std::string& str)
                 setbuf(fileout, NULL); // unbuffered
         }
 
-        // Debug print useful for profiling
+        //! Debug print useful for profiling
         if (fLogTimestamps && fStartedNewLine)
             ret += fprintf(fileout, "%s ", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
         if (!str.empty() && str[str.size() - 1] == '\n')
@@ -265,7 +269,7 @@ int LogPrintStr(const std::string& str)
 
 static void InterpretNegativeSetting(string name, map<string, string>& mapSettingsRet)
 {
-    // interpret -nofoo as -foo=0 (and -nofoo=0 as -foo=1) as long as -foo not set
+    //! interpret -nofoo as -foo=0 (and -nofoo=0 as -foo=1) as long as -foo not set
     if (name.find("-no") == 0) {
         std::string positive("-");
         positive.append(name.begin() + 3, name.end());
@@ -298,8 +302,8 @@ void ParseParameters(int argc, const char* const argv[])
         if (str[0] != '-')
             break;
 
-        // Interpret --foo as -foo.
-        // If both --foo and -foo are set, the last takes effect.
+        //! Interpret --foo as -foo.
+        //! If both --foo and -foo are set, the last takes effect.
         if (str.length() > 1 && str[1] == '-')
             str = str.substr(1);
 
@@ -307,9 +311,9 @@ void ParseParameters(int argc, const char* const argv[])
         mapMultiArgs[str].push_back(strValue);
     }
 
-    // New 0.6 features:
+    //! New 0.6 features:
     BOOST_FOREACH (const PAIRTYPE(string, string) & entry, mapArgs) {
-        // interpret -nofoo as -foo=0 (and -nofoo=0 as -foo=1) as long as -foo not set
+        //! interpret -nofoo as -foo=0 (and -nofoo=0 as -foo=1) as long as -foo not set
         InterpretNegativeSetting(entry.first, mapArgs);
     }
 }
@@ -359,12 +363,12 @@ void SetupEnvironment()
 #ifndef WIN32
     try {
 #if BOOST_FILESYSTEM_VERSION == 3
-        boost::filesystem::path::codecvt(); // Raises runtime error if current locale is invalid
-#else                                       // boost filesystem v2
-        std::locale(); // Raises runtime error if current locale is invalid
+        boost::filesystem::path::codecvt(); //! Raises runtime error if current locale is invalid
+#else                                       //! boost filesystem v2
+        std::locale(); //! Raises runtime error if current locale is invalid
 #endif
     } catch (std::runtime_error& e) {
-        setenv("LC_ALL", "C", 1); // Force C locale
+        setenv("LC_ALL", "C", 1); //! Force C locale
     }
 #endif
 }
@@ -396,12 +400,14 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
 boost::filesystem::path GetDefaultDataDir(const std::string dirName)
 {
     namespace fs = boost::filesystem;
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Metrix
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Metrix
-    // Mac: ~/Library/Application Support/Metrix
-    // Unix: ~/.Metrix
+    /**
+     * Windows < Vista: C:\Documents and Settings\Username\Application Data\Metrix
+     * Windows >= Vista: C:\Users\Username\AppData\Roaming\Metrix
+     * Mac: ~/Library/Application Support/Metrix
+     * Unix: ~/.Metrix
+     */
 #ifdef WIN32
-    // Windows
+    //! Windows
     return GetSpecialFolderPath(CSIDL_APPDATA) / dirName;
 #else
     fs::path pathRet;
@@ -411,12 +417,12 @@ boost::filesystem::path GetDefaultDataDir(const std::string dirName)
     else
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
-    // Mac
+    //! Mac
     pathRet /= "Library/Application Support";
     TryCreateDirectory(pathRet);
     return pathRet / dirName;
 #else
-    // Unix
+    //! Unix
     std::string dirPath(".");
     dirPath.append(dirName);
     return pathRet / dirPath;
@@ -436,8 +442,10 @@ const boost::filesystem::path& GetDataDir(bool fNetSpecific)
 
     fs::path& path = fNetSpecific ? pathCachedNetSpecific : pathCached;
 
-    // This can be called during exceptions by LogPrintf(), so we cache the
-    // value so we don't have to do memory allocations after that.
+    /**
+     * This can be called during exceptions by LogPrintf(), so we cache the
+     * value so we don't have to do memory allocations after that.
+     */
     if (!path.empty())
         return path;
 
@@ -460,7 +468,7 @@ const boost::filesystem::path& GetDataDir(bool fNetSpecific)
 
 void checkMigrateDataDir()
 {
-    // skip this if data dir is set by user
+    //! skip this if data dir is set by user
     if (mapArgs.count("-datadir"))
         return;
 
@@ -471,7 +479,7 @@ void checkMigrateDataDir()
     {
         try {
             boost::filesystem::rename(lindaDir, metrixDir);
-            // rename conf file
+            //! rename conf file
             const boost::filesystem::path lindaConfigFile = metrixDir / "Linda.conf";
             if (boost::filesystem::exists(lindaConfigFile))
             {
@@ -493,13 +501,13 @@ string randomStrGen(int length)
     return result;
 }
 
-void createConf() //Automatic BitcoinDark.conf generation
+void createConf() //! Automatic BitcoinDark.conf generation
 {
     srand(time(NULL));
 
     ofstream pConf;
     pConf.open(GetConfigFile().generic_string().c_str());
-    const char* nodes = "\nrpcport=33821" //List of known nodes, to be periodically updated
+    const char* nodes = "\nrpcport=33821" //! List of known nodes, to be periodically updated
                         "\nrpcallowip=127.0.0.1"
                         "\ndaemon=1"
                         "\nserver=1"
@@ -536,7 +544,7 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
                     map<string, vector<string> >& mapMultiSettingsRet)
 {
     boost::filesystem::ifstream streamConfig(GetConfigFile());
-    if (!streamConfig.good()) //metrix.conf doesn't exist
+    if (!streamConfig.good()) //! metrix.conf doesn't exist
     {
         createConf();
         new (&streamConfig) boost::filesystem::ifstream(GetConfigFile());
@@ -548,16 +556,16 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
     setOptions.insert("*");
 
     for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it) {
-        // Don't overwrite existing settings so command line settings override bitcoin.conf
+        //! Don't overwrite existing settings so command line settings override bitcoin.conf
         string strKey = string("-") + it->string_key;
         if (mapSettingsRet.count(strKey) == 0) {
             mapSettingsRet[strKey] = it->value[0];
-            // interpret nofoo=1 as foo=0 (and nofoo=0 as foo=1) as long as foo not set)
+            //! interpret nofoo=1 as foo=0 (and nofoo=0 as foo=1) as long as foo not set)
             InterpretNegativeSetting(strKey, mapSettingsRet);
         }
         mapMultiSettingsRet[strKey].push_back(it->value[0]);
     }
-    // If datadir is changed in .conf file:
+    //! If datadir is changed in .conf file:
     ClearDatadirCache();
 }
 
@@ -591,8 +599,10 @@ bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest)
 #endif /* WIN32 */
 }
 
-// Ignores exceptions thrown by boost's create_directory if the requested directory exists.
-//   Specifically handles case where path p exists, but it wasn't possible for the user to write to the parent directory.
+/**
+ * Ignores exceptions thrown by boost's create_directory if the requested directory exists.
+ * Specifically handles case where path p exists, but it wasn't possible for the user to write to the parent directory.
+ */
 bool TryCreateDirectory(const boost::filesystem::path& p)
 {
     try {
@@ -602,13 +612,13 @@ bool TryCreateDirectory(const boost::filesystem::path& p)
             throw;
     }
 
-    // create_directory didn't create the directory, it had to have existed already
+    //! create_directory didn't create the directory, it had to have existed already
     return false;
 }
 
 void FileCommit(FILE* fileout)
 {
-    fflush(fileout); // harmless if redundantly called
+    fflush(fileout); //! harmless if redundantly called
 #ifdef WIN32
     HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(fileout));
     FlushFileBuffers(hFile);
@@ -632,8 +642,10 @@ bool TruncateFile(FILE* file, unsigned int length)
 #endif
 }
 
-// this function tries to raise the file descriptor limit to the requested number.
-// It returns the actual file descriptor limit (which may be more or less than nMinFD)
+/**
+ * this function tries to raise the file descriptor limit to the requested number.
+ * It returns the actual file descriptor limit (which may be more or less than nMinFD)
+ */
 int RaiseFileDescriptorLimit(int nMinFD)
 {
 #if defined(WIN32)
@@ -650,17 +662,18 @@ int RaiseFileDescriptorLimit(int nMinFD)
         }
         return limitFD.rlim_cur;
     }
-    return nMinFD; // getrlimit failed, assume it's fine
+    return nMinFD; //! getrlimit failed, assume it's fine
 #endif
 }
 
-
-// this function tries to make a particular range of a file allocated (corresponding to disk space)
-// it is advisory, and the range specified in the arguments will never contain live data
+/**
+ * this function tries to make a particular range of a file allocated (corresponding to disk space)
+ * it is advisory, and the range specified in the arguments will never contain live data
+ */
 void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length)
 {
 #if defined(WIN32)
-    // Windows-specific version
+    //! Windows-specific version
     HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(file));
     LARGE_INTEGER nFileSize;
     int64_t nEndPos = (int64_t)offset + length;
@@ -669,7 +682,7 @@ void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length)
     SetFilePointerEx(hFile, nFileSize, 0, FILE_BEGIN);
     SetEndOfFile(hFile);
 #elif defined(MAC_OSX)
-    // OSX specific version
+    //! OSX specific version
     fstore_t fst;
     fst.fst_flags = F_ALLOCATECONTIG;
     fst.fst_posmode = F_PEOFPOSMODE;
@@ -682,19 +695,19 @@ void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length)
     }
     ftruncate(fileno(file), fst.fst_length);
 #elif defined(__linux__)
-    // Version using posix_fallocate
+    //! Version using posix_fallocate
     off_t nEndPos = (off_t)offset + length;
     posix_fallocate(fileno(file), 0, nEndPos);
 #else
-    // Fallback version
-    // TODO: just write one byte per block
+    //! Fallback version
+    //! TODO: just write one byte per block
     static const char buf[65536] = {};
     fseek(file, offset, SEEK_SET);
     while (length > 0) {
         unsigned int now = 65536;
         if (length < now)
             now = length;
-        fwrite(buf, 1, now, file); // allowed to fail; this function is advisory anyway
+        fwrite(buf, 1, now, file); //! allowed to fail; this function is advisory anyway
         length -= now;
     }
 #endif
@@ -702,11 +715,11 @@ void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length)
 
 void ShrinkDebugFile()
 {
-    // Scroll debug.log if it's getting too big
+    //! Scroll debug.log if it's getting too big
     boost::filesystem::path pathLog = GetDataDir() / "debug.log";
     FILE* file = fopen(pathLog.string().c_str(), "r");
     if (file && boost::filesystem::file_size(pathLog) > 10 * 1000000) {
-        // Restart the file with some of the end
+        //! Restart the file with some of the end
         char pch[200000];
         fseek(file, -sizeof(pch), SEEK_END);
         int nBytes = fread(pch, 1, sizeof(pch), file);
@@ -748,23 +761,23 @@ void runCommand(std::string strCommand)
 void RenameThread(const char* name)
 {
 #if defined(PR_SET_NAME)
-    // Only the first 15 characters are used (16 - NUL terminator)
+    //! Only the first 15 characters are used (16 - NUL terminator)
     ::prctl(PR_SET_NAME, name, 0, 0, 0);
 #elif 0 && (defined(__FreeBSD__) || defined(__OpenBSD__))
-    // TODO: This is currently disabled because it needs to be verified to work
-    //       on FreeBSD or OpenBSD first. When verified the '0 &&' part can be
-    //       removed.
+    //! TODO: This is currently disabled because it needs to be verified to work
+    //!       on FreeBSD or OpenBSD first. When verified the '0 &&' part can be
+    //!       removed.
     pthread_set_name_np(pthread_self(), name);
 
 #elif defined(MAC_OSX) && defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
 
-// pthread_setname_np is XCode 10.6-and-later
+//! pthread_setname_np is XCode 10.6-and-later
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
     pthread_setname_np(name);
 #endif
 
 #else
-    // Prevent warnings for unused parameters...
+    //! Prevent warnings for unused parameters...
     (void)name;
 #endif
 }
@@ -773,11 +786,11 @@ void SetThreadPriority(int nPriority)
 {
 #ifdef WIN32
     SetThreadPriority(GetCurrentThread(), nPriority);
-#else // WIN32
+#else //! WIN32
 #ifdef PRIO_THREAD
     setpriority(PRIO_THREAD, 0, nPriority);
-#else  // PRIO_THREAD
+#else  //! PRIO_THREAD
     setpriority(PRIO_PROCESS, 0, nPriority);
-#endif // PRIO_THREAD
-#endif // WIN32
+#endif //! PRIO_THREAD
+#endif //! WIN32
 }

@@ -4,16 +4,15 @@
  * file COPYING or http://www.opensource.org/licenses/mit-license.php.*
  **********************************************************************/
 
-#ifndef _SECP256K1_ECMULT_
-#define _SECP256K1_ECMULT_
+#ifndef _SECP256K1_FIELD_REPR_
+#define _SECP256K1_FIELD_REPR_
 
-#include "num.h"
-#include "group.h"
+#include <gmp.h>
 
-static void secp256k1_ecmult_start(void);
-static void secp256k1_ecmult_stop(void);
+#define FIELD_LIMBS ((256 + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS)
 
-/** Double multiply: R = na*A + ng*G */
-static void secp256k1_ecmult(secp256k1_gej_t *r, const secp256k1_gej_t *a, const secp256k1_scalar_t *na, const secp256k1_scalar_t *ng);
+typedef struct {
+    mp_limb_t n[FIELD_LIMBS+1];
+} secp256k1_fe_t;
 
 #endif

@@ -8,6 +8,7 @@
 #include "masternodeconfig.h"
 #include "net.h"
 #include "util.h"
+#include "ui_interface.h"
 
 CMasternodeConfig masternodeConfig;
 
@@ -19,22 +20,28 @@ void CMasternodeConfig::add(std::string alias, std::string ip, std::string privK
 
 bool CMasternodeConfig::read(std::string& strErr)
 {
+    int linenumber = 1;
     entries = std::vector<CMasternodeEntry>(); // Clear entries so we don't double up
     boost::filesystem::ifstream streamConfig(GetMasternodeConfigFile());
     if (!streamConfig.good()) {
         return true; // No masternode.conf file is OK
     }
 
-    for (std::string line; std::getline(streamConfig, line);) {
+    for (std::string line; std::getline(streamConfig, line); linenumber++) {
         if (line.empty()) {
             continue;
         }
         std::istringstream iss(line);
         std::string alias, ip, privKey, txHash, outputIndex;
         if (!(iss >> alias >> ip >> privKey >> txHash >> outputIndex)) {
-            strErr = "Could not parse masternode.conf line: " + line;
-            streamConfig.close();
-            return false;
+            iss.str(line);
+            iss.clear();
+            if (!(iss >> alias >> ip >> privKey >> txHash >> outputIndex)) {
+                strErr = _("Could not parse masternode.conf") + "\n" +
+                        strprintf(_("Line: %d"), linenumber) + "\n\"" + line + "\"";
+                streamConfig.close();
+                return false;
+            }
         }
 
         /*        if(CService(ip).GetPort() != 19999 && CService(ip).GetPort() != 9999)  {

@@ -101,7 +101,7 @@ double GetPoSKernelPS()
     return result;
 }
 
-Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPrintTransactionDetail)
+Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPrintTransactionDetail = false)
 {
     Object result;
     result.push_back(Pair("hash", block.GetHash().GetHex()));

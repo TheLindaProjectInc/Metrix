@@ -62,3 +62,5 @@ share/setup.nsi
 
 # Resources cpp
 qrc_*.cpp
+
+!src/leveldb*/Makefile

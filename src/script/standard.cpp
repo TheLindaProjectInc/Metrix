@@ -40,31 +40,33 @@ const char* GetTxnOutputType(txnouttype t)
     return NULL;
 }
 
-//
-// Return public keys or hashes from scriptPubKey, for 'standard' transaction types.
-//
+/**
+ * Return public keys or hashes from scriptPubKey, for 'standard' transaction types.
+ */
 bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsigned char> >& vSolutionsRet)
 {
-    // Templates
+    //! Templates
     static multimap<txnouttype, CScript> mTemplates;
     if (mTemplates.empty()) {
-        // Standard tx, sender provides pubkey, receiver adds signature
+        //! Standard tx, sender provides pubkey, receiver adds signature
         mTemplates.insert(make_pair(TX_PUBKEY, CScript() << OP_PUBKEY << OP_CHECKSIG));
 
-        // Bitcoin address tx, sender provides hash of pubkey, receiver provides signature and pubkey
+        //! Bitcoin address tx, sender provides hash of pubkey, receiver provides signature and pubkey
         mTemplates.insert(make_pair(TX_PUBKEYHASH, CScript() << OP_DUP << OP_HASH160 << OP_PUBKEYHASH << OP_EQUALVERIFY << OP_CHECKSIG));
 
-        // Sender provides N pubkeys, receivers provides M signatures
+        //! Sender provides N pubkeys, receivers provides M signatures
         mTemplates.insert(make_pair(TX_MULTISIG, CScript() << OP_SMALLINTEGER << OP_PUBKEYS << OP_SMALLINTEGER << OP_CHECKMULTISIG));
 
-        // Empty, provably prunable, data-carrying output
+        //! Empty, provably prunable, data-carrying output
         if (GetBoolArg("-datacarrier", true))
             mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN << OP_SMALLDATA));
         mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN));
     }
 
-    // Shortcut for pay-to-script-hash, which are more constrained than the other types:
-    // it is always OP_HASH160 20 [20 byte hash] OP_EQUAL
+    /**
+     * Shortcut for pay-to-script-hash, which are more constrained than the other types:
+     * it is always OP_HASH160 20 [20 byte hash] OP_EQUAL
+     */
     if (scriptPubKey.IsPayToScriptHash()) {
         typeRet = TX_SCRIPTHASH;
         vector<unsigned char> hashBytes(scriptPubKey.begin() + 2, scriptPubKey.begin() + 22);
@@ -72,7 +74,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         return true;
     }
 
-    // Scan templates
+    //! Scan templates
     const CScript& script1 = scriptPubKey;
     BOOST_FOREACH (const PAIRTYPE(txnouttype, CScript) & tplate, mTemplates) {
         const CScript& script2 = tplate.second;
@@ -81,15 +83,15 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         opcodetype opcode1, opcode2;
         vector<unsigned char> vch1, vch2;
 
-        // Compare
+        //! Compare
         CScript::const_iterator pc1 = script1.begin();
         CScript::const_iterator pc2 = script2.begin();
         while (true) {
             if (pc1 == script1.end() && pc2 == script2.end()) {
-                // Found a match
+                //! Found a match
                 typeRet = tplate.first;
                 if (typeRet == TX_MULTISIG) {
-                    // Additional checks for TX_MULTISIG:
+                    //! Additional checks for TX_MULTISIG:
                     unsigned char m = vSolutionsRet.front()[0];
                     unsigned char n = vSolutionsRet.back()[0];
                     if (m < 1 || n < 1 || m > n || vSolutionsRet.size() - 2 != n)
@@ -102,7 +104,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             if (!script2.GetOp(pc2, opcode2, vch2))
                 break;
 
-            // Template matching opcodes:
+            //! Template matching opcodes:
             if (opcode2 == OP_PUBKEYS) {
                 while (vch1.size() >= 33 && vch1.size() <= 65) {
                     vSolutionsRet.push_back(vch1);
@@ -111,8 +113,8 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                 }
                 if (!script2.GetOp(pc2, opcode2, vch2))
                     break;
-                // Normal situation is to fall through
-                // to other if/else statements
+                //! Normal situation is to fall through
+                //! to other if/else statements
             }
 
             if (opcode2 == OP_PUBKEY) {
@@ -123,7 +125,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                 if (vch1.size() != sizeof(uint160))
                     break;
                 vSolutionsRet.push_back(vch1);
-            } else if (opcode2 == OP_SMALLINTEGER) { // Single-byte small integer pushed onto vSolutions
+            } else if (opcode2 == OP_SMALLINTEGER) { //! Single-byte small integer pushed onto vSolutions
                 if (opcode1 == OP_0 ||
                     (opcode1 >= OP_1 && opcode1 <= OP_16)) {
                     char n = (char)CScript::DecodeOP_N(opcode1);
@@ -131,11 +133,11 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                 } else
                     break;
             } else if (opcode2 == OP_SMALLDATA) {
-                // small pushdata, <= nMaxDatacarrierBytes
+                //! small pushdata, <= nMaxDatacarrierBytes
                 if (vch1.size() > nMaxDatacarrierBytes)
                     break;
             } else if (opcode1 != opcode2 || vch1 != vch2) {
-                // Others must match exactly
+                //! Others must match exactly
                 break;
             }
         }
@@ -161,7 +163,7 @@ int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned c
             return -1;
         return vSolutions[0][0] + 1;
     case TX_SCRIPTHASH:
-        return 1; // doesn't include args needed by the script
+        return 1; //! doesn't include args needed by the script
     }
     return -1;
 }
@@ -175,7 +177,7 @@ bool IsStandard(const CScript& scriptPubKey, txnouttype& whichType)
     if (whichType == TX_MULTISIG) {
         unsigned char m = vSolutions.front()[0];
         unsigned char n = vSolutions.back()[0];
-        // Support up to x-of-3 multisig txns as standard
+        //! Support up to x-of-3 multisig txns as standard
         if (n < 1 || n > 3)
             return false;
         if (m < 1 || m > n)
@@ -206,7 +208,7 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
         addressRet = CScriptID(uint160(vSolutions[0]));
         return true;
     }
-    // Multisig txns have more than one address...
+    //! Multisig txns have more than one address...
     return false;
 }
 
@@ -218,7 +220,7 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, vecto
     if (!Solver(scriptPubKey, typeRet, vSolutions))
         return false;
     if (typeRet == TX_NULL_DATA) {
-        // This is data, not addresses
+        //! This is data, not addresses
         return false;
     }
 
@@ -281,7 +283,7 @@ public:
         return false;
     }
 };
-} // namespace
+} //! namespace
 
 CScript GetScriptForDestination(const CTxDestination& dest)
 {

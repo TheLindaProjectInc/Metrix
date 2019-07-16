@@ -6,7 +6,7 @@
 have metrixd && {
 
 # call $metrixd for RPC
-_bitcoin_rpc() {
+_metrix_rpc() {
     # determine already specified args necessary for RPC
     local rpcargs=()
     for i in ${COMP_LINE}; do
@@ -19,10 +19,10 @@ _bitcoin_rpc() {
     $metrixd "${rpcargs[@]}" "$@"
 }
 
-# Add bitcoin accounts to COMPREPLY
-_bitcoin_accounts() {
+# Add metrix accounts to COMPREPLY
+_metrix_accounts() {
     local accounts
-    accounts=$(_bitcoin_rpc listaccounts | awk '/".*"/ { a=$1; gsub(/"/, "", a); print a}')
+    accounts=$(_metrix_rpc listaccounts | awk '/".*"/ { a=$1; gsub(/"/, "", a); print a}')
     COMPREPLY=( "${COMPREPLY[@]}" $( compgen -W "$accounts" -- "$cur" ) )
 }
 
@@ -39,6 +39,10 @@ _metrixd() {
 
     if ((cword > 4)); then
         case ${words[cword-4]} in
+            listtransactions)
+                COMPREPLY=( $( compgen -W "true false" -- "$cur" ) )
+                return 0
+                ;;
             signrawtransaction)
                 COMPREPLY=( $( compgen -W "ALL NONE SINGLE ALL|ANYONECANPAY NONE|ANYONECANPAY SINGLE|ANYONECANPAY" -- "$cur" ) )
                 return 0
@@ -49,10 +53,10 @@ _metrixd() {
     if ((cword > 3)); then
         case ${words[cword-3]} in
             addmultisigaddress)
-                _bitcoin_accounts
+                _metrix_accounts
                 return 0
                 ;;
-            gettxout|importprivkey)
+            getbalance|gettxout|importaddress|importprivkey|listreceivedbyaccount|listreceivedbyaddress|listsinceblock)
                 COMPREPLY=( $( compgen -W "true false" -- "$cur" ) )
                 return 0
                 ;;
@@ -65,12 +69,12 @@ _metrixd() {
                 COMPREPLY=( $( compgen -W "add remove onetry" -- "$cur" ) )
                 return 0
                 ;;
-            getblock|getrawtransaction|listreceivedbyaccount|listreceivedbyaddress|sendrawtransaction)
+            getblock|getrawtransaction|gettransaction|listaccounts|listreceivedbyaccount|listreceivedbyaddress|sendrawtransaction)
                 COMPREPLY=( $( compgen -W "true false" -- "$cur" ) )
                 return 0
                 ;;
             move|setaccount)
-                _bitcoin_accounts
+                _metrix_accounts
                 return 0
                 ;;
         esac
@@ -86,7 +90,7 @@ _metrixd() {
             return 0
             ;;
         getaccountaddress|getaddressesbyaccount|getbalance|getnewaddress|getreceivedbyaccount|listtransactions|move|sendfrom|sendmany)
-            _bitcoin_accounts
+            _metrix_accounts
             return 0
             ;;
     esac
@@ -115,7 +119,7 @@ _metrixd() {
 
             # only parse help if senseful
             if [[ -z "$cur" || "$cur" =~ ^[a-z] ]]; then
-                commands=$(_bitcoin_rpc help 2>/dev/null | awk '{ print $1; }')
+                commands=$(_metrix_rpc help 2>/dev/null | awk '$1 ~ /^[a-z]/ { print $1; }')
             fi
 
             COMPREPLY=( $( compgen -W "$helpopts $commands" -- "$cur" ) )
