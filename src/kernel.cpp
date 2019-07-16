@@ -291,8 +291,8 @@ bool CheckProofOfStake(CValidationState& state, CBlockIndex* pindexPrev, const C
 
     // Verify signature
     CCoins coins(txPrev, 0);
-    if (!VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, SignatureChecker(tx, 0)))
-        return state.DoS(100, error("CheckProofOfStake() : VerifyScript failed on coinstake %s", tx.GetHash().ToString()));
+    if (!VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, SignatureChecker(tx, 0), &error))
+        return state.DoS(100, error("CheckProofOfStake() : VerifyScript failed on coinstake %s, Error - %s", tx.GetHash().ToString(), ScriptErrorString(error)));
 
     if (!CheckStakeKernelHash(pindexPrev, nBits, header.GetBlockTime(), txPrev, txin.prevout, tx.nTime, hashProofOfStake, targetProofOfStake, fDebug))
         return state.DoS(1, error("CheckProofOfStake() : INFO: check kernel failed on coinstake %s, hashProof=%s", tx.GetHash().ToString(), hashProofOfStake.ToString())); // may occur during initial download or if behind on block chain sync
