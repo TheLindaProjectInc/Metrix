@@ -40,6 +40,7 @@ int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
 unsigned int nTxConfirmTarget = 1;
 bool bSpendZeroConfChange = true;
+bool fSendFreeTransactions = true;
 
 static int64_t GetStakeSplitAmount() { return 1000000 * COIN; }
 static unsigned int GetStakeMaxCombineInputs() { return 100; }
@@ -2588,7 +2589,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
                     break; //! Done, enough fee included.
 
                 //! Too big to send for free? Include more fee and try again:
-                if (nBytes > MAX_FREE_TRANSACTION_CREATE_SIZE) {
+                if (!fSendFreeTransactions || nBytes > MAX_FREE_TRANSACTION_CREATE_SIZE) {
                     nFeeRet = nFeeNeeded;
                     continue;
                 }
