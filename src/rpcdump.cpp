@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "base58.h"
-#include "init.h" // for pwalletMain
+#include "init.h" //! for pwalletMain
 #include "rpcserver.h"
 #include "script/script.h"
 #include "script/standard.h"
@@ -26,8 +26,10 @@ void EnsureWalletIsUnlocked();
 
 namespace bt = boost::posix_time;
 
-// Extended DecodeDumpTime implementation, see this page for details:
-// http://stackoverflow.com/questions/3786201/parsing-of-date-time-from-string-boost
+/**
+ * Extended DecodeDumpTime implementation, see this page for details:
+ * http://stackoverflow.com/questions/3786201/parsing-of-date-time-from-string-boost
+ */
 const std::locale formats[] = {
     std::locale(std::locale::classic(), new bt::time_input_facet("%Y-%m-%dT%H:%M:%SZ")),
     std::locale(std::locale::classic(), new bt::time_input_facet("%Y-%m-%d %H:%M:%S")),
@@ -135,7 +137,7 @@ Value importprivkey(const Array& params, bool fHelp)
     if (params.size() > 1)
         strLabel = params[1].get_str();
 
-    // Whether to perform rescan after import
+    //! Whether to perform rescan after import
     bool fRescan = true;
     if (params.size() > 2)
         fRescan = params[2].get_bool();
@@ -158,7 +160,7 @@ Value importprivkey(const Array& params, bool fHelp)
         pwalletMain->MarkDirty();
         pwalletMain->SetAddressBook(vchAddress, strLabel, "receive");
 
-        // Don't throw error in case a key is already there
+        //! Don't throw error in case a key is already there
         if (pwalletMain->HaveKey(vchAddress))
             return Value::null;
 
@@ -167,7 +169,7 @@ Value importprivkey(const Array& params, bool fHelp)
         if (!pwalletMain->AddKeyPubKey(key, pubkey))
             throw JSONRPCError(RPC_WALLET_ERROR, "Error adding key to wallet");
 
-        // whenever a key is imported, we need to scan the whole chain
+        //! whenever a key is imported, we need to scan the whole chain
         pwalletMain->nTimeFirstKey = 1; // 0 would be considered 'no value'
 
         if (fRescan) {
@@ -211,7 +213,7 @@ Value importaddress(const Array& params, bool fHelp)
     if (params.size() > 1)
         strLabel = params[1].get_str();
 
-    // Whether to perform rescan after import
+    //! Whether to perform rescan after import
     bool fRescan = true;
     if (params.size() > 2)
         fRescan = params[2].get_bool();
@@ -220,11 +222,11 @@ Value importaddress(const Array& params, bool fHelp)
         if (::IsMine(*pwalletMain, script) == ISMINE_SPENDABLE)
             throw JSONRPCError(RPC_WALLET_ERROR, "The wallet already contains the private key for this address or script");
             
-        // add to address book or update label
+        //! add to address book or update label
         if (address.IsValid())
             pwalletMain->SetAddressBook(address.Get(), strLabel, "receive");
 
-        // Don't throw error in case an address is already there
+        //! Don't throw error in case an address is already there
         if (pwalletMain->HaveWatchOnly(script))
             return Value::null;
 
@@ -389,7 +391,7 @@ Value dumpwallet(const Array& params, bool fHelp)
 
     pwalletMain->GetAllReserveKeys(setKeyPool);
 
-    // sort time/key pairs
+    //! sort time/key pairs
     std::vector<std::pair<int64_t, CKeyID> > vKeyBirth;
     for (std::map<CKeyID, int64_t>::const_iterator it = mapKeyBirth.begin(); it != mapKeyBirth.end(); it++) {
         vKeyBirth.push_back(std::make_pair(it->second, it->first));
@@ -397,7 +399,7 @@ Value dumpwallet(const Array& params, bool fHelp)
     mapKeyBirth.clear();
     std::sort(vKeyBirth.begin(), vKeyBirth.end());
 
-    // produce output
+    //! produce output
     file << strprintf("# Wallet dump created by Metrix %s (%s)\n", CLIENT_BUILD, CLIENT_DATE);
     file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()));
     file << strprintf("# * Best block at time of backup was %i (%s),\n", chainActive.Height(), chainActive.Tip()->GetBlockHash().ToString());

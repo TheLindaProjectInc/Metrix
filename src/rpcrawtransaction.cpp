@@ -542,7 +542,7 @@ Value decodescript(const Array& params, bool fHelp)
         vector<unsigned char> scriptData(ParseHexV(params[0], "argument"));
         script = CScript(scriptData.begin(), scriptData.end());
     } else {
-        // Empty scripts are valid
+        //! Empty scripts are valid
     }
     ScriptPubKeyToJSON(script, r, false);
 
@@ -616,26 +616,28 @@ Value signrawtransaction(const Array& params, bool fHelp)
     if (txVariants.empty())
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Missing transaction");
 
-    // mergedTx will end up with all the signatures; it
-    // starts as a clone of the rawtx:
+    /**
+     * mergedTx will end up with all the signatures; it
+     * starts as a clone of the rawtx:
+     */
     CMutableTransaction mergedTx(txVariants[0]);
     bool fComplete = true;
 
-    // Fetch previous transactions (inputs):
+    //! Fetch previous transactions (inputs):
     CCoinsView viewDummy;
     CCoinsViewCache view(&viewDummy);
     {
         LOCK(mempool.cs);
         CCoinsViewCache& viewChain = *pcoinsTip;
         CCoinsViewMemPool viewMempool(&viewChain, mempool);
-        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+        view.SetBackend(viewMempool); //! temporarily switch cache backend to db+mempool view
 
         BOOST_FOREACH (const CTxIn& txin, mergedTx.vin) {
             const uint256& prevHash = txin.prevout.hash;
             CCoins coins;
-            view.AccessCoins(prevHash); // this is certainly allowed to fail
+            view.AccessCoins(prevHash); //! this is certainly allowed to fail
         }
-        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+        view.SetBackend(viewDummy); //! switch back to avoid locking mempool for too long
     }
 
     bool fGivenKeys = false;
@@ -659,7 +661,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
         EnsureWalletIsUnlocked();
 #endif
 
-    // Add previous txouts given in the RPC call:
+    //! Add previous txouts given in the RPC call:
     if (params.size() > 1 && params[1].type() != null_type) {
         Array prevTxs = params[1].get_array();
         BOOST_FOREACH (Value& p, prevTxs) {
@@ -689,13 +691,14 @@ Value signrawtransaction(const Array& params, bool fHelp)
                 if ((unsigned int)nOut >= coins->vout.size())
                     coins->vout.resize(nOut + 1);
                 coins->vout[nOut].scriptPubKey = scriptPubKey;
-                coins->vout[nOut].nValue = 0; // we don't know the actual output value
+                coins->vout[nOut].nValue = 0; //! we don't know the actual output value
             }
 
 
-
-            // if redeemScript given and not using the local wallet (private keys
-            // given), add redeemScript to the tempKeystore so it can be signed:
+            /**
+             * if redeemScript given and not using the local wallet (private keys
+             * given), add redeemScript to the tempKeystore so it can be signed:
+             */
             if (fGivenKeys && scriptPubKey.IsPayToScriptHash()) {
                 RPCTypeCheck(prevOut, map_list_of("txid", str_type)("vout", int_type)("scriptPubKey", str_type)("redeemScript", str_type));
                 Value v = find_value(prevOut, "redeemScript");
@@ -727,7 +730,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
 
     bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
 
-    // Sign what we can:
+    //! Sign what we can:
     for (unsigned int i = 0; i < mergedTx.vin.size(); i++) {
         CTxIn& txin = mergedTx.vin[i];
         const CCoins* coins = view.AccessCoins(txin.prevout.hash);
@@ -738,11 +741,11 @@ Value signrawtransaction(const Array& params, bool fHelp)
         const CScript& prevPubKey = coins->vout[txin.prevout.n].scriptPubKey;
 
         txin.scriptSig.clear();
-        // Only sign SIGHASH_SINGLE if there's a corresponding output:
+        //! Only sign SIGHASH_SINGLE if there's a corresponding output:
         if (!fHashSingle || (i < mergedTx.vout.size()))
             SignSignature(keystore, prevPubKey, mergedTx, i, nHashType);
 
-        // ... and merge in other signatures:
+        //! ... and merge in other signatures:
         BOOST_FOREACH (const CMutableTransaction& txv, txVariants) {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
         }
@@ -779,7 +782,7 @@ Value sendrawtransaction(const Array& params, bool fHelp)
 
     RPCTypeCheck(params, list_of(str_type)(bool_type));
 
-    // parse hex string from parameter
+    //! parse hex string from parameter
 
     CTransaction tx;
     if (!DecodeHexTx(tx, params[0].get_str()))
@@ -795,7 +798,7 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     bool fHaveMempool = mempool.exists(hashTx);
     bool fHaveChain = existingCoins && existingCoins->nHeight < 1000000000;
     if (!fHaveMempool && !fHaveChain) {
-        // push to local node and sync with wallets
+        //! push to local node and sync with wallets
         CValidationState state;
         if (AcceptToMemoryPool(mempool, state, tx, false, NULL, !fOverrideFees))
             SyncWithWallets(tx, NULL);

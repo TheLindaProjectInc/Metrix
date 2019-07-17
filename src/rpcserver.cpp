@@ -48,7 +48,7 @@ static asio::io_service* rpc_io_service = NULL;
 static map<string, boost::shared_ptr<deadline_timer> > deadlineTimers;
 static ssl::context* rpc_ssl_context = NULL;
 static boost::thread_group* rpc_worker_group = NULL;
-static std::vector<CSubNet> rpc_allow_subnets; //!< List of subnets to allow RPC connections from
+static std::vector<CSubNet> rpc_allow_subnets; //! List of subnets to allow RPC connections from
 static std::vector<boost::shared_ptr<ip::tcp::acceptor> > rpc_acceptors;
 
 void RPCTypeCheck(const Array& params,

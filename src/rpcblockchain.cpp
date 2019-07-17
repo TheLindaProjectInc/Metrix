@@ -17,8 +17,10 @@ void ScriptPubKeyToJSON(const CScript& scriptPubKey, Object& out, bool fIncludeH
 
 double GetDifficulty(const CBlockIndex* blockindex)
 {
-    // Floating point number that is a multiple of the minimum difficulty,
-    // minimum difficulty = 1.0.
+    /**
+     * Floating point number that is a multiple of the minimum difficulty,
+     * minimum difficulty = 1.0.
+     */
     if (blockindex == NULL) {
         if (chainActive.Tip() == NULL)
             return 1.0;
@@ -106,7 +108,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool fPri
     Object result;
     result.push_back(Pair("hash", block.GetHash().GetHex()));
     int confirmations = -1;
-    // Only report confirmations if the block is on the main chain
+    //! Only report confirmations if the block is on the main chain
     if (chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
     result.push_back(Pair("confirmations", confirmations));
@@ -426,7 +428,7 @@ Value gettxout(const Array& params, bool fHelp)
         CCoinsViewMemPool view(pcoinsTip, mempool);
         if (!view.GetCoins(hash, coins))
             return Value::null;
-        mempool.pruneSpent(hash, coins); // TODO: this should be done by the CCoinsViewMemPool
+        mempool.pruneSpent(hash, coins); //! TODO: this should be done by the CCoinsViewMemPool
     } else {
         if (!pcoinsTip->GetCoins(hash, coins))
             return Value::null;
@@ -528,11 +530,11 @@ Value getblockchaininfo(const Array& params, bool fHelp)
     return obj;
 }
 
-/* Comparison function for sorting the getchaintips heads.  */
+/** Comparison function for sorting the getchaintips heads.  */
 struct CompareBlocksByHeight {
     bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
     {
-        /* Make sure that unequal blocks with the same height do not compare
+        /** Make sure that unequal blocks with the same height do not compare
            equal.  Use the pointers themselves to make a distinction.  */
 
         if (a->nHeight != b->nHeight)
@@ -568,7 +570,7 @@ Value getchaintips(const Array& params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getchaintips", "") + HelpExampleRpc("getchaintips", ""));
 
-    /* Build up a list of chain tips.  We start with the list of all
+    /** Build up a list of chain tips.  We start with the list of all
        known blocks, and successively remove blocks that appear as pprev
        of another block.  */
     std::set<const CBlockIndex*, CompareBlocksByHeight> setTips;
@@ -580,10 +582,10 @@ Value getchaintips(const Array& params, bool fHelp)
             setTips.erase(pprev);
     }
 
-    // Always report the currently active tip.
+    /** Always report the currently active tip. */
     setTips.insert(chainActive.Tip());
 
-    /* Construct the output array.  */
+    /** Construct the output array.  */
     Array res;
     BOOST_FOREACH (const CBlockIndex* block, setTips) {
         Object obj;
@@ -595,22 +597,22 @@ Value getchaintips(const Array& params, bool fHelp)
 
         string status;
         if (chainActive.Contains(block)) {
-            // This block is part of the currently active chain.
+            //! This block is part of the currently active chain.
             status = "active";
         } else if (block->nStatus & BLOCK_FAILED_MASK) {
-            // This block or one of its ancestors is invalid.
+            //! This block or one of its ancestors is invalid.
             status = "invalid";
         } else if (block->nChainTx == 0) {
-            // This block cannot be connected because full block data for it or one of its parents is missing.
+            //! This block cannot be connected because full block data for it or one of its parents is missing.
             status = "headers-only";
         } else if (block->IsValid(BLOCK_VALID_SCRIPTS)) {
-            // This block is fully validated, but no longer part of the active chain. It was probably the active block once, but was reorganized.
+            //! This block is fully validated, but no longer part of the active chain. It was probably the active block once, but was reorganized.
             status = "valid-fork";
         } else if (block->IsValid(BLOCK_VALID_TREE)) {
-            // The headers for this block are valid, but it has not been validated. It was probably never part of the most-work chain.
+            //! The headers for this block are valid, but it has not been validated. It was probably never part of the most-work chain.
             status = "valid-headers";
         } else {
-            // No clue.
+            //! No clue.
             status = "unknown";
         }
         obj.push_back(Pair("status", status));
