@@ -368,6 +368,7 @@ Value gettxoutsetinfo(const Array& params, bool fHelp)
 
     Object ret;
     CCoinsStats stats;
+    FlushStateToDisk();
     if (pcoinsTip->GetStats(stats)) {
         ret.push_back(Pair("height", (boost::int64_t)stats.nHeight));
         ret.push_back(Pair("bestblock", stats.hashBlock.GetHex()));
