@@ -1885,7 +1885,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     AssertLockHeld(cs_main);
     // Check it again in case a previous version let a bad block in, but skip BlockSig checking
     if (!CheckBlock(block, state, !fJustCheck, !fJustCheck, false)){
-        LogPrintf("ERROR ConnectBlock() : CheckBlock failed");
+        LogPrintf("ERROR ConnectBlock() : CheckBlock failed\n");
         return false;
     }
 
@@ -1894,7 +1894,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     assert(hashPrevBlock == view.GetBestBlock());
 
     // Check block POS/POW work
-    if (!UpdateHashProof(block, state, pindex))
+    if (!fJustCheck && !UpdateHashProof(block, state, pindex))
         return false;
 
     // Special case for the genesis block, skipping connection of its transactions
@@ -2825,7 +2825,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 {
     // These are checks that are independent of context.
 
-    if (!CheckBlockHeader(block, state, block.IsProofOfWork()))
+    if (!CheckBlockHeader(block, state, block.IsProofOfWork() && fCheckPOW))
         return state.DoS(100, error("CheckBlock() : CheckBlockHeader failed"),
                          REJECT_INVALID, "bad-header", true);
 
