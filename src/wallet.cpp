@@ -41,6 +41,7 @@ int64_t nMinimumInputValue = 0;
 unsigned int nTxConfirmTarget = 1;
 bool bSpendZeroConfChange = true;
 bool fSendFreeTransactions = true;
+bool fPayAtLeastCustomFee = true;
 
 static int64_t GetStakeSplitAmount() { return 1000000 * COIN; }
 static unsigned int GetStakeMaxCombineInputs() { return 100; }
@@ -2466,7 +2467,11 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
     {
         LOCK2(cs_main, cs_wallet);
         {
-            nFeeRet = payTxFee.GetFeePerK();
+            if (fPayAtLeastCustomFee)
+                nFeeRet = payTxFee.GetFeePerK();
+            else
+                nFeeRet = 0;
+
             while (true) {
                 txNew.vin.clear();
                 txNew.vout.clear();
