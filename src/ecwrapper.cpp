@@ -13,9 +13,11 @@
 
 namespace {
 
-// Perform ECDSA key recovery (see SEC1 4.1.6) for curves over (mod p)-fields
-// recid selects which key is recovered
-// if check is non-zero, additional checks are performed
+/**
+ * Perform ECDSA key recovery (see SEC1 4.1.6) for curves over (mod p)-fields
+ * recid selects which key is recovered
+ * if check is non-zero, additional checks are performed
+ */
 int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned char *msg, int msglen, int recid, int check)
 {
     if (!eckey) return 0;
@@ -115,7 +117,7 @@ bool CECKey::SetPubKey(const unsigned char* pubkey, size_t size) {
 }
 
 bool CECKey::Verify(const uint256 &hash, const std::vector<unsigned char>& vchSig) {
-    // -1 = error, 0 = bad sig, 1 = good
+    //! -1 = error, 0 = bad sig, 1 = good
     if (ECDSA_verify(0, (unsigned char*)&hash, sizeof(hash), &vchSig[0], vchSig.size(), pkey) != 1)
         return false;
     return true;
@@ -141,15 +143,15 @@ bool CECKey::TweakPublic(const unsigned char vchTweak[32]) {
     BIGNUM *bnOrder = BN_CTX_get(ctx);
     BIGNUM *bnOne = BN_CTX_get(ctx);
     const EC_GROUP *group = EC_KEY_get0_group(pkey);
-    EC_GROUP_get_order(group, bnOrder, ctx); // what a grossly inefficient way to get the (constant) group order...
+    EC_GROUP_get_order(group, bnOrder, ctx); //! what a grossly inefficient way to get the (constant) group order...
     BN_bin2bn(vchTweak, 32, bnTweak);
     if (BN_cmp(bnTweak, bnOrder) >= 0)
-        ret = false; // extremely unlikely
+        ret = false; //! extremely unlikely
     EC_POINT *point = EC_POINT_dup(EC_KEY_get0_public_key(pkey), group);
     BN_one(bnOne);
     EC_POINT_mul(group, point, bnTweak, point, bnOne, ctx);
     if (EC_POINT_is_at_infinity(group, point))
-        ret = false; // ridiculously unlikely
+        ret = false; //! ridiculously unlikely
     EC_KEY_set_public_key(pkey, point);
     EC_POINT_free(point);
     BN_CTX_end(ctx);
@@ -164,6 +166,6 @@ bool CECKey::SanityCheck()
         return false;
     EC_KEY_free(pkey);
 
-    // TODO Is there more EC functionality that could be missing?
+    //! TODO Is there more EC functionality that could be missing?
     return true;
 }

@@ -35,7 +35,7 @@ struct stealth_prefix {
 template <typename T, typename Iterator>
 T from_big_endian(Iterator in)
 {
-    //VERIFY_UNSIGNED(T);
+    //!VERIFY_UNSIGNED(T);
     T out = 0;
     size_t i = sizeof(T);
     while (0 < i)
@@ -46,7 +46,7 @@ T from_big_endian(Iterator in)
 template <typename T, typename Iterator>
 T from_little_endian(Iterator in)
 {
-    //VERIFY_UNSIGNED(T);
+    //!VERIFY_UNSIGNED(T);
     T out = 0;
     size_t i = 0;
     while (i < sizeof(T))
@@ -65,7 +65,7 @@ public:
     uint8_t options;
     ec_point scan_pubkey;
     ec_point spend_pubkey;
-    //std::vector<ec_point> spend_pubkeys;
+    //!std::vector<ec_point> spend_pubkeys;
     size_t number_signatures;
     stealth_prefix prefix;
 

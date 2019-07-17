@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2012 The Darkcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+// file COPYING or http://!www.opensource.org/licenses/mit-license.php.
 
 
 #include "instantx.h"
@@ -25,24 +25,26 @@ std::map<uint256, CTransaction> mapTxLockReqRejected;
 std::map<uint256, CConsensusVote> mapTxLockVote;
 std::map<uint256, CTransactionLock> mapTxLocks;
 std::map<COutPoint, uint256> mapLockedInputs;
-std::map<uint256, int64_t> mapUnknownVotes; //track votes with no tx for DOS
+std::map<uint256, int64_t> mapUnknownVotes; //!! track votes with no tx for DOS
 int nCompleteTXLocks;
 
-//txlock - Locks transaction
-//
-//step 1.) Broadcast intention to lock transaction inputs, "txlreg", CTransaction
-//step 2.) Top 10 masternodes, open connect to top 1 masternode. Send "txvote", CTransaction, Signature, Approve
-//step 3.) Top 1 masternode, waits for 10 messages. Upon success, sends "txlock'
+/**
+ * txlock - Locks transaction
+ *
+ * step 1.) Broadcast intention to lock transaction inputs, "txlreg", CTransaction
+ * step 2.) Top 10 masternodes, open connect to top 1 masternode. Send "txvote", CTransaction, Signature, Approve
+ * step 3.) Top 1 masternode, waits for 10 messages. Upon success, sends "txlock'
+ */
 
 void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
 {
     if (fLiteMode)
-        return; //disable all darksend/masternode related functionality
+        return; //!! disable all darksend/masternode related functionality
     if (!IsSporkActive(SPORK_1_MASTERNODE_PAYMENTS_ENFORCEMENT))
         return;
 
     if (strCommand == "txlreq") {
-        //LogPrintf("ProcessMessageInstantX::txlreq\n");
+        //! LogPrintf("ProcessMessageInstantX::txlreq\n");
         CDataStream vMsg(vRecv);
         CTransaction tx;
         vRecv >> tx;
@@ -89,7 +91,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         } else {
             mapTxLockReqRejected.insert(make_pair(tx.GetHash(), tx));
 
-            // can we get the conflicting transaction as proof?
+            //! can we get the conflicting transaction as proof?
 
             LogPrintf("ProcessMessageInstantX::txlreq - Transaction Lock Request: %s %s : rejected %s\n",
                       pfrom->addr.ToString().c_str(), pfrom->cleanSubVer.c_str(),
@@ -101,16 +103,16 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
                 }
             }
 
-            // resolve conflicts
+            //! resolve conflicts
             std::map<uint256, CTransactionLock>::iterator i = mapTxLocks.find(tx.GetHash());
             if (i != mapTxLocks.end()) {
-                //we only care if we have a complete tx lock
+                //!we only care if we have a complete tx lock
                 if ((*i).second.CountSignatures() >= INSTANTX_SIGNATURES_REQUIRED) {
                     if (!CheckForConflictingLocks(tx)) {
                         LogPrintf("ProcessMessageInstantX::txlreq - Found Existing Complete IX Lock\n");
 
                         CValidationState state;
-                        //DisconnectBlockAndInputs(state, tx);
+                        //!DisconnectBlockAndInputs(state, tx);
                         mapTxLockReq.insert(make_pair(tx.GetHash(), tx));
                     }
                 }
@@ -118,7 +120,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
 
             return;
         }
-    } else if (strCommand == "txlvote") //InstantX Lock Consensus Votes
+    } else if (strCommand == "txlvote") //!InstantX Lock Consensus Votes
     {
         CConsensusVote ctx;
         vRecv >> ctx;
@@ -133,7 +135,7 @@ void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& 
         mapTxLockVote.insert(make_pair(ctx.GetHash(), ctx));
 
         if (ProcessConsensusVote(ctx)) {
-            //Spam/Dos protection
+            //!Spam/Dos protection
             /*
                 Masternodes will sometimes propagate votes before the transaction is known to the client.
                 This tracks those messages and allows it at the same rate of the rest of the network, if
@@ -240,7 +242,7 @@ int64_t CreateNewLock(CTransaction tx)
 
         CTransactionLock newLock;
         newLock.nBlockHeight = nBlockHeight;
-        newLock.nExpiration = GetTime() + (60 * 60); //locks expire after 15 minutes (6 confirmations)
+        newLock.nExpiration = GetTime() + (60 * 60); //!locks expire after 15 minutes (6 confirmations)
         newLock.nTimeout = GetTime() + (60 * 5);
         newLock.txHash = tx.GetHash();
         mapTxLocks.insert(make_pair(tx.GetHash(), newLock));
@@ -253,7 +255,7 @@ int64_t CreateNewLock(CTransaction tx)
     return nBlockHeight;
 }
 
-// check if we need to vote on this transaction
+//! check if we need to vote on this transaction
 void DoConsensusVote(CTransaction& tx, int64_t nBlockHeight)
 {
     if (!fMasterNode)
@@ -304,7 +306,7 @@ void DoConsensusVote(CTransaction& tx, int64_t nBlockHeight)
     }
 }
 
-//received a consensus vote
+//!received a consensus vote
 bool ProcessConsensusVote(CConsensusVote& ctx)
 {
     int n = GetMasternodeRank(ctx.vinMasternode, ctx.nBlockHeight, MIN_INSTANTX_PROTO_VERSION);
@@ -316,7 +318,7 @@ bool ProcessConsensusVote(CConsensusVote& ctx)
     }
 
     if (n == -1) {
-        //can be caused by past versions trying to vote with an invalid protocol
+        //!can be caused by past versions trying to vote with an invalid protocol
         if (fDebug)
             LogPrintf("InstantX::ProcessConsensusVote - Unknown Masternode\n");
         return false;
@@ -330,7 +332,7 @@ bool ProcessConsensusVote(CConsensusVote& ctx)
 
     if (!ctx.SignatureValid()) {
         LogPrintf("InstantX::ProcessConsensusVote - Signature invalid\n");
-        //don't ban, it could just be a non-synced masternode
+        //!don't ban, it could just be a non-synced masternode
         return false;
     }
 
@@ -348,14 +350,14 @@ bool ProcessConsensusVote(CConsensusVote& ctx)
             LogPrintf("InstantX::ProcessConsensusVote - Transaction Lock Exists %s !\n", ctx.txHash.ToString().c_str());
     }
 
-    //compile consessus vote
+    //!compile consessus vote
     std::map<uint256, CTransactionLock>::iterator i = mapTxLocks.find(ctx.txHash);
     if (i != mapTxLocks.end()) {
         (*i).second.AddSignature(ctx);
 
 #ifdef ENABLE_WALLET
         if (pwalletMain) {
-            //when we get back signatures, we'll count them as requests. Otherwise the client will think it didn't propagate.
+            //!when we get back signatures, we'll count them as requests. Otherwise the client will think it didn't propagate.
             if (pwalletMain->mapRequestCount.count(ctx.txHash))
                 pwalletMain->mapRequestCount[ctx.txHash]++;
         }
@@ -385,12 +387,12 @@ bool ProcessConsensusVote(CConsensusVote& ctx)
                     }
                 }
 
-                // resolve conflicts
+                //! resolve conflicts
 
-                //if this tx lock was rejected, we need to remove the conflicting blocks
+                //!if this tx lock was rejected, we need to remove the conflicting blocks
                 if (mapTxLockReqRejected.count((*i).second.txHash)) {
                     CValidationState state;
-                    //DisconnectBlockAndInputs(state, mapTxLockReqRejected[(*i).second.txHash]);
+                    //!DisconnectBlockAndInputs(state, mapTxLockReqRejected[(*i).second.txHash]);
                 }
             }
         }
@@ -449,7 +451,7 @@ void CleanTransactionLocksList()
     std::map<uint256, CTransactionLock>::iterator it = mapTxLocks.begin();
 
     while (it != mapTxLocks.end()) {
-        if (GetTime() > it->second.nExpiration) { //keep them for an hour
+        if (GetTime() > it->second.nExpiration) { //!keep them for an hour
             LogPrintf("Removing old transaction lock %s\n", it->second.txHash.ToString().c_str());
 
             if (mapTxLockReq.count(it->second.txHash)) {
@@ -482,7 +484,7 @@ bool CConsensusVote::SignatureValid()
 {
     std::string errorMessage;
     std::string strMessage = txHash.ToString().c_str() + boost::lexical_cast<std::string>(nBlockHeight);
-    //LogPrintf("verify strMessage %s \n", strMessage.c_str());
+    //!LogPrintf("verify strMessage %s \n", strMessage.c_str());
 
     int n = GetMasternodeByVin(vinMasternode);
 
@@ -491,16 +493,16 @@ bool CConsensusVote::SignatureValid()
         return false;
     }
 
-    //LogPrintf("verify addr %s \n", vecMasternodes[0].addr.ToString().c_str());
-    //LogPrintf("verify addr %s \n", vecMasternodes[1].addr.ToString().c_str());
-    //LogPrintf("verify addr %d %s \n", n, vecMasternodes[n].addr.ToString().c_str());
+    //!LogPrintf("verify addr %s \n", vecMasternodes[0].addr.ToString().c_str());
+    //!LogPrintf("verify addr %s \n", vecMasternodes[1].addr.ToString().c_str());
+    //!LogPrintf("verify addr %d %s \n", n, vecMasternodes[n].addr.ToString().c_str());
 
     CScript pubkey;
     pubkey = GetScriptForDestination(vecMasternodes[n].pubkey2.GetID());
     CTxDestination address1;
     ExtractDestination(pubkey, address1);
     CBitcoinAddress address2(address1);
-    //LogPrintf("verify pubkey2 %s \n", address2.ToString().c_str());
+    //!LogPrintf("verify pubkey2 %s \n", address2.ToString().c_str());
 
     if (!darkSendSigner.VerifyMessage(vecMasternodes[n].pubkey2, vchMasterNodeSignature, strMessage, errorMessage)) {
         LogPrintf("InstantX::CConsensusVote::SignatureValid() - Verify message failed\n");
@@ -517,8 +519,8 @@ bool CConsensusVote::Sign()
     CKey key2;
     CPubKey pubkey2;
     std::string strMessage = txHash.ToString().c_str() + boost::lexical_cast<std::string>(nBlockHeight);
-    //LogPrintf("signing strMessage %s \n", strMessage.c_str());
-    //LogPrintf("signing privkey %s \n", strMasterNodePrivKey.c_str());
+    //!LogPrintf("signing strMessage %s \n", strMessage.c_str());
+    //!LogPrintf("signing privkey %s \n", strMasterNodePrivKey.c_str());
 
     if (!darkSendSigner.SetKey(strMasterNodePrivKey, errorMessage, key2, pubkey2)) {
         LogPrintf("CActiveMasternode::RegisterAsMasterNode() - ERROR: Invalid masternodeprivkey: '%s'\n", errorMessage.c_str());
@@ -530,7 +532,7 @@ bool CConsensusVote::Sign()
     CTxDestination address1;
     ExtractDestination(pubkey, address1);
     CBitcoinAddress address2(address1);
-    //LogPrintf("signing pubkey2 %s \n", address2.ToString().c_str());
+    //!LogPrintf("signing pubkey2 %s \n", address2.ToString().c_str());
 
     if (!darkSendSigner.SignMessage(strMessage, errorMessage, vchMasterNodeSignature, key2)) {
         LogPrintf("CActiveMasternode::RegisterAsMasterNode() - Sign message failed");

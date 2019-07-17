@@ -36,12 +36,12 @@ class CMasterKey
 public:
     std::vector<unsigned char> vchCryptedKey;
     std::vector<unsigned char> vchSalt;
-    // 0 = EVP_sha512()
-    // 1 = scrypt()
+    //! 0 = EVP_sha512()
+    //! 1 = scrypt()
     unsigned int nDerivationMethod;
     unsigned int nDeriveIterations;
-    // Use this for more parameters to key derivation,
-    // such as the various parameters to scrypt
+    //! Use this for more parameters to key derivation,
+    //! such as the various parameters to scrypt
     std::vector<unsigned char> vchOtherDerivationParameters;
 
     ADD_SERIALIZE_METHODS;
@@ -58,8 +58,8 @@ public:
 
     CMasterKey()
     {
-        // 25000 rounds is just under 0.1 seconds on a 1.86 GHz Pentium M
-        // ie slightly lower than the lowest hardware we need bother supporting
+        //! 25000 rounds is just under 0.1 seconds on a 1.86 GHz Pentium M
+        //! ie slightly lower than the lowest hardware we need bother supporting
         nDeriveIterations = 25000;
         nDerivationMethod = 1;
         vchOtherDerivationParameters = std::vector<unsigned char>(0);
@@ -68,14 +68,14 @@ public:
     CMasterKey(unsigned int nDerivationMethodIndex)
     {
         switch (nDerivationMethodIndex) {
-        case 0: // sha512
+        case 0: //! sha512
         default:
             nDeriveIterations = 25000;
             nDerivationMethod = 0;
             vchOtherDerivationParameters = std::vector<unsigned char>(0);
             break;
 
-        case 1: // scrypt+sha512
+        case 1: //! scrypt+sha512
             nDeriveIterations = 10000;
             nDerivationMethod = 1;
             vchOtherDerivationParameters = std::vector<unsigned char>(0);
@@ -111,9 +111,11 @@ public:
     {
         fKeySet = false;
 
-        // Try to keep the key data out of swap (and be a bit over-careful to keep the IV that we don't even use out of swap)
-        // Note that this does nothing about suspend-to-disk (which will put all our key data on disk)
-        // Note as well that at no point in this program is any attempt made to prevent stealing of keys by reading the memory of the running process.
+        /**
+         * Try to keep the key data out of swap (and be a bit over-careful to keep the IV that we don't even use out of swap)
+         * Note that this does nothing about suspend-to-disk (which will put all our key data on disk)
+         * Note as well that at no point in this program is any attempt made to prevent stealing of keys by reading the memory of the running process.
+         */
         LockedPageManager::Instance().LockRange(&chKey[0], sizeof chKey);
         LockedPageManager::Instance().LockRange(&chIV[0], sizeof chIV);
     }
@@ -139,11 +141,11 @@ bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, con
 class CCryptoKeyStore : public CBasicKeyStore
 {
 private:
-    // if fUseCrypto is true, mapKeys must be empty
-    // if fUseCrypto is false, vMasterKey must be empty
+    //! if fUseCrypto is true, mapKeys must be empty
+    //! if fUseCrypto is false, vMasterKey must be empty
     bool fUseCrypto;
 
-    // keeps track of whether Unlock has run a thourough check before
+    //! keeps track of whether Unlock has run a thourough check before
     bool fDecryptionThoroughlyChecked;
 
 protected:
@@ -152,7 +154,7 @@ protected:
 
     bool SetCrypted();
 
-    // will encrypt previously unencrypted keys
+    //! will encrypt previously unencrypted keys
     bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn);
@@ -174,13 +176,13 @@ public:
 	*/
     bool IsLocked(bool ignoreStakingLock = false) const
     {
-        //If there is no password set -> wallet is not locked
+        //!If there is no password set -> wallet is not locked
         if (!IsCrypted()) {
             return false;
         }
 
 
-        //If staking lock should be considered, and it is locked for staking only -> return true
+        //!If staking lock should be considered, and it is locked for staking only -> return true
         if (!ignoreStakingLock && fWalletUnlockStakingOnly) {
             return true;
         }
@@ -241,9 +243,11 @@ private:
 public:
     SecMsgCrypter()
     {
-        // Try to keep the key data out of swap (and be a bit over-careful to keep the IV that we don't even use out of swap)
-        // Note that this does nothing about suspend-to-disk (which will put all our key data on disk)
-        // Note as well that at no point in this program is any attempt made to prevent stealing of keys by reading the memory of the running process.
+        /**
+         * Try to keep the key data out of swap (and be a bit over-careful to keep the IV that we don't even use out of swap)
+         * Note that this does nothing about suspend-to-disk (which will put all our key data on disk)
+         * Note as well that at no point in this program is any attempt made to prevent stealing of keys by reading the memory of the running process.
+         */
         LockedPageManager::Instance().LockRange(&chKey[0], sizeof chKey);
         LockedPageManager::Instance().LockRange(&chIV[0], sizeof chIV);
         fKeySet = false;
@@ -251,7 +255,7 @@ public:
 
     ~SecMsgCrypter()
     {
-        // clean key
+        //! clean key
         memset(&chKey, 0, sizeof chKey);
         memset(&chIV, 0, sizeof chIV);
         fKeySet = false;

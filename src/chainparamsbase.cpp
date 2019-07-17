@@ -13,9 +13,9 @@
 
 using namespace boost::assign;
 
-//
-// Main network
-//
+/**
+ * Main network
+ */
 
 class CBaseMainParams : public CBaseChainParams
 {
@@ -28,9 +28,9 @@ public:
 };
 static CBaseMainParams mainParams;
 
-//
-// Testnet
-//
+/**
+ * Testnet
+ */
 class CBaseTestNetParams : public CBaseMainParams
 {
 public:

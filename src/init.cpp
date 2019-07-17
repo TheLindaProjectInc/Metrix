@@ -54,9 +54,11 @@ CWallet* pwalletMain = NULL;
 #endif
 
 #ifdef WIN32
-// Win32 LevelDB doesn't use filedescriptors, and the ones used for
-// accessing block files, don't count towards to fd_set size limit
-// anyway.
+/**
+ * Win32 LevelDB doesn't use filedescriptors, and the ones used for
+ * accessing block files, don't count towards to fd_set size limit
+ * anyway.
+ */
 #define MIN_CORE_FILEDESCRIPTORS 0
 #else
 #define MIN_CORE_FILEDESCRIPTORS 150
@@ -69,7 +71,7 @@ unsigned int nMinerSleep;
 bool fUseFastIndex;
 bool fOnlyTor = false;
 
-// Used to pass flags to the Bind() function
+//! Used to pass flags to the Bind() function
 enum BindFlags {
     BF_NONE = 0,
     BF_EXPLICIT = (1U << 0),
@@ -81,34 +83,34 @@ static const char* FEE_ESTIMATES_FILENAME = "fee_estimates.dat";
 CClientUIInterface uiInterface;
 
 //////////////////////////////////////////////////////////////////////////////
-//
-// Shutdown
-//
+/**
+ * Shutdown
+ *
 
-//
-// Thread management and startup/shutdown:
-//
-// The network-processing threads are all part of a thread group
-// created by AppInit() or the Qt main() function.
-//
-// A clean exit happens when StartShutdown() or the SIGTERM
-// signal handler sets fRequestShutdown, which triggers
-// the DetectShutdownThread(), which interrupts the main thread group.
-// DetectShutdownThread() then exits, which causes AppInit() to
-// continue (it .joins the shutdown thread).
-// Shutdown() is then
-// called to clean up database connections, and stop other
-// threads that should only be stopped after the main network-processing
-// threads have exited.
-//
-// Note that if running -daemon the parent process returns from AppInit2
-// before adding any threads to the threadGroup, so .join_all() returns
-// immediately and the parent exits from main().
-//
-// Shutdown for Qt is very similar, only it uses a QTimer to detect
-// fRequestShutdown getting set, and then does the normal Qt
-// shutdown thing.
-//
+ *
+ * Thread management and startup/shutdown:
+ *
+ * The network-processing threads are all part of a thread group
+ * created by AppInit() or the Qt main() function.
+ *
+ * A clean exit happens when StartShutdown() or the SIGTERM
+ * signal handler sets fRequestShutdown, which triggers
+ * the DetectShutdownThread(), which interrupts the main thread group.
+ * DetectShutdownThread() then exits, which causes AppInit() to
+ * continue (it .joins the shutdown thread).
+ * Shutdown() is then
+ * called to clean up database connections, and stop other
+ * threads that should only be stopped after the main network-processing
+ * threads have exited.
+ *
+ * Note that if running -daemon the parent process returns from AppInit2
+ * before adding any threads to the threadGroup, so .join_all() returns
+ * immediately and the parent exits from main().
+ *
+ * Shutdown for Qt is very similar, only it uses a QTimer to detect
+ * fRequestShutdown getting set, and then does the normal Qt
+ * shutdown thing.
+ */
 
 volatile bool fRequestShutdown = false;
 
@@ -184,9 +186,9 @@ void Shutdown()
     LogPrintf("%s: done\n", __func__);
 }
 
-//
-// Signal handlers are very limited in what they are allowed to do, so:
-//
+/**
+ * Signal handlers are very limited in what they are allowed to do, so:
+ */
 #ifndef WIN32
 static void HandleSIGTERM(int)
 {
@@ -242,10 +244,10 @@ bool static Bind(const CService& addr, unsigned int flags)
     return true;
 }
 
-// Core-specific options shared between daemon and RPC client
+//! Core-specific options shared between daemon and RPC client
 std::string HelpMessage(HelpMessageMode mode)
 {
-    // When adding new options to the categories, please keep and ensure alphabetical ordering.
+    //! When adding new options to the categories, please keep and ensure alphabetical ordering.
     string strUsage = _("Options:") + "\n";
     strUsage += "  -?                     " + _("This help message") + "\n";
     strUsage += "  -alertnotify=<cmd>     " + _("Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)") + "\n";
@@ -454,17 +456,17 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 {
     RenameThread("Metrix-loadblk");
 
-    // -reindex
+    //! -reindex
     if (fReindex) {
         CImportingNow imp;
         int nFile = 0;
         while (true) {
             CDiskBlockPos pos(nFile, 0);
             if (!boost::filesystem::exists(GetBlockPosFilename(pos, "blk")))
-                break; // No block files left to reindex
+                break; //! No block files left to reindex
             FILE* file = OpenBlockFile(pos, true);
             if (!file)
-                break; // This error is logged in OpenBlockFile
+                break; //! This error is logged in OpenBlockFile
             LogPrintf("Reindexing block file blk%05u.dat...\n", (unsigned int)nFile);
             LoadExternalBlockFile(file, &pos);
             nFile++;
@@ -472,10 +474,10 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
         pblocktree->WriteReindexing(false);
         fReindex = false;
         LogPrintf("Reindexing finished\n");
-        // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
+        //! To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
         InitBlockIndex();
     }
-    // hardcoded $DATADIR/bootstrap.dat
+    //! hardcoded $DATADIR/bootstrap.dat
     filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
     if (filesystem::exists(pathBootstrap)) {
         FILE* file = fopen(pathBootstrap.string().c_str(), "rb");
@@ -489,7 +491,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
             LogPrintf("Warning: Could not open bootstrap file %s\n", pathBootstrap.string());
         }
     }
-    // -loadblock=
+    //! -loadblock=
     BOOST_FOREACH (boost::filesystem::path& path, vImportFiles) {
         FILE* file = fopen(path.string().c_str(), "rb");
         if (file) {
@@ -512,23 +514,25 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
  */
 bool AppInit2(boost::thread_group& threadGroup)
 {
-    // ********************************************************* Step 1: setup
+    //! ********************************************************* Step 1: setup
 #ifdef _MSC_VER
-    // Turn off Microsoft heap dump noise
+    //! Turn off Microsoft heap dump noise
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN, CreateFileA("NUL", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0));
 #endif
 #if _MSC_VER >= 1400
-    // Disable confusing "helpful" text message on abort, Ctrl-C
+    //! Disable confusing "helpful" text message on abort, Ctrl-C
     _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
 #endif
 #ifdef WIN32
-    // Enable Data Execution Prevention (DEP)
-    // Minimum supported OS versions: WinXP SP3, WinVista >= SP1, Win Server 2008
-    // A failure is non-critical and needs no further attention!
+    /**
+     * Enable Data Execution Prevention (DEP)
+     * Minimum supported OS versions: WinXP SP3, WinVista >= SP1, Win Server 2008
+     * A failure is non-critical and needs no further attention!
+     */
 #ifndef PROCESS_DEP_ENABLE
-    // We define this here, because GCCs winbase.h limits this to _WIN32_WINNT >= 0x0601 (Windows 7),
-    // which is not correct. Can be removed, when GCCs winbase.h is fixed!
+    //! We define this here, because GCCs winbase.h limits this to _WIN32_WINNT >= 0x0601 (Windows 7),
+    //! which is not correct. Can be removed, when GCCs winbase.h is fixed!
 #define PROCESS_DEP_ENABLE 0x00000001
 #endif
     typedef BOOL(WINAPI * PSETPROCDEPPOL)(DWORD);
@@ -536,7 +540,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (setProcDEPPol != NULL)
         setProcDEPPol(PROCESS_DEP_ENABLE);
 
-    // Initialize Windows Sockets
+    //! Initialize Windows Sockets
     WSADATA wsadata;
     int ret = WSAStartup(MAKEWORD(2, 2), &wsadata);
     if (ret != NO_ERROR || LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wVersion) != 2) {
@@ -554,19 +558,19 @@ bool AppInit2(boost::thread_group& threadGroup)
         umask(077);
     }
 
-    // Clean shutdown on SIGTERM
+    //! Clean shutdown on SIGTERM
     registerSignalHandler(SIGTERM, HandleSIGTERM);
     registerSignalHandler(SIGINT, HandleSIGTERM);
 
-    // Reopen debug.log on SIGHUP
+    //! Reopen debug.log on SIGHUP
     registerSignalHandler(SIGHUP, HandleSIGHUP);
-    // Ignore SIGPIPE, otherwise it will bring the daemon down if the client closes unexpectedly
+    //! Ignore SIGPIPE, otherwise it will bring the daemon down if the client closes unexpectedly
     signal(SIGPIPE, SIG_IGN);
 #else
     SetConsoleCtrlHandler(consoleCtrlHandler, true);
 #endif
 
-    // ********************************************************* Step 2: parameter interactions
+    //! ********************************************************* Step 2: parameter interactions
 
     nNodeLifespan = GetArg("-addrlifespan", 7);
     fUseFastIndex = GetBoolArg("-fastindex", true);
@@ -575,19 +579,19 @@ bool AppInit2(boost::thread_group& threadGroup)
     nDerivationMethodIndex = 0;
 
     if (mapArgs.count("-bind") || mapArgs.count("-whitebind")) {
-        // when specifying an explicit binding address, you want to listen on it
-        // even when -connect or -proxy is specified
+        //! when specifying an explicit binding address, you want to listen on it
+        //! even when -connect or -proxy is specified
         if (SoftSetBoolArg("-listen", true))
             LogPrintf("AppInit2 : parameter interaction: -bind or -whitebind set -> setting -listen=1\n");
     }
-    // Process Masternode config
+    //! Process Masternode config
     std::string err;
     masternodeConfig.read(err);
     if (err.empty())
         LogPrintf("Error: while parsing masternode.conf Error: %s \n", err);
 
     if (mapArgs.count("-connect") && mapMultiArgs["-connect"].size() > 0) {
-        // when only connecting to trusted nodes, do not seed via DNS, or listen by default
+        //! when only connecting to trusted nodes, do not seed via DNS, or listen by default
         if (SoftSetBoolArg("-dnsseed", false))
             LogPrintf("AppInit2 : parameter interaction: -connect set -> setting -dnsseed=0\n");
         if (SoftSetBoolArg("-listen", false))
@@ -595,16 +599,16 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
     if (mapArgs.count("-proxy")) {
-        // to protect privacy, do not listen by default if a default proxy server is specified
+        //! to protect privacy, do not listen by default if a default proxy server is specified
         if (SoftSetBoolArg("-listen", false))
             LogPrintf("AppInit2 : parameter interaction: -proxy set -> setting -listen=0\n");
-        // to protect privacy, do not discover addresses by default
+        //! to protect privacy, do not discover addresses by default
         if (SoftSetBoolArg("-discover", false))
             LogPrintf("AppInit2 : parameter interaction: -proxy set -> setting -discover=0\n");
     }
 
     if (!GetBoolArg("-listen", true)) {
-        // do not map ports or try to retrieve public IP when not listening (pointless)
+        //! do not map ports or try to retrieve public IP when not listening (pointless)
         if (SoftSetBoolArg("-upnp", false))
             LogPrintf("AppInit2 : parameter interaction: -listen=0 -> setting -upnp=0\n");
         if (SoftSetBoolArg("-discover", false))
@@ -612,24 +616,24 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
     if (mapArgs.count("-externalip")) {
-        // if an explicit public IP is specified, do not try to find others
+        //! if an explicit public IP is specified, do not try to find others
         if (SoftSetBoolArg("-discover", false))
             LogPrintf("AppInit2 : parameter interaction: -externalip set -> setting -discover=0\n");
     }
 
     if (GetBoolArg("-salvagewallet", false)) {
-        // Rewrite just private keys: rescan to find transactions
+        //! Rewrite just private keys: rescan to find transactions
         if (SoftSetBoolArg("-rescan", true))
             LogPrintf("AppInit2 : parameter interaction: -salvagewallet=1 -> setting -rescan=1\n");
     }
 
-    // -zapwallettx implies a rescan
+    //! -zapwallettx implies a rescan
     if (GetBoolArg("-zapwallettxes", false)) {
         if (SoftSetBoolArg("-rescan", true))
             LogPrintf("AppInit2 : parameter interaction: -zapwallettxes=1 -> setting -rescan=1\n");
     }
 
-    // Make sure enough file descriptors are available
+    //! Make sure enough file descriptors are available
     int nBind = std::max((int)mapArgs.count("-bind") + (int)mapArgs.count("-whitebind"), 1);
     nMaxConnections = GetArg("-maxconnections", 256);
     nMaxConnections = max(min(nMaxConnections, (int)(FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS)), 0);
@@ -638,18 +642,18 @@ bool AppInit2(boost::thread_group& threadGroup)
         return InitError(_("Not enough file descriptors available."));
     if (nFD - MIN_CORE_FILEDESCRIPTORS < nMaxConnections)
         nMaxConnections = nFD - MIN_CORE_FILEDESCRIPTORS;
-    // ********************************************************* Step 3: parameter-to-internal-flags
+    //! ********************************************************* Step 3: parameter-to-internal-flags
 
 
     fDebug = !mapMultiArgs["-debug"].empty();
-    // Special-case: if -debug=0/-nodebug is set, turn off debugging messages
+    //! Special-case: if -debug=0/-nodebug is set, turn off debugging messages
     const vector<string>& categories = mapMultiArgs["-debug"];
     if (GetBoolArg("-nodebug", false) || find(categories.begin(), categories.end(), string("0")) != categories.end())
         fDebug = false;
 
     mempool.setSanityCheck(GetBoolArg("-checkmempool", Params().DefaultCheckMemPool()));
     Checkpoints::fEnabled = GetBoolArg("-checkpoints", true);
-    // -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency
+    //! -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency
     nScriptCheckThreads = GetArg("-par", DEFAULT_SCRIPTCHECK_THREADS);
     if (nScriptCheckThreads <= 0)
         nScriptCheckThreads += boost::thread::hardware_concurrency();
@@ -658,15 +662,15 @@ bool AppInit2(boost::thread_group& threadGroup)
     else if (nScriptCheckThreads > MAX_SCRIPTCHECK_THREADS)
         nScriptCheckThreads = MAX_SCRIPTCHECK_THREADS;
 
-    // Check for -debugnet
+    //! Check for -debugnet
     if (GetBoolArg("-debugnet", false))
         InitWarning(_("Warning: Unsupported argument -debugnet ignored, use -debug=net."));
-    // Check for -tor - as this is a privacy risk to continue, exit here
+    //! Check for -tor - as this is a privacy risk to continue, exit here
     if (GetBoolArg("-tor", false))
         return InitError(_("Error: Unsupported argument -tor found, use -onion."));
     if (GetBoolArg("-benchmark", false))
         InitWarning(_("Warning: Unsupported argument -benchmark ignored, use -debug=bench."));
-    // Check for -socks - as this is a privacy risk to continue, exit here
+    //! Check for -socks - as this is a privacy risk to continue, exit here
     if (mapArgs.count("-socks"))
         return InitError(_("Error: Unsupported argument -socks found. Setting SOCKS version isn't possible anymore, only SOCKS5 proxies are supported."));
 
@@ -682,12 +686,14 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (nConnectTimeout <= 0)
         nConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
 
-    // Fee-per-kilobyte amount considered the same as "free"
-    // If you are mining, be careful setting this:
-    // if you set it to zero then
-    // a transaction spammer can cheaply fill blocks using
-    // 1-satoshi-fee transactions. It should be set above the real
-    // cost to you of processing a transaction.
+    /**
+     * Fee-per-kilobyte amount considered the same as "free"
+     * If you are mining, be careful setting this:
+     * if you set it to zero then
+     * a transaction spammer can cheaply fill blocks using
+     * 1-satoshi-fee transactions. It should be set above the real
+     * cost to you of processing a transaction.
+     */
     if (mapArgs.count("-minrelaytxfee")) {
         CAmount n = 0;
         if (ParseMoney(mapArgs["-minrelaytxfee"], n) && n > 0)
@@ -720,7 +726,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     bSpendZeroConfChange = GetArg("-spendzeroconfchange", true);
 
     std::string strWalletFile = GetArg("-wallet", "wallet.dat");
-#endif // ENABLE_WALLET
+#endif //! ENABLE_WALLET
 
     fIsBareMultisigStd = GetArg("-permitbaremultisig", true) != 0;
     nMaxDatacarrierBytes = GetArg("-datacarriersize", nMaxDatacarrierBytes);
@@ -735,21 +741,21 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 #endif
 
-    // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
+    //! ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
 
-    // Sanity check
+    //! Sanity check
     if (!InitSanityCheck())
         return InitError(_("Initialization sanity check failed. Metrix is shutting down."));
 
     std::string strDataDir = GetDataDir().string();
 #ifdef ENABLE_WALLET
-    // Wallet file must be a plain filename without a directory
+    //! Wallet file must be a plain filename without a directory
     if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
         return InitError(strprintf(_("Wallet %s resides outside data directory %s"), strWalletFile, strDataDir));
 #endif
-    // Make sure only a single Metrix process is using the data directory.
+    //! Make sure only a single Metrix process is using the data directory.
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
-    FILE* file = fopen(pathLockFile.string().c_str(), "a"); // empty lock file; created if it doesn't exist.
+    FILE* file = fopen(pathLockFile.string().c_str(), "a"); //! empty lock file; created if it doesn't exist.
     if (file)
         fclose(file);
     static boost::interprocess::file_lock lock(pathLockFile.string().c_str());
@@ -773,7 +779,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("Using config file %s\n", GetConfigFile().string());
     std::ostringstream strErrors;
 
-    if (mapArgs.count("-masternodepaymentskey")) // masternode payments priv key
+    if (mapArgs.count("-masternodepaymentskey")) //! masternode payments priv key
     {
         if (!masternodePayments.SetPrivKey(GetArg("-masternodepaymentskey", "")))
             return InitError(_("Unable to sign masternode payment winner, wrong key?"));
@@ -781,7 +787,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(_("Unable to sign spork message, wrong key?"));
     }
 
-    //ignore masternodes below protocol version
+    //!ignore masternodes below protocol version
     CMasterNode::minProtoVersion = GetArg("-masternodeminprotocol", MIN_MN_PROTO_VERSION);
 
     LogPrintf("Using %u threads for script verification\n", nScriptCheckThreads);
@@ -802,33 +808,33 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     int64_t nStart;
 
-    // ********************************************************* Step 5: verify wallet database integrity
+    //! ********************************************************* Step 5: verify wallet database integrity
 #ifdef ENABLE_WALLET
     if (!fDisableWallet) {
         LogPrintf("Using wallet %s\n", strWalletFile);
         uiInterface.InitMessage(_("Verifying wallet..."));
 
         if (!bitdb.Open(GetDataDir())) {
-            // try moving the database env out of the way
+            //! try moving the database env out of the way
             boost::filesystem::path pathDatabase = GetDataDir() / "database";
             boost::filesystem::path pathDatabaseBak = GetDataDir() / strprintf("database.%d.bak", GetTime());
             try {
                 boost::filesystem::rename(pathDatabase, pathDatabaseBak);
                 LogPrintf("Moved old %s to %s. Retrying.\n", pathDatabase.string(), pathDatabaseBak.string());
             } catch (boost::filesystem::filesystem_error& error) {
-                // failure is ok (well, not really, but it's not worse than what we started with)
+                //! failure is ok (well, not really, but it's not worse than what we started with)
             }
 
-            // try again
+            //! try again
             if (!bitdb.Open(GetDataDir())) {
-                // if it still fails, it probably means we can't even create the database env
+                //! if it still fails, it probably means we can't even create the database env
                 string msg = strprintf(_("Error initializing wallet database environment %s!"), strDataDir);
                 return InitError(msg);
             }
         }
 
         if (GetBoolArg("-salvagewallet", false)) {
-            // Recover readable keypairs:
+            //! Recover readable keypairs:
             if (!CWalletDB::Recover(bitdb, strWalletFile, true))
                 return false;
         }
@@ -847,11 +853,11 @@ bool AppInit2(boost::thread_group& threadGroup)
                 return InitError(_("wallet.dat corrupt, salvage failed"));
         }
 
-        // Initialize KeePass Integration
+        //! Initialize KeePass Integration
         keePassInt.init();
-    }  // (!fDisableWallet)
-#endif // ENABLE_WALLET
-    // ********************************************************* Step 6: network initialization
+    }  //! (!fDisableWallet)
+#endif //! ENABLE_WALLET
+    //! ********************************************************* Step 6: network initialization
 
     RegisterNodeSignals(GetNodeSignals());
 
@@ -894,7 +900,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         fProxy = true;
     }
 
-    // -onion can override normal proxy, -noonion disables tor entirely
+    //! -onion can override normal proxy, -noonion disables tor entirely
     if (!(mapArgs.count("-onion") && mapArgs["-onion"] == "0") &&
         (fProxy || mapArgs.count("-onion"))) {
         CService addrOnion;
@@ -908,7 +914,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         SetReachable(NET_TOR);
     }
 
-    // see Step 2: parameter interactions for more information about these
+    //! see Step 2: parameter interactions for more information about these
     fListen = GetBoolArg("-listen", true);
     fDiscover = GetBoolArg("-discover", true);
     fNameLookup = GetBoolArg("-dns", true);
@@ -952,7 +958,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
 #ifdef ENABLE_WALLET
-    if (mapArgs.count("-reservebalance")) // ppcoin: reserve balance amount
+    if (mapArgs.count("-reservebalance")) //! ppcoin: reserve balance amount
     {
         if (!ParseMoney(mapArgs["-reservebalance"], nReserveBalance)) {
             InitError(_("Invalid amount for -reservebalance=<amount>"));
@@ -964,11 +970,11 @@ bool AppInit2(boost::thread_group& threadGroup)
     BOOST_FOREACH (string strDest, mapMultiArgs["-seednode"])
         AddOneShot(strDest);
 
-    // ********************************************************* Step 7: load blockchain
+    //! ********************************************************* Step 7: load blockchain
 
     fReindex = GetBoolArg("-reindex", false);
 
-    // Upgrading to BTC 0.8; hard-link the old blknnnn.dat files into /blocks/
+    //! Upgrading to BTC 0.8; hard-link the old blknnnn.dat files into /blocks/
     filesystem::path blocksDir = GetDataDir() / "blocks";
     if (!filesystem::exists(blocksDir)) {
         filesystem::create_directories(blocksDir);
@@ -983,8 +989,8 @@ bool AppInit2(boost::thread_group& threadGroup)
                 LogPrintf("Hardlinked %s -> %s\n", source.string().c_str(), dest.string().c_str());
                 linked = true;
             } catch (filesystem::filesystem_error& e) {
-                // Note: hardlink creation failing is not a disaster, it just means
-                // blocks will get re-downloaded from peers.
+                //! Note: hardlink creation failing is not a disaster, it just means
+                //! blocks will get re-downloaded from peers.
                 LogPrintf("Error hardlinking blk%04u.dat : %s\n", i, e.what());
                 break;
             }
@@ -994,19 +1000,19 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
-    // cache size calculations
+    //! cache size calculations
     size_t nTotalCache = (GetArg("-dbcache", nDefaultDbCache) << 20);
     if (nTotalCache < (nMinDbCache << 20))
-        nTotalCache = (nMinDbCache << 20); // total cache cannot be less than nMinDbCache
+        nTotalCache = (nMinDbCache << 20); //! total cache cannot be less than nMinDbCache
     else if (nTotalCache > (nMaxDbCache << 20))
-        nTotalCache = (nMaxDbCache << 20); // total cache cannot be greater than nMaxDbCache
+        nTotalCache = (nMaxDbCache << 20); //! total cache cannot be greater than nMaxDbCache
     size_t nBlockTreeDBCache = nTotalCache / 8;
     if (nBlockTreeDBCache > (1 << 21) && false)
-        nBlockTreeDBCache = (1 << 21); // block tree db cache shouldn't be larger than 2 MiB
+        nBlockTreeDBCache = (1 << 21); //! block tree db cache shouldn't be larger than 2 MiB
     nTotalCache -= nBlockTreeDBCache;
-    size_t nCoinDBCache = nTotalCache / 2; // use half of the remaining cache for coindb cache
+    size_t nCoinDBCache = nTotalCache / 2; //! use half of the remaining cache for coindb cache
     nTotalCache -= nCoinDBCache;
-    nCoinCacheSize = nTotalCache / 300; // coins in memory require around 300 bytes
+    nCoinCacheSize = nTotalCache / 300; //! coins in memory require around 300 bytes
 
     bool fLoaded = false;
     while (!fLoaded) {
@@ -1035,12 +1041,12 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
-                // If the loaded chain has a wrong genesis, bail out immediately
-                // (we're likely using a testnet datadir, or the other way around).
+                //! If the loaded chain has a wrong genesis, bail out immediately
+                //! (we're likely using a testnet datadir, or the other way around).
                 if (!mapBlockIndex.empty() && mapBlockIndex.count(Params().HashGenesisBlock()) == 0)
                     return InitError(_("Incorrect or no genesis block found. Wrong datadir for network?"));
 
-                // Initialize the block index (no-op if non-empty database was already loaded)
+                //! Initialize the block index (no-op if non-empty database was already loaded)
                 if (!InitBlockIndex()) {
                     strLoadError = _("Error initializing block database");
                     break;
@@ -1062,7 +1068,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         } while (false);
 
         if (!fLoaded) {
-            // first suggest a reindex
+            //! first suggest a reindex
             if (!fReset) {
                 bool fRet = uiInterface.ThreadSafeMessageBox(
                     strLoadError + ".\n\n" + _("Do you want to rebuild the block database now?"),
@@ -1081,9 +1087,9 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
 
-    // as LoadBlockIndex can take several minutes, it's possible the user
-    // requested to kill bitcoin-qt during the last operation. If so, exit.
-    // As the program has not fully started yet, Shutdown() is possibly overkill.
+    //! as LoadBlockIndex can take several minutes, it's possible the user
+    //! requested to kill bitcoin-qt during the last operation. If so, exit.
+    //! As the program has not fully started yet, Shutdown() is possibly overkill.
     if (fRequestShutdown) {
         LogPrintf("Shutdown requested. Exiting.\n");
         return false;
@@ -1116,17 +1122,17 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     boost::filesystem::path est_path = GetDataDir() / FEE_ESTIMATES_FILENAME;
     CAutoFile est_filein(fopen(est_path.string().c_str(), "rb"), SER_DISK, CLIENT_VERSION);
-    // Allowed to fail as this file IS missing on first startup.
+    //! Allowed to fail as this file IS missing on first startup.
     if (est_filein)
         mempool.ReadFeeEstimates(est_filein);
 
-        // ********************************************************* Step 8: load wallet
+        //! ********************************************************* Step 8: load wallet
 #ifdef ENABLE_WALLET
     if (fDisableWallet) {
         pwalletMain = NULL;
         LogPrintf("Wallet disabled!\n");
     } else {
-        // needed to restore wallet transaction meta data after -zapwallettxes
+        //! needed to restore wallet transaction meta data after -zapwallettxes
         std::vector<CWalletTx> vWtx;
 
         if (GetBoolArg("-zapwallettxes", false)) {
@@ -1168,11 +1174,11 @@ bool AppInit2(boost::thread_group& threadGroup)
 
         if (GetBoolArg("-upgradewallet", fFirstRun)) {
             int nMaxVersion = GetArg("-upgradewallet", 0);
-            if (nMaxVersion == 0) // the -upgradewallet without argument case
+            if (nMaxVersion == 0) //! the -upgradewallet without argument case
             {
                 LogPrintf("Performing wallet upgrade to %i\n", FEATURE_LATEST);
                 nMaxVersion = CLIENT_VERSION;
-                pwalletMain->SetMinVersion(FEATURE_LATEST); // permanently upgrade the wallet immediately
+                pwalletMain->SetMinVersion(FEATURE_LATEST); //! permanently upgrade the wallet immediately
             } else
                 LogPrintf("Allowing wallet upgrade up to %i\n", nMaxVersion);
             if (nMaxVersion < pwalletMain->GetVersion())
@@ -1181,7 +1187,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
 
         if (fFirstRun) {
-            // Create new keyUser and set as default key
+            //! Create new keyUser and set as default key
             RandAddSeedPerfmon();
 
             CPubKey newDefaultKey;
@@ -1220,7 +1226,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
             nWalletDBUpdated++;
 
-            // Restore wallet transaction metadata after -zapwallettxes=1
+            //! Restore wallet transaction metadata after -zapwallettxes=1
             if (GetBoolArg("-zapwallettxes", false) && GetArg("-zapwallettxes", "1") != "2") {
                 CWalletDB walletdb(strWalletFile);
 
@@ -1242,13 +1248,13 @@ bool AppInit2(boost::thread_group& threadGroup)
                 }
             }
         }
-    }  // (!fDisableWallet)
-#else  // ENABLE_WALLET
+    }  //! (!fDisableWallet)
+#else  //! ENABLE_WALLET
     LogPrintf("No wallet compiled in!\n");
-#endif // !ENABLE_WALLET
-    // ********************************************************* Step 9: import blocks
+#endif //! !ENABLE_WALLET
+    //! ********************************************************* Step 9: import blocks
 
-    // scan for better chains in the block chain database, that are not yet connected in the active best chain
+    //! scan for better chains in the block chain database, that are not yet connected in the active best chain
     uiInterface.InitMessage(_("Importing blocks from block database..."));
     CValidationState state;
     if (!ActivateBestChain(state))
@@ -1266,7 +1272,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             MilliSleep(10);
     }
 
-    // ********************************************************* Step 10: load peers
+    //! ********************************************************* Step 10: load peers
 
     uiInterface.InitMessage(_("Loading addresses..."));
 
@@ -1281,7 +1287,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("Loaded %i addresses from peers.dat  %dms\n",
               addrman.size(), GetTimeMillis() - nStart);
 
-    // ********************************************************* Step 11: start node
+    //! ********************************************************* Step 11: start node
 
     if (!CheckDiskSpace())
         return false;
@@ -1333,7 +1339,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 LogPrintf("  %s %s - WAS NOT FOUND IN WALLET, was not locked\n", mne.getTxHash(), mne.getOutputIndex());
                 continue;
             }
-            // don't lock spent
+            //! don't lock spent
             if (pwalletMain->IsSpent(mnTxHash, outputIndex)) {
                 LogPrintf("  %s %s - IS NOT SPENDABLE, was not locked\n", mne.getTxHash(), mne.getOutputIndex());
                 continue;
@@ -1352,7 +1358,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (nDarksendRounds < 1)
         nDarksendRounds = 1;
 
-    nLiquidityProvider = GetArg("-liquidityprovider", 0); //0-100
+    nLiquidityProvider = GetArg("-liquidityprovider", 0); //!0-100
     if (nLiquidityProvider != 0) {
         darkSendPool.SetMinBlockSpacing(std::min(nLiquidityProvider, 100) * 15);
         fEnableDarksend = true;
@@ -1376,7 +1382,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         nInstantXDepth = 0;
     }
 
-    //lite mode disables all Masternode and Darksend related functionality
+    //!lite mode disables all Masternode and Darksend related functionality
     fLiteMode = GetBoolArg("-litemode", false);
     if (fMasterNode && fLiteMode) {
         return InitError("You can not start a masternode in litemode");
@@ -1413,7 +1419,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     RandAddSeedPerfmon();
 
-    //// debug print
+    //!//! debug print
     LogPrintf("mapBlockIndex.size() = %u\n", mapBlockIndex.size());
     LogPrintf("nBestHeight = %d\n", chainActive.Height());
 #ifdef ENABLE_WALLET
@@ -1425,7 +1431,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     StartNode(threadGroup);
 
 #ifdef ENABLE_WALLET
-    // Mine proof-of-stake blocks in the background
+    //! Mine proof-of-stake blocks in the background
     if (!GetBoolArg("-staking", true))
         LogPrintf("Staking disabled\n");
     else if (pwalletMain)
@@ -1436,15 +1442,15 @@ bool AppInit2(boost::thread_group& threadGroup)
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
         uiInterface.InitMessage(_("Reaccepting wallet transactions..."));
-        // Add wallet transactions that aren't already in a block to mapTransactions
+        //! Add wallet transactions that aren't already in a block to mapTransactions
         pwalletMain->ReacceptWalletTransactions();
 
-        // Run a thread to flush wallet periodically
+        //! Run a thread to flush wallet periodically
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 #endif
 
-    // ********************************************************* Step 12: finished
+    //! ********************************************************* Step 12: finished
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
 

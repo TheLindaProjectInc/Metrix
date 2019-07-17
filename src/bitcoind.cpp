@@ -19,7 +19,7 @@ static bool fDaemon;
 void WaitForShutdown(boost::thread_group* threadGroup)
 {
     bool fShutdown = ShutdownRequested();
-    // Tell the main threads to shutdown.
+    //! Tell the main threads to shutdown.
     while (!fShutdown) {
         MilliSleep(200);
         fShutdown = ShutdownRequested();
@@ -31,21 +31,22 @@ void WaitForShutdown(boost::thread_group* threadGroup)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//
-// Start
-//
+/**
+ * Start
+ */
 bool AppInit(int argc, char* argv[])
 {
     boost::thread_group threadGroup;
 
     bool fRet = false;
     try {
-        //
-        // Parameters
-        //
-        // If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
+        /**
+         * Parameters
+         *
+         * If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
+         */
         ParseParameters(argc, argv);
-        // check migrate linda datadir to metrix datadir
+        //! check migrate linda datadir to metrix datadir
         checkMigrateDataDir();
         if (!boost::filesystem::is_directory(GetDataDir(false))) {
             fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
@@ -58,7 +59,7 @@ bool AppInit(int argc, char* argv[])
             fprintf(stderr, "Error reading configuration file: %s\n", e.what());
             return false;
         }
-        // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+        //! Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
         if (!SelectParamsFromCommandLine()) {
             fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
             return false;
@@ -79,7 +80,7 @@ bool AppInit(int argc, char* argv[])
             return false;
         }
 
-        // Command-line RPC
+        //! Command-line RPC
         for (int i = 1; i < argc; i++)
             if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "Metrix:"))
                 fCommandLine = true;
@@ -93,17 +94,17 @@ bool AppInit(int argc, char* argv[])
         if (fDaemon) {
             fprintf(stdout, "Metrix server starting\n");
 
-            // Daemonize
+            //! Daemonize
             pid_t pid = fork();
             if (pid < 0) {
                 fprintf(stderr, "Error: fork() returned %d errno %d\n", pid, errno);
                 return false;
             }
-            if (pid > 0) // Parent process, pid is child process id
+            if (pid > 0) //! Parent process, pid is child process id
             {
                 return true;
             }
-            // Child process falls through to rest of initialization
+            //! Child process falls through to rest of initialization
 
             pid_t sid = setsid();
             if (sid < 0)
@@ -123,9 +124,11 @@ bool AppInit(int argc, char* argv[])
 
     if (!fRet) {
         threadGroup.interrupt_all();
-        // threadGroup.join_all(); was left out intentionally here, because we didn't re-test all of
-        // the startup-failure cases to make sure they don't result in a hang due to some
-        // thread-blocking-waiting-for-another-thread-during-startup case
+        /**
+         * threadGroup.join_all(); was left out intentionally here, because we didn't re-test all of
+         * the startup-failure cases to make sure they don't result in a hang due to some
+         * thread-blocking-waiting-for-another-thread-during-startup case
+         */
     } else {
         WaitForShutdown(&threadGroup);
     }
@@ -138,7 +141,7 @@ int main(int argc, char* argv[])
 {
     SetupEnvironment();
 
-    // Connect bitcoind signal handlers
+    //! Connect bitcoind signal handlers
     noui_connect();
 
     return (AppInit(argc, argv) ? 0 : 1);

@@ -52,7 +52,7 @@ bool CKey::ReserealizeSignature(std::vector<unsigned char>& vchSig)
     bool ret = false;
     int nSize = i2d_ECDSA_SIG(sig, NULL);
     if (nSize > 0) {
-        vchSig.resize(nSize); // grow or shrink as needed
+        vchSig.resize(nSize); //! grow or shrink as needed
 
         pos = &vchSig[0];
         i2d_ECDSA_SIG(sig, &pos);
