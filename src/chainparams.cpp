@@ -172,11 +172,6 @@ public:
     {
         networkID = CBaseChainParams::TESTNET;
         strNetworkID = "test";
-        /**
-         * The message start string is designed to be unlikely to occur in normal data.
-         * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
-         * a large 4-byte int at any alignment.
-         */
         pchMessageStart[0] = 0xce;
         pchMessageStart[1] = 0xf2;
         pchMessageStart[2] = 0xc0;
