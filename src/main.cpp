@@ -1201,7 +1201,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
 
         // Check against previous transactions
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
-        if (!CheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS, true)) {
+        if (!CheckInputs(tx, state, view, false, STANDARD_SCRIPT_VERIFY_FLAGS, true)) {
             return error("AcceptableInputs : ConnectInputs failed %s", hash.ToString());
         }
     }
@@ -1607,7 +1607,7 @@ void static InvalidBlockFound(CBlockIndex* pindex, const CValidationState& state
     if (state.IsInvalid(nDoS)) {
         std::map<uint256, NodeId>::iterator it = mapBlockSource.find(pindex->GetBlockHash());
         if (it != mapBlockSource.end() && State(it->second)) {
-            CBlockReject reject = {state.GetRejectCode(), state.GetRejectReason(), pindex->GetBlockHash()};
+            CBlockReject reject = {state.GetRejectCode(), state.GetRejectReason().substr(0, MAX_REJECT_MESSAGE_LENGTH), pindex->GetBlockHash()};
             State(it->second)->rejects.push_back(reject);
             if (nDoS > 0)
                 Misbehaving(it->second, nDoS);
@@ -1642,11 +1642,12 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
     inputs.ModifyCoins(tx.GetHash())->FromTx(tx, nHeight);
 }
 
-bool CScriptCheck::operator()() const
+bool CScriptCheck::operator()()
 {
     const CScript& scriptSig = ptxTo->vin[nIn].scriptSig;
-    if (!VerifyScript(scriptSig, scriptPubKey, nFlags, CachingSignatureChecker(*ptxTo, nIn, cacheStore)))
-        return error("CScriptCheck() : %s:%d VerifyScript failed", ptxTo->GetHash().ToString(), nIn);
+    if (!VerifyScript(scriptSig, scriptPubKey, nFlags, CachingSignatureChecker(*ptxTo, nIn, cacheStore), &error)) {
+        return ::error("CScriptCheck() : %s:%d VerifyScript failed %s", ptxTo->GetHash().ToString(), nIn, ScriptErrorString(error));
+    }
     return true;
 }
 
@@ -1751,7 +1752,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsVi
                         CScriptCheck check(*coins, tx, i,
                                 flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, cacheStore);
                         if (check())
-                            return state.Invalid(false, REJECT_NONSTANDARD, "non-mandatory-script-verify-flag");
+                            return state.Invalid(false, REJECT_NONSTANDARD, strprintf("non-mandatory-script-verify-flag (%s)", ScriptErrorString(check.GetScriptError())));
                     }
                     // Failures of other flags indicate a transaction that is
                     // invalid in new blocks, e.g. a invalid P2SH. We DoS ban
@@ -1760,7 +1761,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsVi
                     // as to the correct behavior - we may want to continue
                     // peering with non-upgraded nodes even after a soft-fork
                     // super-majority vote has passed.
-                    return state.DoS(100, false, REJECT_INVALID, "mandatory-script-verify-flag-failed");
+                    return state.DoS(100, false, REJECT_INVALID, strprintf("mandatory-script-verify-flag-failed (%s)", ScriptErrorString(check.GetScriptError())));
                 }
             }
         }
@@ -1883,8 +1884,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 {
     AssertLockHeld(cs_main);
     // Check it again in case a previous version let a bad block in, but skip BlockSig checking
-    if (!CheckBlock(block, state, !fJustCheck, !fJustCheck, false))
+    if (!CheckBlock(block, state, !fJustCheck, !fJustCheck, false)){
+        LogPrintf("ERROR ConnectBlock() : CheckBlock failed");
         return false;
+    }
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == NULL ? uint256(0) : pindex->pprev->GetBlockHash();
@@ -3505,7 +3508,8 @@ bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
     txCoinStake.nTime &= ~STAKE_TIMESTAMP_MASK;
 
     int64_t nSearchTime = txCoinStake.nTime; // search to current time
-
+    if (fDebug)
+        LogPrintf("DEBUG : nSearchTime=%i, nLastCoinStakeSearchTime=$i\n", nSearchTime, nLastCoinStakeSearchTime);
     if (nSearchTime > nLastCoinStakeSearchTime) {
         if (wallet.CreateCoinStake(wallet, block.nBits, nSearchTime-nLastCoinStakeSearchTime, nFees, txCoinStake, key)) {
             if (txCoinStake.nTime >= chainActive.Tip()->GetPastTimeLimit() + 1) {
@@ -4723,7 +4727,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         int nDoS = 0;
         if (state.IsInvalid(nDoS)) {
             pfrom->PushMessage("reject", strCommand, state.GetRejectCode(),
-                               state.GetRejectReason(), inv.hash);
+                               state.GetRejectReason().substr(0, MAX_REJECT_MESSAGE_LENGTH), inv.hash);
             LogPrintf("%s from %s %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
                       pfrom->addr.ToString().c_str(), pfrom->strSubVer.c_str());
             if (nDoS > 0)
@@ -4801,7 +4805,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         int nDoS;
         if (state.IsInvalid(nDoS)) {
             pfrom->PushMessage("reject", strCommand, state.GetRejectCode(),
-                               state.GetRejectReason(), inv.hash);
+                               state.GetRejectReason().substr(0, MAX_REJECT_MESSAGE_LENGTH), inv.hash);
             if (nDoS > 0) {
                 LOCK(cs_main);
                 Misbehaving(pfrom->GetId(), nDoS);
@@ -4995,7 +4999,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 string strMsg;
                 unsigned char ccode;
                 string strReason;
-                vRecv >> LIMITED_STRING(strMsg, CMessageHeader::COMMAND_SIZE) >> ccode >> LIMITED_STRING(strReason, 111);
+                vRecv >> LIMITED_STRING(strMsg, CMessageHeader::COMMAND_SIZE) >> ccode >> LIMITED_STRING(strReason, MAX_REJECT_MESSAGE_LENGTH);
 
                 ostringstream ss;
                 ss << strMsg << " code " << itostr(ccode) << ": " << strReason;
