@@ -10,11 +10,11 @@
 #include "leveldbwrapper.h"
 #include "main.h"
 
-// -dbcache default (MiB)
+//! -dbcache default (MiB)
 static const int64_t nDefaultDbCache = 100;
-// max. -dbcache in (MiB)
+//! max. -dbcache in (MiB)
 static const int64_t nMaxDbCache = sizeof(void*) > 4 ? 4096 : 1024;
-// min. -dbcache in (MiB)
+//! min. -dbcache in (MiB)
 static const int64_t nMinDbCache = 4;
 
 /** CCoinsView backed by the LevelDB coin database (chainstate/) */
@@ -58,4 +58,4 @@ public:
     bool LoadBlockIndexGuts();
 };
 
-#endif // BITCOIN_TXDB_H
+#endif //! BITCOIN_TXDB_H

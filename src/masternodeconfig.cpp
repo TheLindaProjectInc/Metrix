@@ -21,10 +21,10 @@ void CMasternodeConfig::add(std::string alias, std::string ip, std::string privK
 bool CMasternodeConfig::read(std::string& strErr)
 {
     int linenumber = 1;
-    entries = std::vector<CMasternodeEntry>(); // Clear entries so we don't double up
+    entries = std::vector<CMasternodeEntry>(); //! Clear entries so we don't double up
     boost::filesystem::ifstream streamConfig(GetMasternodeConfigFile());
     if (!streamConfig.good()) {
-        return true; // No masternode.conf file is OK
+        return true; //! No masternode.conf file is OK
     }
 
     for (std::string line; std::getline(streamConfig, line); linenumber++) {
@@ -59,7 +59,7 @@ bool CMasternodeConfig::read(std::string& strErr)
 
 bool CMasternodeConfig::create(std::string alias, std::string ip, std::string privKey, std::string txHash, std::string outputIndex)
 {
-    // check if already have masternode account
+    //! check if already have masternode account
     bool exists = false;
     for (std::vector<CMasternodeEntry>::const_iterator it = entries.begin(); it != entries.end(); it++) {
         if ((*it).getAlias() == alias) {
@@ -69,17 +69,17 @@ bool CMasternodeConfig::create(std::string alias, std::string ip, std::string pr
     }
 
     if (!exists) {
-        // update the masternode config file
+        //! update the masternode config file
         boost::filesystem::ofstream streamConfig(GetMasternodeConfigFile());
 
         for (std::vector<CMasternodeEntry>::const_iterator it = entries.begin(); it != entries.end(); it++) {
             streamConfig << (*it).getAlias() << " " << (*it).getIp() << " " << (*it).getPrivKey() << " " << (*it).getTxHash() << " " << (*it).getOutputIndex() << std::endl;
         }
 
-        // add the new masternode to config file
+        //! add the new masternode to config file
         streamConfig << alias << " " << ip << " " << privKey << " " << txHash << " " << outputIndex << std::endl;
 
-        // add new masternode to entries
+        //! add new masternode to entries
         add(alias, ip, privKey, txHash, outputIndex);
 
         streamConfig.close();
@@ -91,7 +91,7 @@ bool CMasternodeConfig::create(std::string alias, std::string ip, std::string pr
 
 bool CMasternodeConfig::remove(std::string alias)
 {
-    // update masternode config file to remove the account
+    //! update masternode config file to remove the account
     boost::filesystem::ofstream streamConfig(GetMasternodeConfigFile());
     int rIndex = -1;
     int i = 0;
@@ -107,7 +107,7 @@ bool CMasternodeConfig::remove(std::string alias)
 
     streamConfig.close();
 
-    // remove from our entries
+    //! remove from our entries
     if (rIndex != -1) {
         entries.erase(entries.begin() + rIndex);
         return true;

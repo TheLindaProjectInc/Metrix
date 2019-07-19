@@ -12,6 +12,10 @@ debug/
 *.Tpo
 *.in~
 
+#libtool object files
+*.lo
+*.la
+
 #Dev tools & build testing
 .vscode/
 .vs/
@@ -55,6 +59,7 @@ depends/SDKs/*
 depends/work/*
 libtool
 .dirstamp
+.libs
 share/setup.nsi
 **/bitcoin-config.*
 **/stamp-h1

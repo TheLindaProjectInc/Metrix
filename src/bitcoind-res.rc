@@ -1,5 +1,5 @@
-#include <windows.h>             // needed for VERSIONINFO
-#include "clientversion.h"       // holds the needed client version information
+#include <windows.h>             //! needed for VERSIONINFO
+#include "clientversion.h"       //! holds the needed client version information
  #define VER_PRODUCTVERSION     CLIENT_VERSION_MAJOR,CLIENT_VERSION_MINOR,CLIENT_VERSION_REVISION,CLIENT_VERSION_BUILD
 #define VER_PRODUCTVERSION_STR STRINGIZE(CLIENT_VERSION_MAJOR) "." STRINGIZE(CLIENT_VERSION_MINOR) "." STRINGIZE(CLIENT_VERSION_REVISION) "." STRINGIZE(CLIENT_VERSION_BUILD)
 #define VER_FILEVERSION        VER_PRODUCTVERSION
@@ -12,7 +12,7 @@ FILETYPE        VFT_APP
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904E4" // U.S. English - multilingual (hex)
+        BLOCK "040904E4" //! U.S. English - multilingual (hex)
         BEGIN
             VALUE "CompanyName",        "Linda Project Inc"
             VALUE "FileDescription",    "metrixd (OSS RPC server for Metrix)"
@@ -27,6 +27,6 @@ BEGIN
     END
      BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0, 1252 // language neutral - multilingual (decimal)
+        VALUE "Translation", 0x0, 1252 //! language neutral - multilingual (decimal)
     END
 END

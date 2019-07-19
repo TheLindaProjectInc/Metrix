@@ -17,8 +17,8 @@ using namespace json_spirit;
 class CRPCConvertParam
 {
 public:
-    std::string methodName; // method whose params want conversion
-    int paramIdx;           // 0-based idx of param to convert
+    std::string methodName; //! method whose params want conversion
+    int paramIdx;           //! 0-based idx of param to convert
 };
 
 static const CRPCConvertParam vRPCConvertParams[] =
@@ -124,7 +124,7 @@ CRPCConvertTable::CRPCConvertTable()
 
 static CRPCConvertTable rpcCvtTable;
 
-// Convert strings to command-specific RPC representation
+//! Convert strings to command-specific RPC representation
 Array RPCConvertValues(const std::string& strMethod, const std::vector<std::string>& strParams)
 {
     Array params;
@@ -132,12 +132,12 @@ Array RPCConvertValues(const std::string& strMethod, const std::vector<std::stri
     for (unsigned int idx = 0; idx < strParams.size(); idx++) {
         const std::string& strVal = strParams[idx];
 
-        // insert string value directly
+        //! insert string value directly
         if (!rpcCvtTable.convert(strMethod, idx)) {
             params.push_back(strVal);
         }
 
-        // parse string as JSON, insert bool/number/object/etc. value
+        //! parse string as JSON, insert bool/number/object/etc. value
         else {
             Value jVal;
             if (!read_string(strVal, jVal))

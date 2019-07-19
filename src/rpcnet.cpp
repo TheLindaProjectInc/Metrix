@@ -48,7 +48,7 @@ Value ping(const Array& params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("ping", "") + HelpExampleRpc("ping", ""));
 
-    // Request that each node send a ping during next message processing pass
+    //! Request that each node send a ping during next message processing pass
     LOCK(cs_vNodes);
     BOOST_FOREACH (CNode* pNode, vNodes) {
         pNode->fPingQueued = true;
@@ -300,10 +300,12 @@ Value getaddednodeinfo(const Array& params, bool fHelp)
     return ret;
 }
 
-// ppcoin: send alert.
-// There is a known deadlock situation with ThreadMessageHandler
-// ThreadMessageHandler: holds cs_vSend and acquiring cs_main in SendMessages()
-// ThreadRPCServer: holds cs_main and acquiring cs_vSend in alert.RelayTo()/PushMessage()/BeginMessage()
+/**
+ * ppcoin: send alert.
+ * There is a known deadlock situation with ThreadMessageHandler
+ * ThreadMessageHandler: holds cs_vSend and acquiring cs_main in SendMessages()
+ * ThreadRPCServer: holds cs_main and acquiring cs_vSend in alert.RelayTo()/PushMessage()/BeginMessage()
+ */
 Value sendalert(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 6)
@@ -337,14 +339,14 @@ Value sendalert(const Array& params, bool fHelp)
     alert.vchMsg = vector<unsigned char>(sMsg.begin(), sMsg.end());
 
     vector<unsigned char> vchPrivKey = ParseHex(params[1].get_str());
-    key.SetPrivKey(CPrivKey(vchPrivKey.begin(), vchPrivKey.end()), false); // if key is not correct openssl may crash
+    key.SetPrivKey(CPrivKey(vchPrivKey.begin(), vchPrivKey.end()), false); //! if key is not correct openssl may crash
     if (!key.Sign(Hash(alert.vchMsg.begin(), alert.vchMsg.end()), alert.vchSig))
         throw runtime_error(
             "Unable to sign alert, check private key?\n");
     if (!alert.ProcessAlert())
         throw runtime_error(
             "Failed to process alert.\n");
-    // Relay alert
+    //! Relay alert
     {
         LOCK(cs_vNodes);
         BOOST_FOREACH (CNode* pnode, vNodes)

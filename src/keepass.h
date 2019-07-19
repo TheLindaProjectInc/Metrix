@@ -39,8 +39,8 @@ class CKeePassIntegrator
         void init();
 
     public:
-        void addStrParameter(std::string sName, std::string sValue);  // Regular
-        void addStrParameter(std::string sName, SecureString sValue); // Encrypt
+        void addStrParameter(std::string sName, std::string sValue);  //! Regular
+        void addStrParameter(std::string sName, SecureString sValue); //! Encrypt
         std::string getJson();
 
         CKeePassRequest(SecureString sKey, std::string sType)
@@ -112,7 +112,7 @@ class CKeePassIntegrator
         std::string getStr(std::string sName);
         std::vector<CKeePassEntry> getEntries();
 
-        SecureString decrypt(std::string sValue); // DecodeBase64 and decrypt arbitrary string value
+        SecureString decrypt(std::string sValue); //! DecodeBase64 and decrypt arbitrary string value
     };
 
     static SecureString generateRandomKey(size_t nSize);

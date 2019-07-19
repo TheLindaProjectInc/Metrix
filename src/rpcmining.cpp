@@ -199,7 +199,7 @@ Value checkkernel(const Array& params, bool fHelp)
     CReserveKey reservekey(pwalletMain);
     CAmount nFees;
     auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwalletMain, true));
-    CBlock* pblock = &pblocktemplate->block; // pointer for convenience
+    CBlock* pblock = &pblocktemplate->block; //! pointer for convenience
     pblock->nTime = pblock->vtx[0].nTime = nTime;
 
     CDataStream ss(SER_DISK, PROTOCOL_VERSION);
@@ -269,32 +269,32 @@ Value getblocktemplate(const Array& params, bool fHelp)
     if (vNodes.empty())
         throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Metrix is not connected!");
 
-    //if (IsInitialBlockDownload())
-    //    throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Metrix is downloading blocks...");
+    //! if (IsInitialBlockDownload())
+    //!     throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Metrix is downloading blocks...");
 
     if (chainActive.Height() >= Params().LastPOWBlock())
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
 
     static unsigned int nTransactionsUpdatedLast;
     if (lpval.type() != null_type) {
-        // Wait to respond until either the best block changes, OR a minute has passed and there are more transactions
+        //! Wait to respond until either the best block changes, OR a minute has passed and there are more transactions
         uint256 hashWatchedChain;
         boost::system_time checktxtime;
         unsigned int nTransactionsUpdatedLastLP;
 
         if (lpval.type() == str_type) {
-            // Format: <hashBestChain><nTransactionsUpdatedLast>
+            //! Format: <hashBestChain><nTransactionsUpdatedLast>
             std::string lpstr = lpval.get_str();
 
             hashWatchedChain.SetHex(lpstr.substr(0, 64));
             nTransactionsUpdatedLastLP = atoi64(lpstr.substr(64));
         } else {
-            // NOTE: Spec does not specify behaviour for non-string longpollid, but this makes testing easier
+            //! NOTE: Spec does not specify behaviour for non-string longpollid, but this makes testing easier
             hashWatchedChain = chainActive.Tip()->GetBlockHash();
             nTransactionsUpdatedLastLP = nTransactionsUpdatedLast;
         }
 
-        // Release the wallet and main lock while waiting
+        //! Release the wallet and main lock while waiting
 #ifdef ENABLE_WALLET
         if (pwalletMain)
             LEAVE_CRITICAL_SECTION(pwalletMain->cs_wallet);
@@ -306,7 +306,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
             boost::unique_lock<boost::mutex> lock(csBestBlock);
             while (chainActive.Tip()->GetBlockHash() == hashWatchedChain && IsRPCRunning()) {
                 if (!cvBlockChange.timed_wait(lock, checktxtime)) {
-                    // Timeout: Check transactions for update
+                    //! Timeout: Check transactions for update
                     if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLastLP)
                         break;
                     checktxtime += boost::posix_time::seconds(10);
@@ -321,24 +321,24 @@ Value getblocktemplate(const Array& params, bool fHelp)
 
         if (!IsRPCRunning())
             throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Shutting down");
-        // TODO: Maybe recheck connections/IBD and (if something wrong) send an expires-immediately template to stop miners?
+        //! TODO: Maybe recheck connections/IBD and (if something wrong) send an expires-immediately template to stop miners?
     }
 
-    // Update block
+    //! Update block
     static CBlockIndex* pindexPrev;
     static int64_t nStart;
     static CBlockTemplate* pblocktemplate;
     if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5)) {
-        // Clear pindexPrev so future calls make a new block, despite any failures from here on
+        //! Clear pindexPrev so future calls make a new block, despite any failures from here on
         pindexPrev = NULL;
 
-        // Store the chainActive.Tip() used before CreateNewBlock, to avoid races
+        //! Store the chainActive.Tip() used before CreateNewBlock, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
         CBlockIndex* pindexPrevNew = chainActive.Tip();
         nStart = GetTime();
 
-        // Create new block
+        //! Create new block
         if (pblocktemplate) {
             delete pblocktemplate;
             pblocktemplate = NULL;
@@ -348,12 +348,12 @@ Value getblocktemplate(const Array& params, bool fHelp)
         if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 
-        // Need to update only after we know CreateNewBlock succeeded
+        //! Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }
-    CBlock* pblock = &pblocktemplate->block; // pointer for convenience
+    CBlock* pblock = &pblocktemplate->block; //! pointer for convenience
 
-    // Update nTime
+    //! Update nTime
     UpdateTime(*pblock, pindexPrev);
     pblock->nNonce = 0;
 
@@ -449,7 +449,7 @@ Value submitblock(const Array& params, bool fHelp)
     CValidationState state;
     bool fAccepted = ProcessNewBlock(state, NULL, &pblock);
     if (!fAccepted)
-        return "rejected"; // TODO: report validation state
+        return "rejected"; //! TODO: report validation state
 
     return Value::null;
 }

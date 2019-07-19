@@ -36,18 +36,18 @@ int64_t CreateNewLock(CTransaction tx);
 
 bool IsIXTXValid(const CTransaction& txCollateral);
 
-// if two conflicting locks are approved by the network, they will cancel out
+//! if two conflicting locks are approved by the network, they will cancel out
 bool CheckForConflictingLocks(CTransaction& tx);
 
 void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
-//check if we need to vote on this transaction
+//!check if we need to vote on this transaction
 void DoConsensusVote(CTransaction& tx, int64_t nBlockHeight);
 
-//process consensus vote message
+//!process consensus vote message
 bool ProcessConsensusVote(CConsensusVote& ctx);
 
-// keep transaction locks in memory for an hour
+//! keep transaction locks in memory for an hour
 void CleanTransactionLocksList();
 
 int64_t GetAverageVoteTime();
@@ -97,4 +97,4 @@ public:
 };
 
 
-#endif // INSTANTX_H
+#endif //! INSTANTX_H

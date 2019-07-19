@@ -14,14 +14,16 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
-// This is used to attempt to keep keying material out of swap
-// Note that VirtualLock does not provide this as a guarantee on Windows,
-// but, in practice, memory that has been VirtualLock'd almost never gets written to
-// the pagefile except in rare circumstances where memory is extremely low.
+/** 
+ * This is used to attempt to keep keying material out of swap
+ * Note that VirtualLock does not provide this as a guarantee on Windows,
+ * but, in practice, memory that has been VirtualLock'd almost never gets written to
+ * the pagefile except in rare circumstances where memory is extremely low.
+ */
 #else
-#include <limits.h> // for PAGESIZE
+#include <limits.h> //! for PAGESIZE
 #include <sys/mman.h>
-#include <unistd.h> // for sysconf
+#include <unistd.h> //! for sysconf
 #endif
 
 LockedPageManager* LockedPageManager::_instance = NULL;
@@ -35,9 +37,9 @@ static inline size_t GetSystemPageSize()
     SYSTEM_INFO sSysInfo;
     GetSystemInfo(&sSysInfo);
     page_size = sSysInfo.dwPageSize;
-#elif defined(PAGESIZE) // defined in limits.h
+#elif defined(PAGESIZE) //! defined in limits.h
     page_size = PAGESIZE;
-#else                   // assume some POSIX OS
+#else                   //! assume some POSIX OS
     page_size = sysconf(_SC_PAGESIZE);
 #endif
     return page_size;

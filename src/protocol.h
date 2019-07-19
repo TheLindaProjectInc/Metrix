@@ -46,7 +46,7 @@ public:
         READWRITE(nChecksum);
     }
 
-    // TODO: make private (improves encapsulation)
+    //! TODO: make private (improves encapsulation)
 public:
     enum {
         COMMAND_SIZE = 12,
@@ -67,13 +67,15 @@ public:
 enum {
     NODE_NETWORK = (1 << 0),
 
-    // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
-    // isn't getting used, or one not being used much, and notify the
-    // bitcoin-development mailing list. Remember that service bits are just
-    // unauthenticated advertisements, so your code must be robust against
-    // collisions and other cases where nodes may be advertising a service they
-    // do not actually support. Other service bits should be allocated via the
-    // BIP process.
+    /**
+     * Bits 24-31 are reserved for temporary experiments. Just pick a bit that
+     * isn't getting used, or one not being used much, and notify the
+     * bitcoin-development mailing list. Remember that service bits are just
+     * unauthenticated advertisements, so your code must be robust against
+     * collisions and other cases where nodes may be advertising a service they
+     * do not actually support. Other service bits should be allocated via the
+     * BIP process.
+     */
 };
 
 /** A CService with information about it as peer */
@@ -101,14 +103,14 @@ public:
         READWRITE(*(CService*)this);
     }
 
-    // TODO: make private (improves encapsulation)
+    //! TODO: make private (improves encapsulation)
 public:
     uint64_t nServices;
 
-    // disk and network only
+    //! disk and network only
     unsigned int nTime;
 
-    // memory only
+    //! memory only
     int64_t nLastTry;
 };
 
@@ -135,7 +137,7 @@ public:
     const char* GetCommand() const;
     std::string ToString() const;
 
-    // TODO: make private (improves encapsulation)
+    //! TODO: make private (improves encapsulation)
 public:
     int type;
     uint256 hash;
@@ -144,8 +146,10 @@ public:
 enum {
     MSG_TX = 1,
     MSG_BLOCK,
-    // Nodes may always request a MSG_FILTERED_BLOCK in a getdata, however,
-    // MSG_FILTERED_BLOCK should not appear in any invs except as a part of getdata.
+    /**
+     * Nodes may always request a MSG_FILTERED_BLOCK in a getdata, however,
+     * MSG_FILTERED_BLOCK should not appear in any invs except as a part of getdata.
+     */
     MSG_FILTERED_BLOCK,
     MSG_TXLOCK_REQUEST,
     MSG_TXLOCK_VOTE,
@@ -153,4 +157,4 @@ enum {
     MSG_MASTERNODE_WINNER
 };
 
-#endif // BITCOIN_PROTOCOL_H
+#endif //! BITCOIN_PROTOCOL_H

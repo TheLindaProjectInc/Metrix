@@ -31,17 +31,17 @@ class CUnsignedAlert
 {
 public:
     int nVersion;
-    int64_t nRelayUntil; // when newer nodes stop relaying to newer nodes
+    int64_t nRelayUntil; //! when newer nodes stop relaying to newer nodes
     int64_t nExpiration;
     int nID;
     int nCancel;
     std::set<int> setCancel;
-    int nMinVer;                     // lowest version inclusive
-    int nMaxVer;                     // highest version inclusive
-    std::set<std::string> setSubVer; // empty matches all
+    int nMinVer;                     //! lowest version inclusive
+    int nMaxVer;                     //! highest version inclusive
+    std::set<std::string> setSubVer; //! empty matches all
     int nPriority;
 
-    // Actions
+    //! Actions
     std::string strComment;
     std::string strStatusBar;
     std::string strReserved;
@@ -103,7 +103,7 @@ public:
     bool AppliesToMe() const;
     bool RelayTo(CNode* pnode) const;
     bool CheckSignature() const;
-    bool ProcessAlert(bool fThread = true); // fThread means run -alertnotify in a free-running thread
+    bool ProcessAlert(bool fThread = true); //! fThread means run -alertnotify in a free-running thread
     static void Notify(const std::string& strMessage, bool fThread);
 
     /*
@@ -112,4 +112,4 @@ public:
     static CAlert getAlertByHash(const uint256& hash);
 };
 
-#endif // BITCOIN_ALERT_H
+#endif //! BITCOIN_ALERT_H

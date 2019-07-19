@@ -5,6 +5,10 @@
 #ifndef BITCOIN_COMPAT_H
 #define BITCOIN_COMPAT_H
 
+#if defined(HAVE_CONFIG_H)
+#include "config/bitcoin-config.h"
+#endif
+
 #ifdef WIN32
 #ifdef _WIN32_WINNT
 #undef _WIN32_WINNT
@@ -19,7 +23,7 @@
 #ifdef FD_SETSIZE
 #undef FD_SETSIZE // prevent redefinition compiler warning
 #endif
-#define FD_SETSIZE 1024 // max number of fds in fd_set
+#define FD_SETSIZE 1024 //! max number of fds in fd_set
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
@@ -62,13 +66,13 @@ typedef u_int SOCKET;
 #define MAX_PATH 1024
 #endif
 
-// As Solaris does not have the MSG_NOSIGNAL flag for send(2) syscall, it is defined as 0
+//! As Solaris does not have the MSG_NOSIGNAL flag for send(2) syscall, it is defined as 0
 #if !defined(HAVE_MSG_NOSIGNAL) && !defined(MSG_NOSIGNAL)
 #define MSG_NOSIGNAL 0
 #endif
 
 #ifndef WIN32
-// PRIO_MAX is not defined on Solaris
+//! PRIO_MAX is not defined on Solaris
 #ifndef PRIO_MAX
 #define PRIO_MAX 20
 #endif
@@ -77,5 +81,9 @@ typedef u_int SOCKET;
 #define THREAD_PRIORITY_NORMAL 0
 #define THREAD_PRIORITY_ABOVE_NORMAL (-2)
 #endif
+
+#if HAVE_DECL_STRNLEN == 0
+size_t strnlen( const char *start, size_t max_len);
+#endif // HAVE_DECL_STRNLEN
 
 #endif // BITCOIN_COMPAT_H
