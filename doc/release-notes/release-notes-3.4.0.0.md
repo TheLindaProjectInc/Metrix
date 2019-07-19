@@ -152,3 +152,26 @@ server round-trip to execute.
 Other utilities "metrix-key" and "metrix-script" have been proposed, making
 key and script operations easily accessible via command line.
 
+Improved signing security
+=========================
+For 3.4 the security of signing against unusual attacks has been
+improved by making the signatures constant time and deterministic.
+This change is a result of switching signing to use libsecp256k1
+instead of OpenSSL. Libsecp256k1 is a cryptographic library
+optimized for the curve Bitcoin uses which was created by Bitcoin
+Core developer Pieter Wuille.
+There exist attacks[1] against most ECC implementations where an
+attacker on shared virtual machine hardware could extract a private
+key if they could cause a target to sign using the same key hundreds
+of times. While using shared hosts and reusing keys are inadvisable
+for other reasons, it's a better practice to avoid the exposure.
+OpenSSL has code in their source repository for derandomization
+and reduction in timing leaks, and we've eagerly wanted to use
+it for a long time but this functionality has still not made its
+way into a released version of OpenSSL. Libsecp256k1 achieves
+significantly stronger protection: As far as we're aware this is
+the only deployed implementation of constant time signing for
+the curve Bitcoin uses and we have reason to believe that
+libsecp256k1 is better tested and more thoroughly reviewed
+than the implementation in OpenSSL.
+[1] https://eprint.iacr.org/2014/161.pdf
