@@ -74,12 +74,6 @@ void SocketSendData(CNode* pnode);
 
 typedef int NodeId;
 
-struct QueuedBlock {
-    uint256 hash;
-    CBlockIndex *pindex;  //! Optional.
-    int64_t nTime;     //! Time of "getdata" request in microseconds.
-};
-
 typedef int NodeId;
 
 //! Signals for message handling
