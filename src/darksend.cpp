@@ -959,7 +959,7 @@ bool CDarkSendPool::SignatureValid(const CScript& newSig, const CTxIn& newVin)
         txNew.vin[n].scriptSig = newSig;
         if (fDebug)
             LogPrintf("CDarkSendPool::SignatureValid() - Sign with sig %s\n", newSig.ToString().substr(0, 24));
-        if (!VerifyScript(txNew.vin[n].scriptSig, sigPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, TransactionSignatureChecker(&txNew, n))) {
+        if (!VerifyScript(txNew.vin[n].scriptSig, sigPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, MutableTransactionSignatureChecker(&txNew, n))) {
             if (fDebug)
                 LogPrintf("CDarkSendPool::SignatureValid() - Signing - Error signing input %u\n", n);
             return false;
