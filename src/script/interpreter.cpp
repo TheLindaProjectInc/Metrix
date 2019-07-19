@@ -98,7 +98,7 @@ static bool IsCompressedOrUncompressedPubKey(const valtype& vchPubKey)
  * This function is consensus-critical since BIP66.
  */
 
-bool static IsValidSignatureEncoding(const std::vector<unsigned char> &sig)
+bool IsValidSignatureEncoding(const std::vector<unsigned char> &sig)
 {
     // Format: 0x30 [total-length] 0x02 [R-length] [R] 0x02 [S-length] [S] [sighash]
     // * total-length: 1-byte length descriptor of everything that follows,
