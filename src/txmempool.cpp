@@ -89,20 +89,33 @@ public:
      * Used as belt-and-suspenders check when reading to detect
      * file corruption
      */
-    bool AreSane(const std::vector<CFeeRate>& vecFee, const CFeeRate& minRelayFee)
+    static bool AreSane(const CFeeRate fee, const CFeeRate& minRelayFee)
     {
-        BOOST_FOREACH (CFeeRate fee, vecFee) {
-            if (fee < CFeeRate(0))
-                return false;
-            if (fee.GetFeePerK() > minRelayFee.GetFeePerK() * 10000)
+        if (fee < CFeeRate(0))
+            return false;
+        if (fee.GetFeePerK() > minRelayFee.GetFeePerK() * 10000)
+            return false;
+        return true;
+    }
+    static bool AreSane(const std::vector<CFeeRate>& vecFee, const CFeeRate& minRelayFee)
+    {
+        BOOST_FOREACH(CFeeRate fee, vecFee)
+        {
+            if (!AreSane(fee, minRelayFee))
                 return false;
         }
         return true;
     }
-    bool AreSane(const std::vector<double> vecPriority)
+
+    static bool AreSane(const double priority)
     {
-        BOOST_FOREACH (double priority, vecPriority) {
-            if (priority < 0)
+        return priority >= 0;
+    }
+    static bool AreSane(const std::vector<double> vecPriority)
+    {
+        BOOST_FOREACH(double priority, vecPriority)
+        {
+            if (!AreSane(priority))
                 return false;
         }
         return true;
@@ -164,13 +177,18 @@ private:
         bool sufficientFee = (feeRate > minRelayFee);
         bool sufficientPriority = AllowFree(dPriority);
         const char* assignedTo = "unassigned";
-        if (sufficientFee && !sufficientPriority) {
+        if (sufficientFee && !sufficientPriority && CBlockAverage::AreSane(feeRate, minRelayFee))
+        {
             history[nBlocksTruncated].RecordFee(feeRate);
             assignedTo = "fee";
-        } else if (sufficientPriority && !sufficientFee) {
+        }
+        else if (sufficientPriority && !sufficientFee && CBlockAverage::AreSane(dPriority))
+        {
             history[nBlocksTruncated].RecordPriority(dPriority);
             assignedTo = "priority";
-        } else {
+        }
+        else
+        {
             //! Neither or both fee and priority sufficient to get confirmed:
             //! don't know why they got confirmed.
         }
