@@ -8,7 +8,7 @@
 
 #include "addrman.h"
 #include "bloom.h"
-#include "core/block.h"
+#include "primitives/block.h"
 #include "hash.h"
 #include "limitedmap.h"
 #include "mruset.h"

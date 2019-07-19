@@ -88,8 +88,8 @@ BITCOIN_CORE_H = \
   compat.h \
   compat/sanity.h \
   compressor.h \
-  core/block.h \
-  core/transaction.h \
+  primitives/block.h \
+  primitives/transaction.h \
   core_io.h \
   coins.h \
   crypter.h \
@@ -252,8 +252,8 @@ libbitcoin_common_a_SOURCES = \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
-  core/block.cpp \
-  core/transaction.cpp \
+  primitives/block.cpp \
+  primitives/transaction.cpp \
   core_read.cpp \
   core_write.cpp \
   darksend.cpp \
@@ -376,7 +376,7 @@ metrix_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 if BUILD_BITCOIN_LIBS
 include_HEADERS = script/bitcoinconsensus.h
 libbitcoinconsensus_la_SOURCES = \
-  core/transaction.cpp \
+  primitives/transaction.cpp \
   crypto/sha1.cpp \
   crypto/sha256.cpp \
   crypto/sha512.cpp \
