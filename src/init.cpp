@@ -143,6 +143,7 @@ public:
     // Writes do not need similar protection, as failure to write is handled by the caller.
 };
 
+static CCoinsViewDB *pcoinsdbview = NULL;
 static CCoinsViewErrorCatcher *pcoinscatcher = NULL;
 
 void Shutdown()
