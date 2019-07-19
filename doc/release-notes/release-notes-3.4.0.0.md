@@ -5,9 +5,12 @@ This is a major version release, bringing both new features and bug fixes.
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/metrix/issues
 
 ## How to Upgrade
-Shut down Linda, wait until it has completely shut down (which might take a few minutes for older versions), then just copy over the appropriate metrixd file.
+Shut down Linda, wait until it has completely shut down (which might take a few minutes
+for older versions), then just copy over the appropriate metrixd file.
 
-If you are upgrading from 3.1.0.1 or older, the first time you run after the upgrade a re-indexing process will be started that will take anywhere from 30 minutes to several hours, depending on the speed of your machine.
+If you are upgrading from 3.1.0.1 or older, the first time you run after the upgrade
+a re-indexing process will be started that will take anywhere from 30 minutes to
+several hours, depending on the speed of your machine.
 
 ## Downgrading warnings
 Release 3.4.0.0 makes use of headers-first synchronization and parallel
@@ -30,7 +33,11 @@ synchronised 3.4 node may be usable in older versions as-is, but this is not
 supported and may break as soon as the older version attempts to reindex.
 
 ## metrix-cli
-We are moving away from the metrixd executable functioning both as a server and as a RPC client. The RPC client functionality ("tell the running metrix daemon to do THIS") was split into a separate executable, 'metrix-cli'. The RPC client code will eventually be removed from metrixd, but will be kept for backwards compatibility for a release or two.
+We are moving away from the metrixd executable functioning both as a server and
+as a RPC client. The RPC client functionality ("tell the running metrix daemon
+to do THIS") was split into a separate executable, 'metrix-cli'. 
+The RPC client code will eventually be removed from metrixd, but will be kept
+for backwards compatibility for a release or two.
 
 ## About this Release
 
@@ -102,7 +109,8 @@ For example:
 | `-rpcallowip=192.168.*`                    | `-rpcallowip=192.168.0.0/16`          |
 | `-rpcallowip=*` (dangerous!)               | `-rpcallowip=::/0` (still dangerous!) |
 Using wildcards will result in the rule being rejected with the following error in debug.log:
-    Error: Invalid -rpcallowip subnet specification: *. Valid are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24).
+    Error: Invalid -rpcallowip subnet specification: *. Valid are a single IP (e.g. 1.2.3.4),
+    a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24).
 
 #### REST interface
 A new HTTP API is exposed when running with the `-rest` flag, which allows
@@ -111,10 +119,11 @@ It is served on the same port as RPC, but does not need a password, and uses
 plain HTTP instead of JSON-RPC.
 Assuming a local RPC server running on port 8332, it is possible to request:
 - Blocks: http://localhost:33821/rest/block/*HASH*.*EXT*
-- Blocks without transactions: http://localhost:33821/block/notxdetails/*HASH*.*EXT*
-- Transactions (requires `-txindex`): http://localhost:33821/tx/*HASH*.*EXT*
+- Blocks without transactions: http://localhost:33821/rest/block/notxdetails/*HASH*.*EXT*
+- Transactions (requires `-txindex`): http://localhost:33821/rest/tx/*HASH*.*EXT*
 
-In every case, *EXT* can be `bin` (for raw binary data), `hex` (for hex-encoded binary) or `json`.
+In every case, *EXT* can be `bin` (for raw binary data), `hex` (for hex-encoded
+binary) or `json`.
 
 For more details, see the `doc/REST-interface.md` document in the repository.
 
@@ -202,8 +211,9 @@ alternative node implementations.
 This library is called `libbitcoinconsensus.so` (or, `.dll` for Windows).
 Its interface is defined in the C header [bitcoinconsensus.h](https://github.com/bitcoin/bitcoin/blob/0.10/src/script/bitcoinconsensus.h).
 In its initial version the API includes two functions:
-- `bitcoinconsensus_verify_script` verifies a script. It returns whether the indicated input of the provided serialized transaction 
-correctly spends the passed scriptPubKey under additional constraints indicated by flags
+- `bitcoinconsensus_verify_script` verifies a script. It returns whether the indicated
+input of the provided serialized transaction correctly spends the passed scriptPubKey
+under additional constraints indicated by flags
 - `bitcoinconsensus_version` returns the API version, currently at an experimental `0`
-The functionality is planned to be extended to e.g. UTXO management in upcoming releases, but the interface
-for existing methods should remain stable.
+The functionality is planned to be extended to e.g. UTXO management in upcoming releases,
+but the interface for existing methods should remain stable.
