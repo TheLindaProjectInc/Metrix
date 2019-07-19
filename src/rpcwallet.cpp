@@ -339,7 +339,7 @@ Value getaddressesbyaccount(const Array& params, bool fHelp)
     return ret;
 }
 
-void SendMoney(const CtxDestination& address, CAmount nValue, std::string& sNarr, CWalletTx& wtxNew)
+void SendMoney(const CTxDestination& address, CAmount nValue, std::string& sNarr, CWalletTx& wtxNew)
 {
     // Check amount
     if (nValue <= 0)
