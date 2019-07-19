@@ -71,17 +71,20 @@ This release automatically estimates how high a transaction fee (or how
 high a priority) transactions require to be confirmed quickly. The default
 settings will create transactions that confirm quickly; see the new
 'txconfirmtarget' setting to control the tradeoff between fees and
-confirmation times.
+confirmation times. Fees are added by default unless the 'sendfreetransactions' 
+setting is enabled.
 Prior releases used hard-coded fees (and priorities), and would
 sometimes create transactions that took a very long time to confirm.
 Statistics used to estimate fees and priorities are saved in the
 data directory in the `fee_estimates.dat` file just before
 program shutdown, and are read in at startup.
 
-#### New command line options for fee estimation
+#### New command line options for transaction fee changes:
 - `-txconfirmtarget=n` : create transactions that have enough fees (or priority)
 so they are likely to begin confirmation within n blocks (default: 1). This setting
 is over-ridden by the -paytxfee option.
+- `-sendfreetransactions` : Send transactions as zero-fee transactions if possible 
+(default: 0)
 
 ##### New RPC commands for fee estimation
 - `estimatefee nblocks` : Returns approximate fee-per-1,000-bytes needed for
