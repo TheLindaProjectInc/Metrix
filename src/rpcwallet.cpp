@@ -425,7 +425,7 @@ Value sendtoaddress(const Array& params, bool fHelp)
 
     EnsureWalletIsUnlocked();
 
-    SendMoney(address.Get(), nAmount, sNarr, wtx)
+    SendMoney(address.Get(), nAmount, sNarr, wtx);
 
     return wtx.GetHash().GetHex();
 }
