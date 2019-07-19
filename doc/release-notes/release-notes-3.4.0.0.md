@@ -101,6 +101,20 @@ For example:
 Using wildcards will result in the rule being rejected with the following error in debug.log:
     Error: Invalid -rpcallowip subnet specification: *. Valid are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24).
 
+#### REST interface
+A new HTTP API is exposed when running with the `-rest` flag, which allows
+unauthenticated access to public node data.
+It is served on the same port as RPC, but does not need a password, and uses
+plain HTTP instead of JSON-RPC.
+Assuming a local RPC server running on port 8332, it is possible to request:
+- Blocks: http://localhost:33821/rest/block/*HASH*.*EXT*
+- Blocks without transactions: http://localhost:33821/block/notxdetails/*HASH*.*EXT*
+- Transactions (requires `-txindex`): http://localhost:33821/tx/*HASH*.*EXT*
+
+In every case, *EXT* can be `bin` (for raw binary data), `hex` (for hex-encoded binary) or `json`.
+
+For more details, see the `doc/REST-interface.md` document in the repository.
+
 #### RPC Server "Warm-Up" Mode
 The RPC server is started earlier now, before most of the expensive
 intialisations like loading the block index.  It is available now almost
