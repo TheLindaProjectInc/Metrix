@@ -98,7 +98,8 @@ static bool IsCompressedOrUncompressedPubKey(const valtype& vchPubKey)
  * This function is consensus-critical since BIP66.
  */
 
-bool static IsValidSignatureEncoding(const std::vector<unsigned char> &sig) {
+bool static IsValidSignatureEncoding(const std::vector<unsigned char> &sig)
+{
     // Format: 0x30 [total-length] 0x02 [R-length] [R] 0x02 [S-length] [S] [sighash]
     // * total-length: 1-byte length descriptor of everything that follows,
     //   excluding the sighash byte.
@@ -110,7 +111,7 @@ bool static IsValidSignatureEncoding(const std::vector<unsigned char> &sig) {
     // * S: arbitrary-length big-endian encoded S value. The same rules apply.
     // * sighash: 1-byte value indicating what data is hashed (not part of the DER
     //   signature)
-{
+
     /**
      * See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
      * A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
