@@ -6,7 +6,7 @@
 #include "txmempool.h"
 
 #include "clientversion.h"
-#include "main.h" //! for CTransaction
+#include "main.h" //! for CTransaction & COINBASE_MATURITY
 #include "streams.h"
 #include "util.h"
 #include "utilmoneystr.h"
