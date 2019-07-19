@@ -3426,7 +3426,7 @@ bool static IsCanonicalBlockSignature(CBlock* pblock)
         return pblock->vchBlockSig.empty();
     }
 
-    return IsDERSignature(pblock->vchBlockSig, false);
+    return IsValidSignatureEncoding(pblock->vchBlockSig);
 }
 
 bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
