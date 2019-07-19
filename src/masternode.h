@@ -36,17 +36,17 @@ extern map<uint256, CMasternodePaymentWinner> mapSeenMasternodeVotes;
 extern map<int64_t, uint256> mapCacheBlockHashes;
 
 
-// manage the masternode connections
+//! manage the masternode connections
 void ProcessMasternodeConnections();
 int CountMasternodesAboveProtocol(int protocolVersion);
 
 
 void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
-//
-// The Masternode Class. For managing the darksend process. It contains the input of the 1000Metrix, signature to prove
-// it's the one who own that ip address and code for calculating the payment election.
-//
+/**
+ * The Masternode Class. For managing the darksend process. It contains the input of the 1000Metrix, signature to prove
+ * it's the one who own that ip address and code for calculating the payment election.
+ */
 class CMasterNode
 {
 public:
@@ -57,7 +57,7 @@ public:
     CPubKey pubkey;
     CPubKey pubkey2;
     std::vector<unsigned char> sig;
-    int64_t now; //dsee message times
+    int64_t now; //!dsee message times
     int64_t lastDseep;
     int cacheInputAge;
     int cacheInputAgeBlock;
@@ -66,7 +66,7 @@ public:
     bool allowFreeTx;
     int protocolVersion;
 
-    //the dsq count from the last dsq broadcast of this node
+    //!the dsq count from the last dsq broadcast of this node
     int64_t nLastDsq;
 
     CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64_t newNow, CPubKey newPubkey2, int protocolVersionIn)
@@ -110,7 +110,7 @@ public:
 
     bool UpdatedWithin(int seconds)
     {
-        // LogPrintf("UpdatedWithin %d, %d --  %d \n", GetAdjustedTime() , lastTimeSeen, (GetAdjustedTime() - lastTimeSeen) < seconds);
+        //! LogPrintf("UpdatedWithin %d, %d --  %d \n", GetAdjustedTime() , lastTimeSeen, (GetAdjustedTime() - lastTimeSeen) < seconds);
 
         return (GetAdjustedTime() - lastTimeSeen) < seconds;
     }
@@ -140,7 +140,7 @@ public:
 };
 
 
-// Get the current winner for this block
+//! Get the current winner for this block
 int GetCurrentMasterNode(int64_t nBlockHeight = 0, int minProtocol = CMasterNode::minProtoVersion);
 
 int GetMasternodeByVin(CTxIn& vin);
@@ -150,7 +150,7 @@ int GetMasternodeByRank(int findRank, int64_t nBlockHeight = 0, int minProtocol 
 std::vector<pair<unsigned int, CTxIn> > GetMasternodeScores(int64_t nBlockHeight, int minProtocol = CMasterNode::minProtoVersion);
 
 
-// for storing the winning payments
+//! for storing the winning payments
 class CMasternodePaymentWinner
 {
 public:
@@ -189,10 +189,10 @@ public:
     }
 };
 
-//
-// Masternode Payments Class
-// Keeps track of who should get paid for which blocks
-//
+/**
+ * Masternode Payments Class
+ * Keeps track of who should get paid for which blocks
+ */
 
 class CMasternodePayments
 {
@@ -216,10 +216,11 @@ public:
     bool CheckSignature(CMasternodePaymentWinner& winner);
     bool Sign(CMasternodePaymentWinner& winner);
 
-    // Deterministically calculate a given "score" for a masternode depending on how close it's hash is
-    // to the blockHeight. The further away they are the better, the furthest will win the election
-    // and get paid this block
-    //
+    /**
+     * Deterministically calculate a given "score" for a masternode depending on how close it's hash is
+     * to the blockHeight. The further away they are the better, the furthest will win the election
+     * and get paid this block
+     */
 
     uint64_t CalculateScore(uint256 blockHash, CTxIn& vin);
     bool GetWinningMasternode(int nBlockHeight, CTxIn& vinOut);
@@ -230,7 +231,7 @@ public:
     void CleanPaymentList();
     int LastPayment(CMasterNode& mn);
 
-    //slow
+    //!slow
     bool GetBlockPayee(int nBlockHeight, CScript& payee);
 };
 

@@ -18,14 +18,14 @@ using namespace std;
 static CCriticalSection cs_nTimeOffset;
 static int64_t nTimeOffset = 0;
 
-//
-// "Never go to sea with two chronometers; take one or three."
-// Our three time sources are:
-//  - System clock
-//  - Median of other nodes clocks
-//  - The user (asking the user to fix the system clock if the first two disagree)
-//
-//
+/**
+ * "Never go to sea with two chronometers; take one or three."
+ * Our three time sources are:
+ *  - System clock
+ *  - Median of other nodes clocks
+ *  - The user (asking the user to fix the system clock if the first two disagree)
+ *
+ */
 int64_t GetTimeOffset()
 {
     LOCK(cs_nTimeOffset);
@@ -47,37 +47,38 @@ void AddTimeData(const CNetAddr& ip, int64_t nTime)
     int64_t nOffsetSample = nTime - GetTime();
 
     LOCK(cs_nTimeOffset);
-    // Ignore duplicates
+    //! Ignore duplicates
     static set<CNetAddr> setKnown;
     if (!setKnown.insert(ip).second)
         return;
 
-    // Add data
+    //! Add data
     static CMedianFilter<int64_t> vTimeOffsets(200, 0);
     vTimeOffsets.input(nOffsetSample);
     LogPrintf("Added time data, samples %d, offset %+d (%+d minutes)\n", vTimeOffsets.size(), nOffsetSample, nOffsetSample / 60);
 
-    // There is a known issue here (see issue #4521):
-    //
-    // - The structure vTimeOffsets contains up to 200 elements, after which
-    // any new element added to it will not increase its size, replacing the
-    // oldest element.
-    //
-    // - The condition to update nTimeOffset includes checking whether the
-    // number of elements in vTimeOffsets is odd, which will never happen after
-    // there are 200 elements.
-    //
-    // But in this case the 'bug' is protective against some attacks, and may
-    // actually explain why we've never seen attacks which manipulate the
-    // clock offset.
-    //
-    // So we should hold off on fixing this and clean it up as part of
-    // a timing cleanup that strengthens it in a number of other ways.
-    //
+    /**
+     * There is a known issue here (see issue #4521):
+     *
+     * - The structure vTimeOffsets contains up to 200 elements, after which
+     * any new element added to it will not increase its size, replacing the
+     * oldest element.
+     *
+     * - The condition to update nTimeOffset includes checking whether the
+     * number of elements in vTimeOffsets is odd, which will never happen after
+     * there are 200 elements.
+     *
+     * But in this case the 'bug' is protective against some attacks, and may
+     * actually explain why we've never seen attacks which manipulate the
+     * clock offset.
+     *
+     * So we should hold off on fixing this and clean it up as part of
+     * a timing cleanup that strengthens it in a number of other ways.
+     */
     if (vTimeOffsets.size() >= 5 && vTimeOffsets.size() % 2 == 1) {
         int64_t nMedian = vTimeOffsets.median();
         std::vector<int64_t> vSorted = vTimeOffsets.sorted();
-        // Only let other nodes change our time by so much
+        //! Only let other nodes change our time by so much
         if (abs64(nMedian) < 70 * 60) {
             nTimeOffset = nMedian;
         } else {
@@ -85,7 +86,7 @@ void AddTimeData(const CNetAddr& ip, int64_t nTime)
 
             static bool fDone;
             if (!fDone) {
-                // If nobody has a time different than ours but within 5 minutes of ours, give a warning
+                //! If nobody has a time different than ours but within 5 minutes of ours, give a warning
                 bool fMatch = false;
                 BOOST_FOREACH (int64_t nOffset, vSorted)
                     if (nOffset != 0 && abs64(nOffset) < 5 * 60)

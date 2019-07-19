@@ -76,13 +76,13 @@ typedef int NodeId;
 
 struct QueuedBlock {
     uint256 hash;
-    CBlockIndex *pindex;  // Optional.
-    int64_t nTime;     // Time of "getdata" request in microseconds.
+    CBlockIndex *pindex;  //! Optional.
+    int64_t nTime;     //! Time of "getdata" request in microseconds.
 };
 
 typedef int NodeId;
 
-// Signals for message handling
+//! Signals for message handling
 struct CNodeSignals {
     boost::signals2::signal<int()> GetHeight;
     boost::signals2::signal<bool(CNode*)> ProcessMessages;
@@ -94,11 +94,11 @@ struct CNodeSignals {
 CNodeSignals& GetNodeSignals();
 
 enum {
-    LOCAL_NONE,   // unknown
-    LOCAL_IF,     // address a local interface listens on
-    LOCAL_BIND,   // address explicit bound to
-    LOCAL_UPNP,   // address reported by UPnP
-    LOCAL_MANUAL, // address explicitly specified (-externalip=)
+    LOCAL_NONE,   //! unknown
+    LOCAL_IF,     //! address a local interface listens on
+    LOCAL_BIND,   //! address explicit bound to
+    LOCAL_UPNP,   //! address reported by UPnP
+    LOCAL_MANUAL, //! address explicitly specified (-externalip=)
 
     LOCAL_MAX
 };
@@ -175,17 +175,17 @@ public:
 class CNetMessage
 {
 public:
-    bool in_data; // parsing header (false) or data (true)
+    bool in_data; //! parsing header (false) or data (true)
 
-    CDataStream hdrbuf; // partially received header
-    CMessageHeader hdr; // complete header
+    CDataStream hdrbuf; //! partially received header
+    CMessageHeader hdr; //! complete header
     unsigned int nHdrPos;
 
-    CDataStream vRecv; // received message data
+    CDataStream vRecv; //! received message data
     unsigned int nDataPos;
     unsigned int nLastDataPos;
 
-    int64_t nTime; // time (in microseconds) of message receipt.
+    int64_t nTime; //! time (in microseconds) of message receipt.
 
     CNetMessage(int nTypeIn, int nVersionIn) : hdrbuf(nTypeIn, nVersionIn), vRecv(nTypeIn, nVersionIn)
     {
@@ -219,12 +219,12 @@ public:
 class CNode
 {
 public:
-    // socket
+    //! socket
     uint64_t nServices;
     SOCKET hSocket;
     CDataStream ssSend;
-    size_t nSendSize;   // total size of all vSendMsg entries
-    size_t nSendOffset; // offset inside the first vSendMsg already sent
+    size_t nSendSize;   //! total size of all vSendMsg entries
+    size_t nSendOffset; //! offset inside the first vSendMsg already sent
     uint64_t nSendBytes;
     std::deque<CSerializeData> vSendMsg;
     CCriticalSection cs_vSend;
@@ -235,35 +235,39 @@ public:
     uint64_t nRecvBytes;
     int nRecvVersion;
 
-    int64_t nLastSend;       // Time data last sent to peer.
-    int64_t nLastRecv;       // Time data last received from peer.
-    int64_t nTimeConnected;  // Time connection to peer was established.
-    int64_t tGetblocks;      // When we became a sync node.
-    int64_t tBlockInvs;      // Time new block invs arrived from peer.
-    int64_t tGetdataBlock;   // Time getdata block sent.
-    int64_t tBlockRecvStart; // Time block reception first detected.
-    int64_t tBlockRecving;   // Time block reception last progressed.
-    int64_t tBlockRecved;    // Time last complete block received.
+    int64_t nLastSend;       //! Time data last sent to peer.
+    int64_t nLastRecv;       //! Time data last received from peer.
+    int64_t nTimeConnected;  //! Time connection to peer was established.
+    int64_t tGetblocks;      //! When we became a sync node.
+    int64_t tBlockInvs;      //! Time new block invs arrived from peer.
+    int64_t tGetdataBlock;   //! Time getdata block sent.
+    int64_t tBlockRecvStart; //! Time block reception first detected.
+    int64_t tBlockRecving;   //! Time block reception last progressed.
+    int64_t tBlockRecved;    //! Time last complete block received.
     CAddress addr;
     std::string addrName;
     CService addrLocal;
     int nVersion;
-    // strSubVer is whatever byte array we read from the wire. However, this field is intended
-    // to be printed out, displayed to humans in various forms and so on. So we sanitize it and
-    // store the sanitized version in cleanSubVer. The original should be used when dealing with
-    // the network or wire types and the cleaned string used when displayed or logged.
+    /**
+     * strSubVer is whatever byte array we read from the wire. However, this field is intended
+     * to be printed out, displayed to humans in various forms and so on. So we sanitize it and
+     * store the sanitized version in cleanSubVer. The original should be used when dealing with
+     * the network or wire types and the cleaned string used when displayed or logged.
+     */
     std::string strSubVer, cleanSubVer;
-    bool fWhitelisted; // This peer can bypass DoS banning.
+    bool fWhitelisted; //! This peer can bypass DoS banning.
     bool fOneShot;
     bool fClient;
     bool fInbound;
     bool fNetworkNode;
     bool fSuccessfullyConnected;
     bool fDisconnect;
-    // We use fRelayTxes for two purposes -
-    // a) it allows us to not relay tx invs before receiving the peer's version message
-    // b) the peer may tell us in their version message that we should not relay tx invs
-    //    until they have initialized their bloom filter.
+    /**
+     * We use fRelayTxes for two purposes -
+     * a) it allows us to not relay tx invs before receiving the peer's version message
+     * b) the peer may tell us in their version message that we should not relay tx invs
+     *    until they have initialized their bloom filter.
+     */
     bool fRelayTxes;
     bool fDarkSendMaster;
     CSemaphoreGrant grantOutbound;
@@ -273,27 +277,27 @@ public:
     CBloomFilter* pfilter;
 
 protected:
-    // Denial-of-service detection/prevention
-    // Key is IP address, value is banned-until-time
+    //! Denial-of-service detection/prevention
+    //! Key is IP address, value is banned-until-time
     static std::map<CNetAddr, int64_t> setBanned;
     static CCriticalSection cs_setBanned;
 
-    // Whitelisted ranges. Any node connecting from these is automatically
-    // whitelisted (as well as those connecting to whitelisted binds).
+    //! Whitelisted ranges. Any node connecting from these is automatically
+    //! whitelisted (as well as those connecting to whitelisted binds).
     static std::vector<CSubNet> vWhitelistedRange;
     static CCriticalSection cs_vWhitelistedRange;
 
-    std::vector<std::string> vecRequestsFulfilled; //keep track of what client has asked for
+    std::vector<std::string> vecRequestsFulfilled; //!keep track of what client has asked for
 
-    // Basic fuzz-testing
-    void Fuzz(int nChance); // modifies ssSend
+    //! Basic fuzz-testing
+    void Fuzz(int nChance); //! modifies ssSend
 
 public:
     int nMisbehavior;
     uint256 hashContinue;;
     int nStartingHeight;
 
-    // flood relay
+    //! flood relay
     std::vector<CAddress> vAddrToSend;
     mruset<CAddress> setAddrKnown;
     bool fGetAddr;
@@ -301,28 +305,28 @@ public:
     int64_t nNextAddrSend;
     int64_t nNextLocalAddrSend;
 
-    // inventory based relay
+    //! inventory based relay
     mruset<CInv> setInventoryKnown;
     std::vector<CInv> vInventoryToSend;
     CCriticalSection cs_inventory;
     std::multimap<int64_t, CInv> mapAskFor;
     int64_t nNextInvSend;
 
-    // Ping time measurement:
-    // The pong reply we're expecting, or 0 if no pong expected.
+    //! Ping time measurement:
+    //! The pong reply we're expecting, or 0 if no pong expected.
     uint64_t nPingNonceSent;
-    // Time (in usec) the last ping was sent, or 0 if no ping was ever sent.
+    //! Time (in usec) the last ping was sent, or 0 if no ping was ever sent.
     int64_t nPingUsecStart;
-    // Last measured round-trip time.
+    //! Last measured round-trip time.
     int64_t nPingUsecTime;
-    // Whether a ping is requested.
+    //! Whether a ping is requested.
     bool fPingQueued;
 
     CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn = "", bool fInboundIn = false);
     ~CNode();
 
 private:
-    // Network usage totals
+    //! Network usage totals
     static CCriticalSection cs_totalBytesRecv;
     static CCriticalSection cs_totalBytesSent;
     static uint64_t nTotalBytesRecv;
@@ -343,7 +347,7 @@ public:
         return nRefCount;
     }
 
-    // requires LOCK(cs_vRecvMsg)
+    //! requires LOCK(cs_vRecvMsg)
     unsigned int GetTotalRecvSize()
     {
         unsigned int total = 0;
@@ -352,10 +356,10 @@ public:
         return total;
     }
 
-    // requires LOCK(cs_vRecvMsg)
+    //! requires LOCK(cs_vRecvMsg)
     bool ReceiveMsgBytes(const char* pch, unsigned int nBytes);
 
-    // requires LOCK(cs_vRecvMsg)
+    //! requires LOCK(cs_vRecvMsg)
     void SetRecvVersion(int nVersionIn)
     {
         nRecvVersion = nVersionIn;
@@ -382,9 +386,11 @@ public:
 
     void PushAddress(const CAddress& addr)
     {
-        // Known checking here is only to save space from duplicates.
-        // SendMessages will filter it again for knowns that were added
-        // after addresses were pushed.
+        /**
+         * Known checking here is only to save space from duplicates.
+         * SendMessages will filter it again for knowns that were added
+         * after addresses were pushed.
+         */
         if (addr.IsValid() && !setAddrKnown.count(addr)) {
             if (vAddrToSend.size() >= MAX_ADDR_TO_SEND) {
                 vAddrToSend[insecure_rand() % vAddrToSend.size()] = addr;
@@ -415,13 +421,13 @@ public:
     void AskFor(const CInv& inv);
 
 
-    // TODO: Document the postcondition of this function.  Is cs_vSend locked?
+    //! TODO: Document the postcondition of this function.  Is cs_vSend locked?
     void BeginMessage(const char* pszCommand) EXCLUSIVE_LOCK_FUNCTION(cs_vSend);
 
-    // TODO: Document the precondition of this function.  Is cs_vSend locked?
+    //! TODO: Document the precondition of this function.  Is cs_vSend locked?
     void AbortMessage() UNLOCK_FUNCTION(cs_vSend);
 
-    // TODO: Document the precondition of this function.  Is cs_vSend locked?
+    //! TODO: Document the precondition of this function.  Is cs_vSend locked?
     void EndMessage() UNLOCK_FUNCTION(cs_vSend);
 
     void PushVersion();
@@ -589,21 +595,23 @@ public:
     void CancelSubscribe(unsigned int nChannel);
     void CloseSocketDisconnect();
 
-    // Denial-of-service detection/prevention
-    // The idea is to detect peers that are behaving
-    // badly and disconnect/ban them, but do it in a
-    // one-coding-mistake-won't-shatter-the-entire-network
-    // way.
-    // IMPORTANT:  There should be nothing I can give a
-    // node that it will forward on that will make that
-    // node's peers drop it. If there is, an attacker
-    // can isolate a node and/or try to split the network.
-    // Dropping a node for sending stuff that is invalid
-    // now but might be valid in a later version is also
-    // dangerous, because it can cause a network split
-    // between nodes running old code and nodes running
-    // new code.
-    static void ClearBanned(); // needed for unit testing
+    /**
+     * Denial-of-service detection/prevention
+     * The idea is to detect peers that are behaving
+     * badly and disconnect/ban them, but do it in a
+     * one-coding-mistake-won't-shatter-the-entire-network
+     * way.
+     * IMPORTANT:  There should be nothing I can give a
+     * node that it will forward on that will make that
+     * node's peers drop it. If there is, an attacker
+     * can isolate a node and/or try to split the network.
+     * Dropping a node for sending stuff that is invalid
+     * now but might be valid in a later version is also
+     * dangerous, because it can cause a network split
+     * between nodes running old code and nodes running
+     * new code.
+     */
+    static void ClearBanned(); //! needed for unit testing
     static bool IsBanned(CNetAddr ip);
     static bool Ban(const CNetAddr& ip);
     void copyStats(CNodeStats& stats);
@@ -611,7 +619,7 @@ public:
     static bool IsWhitelistedRange(const CNetAddr& ip);
     static void AddWhitelistedRange(const CSubNet& subnet);
 
-    // Network stats
+    //! Network stats
     static void RecordBytesRecv(uint64_t bytes);
     static void RecordBytesSent(uint64_t bytes);
 

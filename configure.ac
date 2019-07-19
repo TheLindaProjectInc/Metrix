@@ -158,7 +158,7 @@ if test "x$enable_debug" = xyes; then
     fi
     
     if test "x$GXX" = xyes; then
-        CXXFLAGS="-g3 -O0 -DDEBUG"
+        CXXFLAGS="-g3 -O0 -DDEBUG $CXXFLAGS"
     fi
 fi 
 

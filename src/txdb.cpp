@@ -201,7 +201,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
     ssKeySet << make_pair('b', uint256(0));
     pcursor->Seek(ssKeySet.str());
 
-    // Load mapBlockIndex
+    //! Load mapBlockIndex
     while (pcursor->Valid()) {
         boost::this_thread::interruption_point();
         try {
@@ -215,7 +215,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 CDiskBlockIndex diskindex;
                 ssValue >> diskindex;
 
-                // Construct block index object
+                //! Construct block index object
                 CBlockIndex* pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
                 pindexNew->pprev = InsertBlockIndex(diskindex.hashPrev);
                 pindexNew->nHeight = diskindex.nHeight;
@@ -230,7 +230,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nStatus = diskindex.nStatus;
                 pindexNew->nTx = diskindex.nTx;
 
-                // ppcoin related block index fields
+                //! ppcoin related block index fields
                 pindexNew->nMint = diskindex.nMint;
                 pindexNew->nMoneySupply = diskindex.nMoneySupply;
                 pindexNew->nFlags = diskindex.nFlags;
@@ -239,19 +239,19 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nStakeTime = diskindex.nStakeTime;
                 pindexNew->hashProof = diskindex.hashProof;
 
-                // metrix POS details are set from db
+                //! metrix POS details are set from db
                 pindexNew->POSDetailSet = true;
 
                 if (!pindexNew->CheckIndex())
                     return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString());
 
-                // ppcoin: build setStakeSeen
+                //! ppcoin: build setStakeSeen
                 if (pindexNew->IsProofOfStake())
                     setStakeSeen.insert(make_pair(pindexNew->prevoutStake, pindexNew->nStakeTime));
 
                 pcursor->Next();
             } else {
-                break; // if shutdown requested or finished loading block index
+                break; //! if shutdown requested or finished loading block index
             }
         } catch (std::exception& e) {
             return error("%s : Deserialize or I/O error - %s", __func__, e.what());

@@ -8,10 +8,10 @@
 #include "core/transaction.h"
 #include "core_io.h"
 #include "keystore.h"
-#include "main.h" // for MAX_BLOCK_SIZE
+#include "main.h" //! for MAX_BLOCK_SIZE
 #include "script/script.h"
 #include "script/sign.h"
-#include "ui_interface.h" // for _(...)
+#include "ui_interface.h" //! for _(...)
 #include "univalue/univalue.h"
 #include "util.h"
 #include "utilmoneystr.h"
@@ -30,12 +30,12 @@ CClientUIInterface uiInterface;
 
 static bool AppInitRawTx(int argc, char* argv[])
 {
-    //
-    // Parameters
-    //
+    /**
+     * Parameters
+     */
     ParseParameters(argc, argv);
 
-    // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+    //! Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
     if (!SelectParamsFromCommandLine()) {
         fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
         return false;
@@ -44,7 +44,7 @@ static bool AppInitRawTx(int argc, char* argv[])
     fCreateBlank = GetBoolArg("-create", false);
 
     if (argc < 2 || mapArgs.count("-?") || mapArgs.count("-help")) {
-        // First part of help message is specific to this utility
+        //! First part of help message is specific to this utility
         std::string strUsage = _("Metrix metrix-tx utility version") + " " + FormatFullVersion() + "\n\n" +
                                _("Usage:") + "\n" +
                                "  metrix-tx [options] <hex-tx> [commands]  " + _("Update hex-encoded Metrix transaction") + "\n" +
@@ -104,7 +104,7 @@ static void RegisterSetJson(const string& key, const string& rawJson)
 
 static void RegisterSet(const string& strInput)
 {
-    // separate NAME:VALUE in string
+    //! separate NAME:VALUE in string
     size_t pos = strInput.find(':');
     if ((pos == string::npos) ||
         (pos == 0) ||
@@ -119,7 +119,7 @@ static void RegisterSet(const string& strInput)
 
 static void RegisterLoad(const string& strInput)
 {
-    // separate NAME:FILENAME in string
+    //! separate NAME:FILENAME in string
     size_t pos = strInput.find(':');
     if ((pos == string::npos) ||
         (pos == 0) ||
@@ -135,7 +135,7 @@ static void RegisterLoad(const string& strInput)
         throw runtime_error(strErr);
     }
 
-    // load file chunks into one big buffer
+    //! load file chunks into one big buffer
     string valStr;
     while ((!feof(f)) && (!ferror(f))) {
         char buf[4096];
@@ -153,7 +153,7 @@ static void RegisterLoad(const string& strInput)
 
     fclose(f);
 
-    // evaluate as JSON buffer register
+    //! evaluate as JSON buffer register
     RegisterSetJson(key, valStr);
 }
 
@@ -177,14 +177,14 @@ static void MutateTxLocktime(CMutableTransaction& tx, const string& cmdVal)
 
 static void MutateTxAddInput(CMutableTransaction& tx, const string& strInput)
 {
-    // separate TXID:VOUT in string
+    //! separate TXID:VOUT in string
     size_t pos = strInput.find(':');
     if ((pos == string::npos) ||
         (pos == 0) ||
         (pos == (strInput.size() - 1)))
         throw runtime_error("TX input missing separator");
 
-    // extract and validate TXID
+    //! extract and validate TXID
     string strTxid = strInput.substr(0, pos);
     if ((strTxid.size() != 64) || !IsHex(strTxid))
         throw runtime_error("invalid TX input txid");
@@ -193,92 +193,92 @@ static void MutateTxAddInput(CMutableTransaction& tx, const string& strInput)
     static const unsigned int minTxOutSz = 9;
     static const unsigned int maxVout = MAX_BLOCK_SIZE / minTxOutSz;
 
-    // extract and validate vout
+    //! extract and validate vout
     string strVout = strInput.substr(pos + 1, string::npos);
     int vout = atoi(strVout);
     if ((vout < 0) || (vout > (int)maxVout))
         throw runtime_error("invalid TX input vout");
 
-    // append to transaction input list
+    //! append to transaction input list
     CTxIn txin(txid, vout);
     tx.vin.push_back(txin);
 }
 
 static void MutateTxAddOutAddr(CMutableTransaction& tx, const string& strInput)
 {
-    // separate VALUE:ADDRESS in string
+    //! separate VALUE:ADDRESS in string
     size_t pos = strInput.find(':');
     if ((pos == string::npos) ||
         (pos == 0) ||
         (pos == (strInput.size() - 1)))
         throw runtime_error("TX output missing separator");
 
-    // extract and validate VALUE
+    //! extract and validate VALUE
     string strValue = strInput.substr(0, pos);
     CAmount value;
     if (!ParseMoney(strValue, value))
         throw runtime_error("invalid TX output value");
 
-    // extract and validate ADDRESS
+    //! extract and validate ADDRESS
     string strAddr = strInput.substr(pos + 1, string::npos);
     CBitcoinAddress addr(strAddr);
     if (!addr.IsValid())
         throw runtime_error("invalid TX output address");
 
-    // build standard output script via GetScriptForDestination()
+    //! build standard output script via GetScriptForDestination()
     CScript scriptPubKey = GetScriptForDestination(addr.Get());
 
-    // construct TxOut, append to transaction output list
+    //! construct TxOut, append to transaction output list
     CTxOut txout(value, scriptPubKey);
     tx.vout.push_back(txout);
 }
 
 static void MutateTxAddOutScript(CMutableTransaction& tx, const string& strInput)
 {
-    // separate VALUE:SCRIPT in string
+    //! separate VALUE:SCRIPT in string
     size_t pos = strInput.find(':');
     if ((pos == string::npos) ||
         (pos == 0))
         throw runtime_error("TX output missing separator");
 
-    // extract and validate VALUE
+    //! extract and validate VALUE
     string strValue = strInput.substr(0, pos);
     CAmount value;
     if (!ParseMoney(strValue, value))
         throw runtime_error("invalid TX output value");
 
-    // extract and validate script
+    //! extract and validate script
     string strScript = strInput.substr(pos + 1, string::npos);
-    CScript scriptPubKey = ParseScript(strScript); // throws on err
+    CScript scriptPubKey = ParseScript(strScript); //! throws on err
 
-    // construct TxOut, append to transaction output list
+    //! construct TxOut, append to transaction output list
     CTxOut txout(value, scriptPubKey);
     tx.vout.push_back(txout);
 }
 
 static void MutateTxDelInput(CMutableTransaction& tx, const string& strInIdx)
 {
-    // parse requested deletion index
+    //! parse requested deletion index
     int inIdx = atoi(strInIdx);
     if (inIdx < 0 || inIdx >= (int)tx.vin.size()) {
         string strErr = "Invalid TX input index '" + strInIdx + "'";
         throw runtime_error(strErr.c_str());
     }
 
-    // delete input from transaction
+    //! delete input from transaction
     tx.vin.erase(tx.vin.begin() + inIdx);
 }
 
 static void MutateTxDelOutput(CMutableTransaction& tx, const string& strOutIdx)
 {
-    // parse requested deletion index
+    //! parse requested deletion index
     int outIdx = atoi(strOutIdx);
     if (outIdx < 0 || outIdx >= (int)tx.vout.size()) {
         string strErr = "Invalid TX output index '" + strOutIdx + "'";
         throw runtime_error(strErr.c_str());
     }
 
-    // delete output from transaction
+    //! delete output from transaction
     tx.vout.erase(tx.vout.begin() + outIdx);
 }
 
@@ -336,8 +336,8 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
     vector<CTransaction> txVariants;
     txVariants.push_back(tx);
 
-    // mergedTx will end up with all the signatures; it
-    // starts as a clone of the raw tx:
+    //! mergedTx will end up with all the signatures; it
+    //! starts as a clone of the raw tx:
     CMutableTransaction mergedTx(txVariants[0]);
     bool fComplete = true;
     CCoinsView viewDummy;
@@ -362,7 +362,7 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
         tempKeystore.AddKey(key);
     }
 
-    // Add previous txouts given in the RPC call:
+    //! Add previous txouts given in the RPC call:
     if (!registers.count("prevtxs"))
         throw runtime_error("prevtxs register variable must be set.");
     UniValue prevtxsObj = registers["prevtxs"];
@@ -396,11 +396,13 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
                 if ((unsigned int)nOut >= coins->vout.size())
                     coins->vout.resize(nOut+1);
                 coins->vout[nOut].scriptPubKey = scriptPubKey;
-                coins->vout[nOut].nValue = 0; // we don't know the actual output value
+                coins->vout[nOut].nValue = 0; //! we don't know the actual output value
             }
 
-            // if redeemScript given and private keys given,
-            // add redeemScript to the tempKeystore so it can be signed:
+            /**
+             * if redeemScript given and private keys given,
+             * add redeemScript to the tempKeystore so it can be signed:
+             */
             if (fGivenKeys && scriptPubKey.IsPayToScriptHash() &&
                 prevOut.exists("redeemScript")) {
                 UniValue v = prevOut["redeemScript"];
@@ -415,7 +417,7 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
 
     bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
 
-    // Sign what we can:
+    //! Sign what we can:
     for (unsigned int i = 0; i < mergedTx.vin.size(); i++) {
         CTxIn& txin = mergedTx.vin[i];
         const CCoins* coins = view.AccessCoins(txin.prevout.hash);
@@ -426,11 +428,11 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
         const CScript& prevPubKey = coins->vout[txin.prevout.n].scriptPubKey;
 
         txin.scriptSig.clear();
-        // Only sign SIGHASH_SINGLE if there's a corresponding output:
+        //! Only sign SIGHASH_SINGLE if there's a corresponding output:
         if (!fHashSingle || (i < mergedTx.vout.size()))
             SignSignature(keystore, prevPubKey, mergedTx, i, nHashType);
 
-        // ... and merge in other signatures:
+        //! ... and merge in other signatures:
         BOOST_FOREACH (const CTransaction& txv, txVariants) {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
         }
@@ -439,8 +441,8 @@ static void MutateTxSign(CMutableTransaction& tx, const string& flagStr)
     }
 
     if (fComplete) {
-        // do nothing... for now
-        // perhaps store this for later optional JSON output
+        //! do nothing... for now
+        //! perhaps store this for later optional JSON output
     }
 
     tx = mergedTx;
@@ -527,7 +529,7 @@ static int CommandLineRawTx(int argc, char* argv[])
     string strPrint;
     int nRet = 0;
     try {
-        // Skip switches; Permit common stdin convention "-"
+        //! Skip switches; Permit common stdin convention "-"
         while (argc > 1 && IsSwitchChar(argv[1][0]) &&
                (argv[1][1] != 0)) {
             argc--;
@@ -538,13 +540,13 @@ static int CommandLineRawTx(int argc, char* argv[])
         int startArg;
 
         if (!fCreateBlank) {
-            // require at least one param
+            //! require at least one param
             if (argc < 2)
                 throw runtime_error("too few parameters");
 
-            // param: hex-encoded bitcoin transaction
+            //! param: hex-encoded bitcoin transaction
             string strHexTx(argv[1]);
-            if (strHexTx == "-") // "-" implies standard input
+            if (strHexTx == "-") //! "-" implies standard input
                 strHexTx = readStdin();
 
             if (!DecodeHexTx(txDecodeTmp, strHexTx))

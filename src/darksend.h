@@ -19,18 +19,18 @@ class CDarksendQueue;
 class CDarksendBroadcastTx;
 class CActiveMasternode;
 
-#define POOL_MAX_TRANSACTIONS                  3 // wait for X transactions to merge and publish
-#define POOL_STATUS_UNKNOWN                    0 // waiting for update
-#define POOL_STATUS_IDLE                       1 // waiting for update
-#define POOL_STATUS_QUEUE                      2 // waiting in a queue
-#define POOL_STATUS_ACCEPTING_ENTRIES          3 // accepting entries
-#define POOL_STATUS_FINALIZE_TRANSACTION       4 // master node will broadcast what it accepted
-#define POOL_STATUS_SIGNING                    5 // check inputs/outputs, sign final tx
-#define POOL_STATUS_TRANSMISSION               6 // transmit transaction
-#define POOL_STATUS_ERROR                      7 // error
-#define POOL_STATUS_SUCCESS                    8 // success
+#define POOL_MAX_TRANSACTIONS                  3 //! wait for X transactions to merge and publish
+#define POOL_STATUS_UNKNOWN                    0 //! waiting for update
+#define POOL_STATUS_IDLE                       1 //! waiting for update
+#define POOL_STATUS_QUEUE                      2 //! waiting in a queue
+#define POOL_STATUS_ACCEPTING_ENTRIES          3 //! accepting entries
+#define POOL_STATUS_FINALIZE_TRANSACTION       4 //! master node will broadcast what it accepted
+#define POOL_STATUS_SIGNING                    5 //! check inputs/outputs, sign final tx
+#define POOL_STATUS_TRANSMISSION               6 //! transmit transaction
+#define POOL_STATUS_ERROR                      7 //! error
+#define POOL_STATUS_SUCCESS                    8 //! success
 
-// status update message constants
+//! status update message constants
 #define MASTERNODE_ACCEPTED                    1
 #define MASTERNODE_REJECTED                    0
 #define MASTERNODE_RESET                       -1
@@ -45,14 +45,14 @@ extern std::string strMasterNodePrivKey;
 extern map<uint256, CDarksendBroadcastTx> mapDarksendBroadcastTxes;
 extern CActiveMasternode activeMasternode;
 
-//specific messages for the Darksend protocol
+//!specific messages for the Darksend protocol
 void ProcessMessageDarksend(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
-// get the darksend chain depth for a given input
+//! get the darksend chain depth for a given input
 int GetInputDarksendRounds(CTxIn in, int rounds = 0);
 
 
-// An input in the darksend pool
+//! An input in the darksend pool
 class CDarkSendEntryVin
 {
 public:
@@ -66,7 +66,7 @@ public:
     }
 };
 
-// A clients transaction in the darksend pool
+//! A clients transaction in the darksend pool
 class CDarkSendEntry
 {
 public:
@@ -125,20 +125,20 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - addedTime) > DARKSEND_QUEUE_TIMEOUT; // 120 seconds
+        return (GetTime() - addedTime) > DARKSEND_QUEUE_TIMEOUT; //! 120 seconds
     }
 };
 
-//
-// A currently inprogress darksend merge and denomination information
-//
+/**
+ * A currently inprogress darksend merge and denomination information
+ */
 class CDarksendQueue
 {
 public:
     CTxIn vin;
     int64_t time;
     int nDenom;
-    bool ready; //ready for submit
+    bool ready; //!ready for submit
     std::vector<unsigned char> vchSig;
 
     CDarksendQueue()
@@ -189,13 +189,13 @@ public:
 
     bool IsExpired()
     {
-        return (GetTime() - time) > DARKSEND_QUEUE_TIMEOUT; // 120 seconds
+        return (GetTime() - time) > DARKSEND_QUEUE_TIMEOUT; //! 120 seconds
     }
 
     bool CheckSignature();
 };
 
-// store darksend tx signature information
+//! store darksend tx signature information
 class CDarksendBroadcastTx
 {
 public:
@@ -205,9 +205,9 @@ public:
     int64_t sigTime;
 };
 
-//
-// Helper object for signing and checking signatures
-//
+/**
+ * Helper object for signing and checking signatures
+ */
 class CDarkSendSigner
 {
 public:
@@ -221,19 +221,19 @@ class CDarksendSession
 {
 };
 
-//
-// Used to keep track of current status of darksend pool
-//
+/**
+ * Used to keep track of current status of darksend pool
+ */
 class CDarkSendPool
 {
 public:
     static const int MIN_PEER_PROTO_VERSION = 70000;
 
-    // clients entries
+    //! clients entries
     std::vector<CDarkSendEntry> myEntries;
-    // masternode entries
+    //! masternode entries
     std::vector<CDarkSendEntry> entries;
-    // the finalized transaction ready for signing
+    //! the finalized transaction ready for signing
     CMutableTransaction finalTransaction;
 
     int64_t lastTimeChanged;
@@ -244,7 +244,7 @@ public:
     unsigned int lastEntryAccepted;
     unsigned int countEntriesAccepted;
 
-    // where collateral should be made out to
+    //! where collateral should be made out to
     CScript collateralPubKey;
 
     std::vector<CTxIn> lockedCoins;
@@ -257,23 +257,23 @@ public:
     CService submittedToMasternode;
 
     int sessionID;
-    int sessionDenom;            //Users must submit an denom matching this
-    int sessionUsers;            //N Users have said they'll join
-    bool sessionFoundMasternode; //If we've found a compatible masternode
-    int64_t sessionTotalValue;   //used for autoDenom
+    int sessionDenom;            //!Users must submit an denom matching this
+    int sessionUsers;            //!N Users have said they'll join
+    bool sessionFoundMasternode; //!If we've found a compatible masternode
+    int64_t sessionTotalValue;   //!used for autoDenom
     std::vector<CTransaction> vecSessionCollateral;
 
     int cachedLastSuccess;
-    int cachedNumBlocks; //used for the overview screen
-    int minBlockSpacing; //required blocks between mixes
+    int cachedNumBlocks; //!used for the overview screen
+    int minBlockSpacing; //!required blocks between mixes
     CMutableTransaction txCollateral;
 
     int64_t lastNewBlock;
 
-    //debugging data
+    //!debugging data
     std::string strAutoDenomResult;
 
-    //incremented whenever a DSQ comes through
+    //!incremented whenever a DSQ comes through
     int64_t nDsqCount;
 
     CDarkSendPool()
@@ -363,66 +363,66 @@ public:
 
     int GetMaxPoolTransactions()
     {
-        //use the production amount
+        //!use the production amount
         return POOL_MAX_TRANSACTIONS;
     }
 
-    //Do we have enough users to take entries?
+    //!Do we have enough users to take entries?
     bool IsSessionReady()
     {
         return sessionUsers >= GetMaxPoolTransactions();
     }
 
-    // Are these outputs compatible with other client in the pool?
+    //! Are these outputs compatible with other client in the pool?
     bool IsCompatibleWithEntries(std::vector<CTxOut> vout);
-    // Is this amount compatible with other client in the pool?
+    //! Is this amount compatible with other client in the pool?
     bool IsCompatibleWithSession(int64_t nAmount, CTransaction txCollateral, std::string& strReason);
 
-    // Passively run Darksend in the background according to the configuration in settings (only for QT)
+    //! Passively run Darksend in the background according to the configuration in settings (only for QT)
     bool DoAutomaticDenominating(bool fDryRun = false, bool ready = false);
     bool PrepareDarksendDenominate();
 
 
-    // check for process in Darksend
+    //! check for process in Darksend
     void Check();
-    // charge fees to bad actors
+    //! charge fees to bad actors
     void ChargeFees();
-    // rarely charge fees to pay miners
+    //! rarely charge fees to pay miners
     void ChargeRandomFees();
     void CheckTimeout();
-    // check to make sure a signature matches an input in the pool
+    //! check to make sure a signature matches an input in the pool
     bool SignatureValid(const CScript& newSig, const CTxIn& newVin);
-    // if the collateral is valid given by a client
+    //! if the collateral is valid given by a client
     bool IsCollateralValid(const CTransaction& txCollateral);
-    // add a clients entry to the pool
+    //! add a clients entry to the pool
     bool AddEntry(const std::vector<CTxIn>& newInput, const int64_t& nAmount, const CTransaction& txCollateral, const std::vector<CTxOut>& newOutput, std::string& error);
-    // add signature to a vin
+    //! add signature to a vin
     bool AddScriptSig(const CTxIn newVin);
-    // are all inputs signed?
+    //! are all inputs signed?
     bool SignaturesComplete();
-    // as a client, send a transaction to a masternode to start the denomination process
+    //! as a client, send a transaction to a masternode to start the denomination process
     void SendDarksendDenominate(std::vector<CTxIn>& vin, std::vector<CTxOut>& vout, int64_t amount);
-    // get masternode updates about the progress of darksend
+    //! get masternode updates about the progress of darksend
     bool StatusUpdate(int newState, int newEntriesCount, int newAccepted, std::string& error, int newSessionID = 0);
 
-    // as a client, check and sign the final transaction
+    //! as a client, check and sign the final transaction
     bool SignFinalTransaction(CMutableTransaction& finalTransactionNew, CNode* node);
 
-    // get the last valid block hash for a given modulus
+    //! get the last valid block hash for a given modulus
     bool GetLastValidBlockHash(uint256& hash, int mod = 1, int nBlockHeight = 0);
-    // process a new block
+    //! process a new block
     void NewBlock();
     void CompletedTransaction(bool error, std::string lastMessageNew);
     void ClearLastMessage();
-    // used for liquidity providers
+    //! used for liquidity providers
     bool SendRandomPaymentToSelf();
-    // split up large inputs or make fee sized inputs
+    //! split up large inputs or make fee sized inputs
     bool MakeCollateralAmounts();
     bool CreateDenominated(int64_t nTotalValue);
-    // get the denominations for a list of outputs (returns a bitshifted integer)
+    //! get the denominations for a list of outputs (returns a bitshifted integer)
     int GetDenominations(const std::vector<CTxOut>& vout);
     void GetDenominationsToString(int nDenom, std::string& strDenom);
-    // get the denominations for a specific amount of Metrix.
+    //! get the denominations for a specific amount of Metrix.
     int GetDenominationsByAmount(int64_t nAmount, int nDenomTarget = 0);
 
     int GetDenominationsByAmounts(std::vector<int64_t>& vecAmount);

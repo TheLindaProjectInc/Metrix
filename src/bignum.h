@@ -84,7 +84,7 @@ public:
         BN_clear_free(this);
     }
 
-    //CBigNum(char n) is not portable.  Use 'signed char' or 'unsigned char'.
+    //! CBigNum(char n) is not portable.  Use 'signed char' or 'unsigned char'.
     CBigNum(signed char n)
     {
         BN_init(this);
@@ -229,7 +229,7 @@ public:
         uint64_t n;
 
         if (sn < (int64_t)0) {
-            // Since the minimum signed integer cannot be represented as positive so long as its type is signed, and it's not well-defined what happens if you make it unsigned before negating it, we instead increment the negative integer by 1, convert it, then increment the (now positive) unsigned integer by 1 to compensate
+            //! Since the minimum signed integer cannot be represented as positive so long as its type is signed, and it's not well-defined what happens if you make it unsigned before negating it, we instead increment the negative integer by 1, convert it, then increment the (now positive) unsigned integer by 1 to compensate
             n = -(sn + 1);
             ++n;
             fNegative = true;
@@ -347,13 +347,15 @@ public:
     {
         std::vector<unsigned char> vch2(vch.size() + 4);
         unsigned int nSize = vch.size();
-        // BIGNUM's byte stream format expects 4 bytes of
-        // big endian size data info at the front
+        /** 
+         * BIGNUM's byte stream format expects 4 bytes of
+         * big endian size data info at the front
+         */
         vch2[0] = (nSize >> 24) & 0xff;
         vch2[1] = (nSize >> 16) & 0xff;
         vch2[2] = (nSize >> 8) & 0xff;
         vch2[3] = (nSize >> 0) & 0xff;
-        // swap data to big endian
+        //! swap data to big endian
         reverse_copy(vch.begin(), vch.end(), vch2.begin() + 4);
         BN_mpi2bn(&vch2[0], vch2.size(), this);
     }
@@ -403,7 +405,7 @@ public:
 
     void SetHex(const std::string& str)
     {
-        // skip 0x
+        //! skip 0x
         const char* psz = str.c_str();
         while (isspace(*psz))
             psz++;
@@ -417,7 +419,7 @@ public:
         while (isspace(*psz))
             psz++;
 
-        // hex string to bignum
+        //! hex string to bignum
         *this = 0;
         int n;
         while ((n = HexDigit(*psz)) != -1) {
@@ -650,8 +652,8 @@ public:
 
     CBigNum& operator>>=(unsigned int shift)
     {
-        // Note: BN_rshift segfaults on 64-bit if 2^shift is greater than the number
-        //   if built on ubuntu 9.04 or 9.10, probably depends on version of OpenSSL
+        //! Note: BN_rshift segfaults on 64-bit if 2^shift is greater than the number
+        //!   if built on ubuntu 9.04 or 9.10, probably depends on version of OpenSSL
         CBigNum a = 1;
         a <<= shift;
         if (BN_cmp(&a, this) > 0) {
@@ -667,7 +669,7 @@ public:
 
     CBigNum& operator++()
     {
-        // prefix operator
+        //! prefix operator
         if (!BN_add(this, this, BN_value_one()))
             throw bignum_error("CBigNum::operator++ : BN_add failed");
         return *this;
@@ -675,7 +677,7 @@ public:
 
     const CBigNum operator++(int)
     {
-        // postfix operator
+        //! postfix operator
         const CBigNum ret = *this;
         ++(*this);
         return ret;
@@ -683,7 +685,7 @@ public:
 
     CBigNum& operator--()
     {
-        // prefix operator
+        //! prefix operator
         CBigNum r;
         if (!BN_sub(&r, this, BN_value_one()))
             throw bignum_error("CBigNum::operator-- : BN_sub failed");
@@ -693,7 +695,7 @@ public:
 
     const CBigNum operator--(int)
     {
-        // postfix operator
+        //! postfix operator
         const CBigNum ret = *this;
         --(*this);
         return ret;

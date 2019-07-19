@@ -48,7 +48,7 @@ static asio::io_service* rpc_io_service = NULL;
 static map<string, boost::shared_ptr<deadline_timer> > deadlineTimers;
 static ssl::context* rpc_ssl_context = NULL;
 static boost::thread_group* rpc_worker_group = NULL;
-static std::vector<CSubNet> rpc_allow_subnets; //!< List of subnets to allow RPC connections from
+static std::vector<CSubNet> rpc_allow_subnets; //! List of subnets to allow RPC connections from
 static std::vector<boost::shared_ptr<ip::tcp::acceptor> > rpc_acceptors;
 
 void RPCTypeCheck(const Array& params,
@@ -761,6 +761,14 @@ void SetRPCWarmupFinished()
     fRPCInWarmup = false;
 }
 
+bool RPCIsInWarmup(std::string *outStatus)
+{
+    LOCK(cs_rpcWarmup);
+    if (outStatus)
+        *outStatus = rpcWarmupStatus;
+    return fRPCInWarmup;
+}
+
 void RPCRunHandler(const boost::system::error_code& err, boost::function<void(void)> func)
 {
     if (!err)
@@ -940,7 +948,7 @@ void ServiceConnection(AcceptedConnection* conn)
                 break;
 
         //! Process via HTTP REST API
-        } else if (strURI.substr(0, 6) == "/rest/") {
+        } else if (strURI.substr(0, 6) == "/rest/" && GetBoolArg("-rest", false)) {
             if (!HTTPReq_REST(conn, strURI, mapHeaders, fRun))
                 break;
 

@@ -41,7 +41,7 @@
 #if defined(OPTIMIZED_SALSA) && (defined(__x86_64__) || defined(__i386__) || defined(__arm__))
 extern "C" void scrypt_core(unsigned int* X, unsigned int* V);
 #else
-// Generic scrypt_core implementation
+//! Generic scrypt_core implementation
 
 static inline void xor_salsa8(unsigned int B[16], const unsigned int Bx[16])
 {

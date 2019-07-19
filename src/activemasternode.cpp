@@ -9,9 +9,9 @@
 
 #include <boost/lexical_cast.hpp>
 
-//
-// Bootup the masternode, look for a 500 MRX input and register on the network
-//
+/**
+ * Bootup the masternode, look for a 500 MRX input and register on the network
+ */
 void CActiveMasternode::ManageStatus()
 {
     std::string errorMessage;
@@ -22,7 +22,7 @@ void CActiveMasternode::ManageStatus()
     if (fDebug)
         LogPrintf("CActiveMasternode::ManageStatus() - Begin\n");
 
-    //need correct adjusted time to send ping
+    //! need correct adjusted time to send ping
     bool fIsInitialDownload = IsInitialBlockDownload();
     if (fIsInitialDownload) {
         status = MASTERNODE_SYNC_IN_PROCESS;
@@ -49,14 +49,15 @@ void CActiveMasternode::ManageStatus()
 
         LogPrintf("CActiveMasternode::ManageStatus() - Checking inbound connection to '%s'\n", service.ToString());
 
-        // MetrixNOTE: There is no logical reason to restrict this to a specific port.  Its a peer, what difference does it make.
-        /*  if(service.GetPort() != 9999) {
-                notCapableReason = "Invalid port: " + boost::lexical_cast<string>(service.GetPort()) + " -only 9999 is supported on mainnet.";
-                status = MASTERNODE_NOT_CAPABLE;
-                LogPrintf("CActiveMasternode::ManageStatus() - not capable: %s\n", notCapableReason);
-                return;
-            }
-        */
+        /**
+         * Metrix NOTE: There is no logical reason to restrict this to a specific port.  Its a peer, what difference does it make.
+         *  if(service.GetPort() != 9999) {
+         *       notCapableReason = "Invalid port: " + boost::lexical_cast<string>(service.GetPort()) + " -only 9999 is supported on mainnet.";
+         *       status = MASTERNODE_NOT_CAPABLE;
+         *       LogPrintf("CActiveMasternode::ManageStatus() - not capable: %s\n", notCapableReason);
+         *       return;
+         *   }
+         */
 
 
         if (!ConnectNode((CAddress)service, service.ToString().c_str())) {
@@ -74,21 +75,21 @@ void CActiveMasternode::ManageStatus()
             return;
         }
 
-        // Set defaults
+        //! Set defaults
         status = MASTERNODE_NOT_CAPABLE;
         notCapableReason = "Unknown. Check debug.log for more information.\n";
 
-        // Choose coins to use
+        //! Choose coins to use
         CPubKey pubKeyCollateralAddress;
         CKey keyCollateralAddress;
 
-        // Find possible candidates
+        //! Find possible candidates
         vector<COutput> possibleCoins = SelectCoinsMasternode();
         COutput* selectedOutput;
 
         BOOST_FOREACH (COutput& out, possibleCoins) {
             selectedOutput = &out;
-            // At this point we have a selected output, retrieve the associated info
+            //! At this point we have a selected output, retrieve the associated info
             if (GetVinFromOutput(*selectedOutput, vin, pubKeyCollateralAddress, keyCollateralAddress)) {
                 if (GetInputAge(vin) < MASTERNODE_MIN_CONFIRMATIONS) {
                     LogPrintf("CActiveMasternode::ManageStatus() - Input must have least %d confirmations - %d confirmations\n", MASTERNODE_MIN_CONFIRMATIONS, GetInputAge(vin));
@@ -101,7 +102,7 @@ void CActiveMasternode::ManageStatus()
 
                     pwalletMain->LockCoin(vin.prevout);
 
-                    // send to all nodes
+                    //! send to all nodes
                     CPubKey pubKeyMasternode;
                     CKey keyMasternode;
 
@@ -119,13 +120,13 @@ void CActiveMasternode::ManageStatus()
         LogPrintf("CActiveMasternode::ManageStatus() - Could not find suitable coins!\n");
     }
 
-    //send to all peers
+    //! send to all peers
     if (!Dseep(errorMessage)) {
         LogPrintf("CActiveMasternode::ManageStatus() - Error on Ping: %s", errorMessage);
     }
 }
 
-// Send stop dseep to network for remote masternode
+//! Send stop dseep to network for remote masternode
 bool CActiveMasternode::StopMasterNode(std::string strService, std::string strKeyMasternode, std::string& errorMessage)
 {
     CTxIn vin;
@@ -140,7 +141,7 @@ bool CActiveMasternode::StopMasterNode(std::string strService, std::string strKe
     return StopMasterNode(vin, CService(strService), keyMasternode, pubKeyMasternode, errorMessage);
 }
 
-// Send stop dseep to network for main masternode
+//! Send stop dseep to network for main masternode
 bool CActiveMasternode::StopMasterNode(std::string& errorMessage)
 {
     if (status != MASTERNODE_IS_CAPABLE && status != MASTERNODE_REMOTELY_ENABLED) {
@@ -162,7 +163,7 @@ bool CActiveMasternode::StopMasterNode(std::string& errorMessage)
     return StopMasterNode(vin, service, keyMasternode, pubKeyMasternode, errorMessage);
 }
 
-// Send stop dseep to network for any masternode
+//! Send stop dseep to network for any masternode
 bool CActiveMasternode::StopMasterNode(CTxIn vin, CService service, CKey keyMasternode, CPubKey pubKeyMasternode, std::string& errorMessage)
 {
     pwalletMain->UnlockCoin(vin.prevout);
@@ -209,10 +210,10 @@ bool CActiveMasternode::Dseep(CTxIn vin, CService service, CKey keyMasternode, C
         return false;
     }
 
-    // Update Last Seen timestamp in masternode list
+    //! Update Last Seen timestamp in masternode list
     bool found = false;
     BOOST_FOREACH (CMasterNode& mn, vecMasternodes) {
-        //LogPrintf(" -- %s\n", mn.vin.ToString());
+        //! LogPrintf(" -- %s\n", mn.vin.ToString());
         if (mn.vin == vin) {
             found = true;
             mn.UpdateLastSeen();
@@ -220,7 +221,7 @@ bool CActiveMasternode::Dseep(CTxIn vin, CService service, CKey keyMasternode, C
     }
 
     if (!found) {
-        // Seems like we are trying to send a ping while the masternode is not registered in the network
+        //! Seems like we are trying to send a ping while the masternode is not registered in the network
         retErrorMessage = "Darksend Masternode List doesn't include our masternode, Shutting down masternode pinging service! " + vin.ToString();
         LogPrintf("CActiveMasternode::Dseep() - Error: %s\n", retErrorMessage);
         status = MASTERNODE_NOT_CAPABLE;
@@ -228,7 +229,7 @@ bool CActiveMasternode::Dseep(CTxIn vin, CService service, CKey keyMasternode, C
         return false;
     }
 
-    //send to all peers
+    //! send to all peers
     LogPrintf("CActiveMasternode::Dseep() - SendDarkSendElectionEntryPing vin = %s\n", vin.ToString());
     SendDarkSendElectionEntryPing(vin, vchMasterNodeSignature, masterNodeSignatureTime, stop);
 
@@ -292,7 +293,7 @@ bool CActiveMasternode::Register(CTxIn vin, CService service, CKey keyCollateral
         vecMasternodes.push_back(mn);
     }
 
-    //send to all peers
+    //! send to all peers
     LogPrintf("CActiveMasternode::Register() - SendDarkSendElectionEntry vin = %s\n", vin.ToString());
     SendDarkSendElectionEntry(vin, service, vchMasterNodeSignature, masterNodeSignatureTime, pubKeyCollateralAddress, pubKeyMasternode, -1, -1, masterNodeSignatureTime, PROTOCOL_VERSION);
 
@@ -308,13 +309,13 @@ bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secr
 {
     CScript pubScript;
 
-    // Find possible candidates
+    //! Find possible candidates
     vector<COutput> possibleCoins = SelectCoinsMasternode(includeLocked);
     COutput* selectedOutput;
 
-    // Find the vin
+    //! Find the vin
     if (!strTxHash.empty()) {
-        // Let's find it
+        //! Let's find it
         uint256 txHash(strTxHash);
         int outputIndex = boost::lexical_cast<int>(strOutputIndex);
         bool found = false;
@@ -330,7 +331,7 @@ bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secr
             return false;
         }
     } else {
-        // No output specified,  Select the first one
+        //! No output specified,  Select the first one
         if (possibleCoins.size() > 0) {
             selectedOutput = &possibleCoins[0];
         } else {
@@ -339,18 +340,18 @@ bool CActiveMasternode::GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secr
         }
     }
 
-    // At this point we have a selected output, retrieve the associated info
+    //! At this point we have a selected output, retrieve the associated info
     return GetVinFromOutput(*selectedOutput, vin, pubkey, secretKey);
 }
 
 
-// Extract masternode vin information from output
+//! Extract masternode vin information from output
 bool CActiveMasternode::GetVinFromOutput(COutput out, CTxIn& vin, CPubKey& pubkey, CKey& secretKey)
 {
     CScript pubScript;
 
     vin = CTxIn(out.tx->GetHash(), out.i);
-    pubScript = out.tx->vout[out.i].scriptPubKey; // the inputs PubKey
+    pubScript = out.tx->vout[out.i].scriptPubKey; //! the inputs PubKey
 
     CTxDestination address1;
     ExtractDestination(pubScript, address1);
@@ -371,21 +372,23 @@ bool CActiveMasternode::GetVinFromOutput(COutput out, CTxIn& vin, CPubKey& pubke
     return true;
 }
 
-// get all possible outputs for running masternode
+//! get all possible outputs for running masternode
 vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
 {
     vector<COutput> vCoins;
     vector<COutput> filteredCoins;
 
-    // Retrieve all possible outputs
-    // Metrix - start-many and start-alias should include locked coins as nodes in
-    // the masternode.conf file coins are looked on startup. otherwise it wouldn't
-    // be possible to start the node remotely as it would alywas fail to find vin
+    /**
+     * Retrieve all possible outputs
+     * Metrix - start-many and start-alias should include locked coins as nodes in
+     * the masternode.conf file coins are looked on startup. otherwise it wouldn't
+     * be possible to start the node remotely as it would alywas fail to find vin
+     */
     pwalletMain->AvailableCoins(vCoins, true, NULL, false, ALL_COINS, false, (int)1, includeLocked);
 
-    // Filter
+    //! Filter
     BOOST_FOREACH (const COutput& out, vCoins) {
-        // MBK: Have reached the blockheight when swap to 2m masternode activation starts
+        //! MBK: Have reached the blockheight when swap to 2m masternode activation starts
         if (out.tx->vout[out.i].nValue == MASTERNODE_COLLATERAL)
             filteredCoins.push_back(out);
     }
@@ -393,7 +396,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
     return filteredCoins;
 }
 
-// when starting a masternode, this can enable to run as a hot wallet with no funds
+//! when starting a masternode, this can enable to run as a hot wallet with no funds
 bool CActiveMasternode::EnableHotColdMasterNode(CTxIn& newVin, CService& newService)
 {
     if (!fMasterNode)
@@ -401,7 +404,7 @@ bool CActiveMasternode::EnableHotColdMasterNode(CTxIn& newVin, CService& newServ
 
     status = MASTERNODE_REMOTELY_ENABLED;
 
-    //The values below are needed for signing dseep messages going forward
+    //! The values below are needed for signing dseep messages going forward
     this->vin = newVin;
     this->service = newService;
 

@@ -58,13 +58,13 @@ public:
                 map.erase(itTarget);
                 return;
             }
-        // Shouldn't ever get here
-        assert(0); //TODO remove me
+        //! Shouldn't ever get here
+        assert(0); //! TODO remove me
         map.erase(itTarget);
     }
     void update(const_iterator itIn, const mapped_type& v)
     {
-        //TODO: When we switch to C++11, use map.erase(itIn, itIn) to get the non-const iterator
+        //! TODO: When we switch to C++11, use map.erase(itIn, itIn) to get the non-const iterator
         iterator itTarget = map.find(itIn->first);
         if (itTarget == map.end())
             return;
@@ -76,8 +76,8 @@ public:
                 rmap.insert(make_pair(v, itTarget));
                 return;
             }
-        // Shouldn't ever get here
-        assert(0); //TODO remove me
+        //! Shouldn't ever get here
+        assert(0); //! TODO remove me
         itTarget->second = v;
         rmap.insert(make_pair(v, itTarget));
     }

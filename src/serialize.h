@@ -72,13 +72,13 @@ inline const T* end_ptr(const std::vector<T, TAl>& v)
 
 
 /////////////////////////////////////////////////////////////////
-//
-// Templates for serializing to anything that looks like a stream,
-// i.e. anything that supports .read(char*, size_t) and .write(char*, size_t)
-//
+/**
+ * Templates for serializing to anything that looks like a stream,
+ * i.e. anything that supports .read(char*, size_t) and .write(char*, size_t)
+ */
 
 enum {
-    // primary actions
+    //! primary actions
     SER_NETWORK = (1 << 0),
     SER_DISK = (1 << 1),
     SER_GETHASH = (1 << 2),

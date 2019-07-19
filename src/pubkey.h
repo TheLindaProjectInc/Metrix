@@ -130,7 +130,7 @@ public:
         if (len <= 65) {
             s.read((char*)vch, len);
         } else {
-            // invalid pubkey, skip available data
+            //! invalid pubkey, skip available data
             char dummy;
             while (len--)
                 s.read(&dummy, 1);

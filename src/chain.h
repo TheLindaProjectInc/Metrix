@@ -390,7 +390,7 @@ public:
     //! Returns true if the validity was changed.
     bool RaiseValidity(enum BlockStatus nUpTo)
     {
-        assert(!(nUpTo & ~BLOCK_VALID_MASK)); // Only validity flags allowed.
+        assert(!(nUpTo & ~BLOCK_VALID_MASK)); //! Only validity flags allowed.
         if (nStatus & BLOCK_FAILED_MASK)
             return false;
         if ((nStatus & BLOCK_VALID_MASK) < nUpTo) {

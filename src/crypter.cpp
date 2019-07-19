@@ -32,7 +32,7 @@ bool CCrypter::SetKeyFromPassphrase(const SecureString& strKeyData, const std::v
     }
 
     if (nDerivationMethod == 1) {
-        // Passphrase conversion
+        //! Passphrase conversion
         uint256 scryptHash = scrypt_salted_multiround_hash((const void*)strKeyData.c_str(), strKeyData.size(), &chSalt[0], 8, nRounds);
 
         i = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha512(), &chSalt[0],
@@ -68,8 +68,8 @@ bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned
     if (!fKeySet)
         return false;
 
-    // max ciphertext len for a n bytes of plaintext is
-    // n + AES_BLOCK_SIZE - 1 bytes
+    //! max ciphertext len for a n bytes of plaintext is
+    //! n + AES_BLOCK_SIZE - 1 bytes
     int nLen = vchPlaintext.size();
     int nCLen = nLen + AES_BLOCK_SIZE, nFLen = 0;
     vchCiphertext = std::vector<unsigned char>(nCLen);
@@ -99,7 +99,7 @@ bool CCrypter::Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingM
     if (!fKeySet)
         return false;
 
-    // plaintext will always be equal to or lesser than length of ciphertext
+    //! plaintext will always be equal to or lesser than length of ciphertext
     int nLen = vchCiphertext.size();
     int nPLen = nLen, nFLen = 0;
 
@@ -146,25 +146,25 @@ bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned
     return cKeyCrypter.Decrypt(vchCiphertext, *((CKeyingMaterial*)&vchPlaintext));
 }
 
-// General secure AES 256 CBC encryption routine
+//! General secure AES 256 CBC encryption routine
 bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, const std::string& sIV, std::string& sCiphertext)
 {
-    // max ciphertext len for a n bytes of plaintext is
-    // n + AES_BLOCK_SIZE - 1 bytes
+    //! max ciphertext len for a n bytes of plaintext is
+    //! n + AES_BLOCK_SIZE - 1 bytes
     int nLen = sPlaintext.size();
     int nCLen = nLen + AES_BLOCK_SIZE;
     int nFLen = 0;
 
-    // Verify key sizes
+    //! Verify key sizes
     if (sKey.size() != 32 || sIV.size() != AES_BLOCK_SIZE) {
         LogPrintf("crypter EncryptAES256 - Invalid key or block size: Key: %d sIV:%d\n", sKey.size(), sIV.size());
         return false;
     }
 
-    // Prepare output buffer
+    //! Prepare output buffer
     sCiphertext.resize(nCLen);
 
-    // Perform the encryption
+    //! Perform the encryption
     EVP_CIPHER_CTX ctx;
 
     bool fOk = true;
@@ -187,11 +187,11 @@ bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, con
 
 bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, const std::string& sIV, SecureString& sPlaintext)
 {
-    // plaintext will always be equal to or lesser than length of ciphertext
+    //! plaintext will always be equal to or lesser than length of ciphertext
     int nLen = sCiphertext.size();
     int nPLen = nLen, nFLen = 0;
 
-    // Verify key sizes
+    //! Verify key sizes
     if (sKey.size() != 32 || sIV.size() != AES_BLOCK_SIZE) {
         LogPrintf("crypter DecryptAES256 - Invalid key or block size\n");
         return false;
@@ -396,7 +396,7 @@ bool SecMsgCrypter::SetKey(const std::vector<unsigned char>& vchNewKey, unsigned
 
 bool SecMsgCrypter::SetKey(const unsigned char* chNewKey, unsigned char* chNewIV)
 {
-    // -- for EVP_aes_256_cbc() key must be 256 bit, iv must be 128 bit.
+    //! -- for EVP_aes_256_cbc() key must be 256 bit, iv must be 128 bit.
     memcpy(&chKey[0], chNewKey, sizeof(chKey));
     memcpy(chIV, chNewIV, sizeof(chIV));
 
@@ -409,7 +409,7 @@ bool SecMsgCrypter::Encrypt(unsigned char* chPlaintext, uint32_t nPlain, std::ve
     if (!fKeySet)
         return false;
 
-    // -- max ciphertext len for a n bytes of plaintext is n + AES_BLOCK_SIZE - 1 bytes
+    //! -- max ciphertext len for a n bytes of plaintext is n + AES_BLOCK_SIZE - 1 bytes
     int nLen = nPlain;
 
     int nCLen = nLen + AES_BLOCK_SIZE, nFLen = 0;
@@ -441,7 +441,7 @@ bool SecMsgCrypter::Decrypt(unsigned char* chCiphertext, uint32_t nCipher, std::
     if (!fKeySet)
         return false;
 
-    // plaintext will always be equal to or lesser than length of ciphertext
+    //! plaintext will always be equal to or lesser than length of ciphertext
     int nPLen = nCipher, nFLen = 0;
 
     vchPlaintext.resize(nCipher);

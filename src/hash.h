@@ -88,7 +88,7 @@ public:
         return (*this);
     }
 
-    // invalidates the object
+    //! invalidates the object
     uint256 GetHash()
     {
         uint256 result;
@@ -99,7 +99,7 @@ public:
     template <typename T>
     CHashWriter& operator<<(const T& obj)
     {
-        // Serialize to this stream
+        //! Serialize to this stream
         ::Serialize(*this, obj, nType, nVersion);
         return (*this);
     }
