@@ -327,6 +327,7 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += "  -minimizecoinage       " + strprintf(_("Minimize weight consumption (experimental) (default: %u)"),0) + "\n";
         strUsage += "  -regtest               " + _("Enter regression test mode, which uses a special chain in which blocks can be ");
         strUsage += _("solved instantly. This is intended for regression testing tools and app development.") + "\n";
+        strUsage += "  -relaypriority         " + strprintf(_("Require high priority for relaying free or low-fee transactions (default:%u)"), 1) + "\n";
         strUsage += "  -stopafterblockimport  " + strprintf(_("Stop running after importing blocks from disk (default: %u)"),0) + "\n";
     }
     strUsage += "  -debug=<category>      " + _("Output debugging information (default: 0, supplying <category> is optional)") + "\n";
