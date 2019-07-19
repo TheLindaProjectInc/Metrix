@@ -152,8 +152,7 @@ server round-trip to execute.
 Other utilities "metrix-key" and "metrix-script" have been proposed, making
 key and script operations easily accessible via command line.
 
-Improved signing security
-=========================
+#### Improved signing security
 For 3.4 the security of signing against unusual attacks has been
 improved by making the signatures constant time and deterministic.
 This change is a result of switching signing to use libsecp256k1
@@ -175,3 +174,18 @@ the curve Bitcoin uses and we have reason to believe that
 libsecp256k1 is better tested and more thoroughly reviewed
 than the implementation in OpenSSL.
 [1] https://eprint.iacr.org/2014/161.pdf
+
+#### Consensus library
+Starting from 0.10.0, the Bitcoin Core distribution includes a consensus library.
+The purpose of this library is to make the verification functionality that is
+critical to Bitcoin's consensus available to other applications, e.g. to language
+bindings such as [python_bitcoinlib](https://pypi.python.org/pypi/python-bitcoinlib) or
+alternative node implementations.
+This library is called `libbitcoinconsensus.so` (or, `.dll` for Windows).
+Its interface is defined in the C header [bitcoinconsensus.h](https://github.com/bitcoin/bitcoin/blob/0.10/src/script/bitcoinconsensus.h).
+In its initial version the API includes two functions:
+- `bitcoinconsensus_verify_script` verifies a script. It returns whether the indicated input of the provided serialized transaction 
+correctly spends the passed scriptPubKey under additional constraints indicated by flags
+- `bitcoinconsensus_version` returns the API version, currently at an experimental `0`
+The functionality is planned to be extended to e.g. UTXO management in upcoming releases, but the interface
+for existing methods should remain stable.
