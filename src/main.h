@@ -110,7 +110,7 @@ class CNode;
 class CReserveKey;
 class CScriptCheck;
 class CWallet;
-class CWalletInterface;
+class CValidationInterface;
 class CValidationState;
 
 struct CBlockTemplate;
@@ -220,11 +220,11 @@ extern bool fMinimizeCoinAge;
 static const uint64_t nMinDiskSpace = 52428800;
 
 /** Register a wallet to receive updates from core */
-void RegisterWallet(CWalletInterface* pwalletIn);
+void RegisterValidationInterface(CValidationInterface* pwalletIn);
 /** Unregister a wallet from core */
-void UnregisterWallet(CWalletInterface* pwalletIn);
+void UnregisterValidationInterface(CValidationInterface* pwalletIn);
 /** Unregister all wallets from core */
-void UnregisterAllWallets();
+void UnregisterAllValidationInterfaces();
 /** Push an updated transaction to all registered wallets */
 void SyncWithWallets(const CTransaction& tx, const CBlock* pblock = NULL);
 /** Ask wallets to resend their transactions */
@@ -618,18 +618,18 @@ public:
     bool VerifyDB(CCoinsView* coinsview, int nCheckLevel, int nCheckDepth);
 };
 
-class CWalletInterface
+class CValidationInterface
 {
 protected:
-    virtual void SyncTransaction(const CTransaction& tx, const CBlock* pblock) = 0;
-    virtual void EraseFromWallet(const uint256& hash) = 0;
-    virtual void SetBestChain(const CBlockLocator& locator) = 0;
-    virtual void UpdatedTransaction(const uint256& hash) = 0;
-    virtual void Inventory(const uint256& hash) = 0;
-    virtual void ResendWalletTransactions(bool fForce) = 0;
-    friend void ::RegisterWallet(CWalletInterface*);
-    friend void ::UnregisterWallet(CWalletInterface*);
-    friend void ::UnregisterAllWallets();
+    virtual void SyncTransaction(const CTransaction& tx, const CBlock* pblock) {};
+    virtual void EraseFromWallet(const uint256& hash) {};
+    virtual void SetBestChain(const CBlockLocator& locator) {};
+    virtual void UpdatedTransaction(const uint256& hash) {};
+    virtual void Inventory(const uint256& hash) {};
+    virtual void ResendWalletTransactions(bool fForce) {};
+    friend void ::RegisterValidationInterface(CValidationInterface*);
+    friend void ::UnregisterValidationInterface(CValidationInterface*);
+    friend void ::UnregisterAllValidationInterfaces();
 };
 
 /** Global variable that points to the active CCoinsView (protected by cs_main) */
