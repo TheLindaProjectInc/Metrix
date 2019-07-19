@@ -146,7 +146,7 @@ Object blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool txDe
             txs.push_back(tx.GetHash().GetHex());
     }
 
-    result.push_back(Pair("tx", txinfo));
+    result.push_back(Pair("tx", txs));
 
     if (block.IsProofOfStake())
         result.push_back(Pair("signature", HexStr(block.vchBlockSig.begin(), block.vchBlockSig.end())));
