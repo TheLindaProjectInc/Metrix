@@ -364,14 +364,13 @@ void SendMoney(const CTxDestination& address, CAmount nValue, std::string& sNarr
     }
 
     // Parse Metrix address
-    CScript scriptPubKey;
-    scriptPubKey.SetDestination(address);
+    CScript scriptPubKey = GetScriptForDestination(address);
 
     CReserveKey reservekey(pwalletMain);
     CAmount nFeeRequired;
 
     if (!pwalletMain->CreateTransaction(scriptPubKey, nValue, sNarr, wtxNew, reservekey, nFeeRequired, strError)) {
-        if (nValue + nFeeRequired > GetBalance())
+        if (nValue + nFeeRequired > pwalletMain->GetBalance())
             strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired));
         LogPrintf("SendMoney() : %s\n", strError);
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
@@ -850,8 +849,8 @@ Value sendfrom(const Array& params, bool fHelp)
     if (nAmount > nBalance)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
 
-    SendMoney(address.Get(), nAmount, sNarr, wtx)
-
+    SendMoney(address.Get(), nAmount, sNarr, wtx);
+    
     return wtx.GetHash().GetHex();
 }
 
