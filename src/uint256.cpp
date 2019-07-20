@@ -89,26 +89,26 @@ base_uint<BITS>& base_uint<BITS>::operator*=(const base_uint& b)
 template <unsigned int BITS>
 base_uint<BITS>& base_uint<BITS>::operator/=(const base_uint& b)
 {
-    base_uint<BITS> div = b;     // make a copy, so we can shift.
-    base_uint<BITS> num = *this; // make a copy, so we can subtract.
-    *this = 0;                   // the quotient.
+    base_uint<BITS> div = b;     //! make a copy, so we can shift.
+    base_uint<BITS> num = *this; //! make a copy, so we can subtract.
+    *this = 0;                   //! the quotient.
     int num_bits = num.bits();
     int div_bits = div.bits();
     if (div_bits == 0)
         throw uint_error("Division by zero");
-    if (div_bits > num_bits) // the result is certainly 0.
+    if (div_bits > num_bits) //! the result is certainly 0.
         return *this;
     int shift = num_bits - div_bits;
-    div <<= shift; // shift so that div and nun align.
+    div <<= shift; //! shift so that div and nun align.
     while (shift >= 0) {
         if (num >= div) {
             num -= div;
-            pn[shift / 32] |= (1 << (shift & 31)); // set a bit of the result.
+            pn[shift / 32] |= (1 << (shift & 31)); //! set a bit of the result.
         }
-        div >>= 1; // shift back.
+        div >>= 1; //! shift back.
         shift--;
     }
-    // num now contains the remainder of the division.
+    //! num now contains the remainder of the division.
     return *this;
 }
 
@@ -164,15 +164,15 @@ void base_uint<BITS>::SetHex(const char* psz)
 {
     memset(pn, 0, sizeof(pn));
 
-    // skip leading spaces
+    //! skip leading spaces
     while (isspace(*psz))
         psz++;
 
-    // skip 0x
+    //! skip 0x
     if (psz[0] == '0' && tolower(psz[1]) == 'x')
         psz += 2;
 
-    // hex string to uint
+    //! hex string to uint
     const char* pbegin = psz;
     while (::HexDigit(*psz) != -1)
         psz++;
@@ -215,7 +215,7 @@ unsigned int base_uint<BITS>::bits() const
     return 0;
 }
 
-// Explicit instantiations for base_uint<160>
+//! Explicit instantiations for base_uint<160>
 template base_uint<160>::base_uint(const std::string&);
 template base_uint<160>::base_uint(const std::vector<unsigned char>&);
 template base_uint<160>& base_uint<160>::operator<<=(unsigned int);
@@ -232,7 +232,7 @@ template void base_uint<160>::SetHex(const char*);
 template void base_uint<160>::SetHex(const std::string&);
 template unsigned int base_uint<160>::bits() const;
 
-// Explicit instantiations for base_uint<256>
+//! Explicit instantiations for base_uint<256>
 template base_uint<256>::base_uint(const std::string&);
 template base_uint<256>::base_uint(const std::vector<unsigned char>&);
 template base_uint<256>& base_uint<256>::operator<<=(unsigned int);
@@ -249,8 +249,8 @@ template void base_uint<256>::SetHex(const char*);
 template void base_uint<256>::SetHex(const std::string&);
 template unsigned int base_uint<256>::bits() const;
 
-// This implementation directly uses shifts instead of going
-// through an intermediate MPI representation.
+//! This implementation directly uses shifts instead of going
+//! through an intermediate MPI representation.
 uint256& uint256::SetCompact(uint32_t nCompact, bool* pfNegative, bool* pfOverflow)
 {
     int nSize = nCompact >> 24;
@@ -281,8 +281,8 @@ uint32_t uint256::GetCompact(bool fNegative) const
         uint256 bn = *this >> 8 * (nSize - 3);
         nCompact = bn.GetLow64();
     }
-    // The 0x00800000 bit denotes the sign.
-    // Thus, if it is already set, divide the mantissa by 256 and increase the exponent.
+    //! The 0x00800000 bit denotes the sign.
+    //! Thus, if it is already set, divide the mantissa by 256 and increase the exponent.
     if (nCompact & 0x00800000) {
         nCompact >>= 8;
         nSize++;
@@ -296,7 +296,7 @@ uint32_t uint256::GetCompact(bool fNegative) const
 
 static void inline HashMix(uint32_t& a, uint32_t& b, uint32_t& c)
 {
-    // Taken from lookup3, by Bob Jenkins.
+    //! Taken from lookup3, by Bob Jenkins.
     a -= c;
     a ^= ((c << 4) | (c >> 28));
     c += b;
@@ -319,7 +319,7 @@ static void inline HashMix(uint32_t& a, uint32_t& b, uint32_t& c)
 
 static void inline HashFinal(uint32_t& a, uint32_t& b, uint32_t& c)
 {
-    // Taken from lookup3, by Bob Jenkins.
+    //! Taken from lookup3, by Bob Jenkins.
     c ^= b;
     c -= ((b << 14) | (b >> 18));
     a ^= c;

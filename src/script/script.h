@@ -3,24 +3,29 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPT
-#define H_BITCOIN_SCRIPT
+#ifndef BITCOIN_SCRIPT_H
+#define BITCOIN_SCRIPT_H
 
-#include "key.h"
-#include "script/standard.h"
-#include "tinyformat.h"
-#include "utilstrencodings.h"
-
+#include <assert.h>
+#include <climits>
+#include <limits>
 #include <stdexcept>
+#include <stdint.h>
+#include <string.h>
 #include <string>
+#include <vector>
 
-#include <boost/variant.hpp>
+template <typename T>
+std::vector<unsigned char> ToByteVector(const T& in)
+{
+    return std::vector<unsigned char>(in.begin(), in.end());
+}
 
-static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
+static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; //! bytes
 
 /** Script opcodes */
 enum opcodetype {
-    // push value
+    //! push value
     OP_0 = 0x00,
     OP_FALSE = OP_0,
     OP_PUSHDATA1 = 0x4c,
@@ -46,7 +51,7 @@ enum opcodetype {
     OP_15 = 0x5f,
     OP_16 = 0x60,
 
-    // control
+    //! control
     OP_NOP = 0x61,
     OP_VER = 0x62,
     OP_IF = 0x63,
@@ -58,7 +63,7 @@ enum opcodetype {
     OP_VERIFY = 0x69,
     OP_RETURN = 0x6a,
 
-    // stack ops
+    //! stack ops
     OP_TOALTSTACK = 0x6b,
     OP_FROMALTSTACK = 0x6c,
     OP_2DROP = 0x6d,
@@ -79,14 +84,14 @@ enum opcodetype {
     OP_SWAP = 0x7c,
     OP_TUCK = 0x7d,
 
-    // splice ops
+    //! splice ops
     OP_CAT = 0x7e,
     OP_SUBSTR = 0x7f,
     OP_LEFT = 0x80,
     OP_RIGHT = 0x81,
     OP_SIZE = 0x82,
 
-    // bit logic
+    //! bit logic
     OP_INVERT = 0x83,
     OP_AND = 0x84,
     OP_OR = 0x85,
@@ -96,7 +101,7 @@ enum opcodetype {
     OP_RESERVED1 = 0x89,
     OP_RESERVED2 = 0x8a,
 
-    // numeric
+    //! numeric
     OP_1ADD = 0x8b,
     OP_1SUB = 0x8c,
     OP_2MUL = 0x8d,
@@ -128,7 +133,7 @@ enum opcodetype {
 
     OP_WITHIN = 0xa5,
 
-    // crypto
+    //! crypto
     OP_RIPEMD160 = 0xa6,
     OP_SHA1 = 0xa7,
     OP_SHA256 = 0xa8,
@@ -140,7 +145,7 @@ enum opcodetype {
     OP_CHECKMULTISIG = 0xae,
     OP_CHECKMULTISIGVERIFY = 0xaf,
 
-    // expansion
+    //! expansion
     OP_NOP1 = 0xb0,
     OP_NOP2 = 0xb1,
     OP_NOP3 = 0xb2,
@@ -153,7 +158,7 @@ enum opcodetype {
     OP_NOP10 = 0xb9,
 
 
-    // template matching params
+    //! template matching params
     OP_SMALLDATA = 0xf9,
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
@@ -173,7 +178,7 @@ public:
 
 class CScriptNum
 {
-    /**
+/**
  * Numeric opcodes (OP_1ADD, etc) are restricted to operating on 4-byte integers.
  * The semantics are subtle, though: operands must be in the range [-2^31 +1...2^31 -1],
  * but results may overflow (and are valid as long as they are not used in a subsequent
@@ -193,18 +198,22 @@ public:
             throw scriptnum_error("script number overflow");
         }
         if (fRequireMinimal && vch.size() > 0) {
-            // Check that the number is encoded with the minimum possible
-            // number of bytes.
-            //
-            // If the most-significant-byte - excluding the sign bit - is zero
-            // then we're not minimal. Note how this test also rejects the
-            // negative-zero encoding, 0x80.
+            /**
+             * Check that the number is encoded with the minimum possible
+             * number of bytes.
+             *
+             * If the most-significant-byte - excluding the sign bit - is zero
+             * then we're not minimal. Note how this test also rejects the
+             * negative-zero encoding, 0x80.
+             */
             if ((vch.back() & 0x7f) == 0) {
-                // One exception: if there's more than one byte and the most
-                // significant bit of the second-most-significant-byte is set
-                // it would conflict with the sign bit. An example of this case
-                // is +-255, which encode to 0xff00 and 0xff80 respectively.
-                // (big-endian).
+                /**
+                 * One exception: if there's more than one byte and the most
+                 * significant bit of the second-most-significant-byte is set
+                 * it would conflict with the sign bit. An example of this case
+                 * is +-255, which encode to 0xff00 and 0xff80 respectively.
+                 * (big-endian).
+                 */
                 if (vch.size() <= 1 || (vch[vch.size() - 2] & 0x80) == 0) {
                     throw scriptnum_error("non-minimally encoded script number");
                 }
@@ -290,17 +299,17 @@ public:
             result.push_back(absvalue & 0xff);
             absvalue >>= 8;
         }
+        /**
+         *    - If the most significant byte is >= 0x80 and the value is positive, push a
+         *    new zero-byte to make the significant byte < 0x80 again.
 
-        //    - If the most significant byte is >= 0x80 and the value is positive, push a
-        //    new zero-byte to make the significant byte < 0x80 again.
+         *    - If the most significant byte is >= 0x80 and the value is negative, push a
+         *    new 0x80 byte that will be popped off when converting to an integral.
 
-        //    - If the most significant byte is >= 0x80 and the value is negative, push a
-        //    new 0x80 byte that will be popped off when converting to an integral.
-
-        //    - If the most significant byte is < 0x80 and the value is negative, add
-        //    0x80 to it, since it will be subtracted and interpreted as a negative when
-        //    converting to an integral.
-
+         *    - If the most significant byte is < 0x80 and the value is negative, add
+         *    0x80 to it, since it will be subtracted and interpreted as a negative when
+         *    converting to an integral.
+         */
         if (result.back() & 0x80)
             result.push_back(neg ? 0x80 : 0);
         else if (neg)
@@ -321,8 +330,8 @@ private:
         for (size_t i = 0; i != vch.size(); ++i)
             result |= static_cast<int64_t>(vch[i]) << 8 * i;
 
-        // If the input vector's most significant byte is 0x80, remove it from
-        // the result's msb and return a negative.
+        //! If the input vector's most significant byte is 0x80, remove it from
+        //! the result's msb and return a negative.
         if (vch.back() & 0x80)
             return -((int64_t)(result & ~(0x80ULL << (8 * (vch.size() - 1)))));
 
@@ -379,7 +388,6 @@ public:
     CScript(int64_t b) { operator<<(b); }
 
     explicit CScript(opcodetype b) { operator<<(b); }
-    explicit CScript(const uint256& b) { operator<<(b); }
     explicit CScript(const CScriptNum& b) { operator<<(b); }
     explicit CScript(const std::vector<unsigned char>& b) { operator<<(b); }
 
@@ -391,28 +399,6 @@ public:
         if (opcode < 0 || opcode > 0xff)
             throw std::runtime_error("CScript::operator<<() : invalid opcode");
         insert(end(), (unsigned char)opcode);
-        return *this;
-    }
-
-    CScript& operator<<(const uint160& b)
-    {
-        insert(end(), sizeof(b));
-        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
-        return *this;
-    }
-
-    CScript& operator<<(const uint256& b)
-    {
-        insert(end(), sizeof(b));
-        insert(end(), (unsigned char*)&b, (unsigned char*)&b + sizeof(b));
-        return *this;
-    }
-
-    CScript& operator<<(const CPubKey& key)
-    {
-        assert(key.size() < OP_PUSHDATA1);
-        insert(end(), (unsigned char)key.size());
-        insert(end(), key.begin(), key.end());
         return *this;
     }
 
@@ -444,8 +430,8 @@ public:
 
     CScript& operator<<(const CScript& b)
     {
-        // I'm not sure if this should push the script or concatenate scripts.
-        // If there's ever a use for pushing a script onto a script, delete this member fn
+        //! I'm not sure if this should push the script or concatenate scripts.
+        //! If there's ever a use for pushing a script onto a script, delete this member fn
         assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
         return *this;
     }
@@ -453,7 +439,7 @@ public:
 
     bool GetOp(iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet)
     {
-        // Wrapper so it can be called with either iterator or const_iterator
+        //! Wrapper so it can be called with either iterator or const_iterator
         const_iterator pc2 = pc;
         bool fRet = GetOp2(pc2, opcodeRet, &vchRet);
         pc = begin() + (pc2 - begin());
@@ -486,12 +472,12 @@ public:
         if (pc >= end())
             return false;
 
-        // Read instruction
+        //! Read instruction
         if (end() - pc < 1)
             return false;
         unsigned int opcode = *pc++;
 
-        // Immediate operand
+        //! Immediate operand
         if (opcode <= OP_PUSHDATA4) {
             unsigned int nSize;
             if (opcode < OP_PUSHDATA1) {
@@ -523,7 +509,7 @@ public:
         return true;
     }
 
-    // Encode/decode small integers:
+    //! Encode/decode small integers:
     static int DecodeOP_N(opcodetype opcode)
     {
         if (opcode == OP_0)
@@ -564,25 +550,31 @@ public:
         return nFound;
     }
 
-    // Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
-    // as 20 sigops. With pay-to-script-hash, that changed:
-    // CHECKMULTISIGs serialized in scriptSigs are
-    // counted more accurately, assuming they are of the form
-    //  ... OP_N CHECKMULTISIG ...
+    /**
+     * Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
+     * as 20 sigops. With pay-to-script-hash, that changed:
+     * CHECKMULTISIGs serialized in scriptSigs are
+     * counted more accurately, assuming they are of the form
+     *  ... OP_N CHECKMULTISIG ...
+     */
     unsigned int GetSigOpCount(bool fAccurate) const;
 
-    // Accurately count sigOps, including sigOps in
-    // pay-to-script-hash transactions:
+    /**
+     * Accurately count sigOps, including sigOps in
+     * pay-to-script-hash transactions:
+     */
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
     bool IsNormalPaymentScript() const;
     bool IsPayToScriptHash() const;
 
-    // Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical).
+    //! Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical).
     bool IsPushOnly() const;
 
-    // Returns whether the script is guaranteed to fail at execution,
-    // regardless of the initial stack. This allows outputs to be pruned
-    // instantly when entering the UTXO set.
+    /**
+     * Returns whether the script is guaranteed to fail at execution,
+     * regardless of the initial stack. This allows outputs to be pruned
+     * instantly when entering the UTXO set.
+     */
     bool IsUnspendable() const
     {
         return (size() > 0 && *begin() == OP_RETURN);
@@ -590,16 +582,11 @@ public:
 
     std::string ToString() const;
         
-    CScriptID GetID() const
-    {
-        return CScriptID(Hash160(*this));
-    }
-
     void clear()
     {
-        // The default std::vector::clear() does not release memory.
+        //! The default std::vector::clear() does not release memory.
         std::vector<unsigned char>().swap(*this);
     }
 };
 
-#endif
+#endif // BITCOIN_SCRIPT_H

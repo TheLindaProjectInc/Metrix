@@ -15,7 +15,7 @@
 static bool noui_ThreadSafeMessageBox(const std::string& message, const std::string& caption, unsigned int style)
 {
     std::string strCaption;
-    // Check for usage of predefined caption
+    //! Check for usage of predefined caption
     switch (style) {
     case CClientUIInterface::MSG_ERROR:
         strCaption += _("Error");
@@ -27,7 +27,7 @@ static bool noui_ThreadSafeMessageBox(const std::string& message, const std::str
         strCaption += _("Information");
         break;
     default:
-        strCaption += caption; // Use supplied caption (can be empty)
+        strCaption += caption; //! Use supplied caption (can be empty)
     }
 
     LogPrintf("%s: %s\n", strCaption, message);
@@ -42,7 +42,7 @@ static void noui_InitMessage(const std::string& message)
 
 void noui_connect()
 {
-    // Connect bitcoind signal handlers
+    //! Connect bitcoind signal handlers
     uiInterface.ThreadSafeMessageBox.connect(noui_ThreadSafeMessageBox);
     uiInterface.InitMessage.connect(noui_InitMessage);
 }

@@ -37,10 +37,10 @@ void SendMoney(const CTxDestination& address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
 
-    // Parse Metrix address
+    //! Parse Metrix address
     CScript scriptPubKey = GetScriptForDestination(address);
 
-    // Create and send the transaction
+    //! Create and send the transaction
     CReserveKey reservekey(pwalletMain);
     int64_t nFeeRequired;
     std::string sNarr;
@@ -91,10 +91,10 @@ Value darksend(const Array& params, bool fHelp)
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Metrix address");
 
-    // Amount
+    //! Amount
     int64_t nAmount = AmountFromValue(params[1]);
 
-    // Wallet comments
+    //! Wallet comments
     CWalletTx wtx;
     SendMoney(address.Get(), nAmount, wtx, ONLY_DENOMINATED);
 
@@ -334,7 +334,7 @@ Value masternode(const Array& params, bool fHelp)
         }
 
         if (activeMasternode.status != MASTERNODE_REMOTELY_ENABLED && activeMasternode.status != MASTERNODE_IS_CAPABLE) {
-            activeMasternode.status = MASTERNODE_NOT_PROCESSED; // TODO: consider better way
+            activeMasternode.status = MASTERNODE_NOT_PROCESSED; //! TODO: consider better way
             std::string errorMessage;
             activeMasternode.ManageStatus();
             pwalletMain->Lock();
@@ -596,7 +596,7 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "outputs") {
-        // Find possible candidates
+        //! Find possible candidates
         vector<COutput> possibleCoins = activeMasternode.SelectCoinsMasternode();
 
         Object obj;
@@ -608,14 +608,14 @@ Value masternode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "status" || strCommand == "status-all") {
-        // This will take a pubkey parameter for filtering
+        //! This will take a pubkey parameter for filtering
         bool searchMode = false;
         if (params.size() == 2) {
             searchMode = true;
             strCommandParam = params[1].get_str().c_str();
         }
 
-        // get masternode status
+        //! get masternode status
         std::vector<Value> resultArr;
         std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(chainActive.Height(), MIN_INSTANTX_PROTO_VERSION);
 
@@ -695,11 +695,11 @@ Value masternode(const Array& params, bool fHelp)
         return fMasterNode = false;
 
     if (strCommand == "isInit") {
-        // check flag and variables are set
+        //! check flag and variables are set
         if (!fMasterNode || strMasterNodeAddr == "" || strMasterNodePrivKey == "")
             return false;
 
-        // check valid address
+        //! check valid address
         CService addrTest = CService(strMasterNodeAddr);
         if (!addrTest.IsValid())
             return false;

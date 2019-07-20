@@ -43,14 +43,14 @@ std::string CMessageHeader::GetCommand() const
 
 bool CMessageHeader::IsValid() const
 {
-    // Check start string
+    //! Check start string
     if (memcmp(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE) != 0)
         return false;
 
-    // Check the command string for errors
+    //! Check the command string for errors
     for (const char* p1 = pchCommand; p1 < pchCommand + COMMAND_SIZE; p1++) {
         if (*p1 == 0) {
-            // Must be all zeros after the first zero
+            //! Must be all zeros after the first zero
             for (; p1 < pchCommand + COMMAND_SIZE; p1++)
                 if (*p1 != 0)
                     return false;
@@ -58,7 +58,7 @@ bool CMessageHeader::IsValid() const
             return false;
     }
 
-    // Message size
+    //! Message size
     if (nMessageSize > MAX_SIZE) {
         LogPrintf("CMessageHeader::IsValid() : (%s, %u bytes) nMessageSize > MAX_SIZE\n", GetCommand(), nMessageSize);
         return false;

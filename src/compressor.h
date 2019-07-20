@@ -3,10 +3,16 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPT_COMPRESSOR
-#define H_BITCOIN_SCRIPT_COMPRESSOR
+#ifndef BITCOIN_COMPRESSOR_H
+#define BITCOIN_COMPRESSOR_H
 
+#include "core/transaction.h"
 #include "script/script.h"
+#include "serialize.h"
+
+class CKeyID;
+class CPubKey;
+class CScriptID;
 
 /** Compact serializer for scripts.
  *
@@ -22,20 +28,24 @@
 class CScriptCompressor
 {
 private:
-    // make this static for now (there are only 6 special scripts defined)
-    // this can potentially be extended together with a new nVersion for
-    // transactions, in which case this value becomes dependent on nVersion
-    // and nHeight of the enclosing transaction.
+    /**
+     * make this static for now (there are only 6 special scripts defined)
+     * this can potentially be extended together with a new nVersion for
+     * transactions, in which case this value becomes dependent on nVersion
+     * and nHeight of the enclosing transaction.
+     */
     static const unsigned int nSpecialScripts = 6;
 
     CScript& script;
 
 protected:
-    // These check for scripts for which a special case with a shorter encoding is defined.
-    // They are implemented separately from the CScript test, as these test for exact byte
-    // sequence correspondences, and are more strict. For example, IsToPubKey also verifies
-    // whether the public key is valid (as invalid ones cannot be represented in compressed
-    // form).
+    /**
+     * These check for scripts for which a special case with a shorter encoding is defined.
+     * They are implemented separately from the CScript test, as these test for exact byte
+     * sequence correspondences, and are more strict. For example, IsToPubKey also verifies
+     * whether the public key is valid (as invalid ones cannot be represented in compressed
+     * form).
+     */
     bool IsToKeyID(CKeyID& hash) const;
     bool IsToScriptID(CScriptID& hash) const;
     bool IsToPubKey(CPubKey& pubkey) const;
@@ -86,4 +96,33 @@ public:
     }
 };
 
-#endif // H_BITCOIN_SCRIPT_COMPRESSOR
+/** wrapper for CTxOut that provides a more compact serialization */
+class CTxOutCompressor
+{
+private:
+    CTxOut &txout;
+
+public:
+    static uint64_t CompressAmount(uint64_t nAmount);
+    static uint64_t DecompressAmount(uint64_t nAmount);
+
+    CTxOutCompressor(CTxOut &txoutIn) : txout(txoutIn) { }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        if (!ser_action.ForRead()) {
+            uint64_t nVal = CompressAmount(txout.nValue);
+            READWRITE(VARINT(nVal));
+        } else {
+            uint64_t nVal = 0;
+            READWRITE(VARINT(nVal));
+            txout.nValue = DecompressAmount(nVal);
+        }
+        CScriptCompressor cscript(REF(txout.scriptPubKey));
+        READWRITE(cscript);
+    }
+};
+
+#endif // BITCOIN_COMPRESSOR_H

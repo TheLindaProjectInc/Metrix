@@ -6,7 +6,9 @@
 #ifndef BITCOIN_DB_H
 #define BITCOIN_DB_H
 
+#include "clientversion.h"
 #include "serialize.h"
+#include "streams.h"
 #include "sync.h"
 #include "version.h"
 
@@ -118,13 +120,13 @@ protected:
         if (!pdb)
             return false;
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Read
+        //! Read
         Dbt datValue;
         datValue.set_flags(DB_DBT_MALLOC);
         int ret = pdb->get(activeTxn, &datKey, &datValue, 0);
@@ -132,7 +134,7 @@ protected:
         if (datValue.get_data() == NULL)
             return false;
 
-        // Unserialize value
+        //! Unserialize value
         try {
             CDataStream ssValue((char*)datValue.get_data(), (char*)datValue.get_data() + datValue.get_size(), SER_DISK, CLIENT_VERSION);
             ssValue >> value;
@@ -140,7 +142,7 @@ protected:
             return false;
         }
 
-        // Clear and free memory
+        //! Clear and free memory
         memset(datValue.get_data(), 0, datValue.get_size());
         free(datValue.get_data());
         return (ret == 0);
@@ -154,22 +156,22 @@ protected:
         if (fReadOnly)
             assert(!"Write called on database in read-only mode");
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Value
+        //! Value
         CDataStream ssValue(SER_DISK, CLIENT_VERSION);
         ssValue.reserve(10000);
         ssValue << value;
         Dbt datValue(&ssValue[0], ssValue.size());
 
-        // Write
+        //! Write
         int ret = pdb->put(activeTxn, &datKey, &datValue, (fOverwrite ? 0 : DB_NOOVERWRITE));
 
-        // Clear memory in case it was a private key
+        //! Clear memory in case it was a private key
         memset(datKey.get_data(), 0, datKey.get_size());
         memset(datValue.get_data(), 0, datValue.get_size());
         return (ret == 0);
@@ -183,16 +185,16 @@ protected:
         if (fReadOnly)
             assert(!"Erase called on database in read-only mode");
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Erase
+        //! Erase
         int ret = pdb->del(activeTxn, &datKey, 0);
 
-        // Clear memory
+        //! Clear memory
         memset(datKey.get_data(), 0, datKey.get_size());
         return (ret == 0 || ret == DB_NOTFOUND);
     }
@@ -203,16 +205,16 @@ protected:
         if (!pdb)
             return false;
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Exists
+        //! Exists
         int ret = pdb->exists(activeTxn, &datKey, 0);
 
-        // Clear memory
+        //! Clear memory
         memset(datKey.get_data(), 0, datKey.get_size());
         return (ret == 0);
     }
@@ -230,7 +232,7 @@ protected:
 
     int ReadAtCursor(Dbc* pcursor, CDataStream& ssKey, CDataStream& ssValue, unsigned int fFlags = DB_NEXT)
     {
-        // Read at cursor
+        //! Read at cursor
         Dbt datKey;
         if (fFlags == DB_SET || fFlags == DB_SET_RANGE || fFlags == DB_GET_BOTH || fFlags == DB_GET_BOTH_RANGE) {
             datKey.set_data(&ssKey[0]);
@@ -249,7 +251,7 @@ protected:
         else if (datKey.get_data() == NULL || datValue.get_data() == NULL)
             return 99999;
 
-        // Convert to streams
+        //! Convert to streams
         ssKey.SetType(SER_DISK);
         ssKey.clear();
         ssKey.write((char*)datKey.get_data(), datKey.get_size());
@@ -257,7 +259,7 @@ protected:
         ssValue.clear();
         ssValue.write((char*)datValue.get_data(), datValue.get_size());
 
-        // Clear and free memory
+        //! Clear and free memory
         memset(datKey.get_data(), 0, datKey.get_size());
         memset(datValue.get_data(), 0, datValue.get_size());
         free(datKey.get_data());

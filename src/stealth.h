@@ -1,9 +1,10 @@
 // Copyright (c) 2014 The ShadowCoin developers
+// Copyright (c) 2018 The LindaProjectInc developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_STEALTH_H
-#define BITCOIN_STEALTH_H
+#ifndef METRIX_STEALTH_H
+#define METRIX_STEALTH_H
 
 #include "serialize.h"
 #include "util.h"
@@ -34,7 +35,7 @@ struct stealth_prefix {
 template <typename T, typename Iterator>
 T from_big_endian(Iterator in)
 {
-    //VERIFY_UNSIGNED(T);
+    //!VERIFY_UNSIGNED(T);
     T out = 0;
     size_t i = sizeof(T);
     while (0 < i)
@@ -45,7 +46,7 @@ T from_big_endian(Iterator in)
 template <typename T, typename Iterator>
 T from_little_endian(Iterator in)
 {
-    //VERIFY_UNSIGNED(T);
+    //!VERIFY_UNSIGNED(T);
     T out = 0;
     size_t i = 0;
     while (i < sizeof(T))
@@ -64,7 +65,7 @@ public:
     uint8_t options;
     ec_point scan_pubkey;
     ec_point spend_pubkey;
-    //std::vector<ec_point> spend_pubkeys;
+    //!std::vector<ec_point> spend_pubkeys;
     size_t number_signatures;
     stealth_prefix prefix;
 
@@ -115,4 +116,4 @@ int StealthSharedToSecretSpend(ec_secret& sharedS, ec_secret& spendSecret, ec_se
 bool IsStealthAddress(const std::string& encodedAddress);
 
 
-#endif // BITCOIN_STEALTH_H
+#endif // METRIX_STEALTH_H

@@ -5,7 +5,7 @@
 
 #include "sigcache.h"
 
-#include "key.h"
+#include "pubkey.h"
 #include "random.h"
 #include "uint256.h"
 #include "util.h"
@@ -15,13 +15,15 @@
 
 namespace {
 
-// Valid signature cache, to avoid doing expensive ECDSA signature checking
-// twice for every transaction (once when accepted into memory pool, and
-// again when accepted into the block chain)
+/**
+ * Valid signature cache, to avoid doing expensive ECDSA signature checking
+ * twice for every transaction (once when accepted into memory pool, and
+ * again when accepted into the block chain)
+ */
 class CSignatureCache
 {
 private:
-     // sigdata_type is (signature hash, signature, public key):
+     //! sigdata_type is (signature hash, signature, public key):
     typedef boost::tuple<uint256, std::vector<unsigned char>, CPubKey> sigdata_type;
     std::set< sigdata_type> setValid;
     boost::shared_mutex cs_sigcache;
@@ -41,10 +43,12 @@ public:
 
     void Set(const uint256 &hash, const std::vector<unsigned char>& vchSig, const CPubKey& pubKey)
     {
-        // DoS prevention: limit cache size to less than 10MB
-        // (~200 bytes per cache entry times 50,000 entries)
-        // Since there are a maximum of 20,000 signature operations per block
-        // 50,000 is a reasonable default.
+        /**
+         * DoS prevention: limit cache size to less than 10MB
+         * (~200 bytes per cache entry times 50,000 entries)
+         * Since there are a maximum of 20,000 signature operations per block
+         * 50,000 is a reasonable default.
+         */
         int64_t nMaxCacheSize = GetArg("-maxsigcachesize", 50000);
         if (nMaxCacheSize <= 0) return;
 
@@ -52,10 +56,12 @@ public:
 
         while (static_cast<int64_t>(setValid.size()) > nMaxCacheSize)
         {
-            // Evict a random entry. Random because that helps
-            // foil would-be DoS attackers who might try to pre-generate
-            // and re-use a set of valid signatures just-slightly-greater
-            // than our cache size.
+            /**
+             * Evict a random entry. Random because that helps
+             * foil would-be DoS attackers who might try to pre-generate
+             * and re-use a set of valid signatures just-slightly-greater
+             * than our cache size.
+             */
             uint256 randomHash = GetRandHash();
             std::vector<unsigned char> unused;
             std::set<sigdata_type>::iterator it =

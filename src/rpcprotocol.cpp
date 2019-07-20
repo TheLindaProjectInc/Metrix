@@ -5,6 +5,7 @@
 
 #include "rpcprotocol.h"
 
+#include "clientversion.h"
 #include "tinyformat.h"
 #include "util.h"
 #include "utilstrencodings.h"
@@ -29,15 +30,15 @@ using namespace boost;
 using namespace boost::asio;
 using namespace json_spirit;
 
-// Number of bytes to allocate and read at most at once in post data
+//! Number of bytes to allocate and read at most at once in post data
 const size_t POST_READ_SIZE = 256 * 1024;
 
-//
-// HTTP protocol
-//
-// This ain't Apache.  We're just using HTTP header for the length field
-// and to be compatible with other JSON-RPC implementations.
-//
+/**
+ * HTTP protocol
+ *
+ * This ain't Apache.  We're just using HTTP header for the length field
+ * and to be compatible with other JSON-RPC implementations.
+ */
 
 string HTTPPost(const string& strMsg, const map<string, string>& mapRequestHeaders)
 {
@@ -138,23 +139,23 @@ bool ReadHTTPRequestLine(std::basic_istream<char>& stream, int& proto, string& h
     string str;
     getline(stream, str);
 
-    // HTTP request line is space-delimited
+    //! HTTP request line is space-delimited
     vector<string> vWords;
     boost::split(vWords, str, boost::is_any_of(" "));
     if (vWords.size() < 2)
         return false;
 
-    // HTTP methods permitted: GET, POST
+    //! HTTP methods permitted: GET, POST
     http_method = vWords[0];
     if (http_method != "GET" && http_method != "POST")
         return false;
 
-    // HTTP URI must be an absolute path, relative to current host
+    //! HTTP URI must be an absolute path, relative to current host
     http_uri = vWords[1];
     if (http_uri.size() == 0 || http_uri[0] != '/')
         return false;
 
-    // parse proto, if present
+    //! parse proto, if present
     string strProto = "";
     if (vWords.size() > 2)
         strProto = vWords[2];
@@ -211,12 +212,12 @@ int ReadHTTPMessage(std::basic_istream<char>& stream, map<string, string>& mapHe
     mapHeadersRet.clear();
     strMessageRet = "";
 
-    // Read header
+    //! Read header
     int nLen = ReadHTTPHeaders(stream, mapHeadersRet);
     if (nLen < 0 || (size_t)nLen > max_size)
         return HTTP_INTERNAL_SERVER_ERROR;
 
-    // Read message
+    //! Read message
     if (nLen > 0) {
         vector<char> vch;
         size_t ptr = 0;
@@ -224,7 +225,7 @@ int ReadHTTPMessage(std::basic_istream<char>& stream, map<string, string>& mapHe
             size_t bytes_to_read = std::min((size_t)nLen - ptr, POST_READ_SIZE);
             vch.resize(ptr + bytes_to_read);
             stream.read(&vch[ptr], bytes_to_read);
-            if (!stream) // Connection lost while reading
+            if (!stream) //! Connection lost while reading
                 return HTTP_INTERNAL_SERVER_ERROR;
             ptr += bytes_to_read;
         }
@@ -243,15 +244,15 @@ int ReadHTTPMessage(std::basic_istream<char>& stream, map<string, string>& mapHe
     return HTTP_OK;
 }
 
-//
-// JSON-RPC protocol.  Bitcoin speaks version 1.0 for maximum compatibility,
-// but uses JSON-RPC 1.1/2.0 standards for parts of the 1.0 standard that were
-// unspecified (HTTP errors and contents of 'error').
-//
-// 1.0 spec: http://json-rpc.org/wiki/specification
-// 1.2 spec: http://jsonrpc.org/historical/json-rpc-over-http.html
-// http://www.codeproject.com/KB/recipes/JSON_Spirit.aspx
-//
+/**
+ * JSON-RPC protocol.  Bitcoin speaks version 1.0 for maximum compatibility,
+ * but uses JSON-RPC 1.1/2.0 standards for parts of the 1.0 standard that were
+ * unspecified (HTTP errors and contents of 'error').
+ *
+ * 1.0 spec: http://json-rpc.org/wiki/specification
+ * 1.2 spec: http://jsonrpc.org/historical/json-rpc-over-http.html
+ * http://www.codeproject.com/KB/recipes/JSON_Spirit.aspx
+ */
 
 string JSONRPCRequest(const string& strMethod, const Array& params, const Value& id)
 {

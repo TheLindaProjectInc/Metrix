@@ -5,10 +5,10 @@
 
 #include "script.h"
 
-#include <boost/foreach.hpp>
+#include "tinyformat.h"
+#include "utilstrencodings.h"
 
-using namespace std;
-
+namespace {
 inline std::string ValueString(const std::vector<unsigned char>& vch)
 {
     if (vch.size() <= 4)
@@ -16,11 +16,14 @@ inline std::string ValueString(const std::vector<unsigned char>& vch)
     else
         return HexStr(vch);
 }
+} //! anon namespace
+
+using namespace std;
 
 const char* GetOpName(opcodetype opcode)
 {
     switch (opcode) {
-    // push value
+    //! push value
     case OP_0:
         return "0";
     case OP_PUSHDATA1:
@@ -66,7 +69,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_16:
         return "16";
 
-    // control
+    //! control
     case OP_NOP:
         return "OP_NOP";
     case OP_VER:
@@ -88,7 +91,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_RETURN:
         return "OP_RETURN";
 
-    // stack ops
+    //! stack ops
     case OP_TOALTSTACK:
         return "OP_TOALTSTACK";
     case OP_FROMALTSTACK:
@@ -128,7 +131,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_TUCK:
         return "OP_TUCK";
 
-    // splice ops
+    //! splice ops
     case OP_CAT:
         return "OP_CAT";
     case OP_SUBSTR:
@@ -140,7 +143,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_SIZE:
         return "OP_SIZE";
 
-    // bit logic
+    //! bit logic
     case OP_INVERT:
         return "OP_INVERT";
     case OP_AND:
@@ -158,7 +161,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_RESERVED2:
         return "OP_RESERVED2";
 
-    // numeric
+    //! numeric
     case OP_1ADD:
         return "OP_1ADD";
     case OP_1SUB:
@@ -214,7 +217,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_WITHIN:
         return "OP_WITHIN";
 
-    // crypto
+    //! crypto
     case OP_RIPEMD160:
         return "OP_RIPEMD160";
     case OP_SHA1:
@@ -236,7 +239,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_CHECKMULTISIGVERIFY:
         return "OP_CHECKMULTISIGVERIFY";
 
-    // expanson
+    //! expanson
     case OP_NOP1:
         return "OP_NOP1";
     case OP_NOP2:
@@ -261,10 +264,12 @@ const char* GetOpName(opcodetype opcode)
     case OP_INVALIDOPCODE:
         return "OP_INVALIDOPCODE";
 
-        // Note:
-        //  The template matching params OP_SMALLDATA/etc are defined in opcodetype enum
-        //  as kind of implementation hack, they are *NOT* real opcodes.  If found in real
-        //  Script, just let the default: case deal with them.
+        /** 
+         * Note:
+         *  The template matching params OP_SMALLDATA/etc are defined in opcodetype enum
+         *  as kind of implementation hack, they are *NOT* real opcodes.  If found in real
+         *  Script, just let the default: case deal with them.
+         */
 
     default:
         return "OP_UNKNOWN";
@@ -297,10 +302,11 @@ unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
 {
     if (!IsPayToScriptHash())
         return GetSigOpCount(true);
-
-    // This is a pay-to-script-hash scriptPubKey;
-    // get the last item that the scriptSig
-    // pushes onto the stack:
+    /**
+     * This is a pay-to-script-hash scriptPubKey;
+     * get the last item that the scriptSig
+     * pushes onto the stack:
+     */
     const_iterator pc = scriptSig.begin();
     vector<unsigned char> data;
     while (pc < scriptSig.end()) {
@@ -311,7 +317,7 @@ unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
             return 0;
     }
 
-    /// ... and return its opcount:
+    //! ... and return its opcount:
     CScript subscript(data.begin(), data.end());
     return subscript.GetSigOpCount(true);
 }
@@ -347,7 +353,7 @@ bool CScript::IsNormalPaymentScript() const
 
 bool CScript::IsPayToScriptHash() const
 {
-    // Extra-fast test for pay-to-script-hash CScripts:
+    //! Extra-fast test for pay-to-script-hash CScripts:
     return (this->size() == 23 &&
             this->at(0) == OP_HASH160 &&
             this->at(1) == 0x14 &&

@@ -1,10 +1,11 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
+// Copyright (c) 2017-2019 The LindaProject Inc developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef SRC_MASTERNODECONFIG_H_
-#define SRC_MASTERNODECONFIG_H_
+#ifndef METRIX_MASTERNODECONFIG_H
+#define METRIX_MASTERNODECONFIG_H
 
 #include <string>
 #include <vector>
@@ -109,4 +110,4 @@ private:
 };
 
 
-#endif // SRC_MASTERNODECONFIG_H_
+#endif // METRIX_MASTERNODECONFIG_H

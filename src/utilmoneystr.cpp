@@ -5,21 +5,22 @@
 
 #include "utilmoneystr.h"
 
-#include "core.h"
+#include "core/transaction.h"
 #include "tinyformat.h"
+#include "utilstrencodings.h"
 
 using namespace std;
 
 string FormatMoney(const CAmount& n, bool fPlus)
 {
-    // Note: not using straight sprintf here because we do NOT want
-    // localized number formatting.
+    //! Note: not using straight sprintf here because we do NOT want
+    //! localized number formatting.
     int64_t n_abs = (n > 0 ? n : -n);
     int64_t quotient = n_abs / COIN;
     int64_t remainder = n_abs % COIN;
     string str = strprintf("%d.%08d", quotient, remainder);
 
-    // Right-trim excess zeros before the decimal point:
+    //! Right-trim excess zeros before the decimal point:
     int nTrim = 0;
     for (int i = str.size() - 1; (str[i] == '0' && isdigit(str[i - 2])); --i)
         ++nTrim;
@@ -65,7 +66,7 @@ bool ParseMoney(const char* pszIn, CAmount& nRet)
     for (; *p; p++)
         if (!isspace(*p))
             return false;
-    if (strWhole.size() > 10) // guard against 63 bit overflow
+    if (strWhole.size() > 10) //! guard against 63 bit overflow
         return false;
     if (nUnits < 0 || nUnits > COIN)
         return false;

@@ -10,7 +10,8 @@
 
 class CBlockIndex;
 
-/** Block-chain checkpoints are compiled-in sanity checks.
+/** 
+ * Block-chain checkpoints are compiled-in sanity checks.
  * They are updated every release or three.
  */
 namespace Checkpoints
@@ -24,18 +25,18 @@ struct CCheckpointData {
     double fTransactionsPerDay;
 };
 
-// Returns true if block passes checkpoint checks
+//! Returns true if block passes checkpoint checks
 bool CheckBlock(int nHeight, const uint256& hash);
 
-// Return conservative estimate of total number of blocks, 0 if unknown
+//! Return conservative estimate of total number of blocks, 0 if unknown
 int GetTotalBlocksEstimate();
 
-// Returns last CBlockIndex* in mapBlockIndex that is a checkpoint
+//! Returns last CBlockIndex* in mapBlockIndex that is a checkpoint
 CBlockIndex* GetLastCheckpoint();
 
 double GuessVerificationProgress(CBlockIndex* pindex);
 
 extern bool fEnabled;
-} // namespace Checkpoints
+} //! namespace Checkpoints
 
 #endif // BITCOIN_CHECKPOINT_H

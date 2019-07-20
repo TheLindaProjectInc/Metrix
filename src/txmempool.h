@@ -8,13 +8,19 @@
 
 #include <list>
 
+#include "amount.h"
 #include "coins.h"
-#include "core.h"
+#include "core/transaction.h"
+#include "sync.h"
+
+class CAutoFile;
 
 inline bool AllowFree(double dPriority)
 {
-    // Large (in bytes) low-priority (new, small-coin) transactions
-    // need a fee.
+    /**
+     * Large (in bytes) low-priority (new, small-coin) transactions
+     * need a fee.
+     */
     return dPriority > COIN * 144 / 250;
 }
 
@@ -28,12 +34,12 @@ class CTxMemPoolEntry
 {
 private:
     CTransaction tx;
-    CAmount nFee;         // Cached to avoid expensive parent-transaction lookups
-    size_t nTxSize;       // ... and avoid recomputing tx size
-    size_t nModSize;      // ... and modified size for priority
-    int64_t nTime;        // Local time when entering the mempool
-    double dPriority;     // Priority when entering the mempool
-    unsigned int nHeight; // Chain height when entering the mempool
+    CAmount nFee;         //! Cached to avoid expensive parent-transaction lookups
+    size_t nTxSize;       //! ... and avoid recomputing tx size
+    size_t nModSize;      //! ... and modified size for priority
+    int64_t nTime;        //! Local time when entering the mempool
+    double dPriority;     //! Priority when entering the mempool
+    unsigned int nHeight; //! Chain height when entering the mempool
 
 public:
     CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee, int64_t _nTime, double _dPriority, unsigned int _nHeight);
@@ -52,6 +58,27 @@ class CMinerPolicyEstimator;
 
 class CCoins;
 
+/** An inpoint - a combination of a transaction and an index n into its vin */
+class CInPoint
+{
+public:
+    const CTransaction* ptx;
+    uint32_t n;
+
+    CInPoint() { SetNull(); }
+    CInPoint(const CTransaction* ptxIn, uint32_t nIn)
+    {
+        ptx = ptxIn;
+        n = nIn;
+    }
+    void SetNull()
+    {
+        ptx = NULL;
+        n = (uint32_t)-1;
+    }
+    bool IsNull() const { return (ptx == NULL && n == (uint32_t)-1); }
+};
+
 /*
  * CTxMemPool stores valid-according-to-the-current-best-chain
  * transactions that may be included in the next block.
@@ -65,12 +92,12 @@ class CCoins;
 class CTxMemPool
 {
 private:
-    bool fSanityCheck; // Normally false, true if -checkmempool or -regtest
+    bool fSanityCheck; //! Normally false, true if -checkmempool or -regtest
     unsigned int nTransactionsUpdated;
     CMinerPolicyEstimator* minerPolicyEstimator;
 
-    CFeeRate minRelayFee; // Passed to constructor to avoid dependency on main
-    uint64_t totalTxSize; // sum of all mempool tx' byte sizes
+    CFeeRate minRelayFee; //! Passed to constructor to avoid dependency on main
+    uint64_t totalTxSize; //! sum of all mempool tx' byte sizes
 
 public:
     mutable CCriticalSection cs;
@@ -126,11 +153,11 @@ public:
 
     bool lookup(uint256 hash, CTransaction& result) const;
 
-    // Estimate fee rate needed to get into the next
-    // nBlocks
+    //! Estimate fee rate needed to get into the next
+    //! nBlocks
     CFeeRate estimateFee(int nBlocks) const;
-    // Estimate priority needed to get into the next
-    // nBlocks
+    //! Estimate priority needed to get into the next
+    //! nBlocks
     double estimatePriority(int nBlocks) const;
     // Write/Read estimates to disk
     bool WriteFeeEstimates(CAutoFile& fileout) const;

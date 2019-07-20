@@ -3,13 +3,12 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_SCRIPT_STANDARD
-#define H_BITCOIN_SCRIPT_STANDARD
+#ifndef BITCOIN_SCRIPT_STANDARD_H
+#define BITCOIN_SCRIPT_STANDARD_H
 
 #include "script/interpreter.h"
-#include "script/script.h"
+#include "uint256.h"
 
-#include <key.h>
 #include <stealth.h>
 
 #include <stdint.h>
@@ -20,29 +19,44 @@ class CKeyID;
 class CScript;
 class CStealthAddress;
 
-static const unsigned int MAX_OP_RETURN_RELAY = 40; // bytes
+/** A reference to a CScript: the Hash160 of its serialization (see script.h) */
+class CScriptID : public uint160
+{
+public:
+    CScriptID() : uint160(0) {}
+    CScriptID(const CScript& in);
+    CScriptID(const uint160& in) : uint160(in) {}
+};
 
-// Mandatory script verification flags that all new blocks must comply with for
-// them to be valid. (but old blocks may not comply with)
-//
-// Failing one of these tests may trigger a DoS ban - see ConnectInputs() for
-// details.
+static const unsigned int MAX_OP_RETURN_RELAY = 40; // bytes
+extern unsigned nMaxDatacarrierBytes;
+
+/**
+ * Mandatory script verification flags that all new blocks must comply with for
+ * them to be valid. (but old blocks may not comply with)
+ *
+ * Failing one of these tests may trigger a DoS ban - see ConnectInputs() for
+ * details.
+ */
 static const unsigned int MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_NONE;
 
-// Standard script verification flags that standard transactions will comply
-// with. However scripts violating these flags may still be present in valid
-// blocks and we must accept those blocks.
+/**
+ * Standard script verification flags that standard transactions will comply
+ * with. However scripts violating these flags may still be present in valid
+ * blocks and we must accept those blocks.
+ */
 static const unsigned int STANDARD_SCRIPT_VERIFY_FLAGS = MANDATORY_SCRIPT_VERIFY_FLAGS |
                                                          SCRIPT_VERIFY_STRICTENC |
+                                                         SCRIPT_VERIFY_MINIMALDATA |
                                                          SCRIPT_VERIFY_NULLDUMMY |
                                                          SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
 
-// For convenience, standard but not mandatory verify flags.
+//! For convenience, standard but not mandatory verify flags.
 static const unsigned int STANDARD_NOT_MANDATORY_VERIFY_FLAGS = STANDARD_SCRIPT_VERIFY_FLAGS & ~MANDATORY_SCRIPT_VERIFY_FLAGS;
 
 enum txnouttype {
     TX_NONSTANDARD,
-    // 'standard' transaction types:
+    //! 'standard' transaction types:
     TX_PUBKEY,
     TX_PUBKEYHASH,
     TX_SCRIPTHASH,
@@ -76,4 +90,4 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::
 CScript GetScriptForDestination(const CTxDestination& dest);
 CScript GetScriptForMultisig(int nRequired, const std::vector<CPubKey>& keys);
 
-#endif // H_BITCOIN_SCRIPT_STANDARD
+#endif //! BITCOIN_SCRIPT_STANDARD_H

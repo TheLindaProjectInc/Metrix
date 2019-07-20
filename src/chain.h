@@ -3,11 +3,12 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef H_BITCOIN_CHAIN
-#define H_BITCOIN_CHAIN
+#ifndef BITCOIN_CHAIN_H
+#define BITCOIN_CHAIN_H
 
-#include "core.h"
+#include "core/block.h"
 #include "init.h"
+#include "timedata.h"
 #include "uint256.h"
 #include "utilmoneystr.h"
 
@@ -389,7 +390,7 @@ public:
     //! Returns true if the validity was changed.
     bool RaiseValidity(enum BlockStatus nUpTo)
     {
-        assert(!(nUpTo & ~BLOCK_VALID_MASK)); // Only validity flags allowed.
+        assert(!(nUpTo & ~BLOCK_VALID_MASK)); //! Only validity flags allowed.
         if (nStatus & BLOCK_FAILED_MASK)
             return false;
         if ((nStatus & BLOCK_VALID_MASK) < nUpTo) {
@@ -552,4 +553,4 @@ public:
     const CBlockIndex* FindFork(const CBlockIndex* pindex) const;
 };
 
-#endif
+#endif // BITCOIN_CHAIN_H

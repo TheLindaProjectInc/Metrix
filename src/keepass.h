@@ -2,8 +2,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef _KEEPASS_H_
-#define _KEEPASS_H_
+#ifndef BITCOIN_KEEPASS_H
+#define BITCOIN_KEEPASS_H
 
 #define KEEPASS_CRYPTO_KEY_SIZE 32
 #define KEEPASS_CRYPTO_BLOCK_SIZE 16
@@ -39,8 +39,8 @@ class CKeePassIntegrator
         void init();
 
     public:
-        void addStrParameter(std::string sName, std::string sValue);  // Regular
-        void addStrParameter(std::string sName, SecureString sValue); // Encrypt
+        void addStrParameter(std::string sName, std::string sValue);  //! Regular
+        void addStrParameter(std::string sName, SecureString sValue); //! Encrypt
         std::string getJson();
 
         CKeePassRequest(SecureString sKey, std::string sType)
@@ -112,7 +112,7 @@ class CKeePassIntegrator
         std::string getStr(std::string sName);
         std::vector<CKeePassEntry> getEntries();
 
-        SecureString decrypt(std::string sValue); // DecodeBase64 and decrypt arbitrary string value
+        SecureString decrypt(std::string sValue); //! DecodeBase64 and decrypt arbitrary string value
     };
 
     static SecureString generateRandomKey(size_t nSize);
@@ -133,4 +133,4 @@ public:
 
 extern CKeePassIntegrator keePassInt;
 
-#endif // KEEPASS_H
+#endif // BITCOIN_KEEPASS_H

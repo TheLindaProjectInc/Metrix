@@ -171,7 +171,7 @@ public:
 
     base_uint& operator++()
     {
-        // prefix operator
+        //! prefix operator
         int i = 0;
         while (++pn[i] == 0 && i < WIDTH - 1)
             i++;
@@ -180,7 +180,7 @@ public:
 
     const base_uint operator++(int)
     {
-        // postfix operator
+        //! postfix operator
         const base_uint ret = *this;
         ++(*this);
         return ret;
@@ -188,7 +188,7 @@ public:
 
     base_uint& operator--()
     {
-        // prefix operator
+        //! prefix operator
         int i = 0;
         while (--pn[i] == (uint32_t)-1 && i < WIDTH - 1)
             i++;
@@ -197,7 +197,7 @@ public:
 
     const base_uint operator--(int)
     {
-        // postfix operator
+        //! postfix operator
         const base_uint ret = *this;
         --(*this);
         return ret;

@@ -1,8 +1,8 @@
 // Copyright (c) 2012 Pieter Wuille
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef _BITCOIN_ADDRMAN
-#define _BITCOIN_ADDRMAN
+#ifndef BITCOIN_ADDRMAN_H
+#define BITCOIN_ADDRMAN_H
 
 #include "netbase.h"
 #include "protocol.h"
@@ -23,7 +23,7 @@ private:
     //! where knowledge about this address first came from
     CNetAddr source;
 
-    // last successful connection by us
+    //! last successful connection by us
     int64_t nLastSuccess;
 
     //! last try whatsoever by us:
@@ -509,4 +509,4 @@ public:
     }
 };
 
-#endif // _BITCOIN_ADDRMAN
+#endif // BITCOIN_ADDRMAN_H

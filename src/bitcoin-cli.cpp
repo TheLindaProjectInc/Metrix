@@ -4,12 +4,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chainparamsbase.h"
-#include "init.h"
+#include "clientversion.h"
 #include "rpcclient.h"
 #include "rpcprotocol.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "version.h"
 
 #define _(x) std::string(x) /* Keep the _() around in case gettext or such will be used later to translate non-UI */
 
@@ -43,14 +42,14 @@ std::string HelpMessageCli()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//
-// Start
-//
+/**
+ * Start
+ *
 
-//
-// Exception thrown on connection error.  This error is used to determine
-// when to wait if -rpcwait is given.
-//
+ *
+ * Exception thrown on connection error.  This error is used to determine
+ * when to wait if -rpcwait is given.
+ */
 class CConnectionFailed : public std::runtime_error
 {
 public:
@@ -63,12 +62,12 @@ public:
 
 static bool AppInitRPC(int argc, char* argv[])
 {
-    //
-    // Parameters
-    //
+    /**
+     * Parameters
+     */
     ParseParameters(argc, argv);
     if (argc < 2 || mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
-        // First part of help message is specific to RPC client
+        //! First part of help message is specific to RPC client
         std::string strUsage = _("Metrix RPC client version") + " " + FormatFullVersion() + "\n";
         if (!mapArgs.count("-version")) {
             strUsage += "\n" + _("Usage:") + "\n" +
@@ -93,7 +92,7 @@ static bool AppInitRPC(int argc, char* argv[])
         return false;
     }
 
-    // Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
+    //! Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
     if (!SelectBaseParamsFromCommandLine()) {
         fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
         return false;
@@ -109,7 +108,7 @@ Object CallRPC(const string& strMethod, const Array& params)
               "If the file does not exist, create it with owner-readable-only file permissions."),
             GetConfigFile().string()));
 
-    // Connect to localhost
+    //! Connect to localhost
     bool fUseSSL = GetBoolArg("-rpcssl", false);
     asio::io_service io_service;
     ssl::context context(io_service, ssl::context::sslv23);
@@ -122,21 +121,21 @@ Object CallRPC(const string& strMethod, const Array& params)
     if (!fConnected)
         throw CConnectionFailed("couldn't connect to server");
 
-    // HTTP basic authentication
+    //! HTTP basic authentication
     string strUserPass64 = EncodeBase64(mapArgs["-rpcuser"] + ":" + mapArgs["-rpcpassword"]);
     map<string, string> mapRequestHeaders;
     mapRequestHeaders["Authorization"] = string("Basic ") + strUserPass64;
 
-    // Send request
+    //! Send request
     string strRequest = JSONRPCRequest(strMethod, params, 1);
     string strPost = HTTPPost(strRequest, mapRequestHeaders);
     stream << strPost << std::flush;
 
-    // Receive HTTP reply status
+    //! Receive HTTP reply status
     int nProto = 0;
     int nStatus = ReadHTTPStatus(stream, nProto);
 
-    // Receive HTTP reply message headers and body
+    //! Receive HTTP reply message headers and body
     map<string, string> mapHeaders;
     string strReply;
     ReadHTTPMessage(stream, mapHeaders, strReply, nProto, MAX_SIZE);
@@ -148,7 +147,7 @@ Object CallRPC(const string& strMethod, const Array& params)
     else if (strReply.empty())
         throw runtime_error("no response from server");
 
-    // Parse reply
+    //! Parse reply
     Value valReply;
     if (!read_string(strReply, valReply))
         throw runtime_error("couldn't parse reply from server");
@@ -164,40 +163,40 @@ int CommandLineRPC(int argc, char* argv[])
     string strPrint;
     int nRet = 0;
     try {
-        // Skip switches
+        //! Skip switches
         while (argc > 1 && IsSwitchChar(argv[1][0])) {
             argc--;
             argv++;
         }
 
-        // Method
+        //! Method
         if (argc < 2)
             throw runtime_error("too few parameters");
         string strMethod = argv[1];
 
-        // Parameters default to strings
+        //! Parameters default to strings
         std::vector<std::string> strParams(&argv[2], &argv[argc]);
         Array params = RPCConvertValues(strMethod, strParams);
 
-        // Execute and handle connection failures with -rpcwait
+        //! Execute and handle connection failures with -rpcwait
         const bool fWait = GetBoolArg("-rpcwait", false);
         do {
             try {
                 const Object reply = CallRPC(strMethod, params);
 
-                // Parse reply
+                //! Parse reply
                 const Value& result = find_value(reply, "result");
                 const Value& error  = find_value(reply, "error");
 
                 if (error.type() != null_type) {
-                    // Error
+                    //! Error
                     const int code = find_value(error.get_obj(), "code").get_int();
                     if (fWait && code == RPC_IN_WARMUP)
                         throw CConnectionFailed("server in warmup");
                     strPrint = "error: " + write_string(error, false);
                     nRet = abs(code);
                 } else {
-                    // Result
+                    //! Result
                     if (result.type() == null_type)
                         strPrint = "";
                     else if (result.type() == str_type)
@@ -206,7 +205,7 @@ int CommandLineRPC(int argc, char* argv[])
                         strPrint = write_string(result, true);
                 }
 
-                // Connection succeeded, no need to retry.
+                //! Connection succeeded, no need to retry.
                 break;
             }
             catch (const CConnectionFailed& e) {

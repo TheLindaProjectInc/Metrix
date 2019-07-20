@@ -3,8 +3,9 @@
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
 #include "stealth.h"
-#include "base58.h"
 
+#include "base58.h"
+#include "random.h"
 
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
@@ -51,7 +52,7 @@ bool CStealthAddress::SetEncoded(const std::string& encodedAddress)
     scan_pubkey.resize(33);
     memcpy(&scan_pubkey[0], p, 33);
     p += 33;
-    //uint8_t spend_pubkeys = *p++;
+    //!uint8_t spend_pubkeys = *p++;
     p++;
 
     spend_pubkey.resize(33);
@@ -62,8 +63,8 @@ bool CStealthAddress::SetEncoded(const std::string& encodedAddress)
 
 std::string CStealthAddress::Encoded() const
 {
-    // https://wiki.unsystem.net/index.php/DarkWallet/Stealth#Address_format
-    // [version] [options] [scan_key] [N] ... [Nsigs] [prefix_length] ...
+    //! https://wiki.unsystem.net/index.php/DarkWallet/Stealth#Address_format
+    //! [version] [options] [scan_key] [N] ... [Nsigs] [prefix_length] ...
 
     data_chunk raw;
     raw.push_back(stealth_version_byte);
@@ -71,10 +72,10 @@ std::string CStealthAddress::Encoded() const
     raw.push_back(options);
 
     raw.insert(raw.end(), scan_pubkey.begin(), scan_pubkey.end());
-    raw.push_back(1); // number of spend pubkeys
+    raw.push_back(1); //! number of spend pubkeys
     raw.insert(raw.end(), spend_pubkey.begin(), spend_pubkey.end());
-    raw.push_back(0); // number of signatures
-    raw.push_back(0); // ?
+    raw.push_back(0); //! number of signatures
+    raw.push_back(0); //! ?
 
     AppendChecksum(raw);
 
@@ -92,7 +93,7 @@ uint32_t BitcoinChecksum(uint8_t* p, uint32_t nBytes)
     uint8_t hash2[32];
     CSHA256().Write((uint8_t*)hash1, sizeof(hash1)).Finalize((uint8_t*)hash2);
 
-    // -- checksum is the 1st 4 bytes of the hash
+    //! -- checksum is the 1st 4 bytes of the hash
     uint32_t checksum = from_little_endian<uint32_t>(&hash2[0]);
 
     return checksum;
@@ -102,10 +103,10 @@ void AppendChecksum(data_chunk& data)
 {
     uint32_t checksum = BitcoinChecksum(&data[0], data.size());
 
-    // -- to_little_endian
+    //! -- to_little_endian
     std::vector<uint8_t> tmp(4);
 
-    //memcpy(&tmp[0], &checksum, 4);
+    //!memcpy(&tmp[0], &checksum, 4);
     for (int i = 0; i < 4; ++i) {
         tmp[i] = checksum & 0xFF;
         checksum >>= 8;
@@ -130,12 +131,12 @@ int GenerateRandomSecret(ec_secret& out)
     RandAddSeedPerfmon();
 
     static uint256 max("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140");
-    static uint256 min(16000); // increase? min valid key is 1
+    static uint256 min(16000); //! increase? min valid key is 1
 
     uint256 test;
 
     int i;
-    // -- check max, try max 32 times
+    //! -- check max, try max 32 times
     for (i = 0; i < 32; ++i) {
         RAND_bytes((unsigned char*)test.begin(), 32);
         if (test > min && test < max) {
@@ -154,7 +155,7 @@ int GenerateRandomSecret(ec_secret& out)
 
 int SecretToPublicKey(const ec_secret& secret, ec_point& out)
 {
-    // -- public key = private * G
+    //! -- public key = private * G
     int rv = 0;
 
     EC_GROUP* ecgrp = EC_GROUP_new_by_curve_name(NID_secp256k1);
@@ -276,9 +277,9 @@ int StealthSecret(ec_secret& secret, ec_point& pubkey, const ec_point& pkSpend, 
         goto End;
     };
 
-    // -- eQ
-    // EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
-    // EC_POINT_mul calculates the value generator * n + q * m and stores the result in r. The value n may be NULL in which case the result is just q * m.
+    //! -- eQ
+    //! EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
+    //! EC_POINT_mul calculates the value generator * n + q * m and stores the result in r. The value n may be NULL in which case the result is just q * m.
     if (!EC_POINT_mul(ecgrp, Q, NULL, Q, bnEphem, bnCtx)) {
         LogPrintf("StealthSecret(): eQ EC_POINT_mul failed\n");
         rv = 1;
@@ -307,7 +308,7 @@ int StealthSecret(ec_secret& secret, ec_point& pubkey, const ec_point& pkSpend, 
         goto End;
     };
 
-    // -- cG
+    //! -- cG
     if (!(C = EC_POINT_new(ecgrp))) {
         LogPrintf("StealthSecret(): C EC_POINT_new failed\n");
         rv = 1;
@@ -447,7 +448,7 @@ int StealthSecretSpend(ec_secret& scanSecret, ec_point& ephemPubkey, ec_secret& 
         goto End;
     };
 
-    // -- dP
+    //! -- dP
     if (!EC_POINT_mul(ecgrp, P, NULL, P, bnScanSecret, bnCtx)) {
         LogPrintf("StealthSecretSpend(): dP EC_POINT_mul failed\n");
         rv = 1;
@@ -490,15 +491,15 @@ int StealthSecretSpend(ec_secret& scanSecret, ec_point& ephemPubkey, ec_secret& 
         goto End;
     };
 
-    //if (!BN_add(r, a, b)) return 0;
-    //return BN_nnmod(r, r, m, ctx);
+    //!if (!BN_add(r, a, b)) return 0;
+    //!return BN_nnmod(r, r, m, ctx);
     if (!BN_mod_add(bnSpend, bnSpend, bnc, bnOrder, bnCtx)) {
         LogPrintf("StealthSecretSpend(): bnSpend BN_mod_add failed.\n");
         rv = 1;
         goto End;
     };
 
-    if (BN_is_zero(bnSpend)) // possible?
+    if (BN_is_zero(bnSpend)) //! possible?
     {
         LogPrintf("StealthSecretSpend(): bnSpend is zero.\n");
         rv = 1;
@@ -575,15 +576,15 @@ int StealthSharedToSecretSpend(ec_secret& sharedS, ec_secret& spendSecret, ec_se
         goto End;
     };
 
-    //if (!BN_add(r, a, b)) return 0;
-    //return BN_nnmod(r, r, m, ctx);
+    //!if (!BN_add(r, a, b)) return 0;
+    //!return BN_nnmod(r, r, m, ctx);
     if (!BN_mod_add(bnSpend, bnSpend, bnc, bnOrder, bnCtx)) {
         LogPrintf("StealthSecretSpend(): bnSpend BN_mod_add failed.\n");
         rv = 1;
         goto End;
     };
 
-    if (BN_is_zero(bnSpend)) // possible?
+    if (BN_is_zero(bnSpend)) //! possible?
     {
         LogPrintf("StealthSecretSpend(): bnSpend is zero.\n");
         rv = 1;
@@ -615,17 +616,17 @@ bool IsStealthAddress(const std::string& encodedAddress)
     data_chunk raw;
 
     if (!DecodeBase58(encodedAddress, raw)) {
-        //LogPrintf("IsStealthAddress DecodeBase58 falied.\n");
+        //!LogPrintf("IsStealthAddress DecodeBase58 falied.\n");
         return false;
     };
 
     if (!VerifyChecksum(raw)) {
-        //LogPrintf("IsStealthAddress verify_checksum falied.\n");
+        //!LogPrintf("IsStealthAddress verify_checksum falied.\n");
         return false;
     };
 
     if (raw.size() < 1 + 1 + 33 + 1 + 33 + 1 + 1 + 4) {
-        //LogPrintf("IsStealthAddress too few bytes provided.\n");
+        //!LogPrintf("IsStealthAddress too few bytes provided.\n");
         return false;
     };
 
@@ -634,7 +635,7 @@ bool IsStealthAddress(const std::string& encodedAddress)
     uint8_t version = *p++;
 
     if (version != stealth_version_byte) {
-        //LogPrintf("IsStealthAddress version mismatch 0x%x != 0x%x.\n", version, stealth_version_byte);
+        //!LogPrintf("IsStealthAddress version mismatch 0x%x != 0x%x.\n", version, stealth_version_byte);
         return false;
     };
 

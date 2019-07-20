@@ -25,8 +25,8 @@
 #include <fcntl.h>
 #endif
 
-#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
-#include <boost/algorithm/string/predicate.hpp> // for startswith() and endswith()
+#include <boost/algorithm/string/case_conv.hpp> //! for to_lower()
+#include <boost/algorithm/string/predicate.hpp> //! for startswith() and endswith()
 #include <boost/thread.hpp>
 
 #if !defined(HAVE_MSG_NOSIGNAL) && !defined(MSG_NOSIGNAL)
@@ -35,7 +35,7 @@
 
 using namespace std;
 
-// Settings
+//! Settings
 static proxyType proxyInfo[NET_MAX];
 static CService nameProxy;
 static CCriticalSection cs_proxyInfos;
@@ -44,7 +44,7 @@ bool fNameLookup = false;
 
 static const unsigned char pchIPv4[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff};
 
-// Need ample time for negotiation for very slow proxies such as Tor (milliseconds)
+//! Need ample time for negotiation for very slow proxies such as Tor (milliseconds)
 static const int SOCKS5_RECV_TIMEOUT = 20 * 1000;
 
 enum Network ParseNetwork(std::string net)
@@ -78,9 +78,9 @@ std::string GetNetworkName(enum Network net)
 void SplitHostPort(std::string in, int& portOut, std::string& hostOut)
 {
     size_t colon = in.find_last_of(':');
-    // if a : is found, and it either follows a [...], or no other : is in the string, treat it as port separator
+    //! if a : is found, and it either follows a [...], or no other : is in the string, treat it as port separator
     bool fHaveColon = colon != in.npos;
-    bool fBracketed = fHaveColon && (in[0] == '[' && in[colon - 1] == ']'); // if there is a colon, and in[0]=='[', colon is not 0, so in[colon-1] is safe
+    bool fBracketed = fHaveColon && (in[0] == '[' && in[colon - 1] == ']'); //! if there is a colon, and in[0]=='[', colon is not 0, so in[colon-1] is safe
     bool fMultiColon = fHaveColon && (in.find_last_of(':', colon - 1) != in.npos);
     if (fHaveColon && (colon == 0 || fBracketed || !fMultiColon)) {
         int32_t n;
@@ -150,10 +150,12 @@ bool static LookupIntern(const char* pszName, std::vector<CNetAddr>& vIP, unsign
         return false;
 
     do {
-        // Should set the timeout limit to a resonable value to avoid
-        // generating unnecessary checking call during the polling loop,
-        // while it can still response to stop request quick enough.
-        // 2 seconds looks fine in our situation.
+        /**
+         * Should set the timeout limit to a resonable value to avoid
+         * generating unnecessary checking call during the polling loop,
+         * while it can still response to stop request quick enough.
+         * 2 seconds looks fine in our situation.
+         */
         struct timespec ts = {2, 0};
         gai_suspend(&query, 1, &ts);
         boost::this_thread::interruption_point();
@@ -259,17 +261,19 @@ bool static InterruptibleRecv(char* data, size_t len, int timeout, SOCKET& hSock
 {
     int64_t curTime = GetTimeMillis();
     int64_t endTime = curTime + timeout;
-    // Maximum time to wait in one select call. It will take up until this time (in millis)
-    // to break off in case of an interruption.
+    /**
+     * Maximum time to wait in one select call. It will take up until this time (in millis)
+     * to break off in case of an interruption.
+     */
     const int64_t maxWait = 1000;
     while (len > 0 && curTime < endTime) {
-        ssize_t ret = recv(hSocket, data, len, 0); // Optimistically try the recv first
+        ssize_t ret = recv(hSocket, data, len, 0); //! Optimistically try the recv first
         if (ret > 0) {
             len -= ret;
             data += ret;
-        } else if (ret == 0) { // Unexpected disconnection
+        } else if (ret == 0) { //! Unexpected disconnection
             return false;
-        } else { // Other error or blocking
+        } else { //! Other error or blocking
             int nErr = WSAGetLastError();
             if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL) {
                 struct timeval tval = MillisToTimeval(std::min(endTime - curTime, maxWait));
@@ -412,7 +416,7 @@ bool static ConnectSocketDirectly(const CService& addrConnect, SOCKET& hSocketRe
         return false;
 #ifdef SO_NOSIGPIPE
     int set = 1;
-    // Different way of disabling SIGPIPE on BSD
+    //! Different way of disabling SIGPIPE on BSD
     setsockopt(hSocket, SOL_SOCKET, SO_NOSIGPIPE, (void*)&set, sizeof(int));
 #endif
 
@@ -430,7 +434,7 @@ bool static ConnectSocketDirectly(const CService& addrConnect, SOCKET& hSocketRe
 
     if (connect(hSocket, (struct sockaddr*)&sockaddr, len) == SOCKET_ERROR) {
         int nErr = WSAGetLastError();
-        // WSAEINVAL is here because some legacy version of winsock uses it
+        //! WSAEINVAL is here because some legacy version of winsock uses it
         if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL) {
             struct timeval timeout = MillisToTimeval(nTimeout);
             fd_set fdset;
@@ -539,19 +543,19 @@ bool ConnectSocket(const CService& addrDest, SOCKET& hSocketRet, int nTimeout, b
     proxyType proxy;
     if (outProxyConnectionFailed)
         *outProxyConnectionFailed = false;
-    // no proxy needed (none set for target network)
+    //! no proxy needed (none set for target network)
     if (!GetProxy(addrDest.GetNetwork(), proxy))
         return ConnectSocketDirectly(addrDest, hSocketRet, nTimeout);
 
     SOCKET hSocket = INVALID_SOCKET;
 
-    // first connect to proxy server
+    //! first connect to proxy server
     if (!ConnectSocketDirectly(proxy, hSocket, nTimeout)) {
         if (outProxyConnectionFailed)
             *outProxyConnectionFailed = true;
         return false;
     }
-    // do socks negotiation
+    //! do socks negotiation
     if (!Socks5(addrDest.ToStringIP(), addrDest.GetPort(), hSocket))
         return false;
 
@@ -584,13 +588,13 @@ bool ConnectSocketByName(CService& addr, SOCKET& hSocketRet, const char* pszDest
 
     if (!HaveNameProxy())
         return false;
-    // first connect to name proxy server
+    //! first connect to name proxy server
     if (!ConnectSocketDirectly(nameProxy, hSocket, nTimeout)) {
         if (outProxyConnectionFailed)
             *outProxyConnectionFailed = true;
         return false;
     }
-    // do socks negotiation
+    //! do socks negotiation
     if (!Socks5(strDest, (unsigned short)port, hSocket))
         return false;
 
@@ -702,9 +706,26 @@ bool CNetAddr::IsRFC1918() const
                         (GetByte(3) == 172 && (GetByte(2) >= 16 && GetByte(2) <= 31)));
 }
 
+bool CNetAddr::IsRFC2544() const
+{
+    return IsIPv4() && GetByte(3) == 198 && (GetByte(2) == 18 || GetByte(2) == 19);
+}
+
 bool CNetAddr::IsRFC3927() const
 {
     return IsIPv4() && (GetByte(3) == 169 && GetByte(2) == 254);
+}
+
+bool CNetAddr::IsRFC6598() const
+{
+    return IsIPv4() && GetByte(3) == 100 && GetByte(2) >= 64 && GetByte(2) <= 127;
+}
+
+bool CNetAddr::IsRFC5737() const
+{
+    return IsIPv4() && ((GetByte(3) == 192 && GetByte(2) == 0 && GetByte(1) == 2) ||
+        (GetByte(3) == 198 && GetByte(2) == 51 && GetByte(1) == 100) ||
+        (GetByte(3) == 203 && GetByte(2) == 0 && GetByte(1) == 113));
 }
 
 bool CNetAddr::IsRFC3849() const
@@ -762,11 +783,11 @@ bool CNetAddr::IsI2P() const
 
 bool CNetAddr::IsLocal() const
 {
-    // IPv4 loopback
+    //! IPv4 loopback
     if (IsIPv4() && (GetByte(3) == 127 || GetByte(3) == 0))
         return true;
 
-    // IPv6 loopback (::1/128)
+    //! IPv6 loopback (::1/128)
     static const unsigned char pchLocal[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
     if (memcmp(ip, pchLocal, 16) == 0)
         return true;
@@ -781,31 +802,33 @@ bool CNetAddr::IsMulticast() const
 
 bool CNetAddr::IsValid() const
 {
-    // Cleanup 3-byte shifted addresses caused by garbage in size field
-    // of addr messages from versions before 0.2.9 checksum.
-    // Two consecutive addr messages look like this:
-    // header20 vectorlen3 addr26 addr26 addr26 header20 vectorlen3 addr26 addr26 addr26...
-    // so if the first length field is garbled, it reads the second batch
-    // of addr misaligned by 3 bytes.
+    /**
+     * Cleanup 3-byte shifted addresses caused by garbage in size field
+     * of addr messages from versions before 0.2.9 checksum.
+     * Two consecutive addr messages look like this:
+     * header20 vectorlen3 addr26 addr26 addr26 header20 vectorlen3 addr26 addr26 addr26...
+     * so if the first length field is garbled, it reads the second batch
+     * of addr misaligned by 3 bytes.
+     */
     if (memcmp(ip, pchIPv4 + 3, sizeof(pchIPv4) - 3) == 0)
         return false;
 
-    // unspecified IPv6 address (::/128)
+    //! unspecified IPv6 address (::/128)
     unsigned char ipNone[16] = {};
     if (memcmp(ip, ipNone, 16) == 0)
         return false;
 
-    // documentation IPv6 address
+    //! documentation IPv6 address
     if (IsRFC3849())
         return false;
 
     if (IsIPv4()) {
-        // INADDR_NONE
+        //! INADDR_NONE
         uint32_t ipNone = INADDR_NONE;
         if (memcmp(ip + 12, &ipNone, 4) == 0)
             return false;
 
-        // 0
+        //! 0
         ipNone = 0;
         if (memcmp(ip + 12, &ipNone, 4) == 0)
             return false;
@@ -816,7 +839,7 @@ bool CNetAddr::IsValid() const
 
 bool CNetAddr::IsRoutable() const
 {
-    return IsValid() && !(IsRFC1918() || IsRFC3927() || IsRFC4862() || (IsRFC4193() && !IsTor() && !IsI2P()) || IsRFC4843() || IsLocal());
+    return IsValid() && !(IsRFC1918() || IsRFC2544() || IsRFC3927() || IsRFC4862() || IsRFC6598() || IsRFC5737() || (IsRFC4193() && !IsTor()) || IsRFC4843() || IsLocal());
 }
 
 enum Network CNetAddr::GetNetwork() const
@@ -894,8 +917,8 @@ bool CNetAddr::GetIn6Addr(struct in6_addr* pipv6Addr) const
     return true;
 }
 
-// get canonical identifier of an address' group
-// no two connections will be attempted to addresses with the same group
+//! get canonical identifier of an address' group
+//! no two connections will be attempted to addresses with the same group
 std::vector<unsigned char> CNetAddr::GetGroup() const
 {
     std::vector<unsigned char> vchRet;
@@ -903,29 +926,29 @@ std::vector<unsigned char> CNetAddr::GetGroup() const
     int nStartByte = 0;
     int nBits = 16;
 
-    // all local addresses belong to the same group
+    //! all local addresses belong to the same group
     if (IsLocal()) {
         nClass = 255;
         nBits = 0;
     }
 
-    // all unroutable addresses belong to the same group
+    //! all unroutable addresses belong to the same group
     if (!IsRoutable()) {
         nClass = NET_UNROUTABLE;
         nBits = 0;
     }
-    // for IPv4 addresses, '1' + the 16 higher-order bits of the IP
-    // includes mapped IPv4, SIIT translated IPv4, and the well-known prefix
+    //! for IPv4 addresses, '1' + the 16 higher-order bits of the IP
+    //! includes mapped IPv4, SIIT translated IPv4, and the well-known prefix
     else if (IsIPv4() || IsRFC6145() || IsRFC6052()) {
         nClass = NET_IPV4;
         nStartByte = 12;
     }
-    // for 6to4 tunnelled addresses, use the encapsulated IPv4 address
+    //! for 6to4 tunnelled addresses, use the encapsulated IPv4 address
     else if (IsRFC3964()) {
         nClass = NET_IPV4;
         nStartByte = 2;
     }
-    // for Teredo-tunnelled IPv6 addresses, use the encapsulated IPv4 address
+    //! for Teredo-tunnelled IPv6 addresses, use the encapsulated IPv4 address
     else if (IsRFC4380()) {
         vchRet.push_back(NET_IPV4);
         vchRet.push_back(GetByte(3) ^ 0xFF);
@@ -940,10 +963,10 @@ std::vector<unsigned char> CNetAddr::GetGroup() const
         nStartByte = 6;
         nBits = 4;
     }
-    // for he.net, use /36 groups
+    //! for he.net, use /36 groups
     else if (GetByte(15) == 0x20 && GetByte(14) == 0x01 && GetByte(13) == 0x04 && GetByte(12) == 0x70)
         nBits = 36;
-    // for the rest of the IPv6 network, use /32 groups
+    //! for the rest of the IPv6 network, use /32 groups
     else
         nBits = 32;
 
@@ -967,8 +990,7 @@ uint64_t CNetAddr::GetHash() const
     return nRet;
 }
 
-// private extensions to enum Network, only returned by GetExtNetwork,
-// and only used in GetReachabilityFrom
+//! private extensions to enum Network, only returned by GetExtNetwork, and only used in GetReachabilityFrom
 static const int NET_UNKNOWN = NET_MAX + 0;
 static const int NET_TEREDO = NET_MAX + 1;
 int static GetExtNetwork(const CNetAddr* addr)
@@ -1017,14 +1039,14 @@ int CNetAddr::GetReachabilityFrom(const CNetAddr* paddrPartner) const
         case NET_IPV4:
             return REACH_IPV4;
         case NET_IPV6:
-            return fTunnel ? REACH_IPV6_WEAK : REACH_IPV6_STRONG; // only prefer giving our IPv6 address if it's not tunnelled
+            return fTunnel ? REACH_IPV6_WEAK : REACH_IPV6_STRONG; //! only prefer giving our IPv6 address if it's not tunnelled
         }
     case NET_TOR:
         switch (ourNet) {
         default:
             return REACH_DEFAULT;
         case NET_IPV4:
-            return REACH_IPV4; // Tor users can connect to IPv4 as well
+            return REACH_IPV4; //! Tor users can connect to IPv4 as well
         case NET_TOR:
             return REACH_PRIVATE;
         }
@@ -1059,9 +1081,9 @@ int CNetAddr::GetReachabilityFrom(const CNetAddr* paddrPartner) const
         case NET_IPV4:
             return REACH_IPV4;
         case NET_I2P:
-            return REACH_PRIVATE; // assume connections from unroutable addresses are
+            return REACH_PRIVATE; //! assume connections from unroutable addresses are
         case NET_TOR:
-            return REACH_PRIVATE; // either from Tor/I2P, or don't care about our address
+            return REACH_PRIVATE; //! either from Tor/I2P, or don't care about our address
         }
     }
 }
@@ -1239,7 +1261,7 @@ CSubNet::CSubNet(const std::string& strSubnet, bool fAllowLookup)
     std::vector<CNetAddr> vIP;
 
     valid = true;
-    // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
+    //! Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
     memset(netmask, 255, sizeof(netmask));
 
     std::string strAddress = strSubnet.substr(0, slash);
@@ -1248,26 +1270,28 @@ CSubNet::CSubNet(const std::string& strSubnet, bool fAllowLookup)
         if (slash != strSubnet.npos) {
             std::string strNetmask = strSubnet.substr(slash + 1);
             int32_t n;
-            // IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
+            //! IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
             int noffset = network.IsIPv4() ? (12 * 8) : 0;
-            if (ParseInt32(strNetmask, &n)) // If valid number, assume /24 symtex
+            if (ParseInt32(strNetmask, &n)) //! If valid number, assume /24 symtex
             {
-                if (n >= 0 && n <= (128 - noffset)) // Only valid if in range of bits of address
+                if (n >= 0 && n <= (128 - noffset)) //! Only valid if in range of bits of address
                 {
                     n += noffset;
-                    // Clear bits [n..127]
+                    //! Clear bits [n..127]
                     for (; n < 128; ++n)
                         netmask[n >> 3] &= ~(1 << (n & 7));
                 } else {
                     valid = false;
                 }
-            } else // If not a valid number, try full netmask syntax
+            } else //! If not a valid number, try full netmask syntax
             {
-                if (LookupHost(strNetmask.c_str(), vIP, 1, false)) // Never allow lookup for netmask
+                if (LookupHost(strNetmask.c_str(), vIP, 1, false)) //! Never allow lookup for netmask
                 {
-                    // Remember: GetByte returns bytes in reversed order
-                    // Copy only the *last* four bytes in case of IPv4, the rest of the mask should stay 1's as
-                    // we don't want pchIPv4 to be part of the mask.
+                    /**
+                     * Remember: GetByte returns bytes in reversed order
+                     * Copy only the *last* four bytes in case of IPv4, the rest of the mask should stay 1's as
+                     * we don't want pchIPv4 to be part of the mask.
+                     */
                     int asize = network.IsIPv4() ? 4 : 16;
                     for (int x = 0; x < asize; ++x)
                         netmask[15 - x] = vIP[0].GetByte(x);

@@ -112,4 +112,4 @@ bool TimingResistantEqual(const T& a, const T& b)
     return accumulator == 0;
 }
 
-#endif // BITCOIN_UTILSTRENCODINGS_H
+#endif //! BITCOIN_UTILSTRENCODINGS_H

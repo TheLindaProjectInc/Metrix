@@ -43,7 +43,7 @@ class CKeyMetadata
 public:
     static const int CURRENT_VERSION = 1;
     int nVersion;
-    int64_t nCreateTime; // 0 means unknown
+    int64_t nCreateTime; //! 0 means unknown
 
     CKeyMetadata()
     {
@@ -74,7 +74,7 @@ public:
 
 class CStealthKeyMetadata
 {
-    // -- used to get secret for keys created by stealth transaction with wallet locked
+    //! -- used to get secret for keys created by stealth transaction with wallet locked
 public:
     CStealthKeyMetadata(){};
 
@@ -145,9 +145,9 @@ public:
     bool ReadAccount(const std::string& strAccount, CAccount& account);
     bool WriteAccount(const std::string& strAccount, const CAccount& account);
 
-    // Write destination data key,value tuple to database
+    //! Write destination data key,value tuple to database
     bool WriteDestData(const std::string& address, const std::string& key, const std::string& value);
-    // Erase destination data tuple from wallet database
+    //! Erase destination data tuple from wallet database
     bool EraseDestData(const std::string& address, const std::string& key);
 
     bool WriteAccountingEntry(const CAccountingEntry& acentry);

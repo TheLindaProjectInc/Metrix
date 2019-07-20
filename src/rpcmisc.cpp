@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "base58.h"
+#include "clientversion.h"
 #include "init.h"
 #include "main.h"
 #include "net.h"
@@ -313,10 +314,10 @@ Value spork(const Array& params, bool fHelp)
             return "Invalid spork name";
         }
 
-        // SPORK VALUE
+        //! SPORK VALUE
         int64_t nValue = params[1].get_int();
 
-        //broadcast new spork
+        //! broadcast new spork
         if (sporkManager.UpdateSpork(nSporkID, nValue)) {
             return "success";
         } else {

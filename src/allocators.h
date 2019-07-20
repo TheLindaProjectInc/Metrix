@@ -9,10 +9,11 @@
 #include <map>
 #include <string.h>
 #include <string>
+#include <vector>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/once.hpp>
-#include <openssl/crypto.h> // for OPENSSL_cleanse()
+#include <openssl/crypto.h> //! for OPENSSL_cleanse()
 
 /**
  * Thread-safe class to keep track of locked (ie, non-swappable) memory pages.
@@ -31,8 +32,8 @@ class LockedPageManagerBase
 public:
     LockedPageManagerBase(size_t page_size) : page_size(page_size)
     {
-        // Determine bitmask for extracting page from address
-        assert(!(page_size & (page_size - 1))); // size must be power of two
+        //! Determine bitmask for extracting page from address
+        assert(!(page_size & (page_size - 1))); //! size must be power of two
         page_mask = ~(page_size - 1);
     }
 
@@ -42,7 +43,7 @@ public:
     }
 
 
-    // For all pages in affected range, increase lock count
+    //! For all pages in affected range, increase lock count
     void LockRange(void* p, size_t size)
     {
         boost::mutex::scoped_lock lock(mutex);
@@ -53,18 +54,18 @@ public:
         const size_t end_page = (base_addr + size - 1) & page_mask;
         for (size_t page = start_page; page <= end_page; page += page_size) {
             Histogram::iterator it = histogram.find(page);
-            if (it == histogram.end()) // Newly locked page
+            if (it == histogram.end()) //! Newly locked page
             {
                 locker.Lock(reinterpret_cast<void*>(page), page_size);
                 histogram.insert(std::make_pair(page, 1));
-            } else // Page was already locked; increase counter
+            } else //! Page was already locked; increase counter
             {
                 it->second += 1;
             }
         }
     }
 
-    // For all pages in affected range, decrease lock count
+    //! For all pages in affected range, decrease lock count
     void UnlockRange(void* p, size_t size)
     {
         boost::mutex::scoped_lock lock(mutex);
@@ -75,19 +76,19 @@ public:
         const size_t end_page = (base_addr + size - 1) & page_mask;
         for (size_t page = start_page; page <= end_page; page += page_size) {
             Histogram::iterator it = histogram.find(page);
-            assert(it != histogram.end()); // Cannot unlock an area that was not locked
-            // Decrease counter for page, when it is zero, the page will be unlocked
+            assert(it != histogram.end()); //! Cannot unlock an area that was not locked
+            //! Decrease counter for page, when it is zero, the page will be unlocked
             it->second -= 1;
-            if (it->second == 0) // Nothing on the page anymore that keeps it locked
+            if (it->second == 0) //! Nothing on the page anymore that keeps it locked
             {
-                // Unlock page and remove the count from histogram
+                //! Unlock page and remove the count from histogram
                 locker.Unlock(reinterpret_cast<void*>(page), page_size);
                 histogram.erase(it);
             }
         }
     }
 
-    // Get number of locked pages for diagnostics
+    //! Get number of locked pages for diagnostics
     int GetLockedPageCount()
     {
         boost::mutex::scoped_lock lock(mutex);
@@ -98,7 +99,7 @@ private:
     Locker locker;
     boost::mutex mutex;
     size_t page_size, page_mask;
-    // map of page base address to lock count
+    //! map of page base address to lock count
     typedef std::map<size_t, int> Histogram;
     Histogram histogram;
 };
@@ -146,11 +147,13 @@ private:
 
     static void CreateInstance()
     {
-        // Using a local static instance guarantees that the object is initialized
-        // when it's first needed and also deinitialized after all objects that use
-        // it are done with it.  I can think of one unlikely scenario where we may
-        // have a static deinitialization order/problem, but the check in
-        // LockedPageManagerBase's destructor helps us detect if that ever happens.
+        /**
+         * Using a local static instance guarantees that the object is initialized
+         * when it's first needed and also deinitialized after all objects that use
+         * it are done with it.  I can think of one unlikely scenario where we may
+         * have a static deinitialization order/problem, but the check in
+         * LockedPageManagerBase's destructor helps us detect if that ever happens.
+         */
         static LockedPageManager instance;
         LockedPageManager::_instance = &instance;
     }
@@ -159,10 +162,10 @@ private:
     static boost::once_flag init_flag;
 };
 
-//
-// Functions for directly locking/unlocking memory objects.
-// Intended for non-dynamically allocated structures.
-//
+/**
+ * Functions for directly locking/unlocking memory objects.
+ * Intended for non-dynamically allocated structures.
+ */
 template <typename T>
 void LockObject(const T& t)
 {
@@ -176,13 +179,13 @@ void UnlockObject(const T& t)
     LockedPageManager::Instance().UnlockRange((void*)(&t), sizeof(T));
 }
 
-//
-// Allocator that locks its contents from being paged
-// out of memory and clears its contents before deletion.
-//
+/**
+ * Allocator that locks its contents from being paged
+ * out of memory and clears its contents before deletion.
+ */
 template <typename T>
 struct secure_allocator : public std::allocator<T> {
-    // MSVC8 default copy constructor is broken
+    //! MSVC8 default copy constructor is broken
     typedef std::allocator<T> base;
     typedef typename base::size_type size_type;
     typedef typename base::difference_type difference_type;
@@ -223,12 +226,12 @@ struct secure_allocator : public std::allocator<T> {
 };
 
 
-//
-// Allocator that clears its contents before deletion.
-//
+/**
+ * Allocator that clears its contents before deletion.
+ */
 template <typename T>
 struct zero_after_free_allocator : public std::allocator<T> {
-    // MSVC8 default copy constructor is broken
+    //! MSVC8 default copy constructor is broken
     typedef std::allocator<T> base;
     typedef typename base::size_type size_type;
     typedef typename base::difference_type difference_type;
@@ -257,7 +260,10 @@ struct zero_after_free_allocator : public std::allocator<T> {
     }
 };
 
-// This is exactly like std::string, but with a custom allocator.
+//! This is exactly like std::string, but with a custom allocator.
 typedef std::basic_string<char, std::char_traits<char>, secure_allocator<char> > SecureString;
 
-#endif // BITCOIN_ALLOCATORS_H
+//! Byte-vector that clears its contents before deletion.
+typedef std::vector<char, zero_after_free_allocator<char> > CSerializeData;
+
+#endif //! BITCOIN_ALLOCATORS_H

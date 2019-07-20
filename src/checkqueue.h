@@ -1,8 +1,8 @@
 // Copyright (c) 2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef CHECKQUEUE_H
-#define CHECKQUEUE_H
+#ifndef BITCOIN_CHECKQUEUE_H
+#define BITCOIN_CHECKQUEUE_H
 
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
@@ -27,40 +27,42 @@ template <typename T>
 class CCheckQueue
 {
 private:
-    // Mutex to protect the inner state
+    //! Mutex to protect the inner state
     boost::mutex mutex;
 
-    // Worker threads block on this when out of work
+    //! Worker threads block on this when out of work
     boost::condition_variable condWorker;
 
-    // Master thread blocks on this when out of work
+    //! Master thread blocks on this when out of work
     boost::condition_variable condMaster;
 
-    // The queue of elements to be processed.
-    // As the order of booleans doesn't matter, it is used as a LIFO (stack)
+    //! The queue of elements to be processed.
+    //! As the order of booleans doesn't matter, it is used as a LIFO (stack)
     std::vector<T> queue;
 
-    // The number of workers (including the master) that are idle.
+    //! The number of workers (including the master) that are idle.
     int nIdle;
 
-    // The total number of workers (including the master).
+    //! The total number of workers (including the master).
     int nTotal;
 
-    // The temporary evaluation result.
+    //! The temporary evaluation result.
     bool fAllOk;
 
-    // Number of verifications that haven't completed yet.
-    // This includes elements that are not anymore in queue, but still in
-    // worker's own batches.
+    /**
+     * Number of verifications that haven't completed yet.
+     * This includes elements that are not anymore in queue, but still in
+     * worker's own batches.
+     */
     unsigned int nTodo;
 
-    // Whether we're shutting down.
+    //! Whether we're shutting down.
     bool fQuit;
 
-    // The maximum number of elements to be processed in one batch
+    //! The maximum number of elements to be processed in one batch
     unsigned int nBatchSize;
 
-    // Internal function that does bulk of the verification work.
+    //! Internal function that does bulk of the verification work.
     bool Loop(bool fMaster = false)
     {
         boost::condition_variable& cond = fMaster ? condMaster : condWorker;
@@ -71,49 +73,53 @@ private:
         do {
             {
                 boost::unique_lock<boost::mutex> lock(mutex);
-                // first do the clean-up of the previous loop run (allowing us to do it in the same critsect)
+                //! first do the clean-up of the previous loop run (allowing us to do it in the same critsect)
                 if (nNow) {
                     fAllOk &= fOk;
                     nTodo -= nNow;
                     if (nTodo == 0 && !fMaster)
-                        // We processed the last element; inform the master he can exit and return the result
+                        //! We processed the last element; inform the master he can exit and return the result
                         condMaster.notify_one();
                 } else {
-                    // first iteration
+                    //! first iteration
                     nTotal++;
                 }
-                // logically, the do loop starts here
+                //! logically, the do loop starts here
                 while (queue.empty()) {
                     if ((fMaster || fQuit) && nTodo == 0) {
                         nTotal--;
                         bool fRet = fAllOk;
-                        // reset the status for new work later
+                        //! reset the status for new work later
                         if (fMaster)
                             fAllOk = true;
-                        // return the current status
+                        //! return the current status
                         return fRet;
                     }
                     nIdle++;
-                    cond.wait(lock); // wait
+                    cond.wait(lock); //! wait
                     nIdle--;
                 }
-                // Decide how many work units to process now.
-                // * Do not try to do everything at once, but aim for increasingly smaller batches so
-                //   all workers finish approximately simultaneously.
-                // * Try to account for idle jobs which will instantly start helping.
-                // * Don't do batches smaller than 1 (duh), or larger than nBatchSize.
+                /**
+                 * Decide how many work units to process now.
+                 * * Do not try to do everything at once, but aim for increasingly smaller batches so
+                 *   all workers finish approximately simultaneously.
+                 * * Try to account for idle jobs which will instantly start helping.
+                 * * Don't do batches smaller than 1 (duh), or larger than nBatchSize.
+                 */
                 nNow = std::max(1U, std::min(nBatchSize, (unsigned int)queue.size() / (nTotal + nIdle + 1)));
                 vChecks.resize(nNow);
                 for (unsigned int i = 0; i < nNow; i++) {
-                    // We want the lock on the mutex to be as short as possible, so swap jobs from the global
-                    // queue to the local batch vector instead of copying.
+                    /**
+                     * We want the lock on the mutex to be as short as possible, so swap jobs from the global
+                     * queue to the local batch vector instead of copying.
+                     */
                     vChecks[i].swap(queue.back());
                     queue.pop_back();
                 }
-                // Check whether we need to do work at all
+                //! Check whether we need to do work at all
                 fOk = fAllOk;
             }
-            // execute work
+            //! execute work
             BOOST_FOREACH (T& check, vChecks)
                 if (fOk)
                     fOk = check();
@@ -122,22 +128,22 @@ private:
     }
 
 public:
-    // Create a new check queue
+    //! Create a new check queue
     CCheckQueue(unsigned int nBatchSizeIn) : nIdle(0), nTotal(0), fAllOk(true), nTodo(0), fQuit(false), nBatchSize(nBatchSizeIn) {}
 
-    // Worker thread
+    //! Worker thread
     void Thread()
     {
         Loop();
     }
 
-    // Wait until execution finishes, and return whether all evaluations where succesful.
+    //! Wait until execution finishes, and return whether all evaluations where succesful.
     bool Wait()
     {
         return Loop(true);
     }
 
-    // Add a batch of checks to the queue
+    //! Add a batch of checks to the queue
     void Add(std::vector<T>& vChecks)
     {
         boost::unique_lock<boost::mutex> lock(mutex);
@@ -172,7 +178,7 @@ private:
 public:
     CCheckQueueControl(CCheckQueue<T>* pqueueIn) : pqueue(pqueueIn), fDone(false)
     {
-        // passed queue is supposed to be unused, or NULL
+        //! passed queue is supposed to be unused, or NULL
         if (pqueue != NULL) {
             assert(pqueue->nTotal == pqueue->nIdle);
             assert(pqueue->nTodo == 0);
@@ -202,4 +208,4 @@ public:
     }
 };
 
-#endif // CHECKQUEUE_H
+#endif // BITCOIN_CHECKQUEUE_H
