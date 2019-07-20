@@ -123,7 +123,28 @@ bool ShutdownRequested()
     return fRequestShutdown;
 }
 
-static CCoinsViewDB* pcoinsdbview;
+class CCoinsViewErrorCatcher : public CCoinsViewBacked
+{
+public:
+    CCoinsViewErrorCatcher(CCoinsView* view) : CCoinsViewBacked(view) {}
+    bool GetCoins(const uint256 &txid, CCoins &coins) const {
+        try {
+            return CCoinsViewBacked::GetCoins(txid, coins);
+        } catch(const std::runtime_error& e) {
+            uiInterface.ThreadSafeMessageBox(_("Error reading from database, shutting down."), "", CClientUIInterface::MSG_ERROR);
+            LogPrintf("Error reading from database: %s\n", e.what());
+            // Starting the shutdown sequence and returning false to the caller would be
+            // interpreted as 'entry not found' (as opposed to unable to read data), and
+            // could lead to invalid interpration. Just exit immediately, as we can't
+            // continue anyway, and all writes should be atomic.
+            abort();
+        }
+    }
+    // Writes do not need similar protection, as failure to write is handled by the caller.
+};
+
+static CCoinsViewDB *pcoinsdbview = NULL;
+static CCoinsViewErrorCatcher *pcoinscatcher = NULL;
 
 void Shutdown()
 {
@@ -159,6 +180,8 @@ void Shutdown()
         }
         delete pcoinsTip;
         pcoinsTip = NULL;
+        delete pcoinscatcher;
+        pcoinscatcher = NULL;
         delete pcoinsdbview;
         pcoinsdbview = NULL;
         delete pblocktree;
@@ -171,7 +194,7 @@ void Shutdown()
 #ifndef WIN32
     boost::filesystem::remove(GetPidFile());
 #endif
-    UnregisterAllWallets();
+    UnregisterAllValidationInterfaces();
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
         delete pwalletMain;
@@ -308,10 +331,11 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -keypool=<n>           " + strprintf(_("Set key pool size to <n> (default: %u)"),100) + "\n";
     strUsage += "  -paytxfee=<amt>        " + _("Fee per KB to add to transactions you send") + "\n";
     strUsage += "  -txconfirmtarget=<n>   " + strprintf(_("If paytxfee is not set, include enough fee so transactions are confirmed on average within n blocks (default: %u)"),1) + "\n";
+    strUsage += "  -maxtxfee=<amt>        " + strprintf(_("Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)"), FormatMoney(maxTxFee)) + "\n";
     strUsage += "  -rescan                " + _("Rescan the block chain for missing wallet transactions") + "\n";
     strUsage += "  -salvagewallet         " + _("Attempt to recover private keys from a corrupt wallet.dat") + "\n";
     strUsage += "  -spendzeroconfchange   " + strprintf(_("Spend unconfirmed change when sending transactions (default: %u)"),1) + "\n";
-    strUsage += "  -txconfirmtarget=<n>   " + strprintf(_("If paytxfee is not set, include enough fee so transactions are confirmed on average within n blocks (default: %u)"),1) + "\n";
+    strUsage += "  -txconfirmtarget=<n>   " + strprintf(_("If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)"),1) + "\n";
     strUsage += "  -upgradewallet         " + _("Upgrade wallet to latest format") + "\n";
     strUsage += "  -wallet=<file>          " + _("Specify wallet file (within data directory)") + " " + strprintf(_("(default: %s)"), "wallet.dat") + "\n";
     strUsage += "  -walletnotify=<cmd>    " + _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)") + "\n";
@@ -326,6 +350,7 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += "  -minimizecoinage       " + strprintf(_("Minimize weight consumption (experimental) (default: %u)"),0) + "\n";
         strUsage += "  -regtest               " + _("Enter regression test mode, which uses a special chain in which blocks can be ");
         strUsage += _("solved instantly. This is intended for regression testing tools and app development.") + "\n";
+        strUsage += "  -relaypriority         " + strprintf(_("Require high priority for relaying free or low-fee transactions (default:%u)"), 1) + "\n";
         strUsage += "  -stopafterblockimport  " + strprintf(_("Stop running after importing blocks from disk (default: %u)"),0) + "\n";
     }
     strUsage += "  -debug=<category>      " + _("Output debugging information (default: 0, supplying <category> is optional)") + "\n";
@@ -367,6 +392,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -rpcallowip=<ip>       " + _("Allow JSON-RPC connections from specified source. Valid for <ip> are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times") + "\n";
     strUsage += "  -rpcconnect=<ip>       " + strprintf(_("Send commands to node running on <ip> (default: %s)"),"127.0.0.1") + "\n";
     strUsage += "  -rpcthreads=<n>        " + strprintf(_("Set the number of threads to service RPC calls (default: %u)"),4) + "\n";
+    strUsage += "  -rpckeepalive          " + strprintf(_("RPC support for HTTP persistent connections (default: %d)"), 1) + "\n";
     strUsage += "  -rpcwait               " + _("Wait for RPC server to start") + "\n";
 
     strUsage += "\n" + _("Block sync/database options:") + "\n";
@@ -718,6 +744,20 @@ bool AppInit2(boost::thread_group& threadGroup)
                                        mapArgs["-paytxfee"], ::minRelayTxFee.ToString()));
         }
     }
+    if (mapArgs.count("-maxtxfee"))
+    {
+        CAmount nMaxFee = 0;
+        if (!ParseMoney(mapArgs["-maxtxfee"], nMaxFee))
+            return InitError(strprintf(_("Invalid amount for -maxtxfee=<amount>: '%s'"), mapArgs["-maptxfee"]));
+        if (nMaxFee > nHighTransactionMaxFeeWarning)
+            InitWarning(_("Warning: -maxtxfee is set very high! Fees this large could be paid on a single transaction."));
+        maxTxFee = nMaxFee;
+        if (CFeeRate(maxTxFee, 1000) < ::minRelayTxFee)
+        {
+            return InitError(strprintf(_("Invalid amount for -maxtxfee=<amount>: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)"),
+                                       mapArgs["-maxtxfee"], ::minRelayTxFee.ToString()));
+        }
+    }
     nTxConfirmTarget = GetArg("-txconfirmtarget", 1);
     bSpendZeroConfChange = GetArg("-spendzeroconfchange", true);
 
@@ -1023,11 +1063,13 @@ bool AppInit2(boost::thread_group& threadGroup)
                 UnloadBlockIndex();
                 delete pcoinsTip;
                 delete pcoinsdbview;
+                delete pcoinscatcher;
                 delete pblocktree;
 
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex);
                 pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex);
-                pcoinsTip = new CCoinsViewCache(pcoinsdbview);
+                pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
+                pcoinsTip = new CCoinsViewCache(pcoinscatcher);
 
                 if (fReindex)
                     pblocktree->WriteReindexing(true);
@@ -1174,7 +1216,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         LogPrintf("%s", strErrors.str());
         LogPrintf(" wallet      %15dms\n", GetTimeMillis() - nStart);
 
-        RegisterWallet(pwalletMain);
+        RegisterValidationInterface(pwalletMain);
 
         CBlockIndex* pindexRescan = chainActive.Tip();
         if (GetBoolArg("-rescan", false))

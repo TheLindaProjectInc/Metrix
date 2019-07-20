@@ -8,7 +8,7 @@
 
 #include "addrman.h"
 #include "bloom.h"
-#include "core/block.h"
+#include "primitives/block.h"
 #include "hash.h"
 #include "limitedmap.h"
 #include "mruset.h"
@@ -73,12 +73,6 @@ bool StopNode();
 void SocketSendData(CNode* pnode);
 
 typedef int NodeId;
-
-struct QueuedBlock {
-    uint256 hash;
-    CBlockIndex *pindex;  //! Optional.
-    int64_t nTime;     //! Time of "getdata" request in microseconds.
-};
 
 typedef int NodeId;
 

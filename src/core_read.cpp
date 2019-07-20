@@ -2,7 +2,9 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php
 
-#include "core/transaction.h"
+#include "core_io.h"
+
+#include "primitives/transaction.h"
 #include "script/script.h"
 #include "serialize.h"
 #include "streams.h"
@@ -89,6 +91,11 @@ uint256 ParseHashUV(const UniValue& v, const string& strName)
     string strHex;
     if (v.isStr())
         strHex = v.getValStr();
+    return ParseHashStr(strHex, strName);  // Note: ParseHashStr("") throws a runtime_error
+}
+
+uint256 ParseHashStr(const std::string& strHex, const std::string& strName)
+{
     if (!IsHex(strHex)) //! Note: IsHex("") is false
         throw runtime_error(strName + " must be hexadecimal string (not '" + strHex + "')");
 

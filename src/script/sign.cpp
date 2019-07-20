@@ -5,7 +5,7 @@
 
 #include "script/sign.h"
 
-#include "core/transaction.h"
+#include "primitives/transaction.h"
 #include "key.h"
 #include "keystore.h"
 #include "script/standard.h"
@@ -123,7 +123,7 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CMutabl
     }
 
     //! Test solution
-    return VerifyScript(txin.scriptSig, fromPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, SignatureChecker(txTo, nIn));
+    return VerifyScript(txin.scriptSig, fromPubKey, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, MutableTransactionSignatureChecker(&txTo, nIn));
 }
 
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
@@ -168,7 +168,7 @@ static CScript CombineMultisig(const CScript& scriptPubKey, const CTransaction& 
             if (sigs.count(pubkey))
                 continue; //! Already got a sig for this pubkey
 
-            if (SignatureChecker(txTo, nIn).CheckSig(sig, pubkey, scriptPubKey)) {
+            if (TransactionSignatureChecker(&txTo, nIn).CheckSig(sig, pubkey, scriptPubKey)) {
                 sigs[pubkey] = sig;
                 break;
             }
