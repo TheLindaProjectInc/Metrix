@@ -1020,6 +1020,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CCoinsView dummy;
         CCoinsViewCache view(&dummy);
 
+        CAmount nValueIn = 0;
         {
             LOCK(pool.cs);
             CCoinsViewMemPool viewMemPool(pcoinsTip, pool);
@@ -1055,6 +1056,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             //! Bring the best block into scope
             view.GetBestBlock();
 
+            nValueIn = view.GetValueIn(tx);
+
             //! we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
             view.SetBackend(dummy);
         }
@@ -1081,7 +1084,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                                    hash.ToString(), nSigOps, MAX_TX_SIGOPS));
         }
 
-        CAmount nValueIn = view.GetValueIn(tx);
         CAmount nValueOut = tx.GetValueOut();
         CAmount nFees = nValueIn - nValueOut;
         double dPriority = view.GetPriority(tx, chainActive.Height());
