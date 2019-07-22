@@ -10,7 +10,7 @@
 #include "addrman.h"
 #include "chainparams.h"
 #include "clientversion.h"
-#include "core/transaction.h"
+#include "primitives/transaction.h"
 #include "darksend.h"
 #include "db.h"
 #include "net.h"

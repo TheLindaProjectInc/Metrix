@@ -7,8 +7,8 @@
 #define BITCOIN_WALLET_H
 
 #include "amount.h"
-#include "core/block.h"
-#include "core/transaction.h"
+#include "primitives/block.h"
+#include "primitives/transaction.h"
 #include "crypter.h"
 #include "key.h"
 #include "keystore.h"
@@ -30,6 +30,7 @@
 
 //! Settings
 extern CFeeRate payTxFee;
+extern CAmount maxTxFee;
 extern int64_t nReserveBalance;
 extern int64_t nMinimumInputValue;
 extern bool fWalletUnlockStakingOnly;
@@ -44,6 +45,10 @@ static const CAmount DEFAULT_TRANSACTION_FEE = 0;
 
 //! -paytxfee will warn if called with a higher fee than this amount (in satoshis) per KB
 static const CAmount nHighTransactionFeeWarning = 0.01 * COIN;
+//! -maxtxfee default
+static const CAmount DEFAULT_TRANSACTION_MAXFEE = 0.1 * COIN;
+//! -maxtxfee will warn if called with a higher fee than this amount (in satoshis)
+static const CAmount nHighTransactionMaxFeeWarning = 100 * nHighTransactionFeeWarning;
 //! Largest (in bytes) free transaction we're willing to create
 static const unsigned int MAX_FREE_TRANSACTION_CREATE_SIZE = 1000;
 
@@ -115,7 +120,7 @@ public:
 /** A CWallet is an extension of a keystore, which also maintains a set of transactions and balances,
  * and provides the ability to create new transactions.
  */
-class CWallet : public CCryptoKeyStore, public CWalletInterface
+class CWallet : public CCryptoKeyStore, public CValidationInterface
 {
 private:
     bool SelectCoinsForStaking(const CAmount& nTargetValue, unsigned int nSpendTime, std::set<std::pair<const CWalletTx*, unsigned int> >& setCoinsRet, CAmount& nValueRet) const;
@@ -339,14 +344,11 @@ public:
     CAmount GetDenominatedBalance(bool onlyDenom = true, bool onlyUnconfirmed = false) const;
 
     bool CreateTransaction(const std::vector<std::pair<CScript, CAmount> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, int32_t& nChangePos, std::string& strFailReason, const CCoinControl* coinControl = NULL, AvailableCoinsType coin_type = ALL_COINS, bool useIX = false);
-    bool CreateTransaction(CScript scriptPubKey, const CAmount& nValue, std::string& sNarr, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, const CCoinControl* coinControl = NULL);
+    bool CreateTransaction(CScript scriptPubKey, const CAmount& nValue, std::string& sNarr, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
 
     uint64_t GetStakeWeight() const;
     bool CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int64_t nSearchInterval, CAmount nFees, CMutableTransaction& txNew, CKey& key);
-
-    std::string SendMoney(CScript scriptPubKey, CAmount nValue, std::string& sNarr, CWalletTx& wtxNew);
-    std::string SendMoneyToDestination(const CTxDestination& address, CAmount nValue, std::string& sNarr, CWalletTx& wtxNew);
 
     static CAmount GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool);
 
