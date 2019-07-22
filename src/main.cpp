@@ -2029,6 +2029,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     unsigned int flags = SCRIPT_VERIFY_P2SH;
 
+        // Start enforcing the DERSIG (BIP66) rules, for block.nVersion=3 blocks, when 75% of the network has upgraded:
+    if (block.nVersion >= 7 && CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
+        flags |= SCRIPT_VERIFY_DERSIG;
+    }
+
+
     CBlockUndo blockundo;
 
     CCheckQueueControl<CScriptCheck> control(fScriptChecks && nScriptCheckThreads ? &scriptcheckqueue : NULL);
@@ -2927,10 +2933,12 @@ bool FindUndoPos(CValidationState& state, int nFile, CDiskBlockPos& pos, unsigne
 
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
-    //! Check block version
-    if (block.nVersion > block.CURRENT_VERSION)
-        return state.DoS(100, error("CheckBlockHeader() : reject unknown block version %d", block.nVersion),
-                         REJECT_INVALID, "unknown block version");
+    // Metrix - Remove this otherwise nodes not on the newest block will immediate reject block upgrades. 
+    // The SuperMajority checks should be used instead.
+    //! Check block version 
+    //if (block.nVersion > block.CURRENT_VERSION)
+    //    return state.DoS(100, error("CheckBlockHeader() : reject unknown block version %d", block.nVersion),
+    //                     REJECT_INVALID, "unknown block version");
 
     if (block.GetHash() != Params().HashGenesisBlock() && block.nVersion < 7)
         return state.DoS(100, error("CheckBlockHeader() : reject too old nVersion = %d", block.nVersion),
@@ -2950,6 +2958,13 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
     if (block.GetBlockTime() > FutureDrift(GetAdjustedTime()) && !fCheckPOW)
         return state.Invalid(error("CheckBlockHeader() : block timestamp too far in the future"),
                              REJECT_INVALID, "time-too-new");
+
+    // Reject block.nVersion=2 blocks when 95% (75% on testnet) of the network has upgraded:
+    if (block.nVersion < 8 && CBlockIndex::IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
+    {
+        return state.Invalid(error("%s : rejected nVersion=7 block", __func__),
+                             REJECT_OBSOLETE, "bad-version");
+    }
 
     return true;
 }
