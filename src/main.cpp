@@ -2959,6 +2959,18 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.Invalid(error("CheckBlockHeader() : block timestamp too far in the future"),
                              REJECT_INVALID, "time-too-new");
 
+    // Get prev block index
+    CBlockIndex* pindexPrev = NULL;
+    uint256 hash = block.GetHash();
+    if (hash != Params().HashGenesisBlock()) {
+        BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
+        if (mi == mapBlockIndex.end())
+            return state.DoS(0, error("%s : prev block %s not found", __func__, block.hashPrevBlock.ToString().c_str()), 0, "bad-prevblk");
+        pindexPrev = (*mi).second;
+        if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
+            return state.DoS(100, error("%s : prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
+    }
+
     // Reject block.nVersion=2 blocks when 95% (75% on testnet) of the network has upgraded:
     if (block.nVersion < 8 && CBlockIndex::IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
     {
