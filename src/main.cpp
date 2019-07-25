@@ -2933,13 +2933,6 @@ bool FindUndoPos(CValidationState& state, int nFile, CDiskBlockPos& pos, unsigne
 
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
-    // Metrix - Remove this otherwise nodes not on the newest block will immediate reject block upgrades. 
-    // The SuperMajority checks should be used instead.
-    //! Check block version 
-    //if (block.nVersion > block.CURRENT_VERSION)
-    //    return state.DoS(100, error("CheckBlockHeader() : reject unknown block version %d", block.nVersion),
-    //                     REJECT_INVALID, "unknown block version");
-
     if (block.GetHash() != Params().HashGenesisBlock() && block.nVersion < 7)
         return state.DoS(100, error("CheckBlockHeader() : reject too old nVersion = %d", block.nVersion),
                          REJECT_INVALID, "old nVersion");
