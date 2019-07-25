@@ -87,6 +87,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"verifychain", 0},
         {"verifychain", 1},
         {"keypoolrefill", 0},
+        {"estimatefee", 0},
+        {"estimatepriority", 0},
         {"importprivkey", 2},
         {"importaddress", 2},
         {"checkkernel", 0},

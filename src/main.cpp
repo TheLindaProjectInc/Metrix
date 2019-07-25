@@ -1020,6 +1020,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CCoinsView dummy;
         CCoinsViewCache view(&dummy);
 
+        CAmount nValueIn = 0;
         {
             LOCK(pool.cs);
             CCoinsViewMemPool viewMemPool(pcoinsTip, pool);
@@ -1055,6 +1056,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             //! Bring the best block into scope
             view.GetBestBlock();
 
+            nValueIn = view.GetValueIn(tx);
+
             //! we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
             view.SetBackend(dummy);
         }
@@ -1081,7 +1084,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                                    hash.ToString(), nSigOps, MAX_TX_SIGOPS));
         }
 
-        CAmount nValueIn = view.GetValueIn(tx);
         CAmount nValueOut = tx.GetValueOut();
         CAmount nFees = nValueIn - nValueOut;
         double dPriority = view.GetPriority(tx, chainActive.Height());
@@ -2027,6 +2029,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     unsigned int flags = SCRIPT_VERIFY_P2SH;
 
+        // Start enforcing the DERSIG (BIP66) rules, for block.nVersion=3 blocks, when 75% of the network has upgraded:
+    if (block.nVersion >= 7 && CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
+        flags |= SCRIPT_VERIFY_DERSIG;
+    }
+
+
     CBlockUndo blockundo;
 
     CCheckQueueControl<CScriptCheck> control(fScriptChecks && nScriptCheckThreads ? &scriptcheckqueue : NULL);
@@ -2925,11 +2933,6 @@ bool FindUndoPos(CValidationState& state, int nFile, CDiskBlockPos& pos, unsigne
 
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
-    //! Check block version
-    if (block.nVersion > block.CURRENT_VERSION)
-        return state.DoS(100, error("CheckBlockHeader() : reject unknown block version %d", block.nVersion),
-                         REJECT_INVALID, "unknown block version");
-
     if (block.GetHash() != Params().HashGenesisBlock() && block.nVersion < 7)
         return state.DoS(100, error("CheckBlockHeader() : reject too old nVersion = %d", block.nVersion),
                          REJECT_INVALID, "old nVersion");
@@ -2948,6 +2951,25 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
     if (block.GetBlockTime() > FutureDrift(GetAdjustedTime()) && !fCheckPOW)
         return state.Invalid(error("CheckBlockHeader() : block timestamp too far in the future"),
                              REJECT_INVALID, "time-too-new");
+
+    // Get prev block index
+    CBlockIndex* pindexPrev = NULL;
+    uint256 hash = block.GetHash();
+    if (hash != Params().HashGenesisBlock()) {
+        BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
+        if (mi == mapBlockIndex.end())
+            return state.DoS(0, error("%s : prev block %s not found", __func__, block.hashPrevBlock.ToString().c_str()), 0, "bad-prevblk");
+        pindexPrev = (*mi).second;
+        if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
+            return state.DoS(100, error("%s : prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
+    }
+
+    // Reject block.nVersion=2 blocks when 95% (75% on testnet) of the network has upgraded:
+    if (block.nVersion < 8 && CBlockIndex::IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
+    {
+        return state.Invalid(error("%s : rejected nVersion=7 block", __func__),
+                             REJECT_OBSOLETE, "bad-version");
+    }
 
     return true;
 }
