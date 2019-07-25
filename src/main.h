@@ -344,7 +344,7 @@ struct CDiskTxPos : public CDiskBlockPos {
     }
 };
 
-CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree);
+CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes);
 
 /**
  * Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)

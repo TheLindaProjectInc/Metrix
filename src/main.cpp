@@ -921,7 +921,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 }
 
 
-CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree)
+CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
 {
     {
         LOCK(mempool.cs);
@@ -936,17 +936,6 @@ CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
     CAmount nMinFee;
 
     nMinFee = ::minRelayTxFee.GetFee(nBytes);
-
-    if (fAllowFree) {
-        /**
-         * There is a free transaction area in blocks created by most miners,
-         * * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
-         *   to be considered to fall into this category. We don't want to encourage sending
-         *   multiple transactions instead of one big transaction to avoid fees.
-         */
-        if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
-            nMinFee = 0;
-    }
 
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
@@ -1092,7 +1081,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         unsigned int nSize = entry.GetTxSize();
 
         //! Don't accept it if it can't get into a block
-        CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
+        CAmount txMinFee = GetMinRelayFee(tx, nSize);
         if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",
@@ -1261,7 +1250,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         unsigned int nSize = entry.GetTxSize();
 
         //! Don't accept it if it can't get into a block
-        CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
+        CAmount txMinFee = GetMinRelayFee(tx, nSize);
         if (fLimitFree && nFees < txMinFee)
             return state.DoS(0, error("AcceptableInputs : not enough fees %s, %d < %d", hash.ToString(), nFees, txMinFee),
                              REJECT_INSUFFICIENTFEE, "insufficient fee");
