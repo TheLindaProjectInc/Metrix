@@ -1543,7 +1543,7 @@ void CWallet::AvailableCoins(
                 if (mine == ISMINE_WATCH_ONLY && nWatchonlyConfig == 1)
                     continue;
 
-                if (IsLockedCoin((*it).first, i))
+                if (!includeLocked && IsLockedCoin((*it).first, i))
                     continue;
                 if (pcoin->vout[i].nValue <= 0 && !fIncludeZeroValue)
                     continue;
