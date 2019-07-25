@@ -28,7 +28,6 @@ enum isminetype {
 /** used for bitflags of isminetype */
 typedef uint8_t isminefilter;
 
-bool IsDERSignature(const valtype& vchSig, bool haveHashType = true);
 isminetype IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
 isminetype IsMine(const CKeyStore& keystore, const CTxDestination& dest);
 

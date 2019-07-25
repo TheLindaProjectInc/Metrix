@@ -6,7 +6,7 @@
 #ifndef NOVACOIN_MINER_H
 #define NOVACOIN_MINER_H
 
-#include "core/block.h"
+#include "primitives/block.h"
 #include "main.h"
 #include "wallet.h"
 

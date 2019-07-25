@@ -36,6 +36,7 @@ using namespace std;
  * Settings
  */
 CFeeRate payTxFee(DEFAULT_TRANSACTION_FEE);
+CAmount maxTxFee = DEFAULT_TRANSACTION_MAXFEE;
 int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
 unsigned int nTxConfirmTarget = 1;
@@ -2472,7 +2473,8 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
             else
                 nFeeRet = 0;
 
-            while (true) {
+            while (true)
+            {
                 txNew.vin.clear();
                 txNew.vout.clear();
                 wtxNew.fFromMe = true;
@@ -2510,7 +2512,16 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
                 }
                 BOOST_FOREACH (PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins) {
                     CAmount nCredit = pcoin.first->vout[pcoin.second].nValue;
-                    dPriority += (double)nCredit * pcoin.first->GetDepthInMainChain();
+                    /**
+                     * The coin age after the next block (depth+1) is used instead of the current,
+                     * reflecting an assumption the user would accept a bit more delay for
+                     * a chance at a free transaction.
+                     */
+                    //But mempool inputs might still be in the mempool, so their age stays 0
+                    int age = pcoin.first->GetDepthInMainChain();
+                    if (age != 0)
+                        age += 1;
+                    dPriority += (double)nCredit * age;
                 }
 
                 CAmount nChange = nValueIn - nValue - nFeeRet;
@@ -2588,26 +2599,32 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
 
                 dPriority = wtxNew.ComputePriority(dPriority, nBytes);
 
-                CAmount nFeeNeeded = GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
+                // Can we complete this as a free transaction?
+                if (fSendFreeTransactions && nBytes <= MAX_FREE_TRANSACTION_CREATE_SIZE)
+                {
+                    // Not enough fee: enough priority?
+                    double dPriorityNeeded = mempool.estimatePriority(nTxConfirmTarget);
+                    // Not enough mempool history to estimate: use hard-coded AllowFree.
+                    if (dPriorityNeeded <= 0 && AllowFree(dPriority))
+                        break;
 
-                if (nFeeRet >= nFeeNeeded)
-                    break; //! Done, enough fee included.
-
-                //! Too big to send for free? Include more fee and try again:
-                if (!fSendFreeTransactions || nBytes > MAX_FREE_TRANSACTION_CREATE_SIZE) {
-                    nFeeRet = nFeeNeeded;
-                    continue;
+                    // Small enough, and priority high enough, to send for free
+                    if (dPriorityNeeded > 0 && dPriority >= dPriorityNeeded)
+                        break;
                 }
 
-                //! Not enough fee: enough priority?
-                double dPriorityNeeded = mempool.estimatePriority(nTxConfirmTarget);
-                //! Not enough mempool history to estimate: use hard-coded AllowFree.
-                if (dPriorityNeeded <= 0 && AllowFree(dPriority))
-                    break;
+                CAmount nFeeNeeded = GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
 
-                //! Small enough, and priority high enough, to send for free
-                if (dPriorityNeeded > 0 && dPriority >= dPriorityNeeded)
-                    break;
+                // If we made it here and we aren't even able to meet the relay fee on the next pass, give up
+                // because we must be at the maximum allowed fee.
+                if (nFeeNeeded < ::minRelayTxFee.GetFee(nBytes))
+                {
+                    strFailReason = _("Transaction too large for fee policy");
+                    return false;
+                }
+
+                if (nFeeRet >= nFeeNeeded)
+                    break; // Done, enough fee included.
 
                 //! Include more fee and try again.
                 nFeeRet = nFeeNeeded;
@@ -2618,7 +2635,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
     return true;
 }
 
-bool CWallet::CreateTransaction(CScript scriptPubKey, const CAmount& nValue, std::string& sNarr, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, const CCoinControl* coinControl)
+bool CWallet::CreateTransaction(CScript scriptPubKey, const CAmount& nValue, std::string& sNarr, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl)
 {
     vector<pair<CScript, int64_t> > vecSend;
     vecSend.push_back(make_pair(scriptPubKey, nValue));
@@ -2640,7 +2657,6 @@ bool CWallet::CreateTransaction(CScript scriptPubKey, const CAmount& nValue, std
     //!    narration output will be for preceding output
 
     int nChangePos;
-    std::string strFailReason;
     bool rv = CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, nChangePos, strFailReason, coinControl);
 
     //! -- narration will be added to mapValue later in FindStealthTransactions From CommitTransaction
@@ -3609,70 +3625,26 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
     return true;
 }
 
-
-string CWallet::SendMoney(CScript scriptPubKey, CAmount nValue, std::string& sNarr, CWalletTx& wtxNew)
-{
-    CReserveKey reservekey(this);
-    CAmount nFeeRequired;
-
-    if (IsLocked()) {
-        string strError = _("Error: Wallet locked, unable to create transaction!");
-        LogPrintf("SendMoney() : %s", strError);
-        return strError;
-    }
-    if (fWalletUnlockStakingOnly) {
-        string strError = _("Error: Wallet unlocked for staking only, unable to create transaction.");
-        LogPrintf("SendMoney() : %s", strError);
-        return strError;
-    }
-    if (!CreateTransaction(scriptPubKey, nValue, sNarr, wtxNew, reservekey, nFeeRequired)) {
-        string strError;
-        if (nValue + nFeeRequired > GetBalance())
-            strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired));
-        else
-            strError = _("Error: Transaction creation failed!");
-        LogPrintf("SendMoney() : %s\n", strError);
-        return strError;
-    }
-
-    if (!CommitTransaction(wtxNew, reservekey))
-        return _("Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
-
-    return "";
-}
-
-
-string CWallet::SendMoneyToDestination(const CTxDestination& address, CAmount nValue, std::string& sNarr, CWalletTx& wtxNew)
-{
-    //! Check amount
-    if (nValue <= 0)
-        return _("Invalid amount");
-    if (nValue > GetBalance())
-        return _("Insufficient funds");
-
-    if (sNarr.length() > 24)
-        return _("Narration must be 24 characters or less.");
-
-    //! Parse Bitcoin address
-    CScript scriptPubKey = GetScriptForDestination(address);
-
-    return SendMoney(scriptPubKey, nValue, sNarr, wtxNew);
-}
-
 CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool)
 {
     //! payTxFee is user-set "I want to pay this much"
     CAmount nFeeNeeded = payTxFee.GetFee(nTxBytes);
-    //! prevent user from paying a non-sense fee (like 1 satoshi): 0 < fee < minRelayFee
-    if (nFeeNeeded > 0 && nFeeNeeded < ::minRelayTxFee.GetFee(nTxBytes))
-        nFeeNeeded = ::minRelayTxFee.GetFee(nTxBytes);
-    //! User didn't set: use -txconfirmtarget to estimate...
+    // user selected total at least (default=true)
+    if (fPayAtLeastCustomFee && nFeeNeeded > 0 && nFeeNeeded < payTxFee.GetFeePerK())
+        nFeeNeeded = payTxFee.GetFeePerK();
+    // User didn't set: use -txconfirmtarget to estimate...
     if (nFeeNeeded == 0)
         nFeeNeeded = pool.estimateFee(nConfirmTarget).GetFee(nTxBytes);
-    //! ... unless we don't have enough mempool data, in which case fall
-    //! back to a hard-coded fee
+    // ... unless we don't have enough mempool data, in which case fall
+    // back to a hard-coded fee
     if (nFeeNeeded == 0)
         nFeeNeeded = minTxFee.GetFee(nTxBytes);
+    // prevent user from paying a non-sense fee (like 1 satoshi): 0 < fee < minRelayFee
+    if (nFeeNeeded < ::minRelayTxFee.GetFee(nTxBytes))
+        nFeeNeeded = ::minRelayTxFee.GetFee(nTxBytes);
+    // But always obey the maximum
+    if (nFeeNeeded > maxTxFee)
+        nFeeNeeded = maxTxFee;
     return nFeeNeeded;
 }
 
