@@ -78,6 +78,14 @@ Statistics used to estimate fees and priorities are saved in the
 data directory in the `fee_estimates.dat` file just before
 program shutdown, and are read in at startup.
 
+#### BIP 66: Strict DER encoding for signatures
+Metrix Core 3.40 implements BIP 66, which enforces the already 
+adhered to consensus rule, which prohibits non-DER signatures.
+
+This change breaks the dependency on OpenSSL's signature parsing, 
+and is required if implementations would want to remove all of 
+OpenSSL from the consensus code.
+
 #### New command line options for transaction fee changes:
 - `-txconfirmtarget=n` : create transactions that have enough fees (or priority)
 so they are likely to begin confirmation within n blocks (default: 1). This setting
