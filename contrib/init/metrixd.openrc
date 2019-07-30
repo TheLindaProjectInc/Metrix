@@ -16,8 +16,8 @@ METRIXD_USER=${METRIXD_USER:-Metrix}
 METRIXD_GROUP=${METRIXD_GROUP:-Metrix}
 METRIXD_BIN=${METRIXD_BIN:-/usr/bin/metrixd}
 
-name="Bitcoin Core Daemon"
-description="Bitcoin crypto-currency p2p network daemon"
+name="Metrix Core Daemon"
+description="Metrix crypto-currency p2p network daemon"
 
 command="/usr/bin/metrixd"
 command_args="-pid=\"${METRIXD_PIDFILE}\" \
@@ -78,7 +78,7 @@ checkconfig()
 		eerror "It is also recommended that you also set alertnotify so you are "
 		eerror "notified of problems:"
 		eerror ""
-		eerror "ie: alertnotify=echo %%s | mail -s \"Bitcoin Alert\"" \
+		eerror "ie: alertnotify=echo %%s | mail -s \"Metrix Alert\"" \
 			"admin@foo.com"
 		eerror ""
 		return 1

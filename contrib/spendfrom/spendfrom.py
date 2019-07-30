@@ -7,7 +7,7 @@
 #  spendfrom.py  # Lists available funds
 #  spendfrom.py --from=ADDRESS --to=ADDRESS --amount=11.00
 #
-# Assumes it will talk to a bitcoind or Bitcoin-Qt running
+# Assumes it will talk to a metrixd running
 # on localhost.
 #
 # Depends on jsonrpc
@@ -33,15 +33,15 @@ def check_json_precision():
         raise RuntimeError("JSON encode/decode loses precision")
 
 def determine_db_dir():
-    """Return the default location of the bitcoin data directory"""
+    """Return the default location of the metrix data directory"""
     if platform.system() == "Darwin":
-        return os.path.expanduser("~/Library/Application Support/Bitcoin/")
+        return os.path.expanduser("~/Library/Application Support/metrix/")
     elif platform.system() == "Windows":
-        return os.path.join(os.environ['APPDATA'], "Bitcoin")
-    return os.path.expanduser("~/.bitcoin")
+        return os.path.join(os.environ['APPDATA'], "Metrix")
+    return os.path.expanduser("~/.metrix")
 
 def read_bitcoin_config(dbdir):
-    """Read the bitcoin.conf file from dbdir, returns dictionary of settings"""
+    """Read the metrix.conf file from dbdir, returns dictionary of settings"""
     from ConfigParser import SafeConfigParser
 
     class FakeSecHead(object):
@@ -59,20 +59,20 @@ def read_bitcoin_config(dbdir):
                 return s
 
     config_parser = SafeConfigParser()
-    config_parser.readfp(FakeSecHead(open(os.path.join(dbdir, "bitcoin.conf"))))
+    config_parser.readfp(FakeSecHead(open(os.path.join(dbdir, "metrix.conf"))))
     return dict(config_parser.items("all"))
 
 def connect_JSON(config):
-    """Connect to a bitcoin JSON-RPC server"""
+    """Connect to a metrix JSON-RPC server"""
     testnet = config.get('testnet', '0')
     testnet = (int(testnet) > 0)  # 0/1 in config file, convert to True/False
     if not 'rpcport' in config:
-        config['rpcport'] = 18332 if testnet else 33821
+        config['rpcport'] = 33821 if testnet else 33821
     connect = "http://%s:%s@127.0.0.1:%s"%(config['rpcuser'], config['rpcpassword'], config['rpcport'])
     try:
         result = ServiceProxy(connect)
         # ServiceProxy is lazy-connect, so send an RPC command mostly to catch connection errors,
-        # but also make sure the bitcoind we're talking to is/isn't testnet:
+        # but also make sure the metrixd we're talking to is/isn't testnet:
         if result.getmininginfo()['testnet'] != testnet:
             sys.stderr.write("RPC server at "+connect+" testnet setting mismatch\n")
             sys.exit(1)
@@ -159,7 +159,7 @@ def create_tx(bitcoind, fromaddresses, toaddress, amount, fee):
     # Note:
     # Python's json/jsonrpc modules have inconsistent support for Decimal numbers.
     # Instead of wrestling with getting json.dumps() (used by jsonrpc) to encode
-    # Decimals, I'm casting amounts to float before sending them to bitcoind.
+    # Decimals, I'm casting amounts to float before sending them to metrixd.
     #  
     outputs = { toaddress : float(amount) }
     (inputs, change_amount) = select_coins(needed, potential_inputs)
@@ -221,15 +221,15 @@ def main():
 
     parser = optparse.OptionParser(usage="%prog [options]")
     parser.add_option("--from", dest="fromaddresses", default=None,
-                      help="addresses to get bitcoins from")
+                      help="addresses to get metrix from")
     parser.add_option("--to", dest="to", default=None,
-                      help="address to get send bitcoins to")
+                      help="address to get send metrix to")
     parser.add_option("--amount", dest="amount", default=None,
                       help="amount to send")
     parser.add_option("--fee", dest="fee", default="0.0",
                       help="fee to include")
     parser.add_option("--datadir", dest="datadir", default=determine_db_dir(),
-                      help="location of bitcoin.conf file with RPC username/password (default: %default)")
+                      help="location of metrix.conf file with RPC username/password (default: %default)")
     parser.add_option("--testnet", dest="testnet", default=False, action="store_true",
                       help="Use the test network")
     parser.add_option("--dry_run", dest="dry_run", default=False, action="store_true",
