@@ -54,7 +54,7 @@ Value getinfo(const Array& params, bool fHelp)
             "  \"version\": xxxxx,           (numeric) the server version\n"
             "  \"protocolversion\": xxxxx,   (numeric) the protocol version\n"
             "  \"walletversion\": xxxxx,     (numeric) the wallet version\n"
-            "  \"balance\": xxxxxxx,         (numeric) the total bitcoin balance of the wallet\n"
+            "  \"balance\": xxxxxxx,         (numeric) the total Metrix balance of the wallet\n"
             "  \"newmint\": xxxxxxx,         (numeric) the immature balance\n"
             "  \"stake\": xxxxxxx            (numeric) the balance of the in progress stake\n"
             "  \"blocks\": xxxxxx,           (numeric) the current number of blocks processed in the server\n"
