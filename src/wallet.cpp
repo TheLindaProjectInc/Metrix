@@ -1197,8 +1197,8 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache, const isminefilter& filter
     if ((IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0)
         return 0;
 
-    CAmount* cache = nullptr;
-    bool* cache_used = nullptr;
+    CAmount* cache=NULL;
+    bool* cache_used=NULL;
 
     if (filter == ISMINE_SPENDABLE) {
         cache = &nAvailableCreditCached;
