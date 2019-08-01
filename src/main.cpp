@@ -921,7 +921,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state)
 }
 
 
-CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree)
+CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
 {
     {
         LOCK(mempool.cs);
@@ -936,17 +936,6 @@ CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
     CAmount nMinFee;
 
     nMinFee = ::minRelayTxFee.GetFee(nBytes);
-
-    if (fAllowFree) {
-        /**
-         * There is a free transaction area in blocks created by most miners,
-         * * If we are relaying we allow transactions up to DEFAULT_BLOCK_PRIORITY_SIZE - 1000
-         *   to be considered to fall into this category. We don't want to encourage sending
-         *   multiple transactions instead of one big transaction to avoid fees.
-         */
-        if (nBytes < (DEFAULT_BLOCK_PRIORITY_SIZE - 1000))
-            nMinFee = 0;
-    }
 
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
@@ -1020,6 +1009,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         CCoinsView dummy;
         CCoinsViewCache view(&dummy);
 
+        CAmount nValueIn = 0;
         {
             LOCK(pool.cs);
             CCoinsViewMemPool viewMemPool(pcoinsTip, pool);
@@ -1055,6 +1045,8 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
             //! Bring the best block into scope
             view.GetBestBlock();
 
+            nValueIn = view.GetValueIn(tx);
+
             //! we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
             view.SetBackend(dummy);
         }
@@ -1081,7 +1073,6 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                                    hash.ToString(), nSigOps, MAX_TX_SIGOPS));
         }
 
-        CAmount nValueIn = view.GetValueIn(tx);
         CAmount nValueOut = tx.GetValueOut();
         CAmount nFees = nValueIn - nValueOut;
         double dPriority = view.GetPriority(tx, chainActive.Height());
@@ -1090,7 +1081,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         unsigned int nSize = entry.GetTxSize();
 
         //! Don't accept it if it can't get into a block
-        CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
+        CAmount txMinFee = GetMinRelayFee(tx, nSize);
         if (fLimitFree && nFees < txMinFee) {
             errorMessage = "not enough fees " + hash.ToString() + ", " + boost::lexical_cast<string>(nFees) + " < " + boost::lexical_cast<string>(txMinFee);
             return error("AcceptToMemoryPool : not enough fees %s, %d < %d",
@@ -1259,7 +1250,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         unsigned int nSize = entry.GetTxSize();
 
         //! Don't accept it if it can't get into a block
-        CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
+        CAmount txMinFee = GetMinRelayFee(tx, nSize);
         if (fLimitFree && nFees < txMinFee)
             return state.DoS(0, error("AcceptableInputs : not enough fees %s, %d < %d", hash.ToString(), nFees, txMinFee),
                              REJECT_INSUFFICIENTFEE, "insufficient fee");
@@ -2026,6 +2017,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     bool fScriptChecks = pindex->nHeight >= Checkpoints::GetTotalBlocksEstimate();
 
     unsigned int flags = SCRIPT_VERIFY_P2SH;
+    // Start enforcing the DERSIG (BIP66) rules
+    // For Metrix the chain has always been BIP66 compliant so there is no need for a soft fork
+    flags |= SCRIPT_VERIFY_DERSIG;
+
 
     CBlockUndo blockundo;
 
@@ -2925,11 +2920,6 @@ bool FindUndoPos(CValidationState& state, int nFile, CDiskBlockPos& pos, unsigne
 
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
 {
-    //! Check block version
-    if (block.nVersion > block.CURRENT_VERSION)
-        return state.DoS(100, error("CheckBlockHeader() : reject unknown block version %d", block.nVersion),
-                         REJECT_INVALID, "unknown block version");
-
     if (block.GetHash() != Params().HashGenesisBlock() && block.nVersion < 7)
         return state.DoS(100, error("CheckBlockHeader() : reject too old nVersion = %d", block.nVersion),
                          REJECT_INVALID, "old nVersion");
@@ -2949,6 +2939,25 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.Invalid(error("CheckBlockHeader() : block timestamp too far in the future"),
                              REJECT_INVALID, "time-too-new");
 
+    //! Get prev block index
+    CBlockIndex* pindexPrev = NULL;
+    uint256 hash = block.GetHash();
+    if (hash != Params().HashGenesisBlock()) {
+        BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
+        if (mi == mapBlockIndex.end())
+            return state.DoS(0, error("%s : prev block %s not found", __func__, block.hashPrevBlock.ToString().c_str()), 0, "bad-prevblk");
+        pindexPrev = (*mi).second;
+        if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
+            return state.DoS(100, error("%s : prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
+    }
+
+    //! Reject block.nVersion=8 blocks when 95% (75% on testnet) of the network has upgraded:
+    if (block.nVersion < 8 && CBlockIndex::IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
+    {
+        return state.Invalid(error("%s : rejected nVersion=7 block", __func__),
+                             REJECT_OBSOLETE, "bad-version");
+    }
+
     return true;
 }
 
@@ -2956,6 +2965,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 {
     //! These are checks that are independent of context.
 
+    //! Check that the header is valid (particularly PoW).  This is mostly
+    //! redundant with the call in AcceptBlockHeader.
     if (!CheckBlockHeader(block, state, block.IsProofOfWork() && fCheckPOW))
         return state.DoS(100, error("CheckBlock() : CheckBlockHeader failed"),
                          REJECT_INVALID, "bad-header", true);
@@ -3182,6 +3193,9 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
             return state.DoS(100, error("%s : prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
         nHeight = pindexPrev->nHeight + 1;
 
+        if (!CheckBlockHeader(block, state, block.nNonce > 0 && nHeight < Params().LastPOWBlock()))
+           return false;
+
         //! Check timestamp against prev
         if (block.GetBlockTime() <= pindexPrev->GetPastTimeLimit() || FutureDrift(block.GetBlockTime()) < pindexPrev->GetBlockTime())
             return state.Invalid(error("%s : block's timestamp is too early", __func__),
@@ -3309,7 +3323,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
             uint256 targetProofOfStake;
             if (!CheckProofOfStake(state, pindexPrev, block.vtx[1], block.nBits, hashProof, targetProofOfStake))
                 return state.Invalid(error("UpdateHashProof() : check proof-of-stake failed for block %s", hash.ToString()),
-                                     REJECT_CHECKPOINT, "pos check fialed");
+                                     REJECT_INVALID, "pos check fialed");
         }
         //! PoW is checked in CheckBlock()
         //! Metrix adds POW block hashes to hash proof when confirming POS blocks

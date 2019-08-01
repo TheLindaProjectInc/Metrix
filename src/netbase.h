@@ -9,11 +9,11 @@
 #include "config/bitcoin-config.h"
 #endif
 
-#include <string>
-#include <vector>
-
 #include "compat.h"
 #include "serialize.h"
+
+#include <string>
+#include <vector>
 
 extern int nConnectTimeout;
 extern bool fNameLookup;

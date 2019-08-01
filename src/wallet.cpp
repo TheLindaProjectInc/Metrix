@@ -41,7 +41,7 @@ int64_t nReserveBalance = 0;
 int64_t nMinimumInputValue = 0;
 unsigned int nTxConfirmTarget = 1;
 bool bSpendZeroConfChange = true;
-bool fSendFreeTransactions = true;
+bool fSendFreeTransactions = false;
 bool fPayAtLeastCustomFee = true;
 
 static int64_t GetStakeSplitAmount() { return 1000000 * COIN; }
@@ -1544,7 +1544,7 @@ void CWallet::AvailableCoins(
                 if (mine == ISMINE_WATCH_ONLY && nWatchonlyConfig == 1)
                     continue;
 
-                if (IsLockedCoin((*it).first, i))
+                if (!includeLocked && IsLockedCoin((*it).first, i))
                     continue;
                 if (pcoin->vout[i].nValue <= 0 && !fIncludeZeroValue)
                     continue;
@@ -2468,10 +2468,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
     {
         LOCK2(cs_main, cs_wallet);
         {
-            if (fPayAtLeastCustomFee)
-                nFeeRet = payTxFee.GetFeePerK();
-            else
-                nFeeRet = 0;
+            nFeeRet = 0;
 
             while (true)
             {
@@ -2587,8 +2584,10 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
                 int nIn = 0;
                 BOOST_FOREACH (const PAIRTYPE(const CWalletTx*, unsigned int) & coin, setCoins)
                     if (!SignSignature(*this, *coin.first, txNew, nIn++))
+                    {
+                        strFailReason = _("Signing transaction failed");
                         return false;
-
+                    }
                 //! Embed the constructed transaction data in wtxNew.
                 *static_cast<CTransaction*>(&wtxNew) = CTransaction(txNew);
 
@@ -3627,7 +3626,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
 
 CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool)
 {
-    //! payTxFee is user-set "I want to pay this much"
+    // payTxFee is user-set "I want to pay this much"
     CAmount nFeeNeeded = payTxFee.GetFee(nTxBytes);
     // user selected total at least (default=true)
     if (fPayAtLeastCustomFee && nFeeNeeded > 0 && nFeeNeeded < payTxFee.GetFeePerK())
