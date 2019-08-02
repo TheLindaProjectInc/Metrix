@@ -360,18 +360,19 @@ bool SoftSetBoolArg(const std::string& strArg, bool fValue)
 
 void SetupEnvironment()
 {
+    std::locale loc("C");
     //! On most POSIX systems (e.g. Linux, but not BSD) the environment's locale
     //! may be invalid, in which case the "C" locale is used as fallback.
 #if !defined(WIN32) && !defined(MAC_OSX) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
     try {
-        std::locale(""); // Raises a runtime error if current locale is invalid
+        loc = std::locale(""); // Raises a runtime error if current locale is invalid
     } catch (const std::runtime_error&) {
-        std::locale::global(std::locale("C"));
+        setenv("LC_ALL", "C", 1);
     }
 #endif
     //! The path locale is lazy initialized and to avoid deinitialization errors 
     //! in multithreading environments, it is set explicitly by the main thread.
-    boost::filesystem::path::imbue(std::locale());    
+    boost::filesystem::path::imbue(loc);
 }
 
 static std::string FormatException(std::exception* pex, const char* pszThread)
