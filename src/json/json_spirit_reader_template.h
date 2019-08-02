@@ -569,7 +569,8 @@ namespace json_spirit
     {
         typename String_type::const_iterator begin = s.begin();
 
-        return read_range( begin, s.end(), value );
+        bool success = read_range( begin, s.end(), value );
+        return success && begin == s.end();
     }
 
     template< class Istream_type >
