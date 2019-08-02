@@ -768,7 +768,7 @@ uint64_t CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
     //!LogPrintf(" -- CMasternodePayments CalculateScore() n3 = %d \n", n3.GetLow64());
     //!LogPrintf(" -- CMasternodePayments CalculateScore() n4 = %d \n", n4.GetLow64());
 
-    return n4.GetLow64();
+    return UintToArith256(n4).GetLow64();
 }
 
 bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)

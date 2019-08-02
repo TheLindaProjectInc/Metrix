@@ -11,6 +11,7 @@
 #endif
 
 #include "amount.h"
+#include "arith_uint256.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "coins.h"
@@ -183,7 +184,7 @@ inline int64_t FutureDrift(int64_t nTime) { return nTime + 15; }
 static const int64_t STAKE_TIMESPAN_SWITCH_TIME = 1428537599;
 
 struct BlockHasher {
-    size_t operator()(const uint256& hash) const { return hash.GetLow64(); }
+    size_t operator()(const uint256& hash) const { return UintToArith256(hash).GetLow64(); }
 };
 
 extern CScript COINBASE_FLAGS;

@@ -186,7 +186,7 @@ public:
         nMoneySupply = 0;
         nFlags = 0;
         nStakeModifier = 0;
-        hashProof = 0;
+        hashProof = uint256();
         prevoutStake.SetNull();
         nStakeTime = 0;
 
@@ -413,7 +413,7 @@ public:
     CDiskBlockIndex()
     {
         hashPrev = uint256();
-        blockHash = 0;
+        blockHash = uint256();
     }
 
     explicit CDiskBlockIndex(CBlockIndex* pindex) : CBlockIndex(*pindex)
@@ -464,7 +464,7 @@ public:
 
     uint256 GetBlockHash() const
     {
-        if (fUseFastIndex && (nTime < GetAdjustedTime() - 24 * 60 * 60) && blockHash != 0)
+        if (fUseFastIndex && (nTime < GetAdjustedTime() - 24 * 60 * 60) && !blockHash.IsNull())
             return blockHash;
 
         CBlockHeader block;

@@ -54,7 +54,7 @@ static uint64_t CoinWeightCost(const COutput& out)
 {
     int64_t nTimeWeight = (int64_t)GetTime() - (int64_t)out.tx->nTime;
     uint256 bnCoinDayWeight = uint256(out.tx->vout[out.i].nValue) * nTimeWeight / (24 * 60 * 60);
-    return bnCoinDayWeight.GetLow64();
+    return UintToArith256(bnCoinDayWeight).GetLow64();
 }
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
