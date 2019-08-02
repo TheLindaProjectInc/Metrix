@@ -32,12 +32,8 @@ public:
     {
         READWRITE(FLATDATA(*this));
     }
-    void SetNull()
-    {
-        hash = 0;
-        n = (unsigned int)-1;
-    }
-    bool IsNull() const { return (hash == 0 && n == (unsigned int)-1); }
+    void SetNull() { hash.SetNull(); n = (unsigned int)-1; }
+    bool IsNull() const { return (hash.IsNull() && n == (unsigned int)-1); }
 
     friend bool operator<(const COutPoint& a, const COutPoint& b)
     {
