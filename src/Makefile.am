@@ -74,6 +74,7 @@ BITCOIN_CORE_H = \
   alert.h \
   allocators.h \
   amount.h \
+  arith_uint256.h \
   base58.h \
   bignum.h \
   bloom.h \
@@ -88,8 +89,6 @@ BITCOIN_CORE_H = \
   compat.h \
   compat/sanity.h \
   compressor.h \
-  primitives/block.h \
-  primitives/transaction.h \
   core_io.h \
   coins.h \
   crypter.h \
@@ -116,6 +115,8 @@ BITCOIN_CORE_H = \
   noui.h \
   netbase.h \
   pbkdf2.h \
+  primitives/block.h \
+  primitives/transaction.h \
   protocol.h \
   pubkey.h \
   random.h \
@@ -143,8 +144,8 @@ BITCOIN_CORE_H = \
   uint256.h \
   undo.h \
   ui_interface.h \
-  utilstrencodings.h \
   utilmoneystr.h \
+  utilstrencodings.h \
   utiltime.h \
   util.h \
   version.h \
@@ -287,18 +288,19 @@ libbitcoin_common_a_SOURCES = \
 libbitcoin_util_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_util_a_SOURCES = \
   allocators.cpp \
+  arith_uint256.cpp \
+  clientversion.cpp \
+  chainparamsbase.cpp \
   compat/strnlen.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
-  clientversion.cpp \
-  chainparamsbase.cpp \
   random.cpp \
   rpcprotocol.cpp \
   sync.cpp \
   uint256.cpp \
   util.cpp \
-  utilstrencodings.cpp \
   utilmoneystr.cpp \
+  utilstrencodings.cpp \
   utiltime.cpp \
   $(BITCOIN_CORE_H)
 
@@ -378,7 +380,7 @@ metrix_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 if BUILD_BITCOIN_LIBS
 include_HEADERS = script/bitcoinconsensus.h
 libbitcoinconsensus_la_SOURCES = \
-  primitives/transaction.cpp \
+  arith_uint256.cpp \
   crypto/sha1.cpp \
   crypto/sha256.cpp \
   crypto/sha512.cpp \
@@ -389,6 +391,7 @@ libbitcoinconsensus_la_SOURCES = \
   eccryptoverify.cpp \
   ecwrapper.cpp \
   hash.cpp \
+  primitives/transaction.cpp \
   pubkey.cpp \
   script/script.cpp \
   script/interpreter.cpp \
