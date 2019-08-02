@@ -100,7 +100,7 @@ public:
  * @note This type is called uint160 for historical reasons only. It is an opaque
  * blob of 160 bits and has no integer operations.
  */
-class uint160 : public base_blob<160> {
+class uint160 : public base_blob<160>
 {
 public:
     uint160() {}
@@ -113,7 +113,7 @@ public:
  * opaque blob of 256 bits and has no integer operations. Use arith_uint256 if
  * those are required.
  */
-class uint256 : public base_blob<256> {
+class uint256 : public base_blob<256> 
 {
 public:
     uint256() {}
@@ -159,6 +159,5 @@ inline uint256 uint256S(const std::string& str)
     rv.SetHex(str);
     return rv;
 }
-
 
 #endif // BITCOIN_UINT256_H
