@@ -126,6 +126,8 @@ static void inline HashFinal(uint32_t& a, uint32_t& b, uint32_t& c)
 uint64_t uint256::GetHash(const uint256& salt) const
 {
     uint32_t a, b, c;
+    const uint32_t *pn = (const uint32_t*)data;
+    const uint32_t *salt_pn = (const uint32_t*)salt.data;
     a = b = c = 0xdeadbeef + (WIDTH << 2);
 
     a += pn[0] ^ salt_pn[0];
