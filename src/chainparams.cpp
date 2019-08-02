@@ -148,9 +148,9 @@ public:
         nLastPOWBlock = 580000;
 
         fRequireRPCPassword = true;
-        fDefaultCheckMemPool = false;
         fRequireStandard = true;
         fTestnetToBeDeprecatedFieldRPC = false;
+        fDefaultConsistencyChecks = false;
     }
 
     const Checkpoints::CCheckpointData& Checkpoints() const 
@@ -205,9 +205,9 @@ public:
         nLastPOWBlock = 0x7fffffff;
 
         fRequireRPCPassword = true;
-        fDefaultCheckMemPool = false;
         fRequireStandard = false;
         fTestnetToBeDeprecatedFieldRPC = true;
+        fDefaultConsistencyChecks = false;
     }
     const Checkpoints::CCheckpointData& Checkpoints() const 
     {
