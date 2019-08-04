@@ -5088,7 +5088,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
-    else if (fAlerts && strCommand == "alert")
+    else if (fAlerts && strCommand == "alert") {
         CAlert alert;
         vRecv >> alert;
 
