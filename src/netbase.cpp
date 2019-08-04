@@ -1282,7 +1282,7 @@ CSubNet::CSubNet(const std::string& strSubnet, bool fAllowLookup)
                     n += astartofs*8;
                     //! Clear bits [n..127]
                     for (; n < 128; ++n)
-                        netmask[n >> 3] &= ~(1 << (7 - (n & 7));
+                        netmask[n >> 3] &= ~(1 << (7 - (n & 7)));
                 } else {
                     valid = false;
                 }
