@@ -3347,7 +3347,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
             uint256 targetProofOfStake;
             if (!CheckProofOfStake(state, pindexPrev, block.vtx[1], block.nBits, hashProof, targetProofOfStake))
                 return state.Invalid(error("UpdateHashProof() : check proof-of-stake failed for block %s", hash.ToString()),
-                                     REJECT_INVALID, "pos check fialed");
+                                     REJECT_INVALID, "pos check failed");
         }
         //! PoW is checked in CheckBlock()
         //! Metrix adds POW block hashes to hash proof when confirming POS blocks
@@ -3495,7 +3495,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     LOCK(cs_main);
     MarkBlockAsReceived(pblock->GetHash());
     if (!checked) {
-        return error("$s : CheckBlock FAILED", __func__);
+        return error("%s : CheckBlock FAILED", __func__);
     }
 
     //! Store to disk
@@ -3548,7 +3548,7 @@ bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
 
     int64_t nSearchTime = txCoinStake.nTime; //! search to current time
     if (fDebug)
-        LogPrintf("DEBUG : nSearchTime=%i, nLastCoinStakeSearchTime=$i\n", nSearchTime, nLastCoinStakeSearchTime);
+        LogPrintf("DEBUG : nSearchTime=%i, nLastCoinStakeSearchTime=%i\n", nSearchTime, nLastCoinStakeSearchTime);
     if (nSearchTime > nLastCoinStakeSearchTime) {
         if (wallet.CreateCoinStake(wallet, block.nBits, nSearchTime-nLastCoinStakeSearchTime, nFees, txCoinStake, key)) {
             if (txCoinStake.nTime >= chainActive.Tip()->GetPastTimeLimit() + 1) {
