@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-#include "json/json_spirit_value.h"
+#include "univalue/univalue.h"
 
 #include "allocators.h"
 
@@ -31,7 +31,7 @@ class CKeePassIntegrator
 
     class CKeePassRequest
     {
-        json_spirit::Object requestObj;
+        UniValue requestObj;
         std::string sType;
         std::string sIV;
         SecureString sKey;
@@ -96,7 +96,7 @@ class CKeePassIntegrator
         void parseResponse(std::string sResponse);
 
     public:
-        json_spirit::Object responseObj;
+        UniValue responseObj;
         CKeePassResponse(SecureString sKey, std::string sResponse)
         {
             this->sKey = sKey;

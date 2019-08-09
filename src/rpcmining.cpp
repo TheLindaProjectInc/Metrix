@@ -16,11 +16,12 @@
 
 #include <boost/assign/list_of.hpp>
 
-using namespace json_spirit;
+#include "univalue/univalue.h"
+
 using namespace std;
 using namespace boost::assign;
 
-Value getsubsidy(const Array& params, bool fHelp)
+UniValue getsubsidy(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
         throw runtime_error(
@@ -32,14 +33,14 @@ Value getsubsidy(const Array& params, bool fHelp)
     return (CAmount)nReward;
 }
 
-Value getstakesubsidy(const Array& params, bool fHelp)
+UniValue getstakesubsidy(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "getstakesubsidy <hex string>\n"
             "Returns proof-of-stake subsidy value for the specified coinstake.");
 
-    RPCTypeCheck(params, list_of(str_type));
+    RPCTypeCheck(params, list_of(UniValue::VSTR));
 
     vector<unsigned char> txData(ParseHex(params[0].get_str()));
     CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
@@ -61,7 +62,7 @@ Value getstakesubsidy(const Array& params, bool fHelp)
     return (CAmount)nStakeReward;
 }
 
-Value getmininginfo(const Array& params, bool fHelp)
+UniValue getmininginfo(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -72,7 +73,9 @@ Value getmininginfo(const Array& params, bool fHelp)
     if (pwalletMain)
         nWeight = pwalletMain->GetStakeWeight();
 
-    Object obj, diff, weight;
+    UniValue obj(UniValue::VOBJ);
+    UniValue diff(UniValue::VOBJ);
+    UniValue weight(UniValue::VOBJ);
     obj.push_back(Pair("blocks", (int)chainActive.Height()));
     obj.push_back(Pair("currentblocksize", (uint64_t)nLastBlockSize));
     obj.push_back(Pair("currentblocktx", (uint64_t)nLastBlockTx));
@@ -98,7 +101,7 @@ Value getmininginfo(const Array& params, bool fHelp)
     return obj;
 }
 
-Value getstakinginfo(const Array& params, bool fHelp)
+UniValue getstakinginfo(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -113,7 +116,7 @@ Value getstakinginfo(const Array& params, bool fHelp)
     bool staking = nLastCoinStakeSearchInterval && nWeight;
     uint64_t nExpectedTime = staking ? (Params().TargetSpacing() * nNetworkWeight / nWeight) : 0;
 
-    Object obj;
+    UniValue obj(UniValue::VOBJ);
 
     obj.push_back(Pair("enabled", GetBoolArg("-staking", true)));
     obj.push_back(Pair("staking", staking));
@@ -134,16 +137,16 @@ Value getstakinginfo(const Array& params, bool fHelp)
     return obj;
 }
 
-Value checkkernel(const Array& params, bool fHelp)
+UniValue checkkernel(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
             "checkkernel [{\"txid\":txid,\"vout\":n},...] [createblocktemplate=false]\n"
             "Check if one of given inputs is a kernel input at the moment.\n");
 
-    RPCTypeCheck(params, list_of(array_type)(bool_type));
+    RPCTypeCheck(params, list_of(UniValue::VARR)(UniValue::VBOOL));
 
-    Array inputs = params[0].get_array();
+    UniValue inputs = params[0].get_array();
     bool fCreateBlockTemplate = params.size() > 1 ? params[1].get_bool() : false;
 
     if (vNodes.empty())
@@ -158,18 +161,19 @@ Value checkkernel(const Array& params, bool fHelp)
     int64_t nTime = GetAdjustedTime();
     nTime &= ~STAKE_TIMESTAMP_MASK;
 
-    BOOST_FOREACH (Value& input, inputs) {
-        const Object& o = input.get_obj();
+    for (unsigned int idx = 0; idx < inputs.size(); idx++) {
+        const UniValue& input = inputs[idx];
+        const UniValue& o = input.get_obj();
 
-        const Value& txid_v = find_value(o, "txid");
-        if (txid_v.type() != str_type)
+        const UniValue& txid_v = find_value(o, "txid");
+        if (!txid_v.isStr())
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, missing txid key");
         string txid = txid_v.get_str();
         if (!IsHex(txid))
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected hex txid");
 
-        const Value& vout_v = find_value(o, "vout");
-        if (vout_v.type() != int_type)
+        const UniValue& vout_v = find_value(o, "vout");
+        if (!vout_v.isNum())
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, missing vout key");
         int nOutput = vout_v.get_int();
         if (nOutput < 0)
@@ -182,13 +186,13 @@ Value checkkernel(const Array& params, bool fHelp)
         }
     }
 
-    Object result;
+    UniValue result(UniValue::VOBJ);
     result.push_back(Pair("found", !kernel.IsNull()));
 
     if (kernel.IsNull())
         return result;
 
-    Object oKernel;
+    UniValue oKernel(UniValue::VOBJ);;
     oKernel.push_back(Pair("txid", kernel.hash.GetHex()));
     oKernel.push_back(Pair("vout", (int64_t)kernel.n));
     oKernel.push_back(Pair("time", nTime));
@@ -215,7 +219,7 @@ Value checkkernel(const Array& params, bool fHelp)
 }
 
 // NOTE: Unlike wallet RPC (which use BTC values), mining RPCs follow GBT (BIP 22) in using satoshi amounts
-Value prioritisetransaction(const Array& params, bool fHelp)
+UniValue prioritisetransaction(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
         throw runtime_error(
@@ -243,7 +247,7 @@ Value prioritisetransaction(const Array& params, bool fHelp)
     return true;
 }
 
-Value getblocktemplate(const Array& params, bool fHelp)
+UniValue getblocktemplate(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
         throw runtime_error(
@@ -266,15 +270,17 @@ Value getblocktemplate(const Array& params, bool fHelp)
             "See https://en.bitcoin.it/wiki/BIP_0022 for full specification.");
 
     std::string strMode = "template";
-    Value lpval = Value::null;
+    UniValue lpval = NullUniValue;
     if (params.size() > 0) {
-        const Object& oparam = params[0].get_obj();
-        const Value& modeval = find_value(oparam, "mode");
-        if (modeval.type() == str_type)
+        const UniValue& oparam = params[0].get_obj();
+        const UniValue& modeval = find_value(oparam, "mode");
+        if (modeval.isStr())
             strMode = modeval.get_str();
-        else if (modeval.type() == null_type) {
+        else if (modeval.isNull())
+        {
             /* Do nothing */
-        } else
+        }
+        else
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
         lpval = find_value(oparam, "longpollid");
     }
@@ -292,16 +298,17 @@ Value getblocktemplate(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
 
     static unsigned int nTransactionsUpdatedLast;
-    if (lpval.type() != null_type) {
+    if (!lpval.isNull())
+    {
         //! Wait to respond until either the best block changes, OR a minute has passed and there are more transactions
         uint256 hashWatchedChain;
         boost::system_time checktxtime;
         unsigned int nTransactionsUpdatedLastLP;
 
-        if (lpval.type() == str_type) {
+        if (lpval.isStr())
+        {
             //! Format: <hashBestChain><nTransactionsUpdatedLast>
             std::string lpstr = lpval.get_str();
-
             hashWatchedChain.SetHex(lpstr.substr(0, 64));
             nTransactionsUpdatedLastLP = atoi64(lpstr.substr(64));
         } else {
@@ -373,7 +380,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     UpdateTime(*pblock, pindexPrev);
     pblock->nNonce = 0;
 
-    Array transactions;
+    UniValue transactions(UniValue::VARR);
     map<uint256, int64_t> setTxIndex;
     int i = 0;
 
@@ -384,13 +391,13 @@ Value getblocktemplate(const Array& params, bool fHelp)
         if (tx.IsCoinBase() || tx.IsCoinStake())
             continue;
 
-        Object entry;
+        UniValue entry(UniValue::VOBJ);
 
         entry.push_back(Pair("data", EncodeHexTx(tx)));
 
         entry.push_back(Pair("hash", txHash.GetHex()));
 
-        Array deps;
+        UniValue deps(UniValue::VARR);
         BOOST_FOREACH (const CTxIn& in, tx.vin) {
             if (setTxIndex.count(in.prevout.hash))
                 deps.push_back(setTxIndex[in.prevout.hash]);
@@ -402,19 +409,19 @@ Value getblocktemplate(const Array& params, bool fHelp)
         transactions.push_back(entry);
     }
 
-    Object aux;
+    UniValue aux(UniValue::VOBJ);
     aux.push_back(Pair("flags", HexStr(COINBASE_FLAGS.begin(), COINBASE_FLAGS.end())));
 
     uint256 hashTarget = uint256().SetCompact(pblock->nBits);
 
-    static Array aMutable;
+    static UniValue aMutable(UniValue::VARR);
     if (aMutable.empty()) {
         aMutable.push_back("time");
         aMutable.push_back("transactions");
         aMutable.push_back("prevblock");
     }
 
-    Object result;
+    UniValue result(UniValue::VOBJ);
     result.push_back(Pair("version", pblock->nVersion));
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
     result.push_back(Pair("transactions", transactions));
@@ -434,7 +441,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
     return result;
 }
 
-Value estimatefee(const Array& params, bool fHelp)
+UniValue estimatefee(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
@@ -452,7 +459,7 @@ Value estimatefee(const Array& params, bool fHelp)
             "\nExample:\n" +
             HelpExampleCli("estimatefee", "6"));
 
-    RPCTypeCheck(params, boost::assign::list_of(int_type));
+    RPCTypeCheck(params, boost::assign::list_of(UniValue::VNUM));
 
     int nBlocks = params[0].get_int();
     if (nBlocks < 1)
@@ -465,7 +472,7 @@ Value estimatefee(const Array& params, bool fHelp)
     return ValueFromAmount(feeRate.GetFeePerK());
 }
 
-Value estimatepriority(const Array& params, bool fHelp)
+UniValue estimatepriority(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
@@ -483,7 +490,7 @@ Value estimatepriority(const Array& params, bool fHelp)
             "\nExample:\n" +
             HelpExampleCli("estimatepriority", "6"));
 
-    RPCTypeCheck(params, boost::assign::list_of(int_type));
+    RPCTypeCheck(params, boost::assign::list_of(UniValue::VNUM));
 
     int nBlocks = params[0].get_int();
     if (nBlocks < 1)
