@@ -1442,9 +1442,11 @@ bool BindListenPort(const CService& addrBind, string& strError, bool fWhiteliste
 
     /**
      * Allow binding if the port is still in TIME_WAIT state after
-     * the program was closed and restarted. Not an issue on windows!
+     * the program was closed and restarted.
      */
     setsockopt(hListenSocket, SOL_SOCKET, SO_REUSEADDR, (void*)&nOne, sizeof(int));
+#else
+    setsockopt(hListenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&nOne, sizeof(int));
 #endif
 
 #ifdef WIN32
