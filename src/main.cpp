@@ -4917,6 +4917,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             vRecv >> headers[n];
             ReadCompactSize(vRecv); //! ignore tx count; assume it is 0.
             //! metrix: ignore vchBlockSig this shouldn't be sent and should be removed in the future
+            ReadCompactSize(vRecv); 
         }
 
         LOCK(cs_main);
