@@ -66,7 +66,7 @@ static bool AppInitRPC(int argc, char* argv[])
      * Parameters
      */
     ParseParameters(argc, argv);
-    if (argc < 2 || mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
+    if (argc<2 || mapArgs.count("-?") || mapArgs.count("-h") || mapArgs.count("-help") || mapArgs.count("-version")) {
         //! First part of help message is specific to RPC client
         std::string strUsage = _("Metrix RPC client version") + " " + FormatFullVersion() + "\n";
         if (!mapArgs.count("-version")) {
