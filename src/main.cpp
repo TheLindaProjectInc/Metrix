@@ -2036,6 +2036,11 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     // For Metrix the chain has always been BIP66 compliant so there is no need for a soft fork
     flags |= SCRIPT_VERIFY_DERSIG;
 
+    // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=8
+    // blocks, when 75% of the network has upgraded:
+    if (block.nVersion >= 7 && CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
+        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+    }
 
     CBlockUndo blockundo;
 
