@@ -81,6 +81,19 @@ struct COrphanTx {
 
 map<uint256, COrphanTx> mapOrphanTransactions;
 map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
+
+struct COrphanBlock {
+    uint256 hashBlock;
+    uint256 hashPrev;
+    std::pair<COutPoint, unsigned int> stake;
+    std::vector<unsigned char> vchBlock;
+};
+
+map<uint256, COrphanBlock*> mapOrphanBlocks;
+multimap<uint256, COrphanBlock*> mapOrphanBlocksByPrev;
+set<pair<COutPoint, unsigned int> > setStakeSeenOrphan;
+size_t nOrphanBlocksSize = 0;
+
 void EraseOrphansFor(NodeId peer);
 
 static void CheckBlockIndex();
@@ -3451,6 +3464,18 @@ void CBlockIndex::BuildSkip()
         pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
 }
 
+void PushGetBlocks(CNode* pnode, CBlockIndex* pindexBegin, uint256 hashEnd)
+{
+    AssertLockHeld(cs_main);
+    // Filter out duplicate requests
+    if (pindexBegin == pnode->pindexLastGetBlocksBegin && hashEnd == pnode->hashLastGetBlocksEnd)
+        return;
+    pnode->pindexLastGetBlocksBegin = pindexBegin;
+    pnode->hashLastGetBlocksEnd = hashEnd;
+
+    pnode->PushMessage("getblocks", chainActive.GetLocator(pindexBegin), hashEnd);
+}
+
 bool static ReserealizeBlockSignature(CBlock* pblock)
 {
     if (pblock->IsProofOfWork()) {
@@ -3470,20 +3495,70 @@ bool static IsCanonicalBlockSignature(CBlock* pblock)
     return IsValidSignatureEncoding(pblock->vchBlockSig);
 }
 
+uint256 static GetOrphanRoot(const uint256& hash)
+{
+    map<uint256, COrphanBlock*>::iterator it = mapOrphanBlocks.find(hash);
+    if (it == mapOrphanBlocks.end())
+        return hash;
+	
+    // Work back to the first block in the orphan chain
+    do {
+        map<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocks.find(it->second->hashPrev);
+        if (it2 == mapOrphanBlocks.end())
+            return it->first;
+        it = it2;
+    } while(true);
+}
+
+uint256 WantedByOrphan(const COrphanBlock* pblockOrphan)
+{
+    while (mapOrphanBlocks.count(pblockOrphan->hashPrev))
+        pblockOrphan = mapOrphanBlocks[pblockOrphan->hashPrev];
+    return pblockOrphan->hashPrev;
+}
+
+// Remove a random orphan block (which does not have any dependent orphans).
+void static PruneOrphanBlocks()
+{
+    size_t nMaxOrphanBlocksSize = GetArg("-maxorphanblocks", DEFAULT_MAX_ORPHAN_BLOCKS) * ((size_t) 1 << 20);
+    while (nOrphanBlocksSize > nMaxOrphanBlocksSize)
+    {
+        // Pick a random orphan block.
+        uint256 randomhash = GetRandHash();
+        std::multimap<uint256, COrphanBlock*>::iterator it = mapOrphanBlocksByPrev.lower_bound(randomhash);
+        if (it == mapOrphanBlocksByPrev.end())
+            it = mapOrphanBlocksByPrev.begin();
+
+        // As long as this block has other orphans depending on it, move to one of those successors.
+        do {
+            std::multimap<uint256, COrphanBlock*>::iterator it2 = mapOrphanBlocksByPrev.find(it->second->hashBlock);
+            if (it2 == mapOrphanBlocksByPrev.end())
+                break;
+            it = it2;
+        } while(1);
+
+        setStakeSeenOrphan.erase(it->second->stake);
+        uint256 hash = it->second->hashBlock;
+        nOrphanBlocksSize -= it->second->vchBlock.size();
+        delete it->second;
+        mapOrphanBlocksByPrev.erase(it);
+        mapOrphanBlocks.erase(hash);
+    }
+}
+
 bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDiskBlockPos* dbp)
 {
-    //! ppcoin: check proof-of-stake
-    if (pblock->IsProofOfStake()) {
-        std::pair<COutPoint, unsigned int> proofOfStake = pblock->GetProofOfStake();
 
-        /**
-         * Limited duplicity on stake: prevents block flood attack
-         * allow the best blocks stake to be reused just incase we are in a fork
-         */
-        if (!(chainActive.Tip()->IsProofOfStake() && proofOfStake.first == chainActive.Tip()->prevoutStake) &&
-            setStakeSeen.count(proofOfStake))
-            return state.Invalid(error("ProcessNewBlock() : duplicate proof-of-stake (%s, %d) for block %s", proofOfStake.first.ToString(), proofOfStake.second, pblock->GetHash().ToString()));
-    }
+    // Check for duplicate orphan block
+    // Duplicate stake allowed only when there is orphan child block
+    // if the block header is already known, allow it (to account for headers being sent before the block itself)
+    uint256 hash = pblock->GetHash();
+    if (!fReindex && !fImporting && pblock->IsProofOfStake() && setStakeSeen.count(pblock->GetProofOfStake()) && !mapBlockIndex.count(hash) && !mapOrphanBlocksByPrev.count(hash))
+        return error("ProcessNewBlock() : duplicate proof-of-stake (%s, %d) for block %s", pblock->GetProofOfStake().first.ToString(), pblock->GetProofOfStake().second, hash.ToString());
+
+
+    if (mapOrphanBlocks.count(hash))
+        return error("ProcessNewBlock() : already have block (orphan) %s", hash.ToString());
 
     //! Preliminary checks
     bool checked = CheckBlock(*pblock, state);
@@ -3492,15 +3567,58 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     //! For now we just strip garbage from newly received blocks
     if (!IsCanonicalBlockSignature(pblock)) {
         if (!ReserealizeBlockSignature(pblock))
-            LogPrintf("WARNING: ProcesNewsBlock() : ReserealizeBlockSignature FAILED\n");
+            LogPrintf("WARNING: ProcesNewBlock() : ReserealizeBlockSignature FAILED\n");
     }
-    
+
     LOCK(cs_main);
     MarkBlockAsReceived(pblock->GetHash());
     if (!checked) {
         return error("%s : CheckBlock FAILED", __func__);
     }
 
+    // If we don't already have its previous block, shunt it off to holding area until we get it
+    if (!mapBlockIndex.count(pblock->hashPrevBlock))
+    {
+        LogPrintf("ProcessNewBlock: ORPHAN BLOCK %lu, prev=%s\n", (unsigned long)mapOrphanBlocks.size(), pblock->hashPrevBlock.ToString());
+
+        // Accept orphans as long as there is a node to request its parents from
+        if (pfrom) {
+            //! ppcoin: check proof-of-stake
+            if (pblock->IsProofOfStake())
+            {
+                /**
+                 * Limited duplicity on stake: prevents block flood attack
+                 * Duplicate stake allowed only when there is orphan child block
+                 */
+                if (setStakeSeenOrphan.count(pblock->GetProofOfStake()) && !mapOrphanBlocksByPrev.count(hash))
+                    return state.Invalid(error("ProcessNewBlock() : duplicate proof-of-stake (%s, %d) for orphan block %s", pblock->GetProofOfStake().first.ToString(), pblock->GetProofOfStake().second, hash.ToString()));
+            }
+
+            PruneOrphanBlocks();
+            COrphanBlock* pblock2 = new COrphanBlock();
+            {
+                CDataStream ss(SER_DISK, CLIENT_VERSION);
+                ss << *pblock;
+                pblock2->vchBlock = std::vector<unsigned char>(ss.begin(), ss.end());
+            }
+            pblock2->hashBlock = hash;
+            pblock2->hashPrev = pblock->hashPrevBlock;
+            nOrphanBlocksSize += pblock2->vchBlock.size();
+            mapOrphanBlocks.insert(std::make_pair(hash, pblock2));
+            mapOrphanBlocksByPrev.insert(std::make_pair(pblock2->hashPrev, pblock2));
+            if (pblock->IsProofOfStake())
+                setStakeSeenOrphan.insert(pblock->GetProofOfStake());
+
+            // Ask this guy to fill in what we're missing
+            PushGetBlocks(pfrom, pindexBestHeader, GetOrphanRoot(hash));
+            // ppcoin: getblocks may not obtain the ancestor block rejected
+            // earlier by duplicate-stake check so we ask for it again directly
+            if (!IsInitialBlockDownload())
+                pfrom->AskFor(CInv(MSG_BLOCK, WantedByOrphan(pblock2)));
+        }
+        return true;
+    }
+    
     //! Store to disk
     CBlockIndex *pindex = NULL;
     bool ret = AcceptBlock(*pblock, state, &pindex, dbp);
@@ -3510,6 +3628,36 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     CheckBlockIndex();
     if (!ret)
         return error("%s : AcceptBlock FAILED", __func__);
+
+    // Recursively process any orphan blocks that depended on this one
+    vector<uint256> vWorkQueue;
+    vWorkQueue.push_back(hash);
+    for (unsigned int i = 0; i < vWorkQueue.size(); i++)
+    {
+        uint256 hashPrev = vWorkQueue[i];
+        for (multimap<uint256, COrphanBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
+            mi != mapOrphanBlocksByPrev.upper_bound(hashPrev);
+            ++mi)
+        {
+            CBlock block;
+            {
+                CDataStream ss(mi->second->vchBlock, SER_DISK, CLIENT_VERSION);
+                ss >> block;
+            }
+            block.BuildMerkleTree();
+            // Use a dummy CValidationState so someone can't setup nodes to counter-DoS based on orphan resolution (that is, feeding people an invalid block based on LegitBlockX in order to get anyone relaying LegitBlockX banned)
+            CValidationState stateDummy;
+            if (AcceptBlock(block, stateDummy, &pindex))
+                vWorkQueue.push_back(mi->second->hashBlock);
+            mapOrphanBlocks.erase(mi->second->hashBlock);
+
+            if (block.IsProofOfStake())
+                setStakeSeenOrphan.erase(block.GetProofOfStake());
+
+            delete mi->second;
+        }
+        mapOrphanBlocksByPrev.erase(hashPrev);
+    }
 
     if (!ActivateBestChain(state, pblock))
         return error("%s : ActivateBestChain failed", __func__);
@@ -5641,5 +5789,8 @@ public:
         mapBlockIndex.clear();
         //! orphan transactions
         mapOrphanTransactions.clear();
+        mapOrphanBlocks.clear();
+        mapOrphanBlocksByPrev.clear();
+        setStakeSeenOrphan.clear();
     }
 } instance_of_cmaincleanup;

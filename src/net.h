@@ -291,6 +291,8 @@ protected:
 public:
     int nMisbehavior;
     uint256 hashContinue;;
+    CBlockIndex* pindexLastGetBlocksBegin;
+    uint256 hashLastGetBlocksEnd;
     int nStartingHeight;
 
     //! flood relay

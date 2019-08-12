@@ -239,6 +239,8 @@ void RegisterNodeSignals(CNodeSignals& nodeSignals);
 /** Unregister a network node */
 void UnregisterNodeSignals(CNodeSignals& nodeSignals);
 
+void PushGetBlocks(CNode* pnode, CBlockIndex* pindexBegin, uint256 hashEnd);
+
 /** Process an incoming block. This only returns after the best known valid
     block is made active. Note that it does not, however, guarantee that the
     specific block passed to it has been checked for validity!
