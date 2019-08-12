@@ -546,18 +546,18 @@ bool GetNodeStateStats(NodeId nodeid, CNodeStateStats& stats)
     return true;
 }
 
-CBlockIndex* CChain::FindFork(const CBlockLocator& locator) const
+CBlockIndex* FindForkInGlobalIndex(const CChain& chain, const CBlockLocator& locator)
 {
     //! Find the first block the caller has in the main chain
     BOOST_FOREACH (const uint256& hash, locator.vHave) {
         BlockMap::iterator mi = mapBlockIndex.find(hash);
         if (mi != mapBlockIndex.end()) {
             CBlockIndex* pindex = (*mi).second;
-            if (Contains(pindex))
+            if (chain.Contains(pindex))
                 return pindex;
         }
     }
-    return Genesis();
+    return chain.Genesis();
 }
 
 void RegisterNodeSignals(CNodeSignals& nodeSignals)
@@ -4747,7 +4747,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         LOCK(cs_main);
 
         //! Find the last block the caller has in the main chain
-        CBlockIndex* pindex = chainActive.FindFork(locator);
+        CBlockIndex* pindex = FindForkInGlobalIndex(chainActive, locator);
 
         //! Send the rest of the chain
         if (pindex)
@@ -4786,7 +4786,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             pindex = (*mi).second;
         } else {
             //! Find the last block the caller has in the main chain
-            pindex = chainActive.FindFork(locator);
+            pindex = FindForkInGlobalIndex(chainActive, locator);
             if (pindex)
                 pindex = chainActive.Next(pindex);
         }

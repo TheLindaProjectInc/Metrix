@@ -653,6 +653,9 @@ bool InvalidateBlock(CValidationState& state, CBlockIndex *pindex);
 /** Remove invalidity status from a block and its descendants. */
 bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex);
 
+/** Find the last common block between the parameter chain and a locator. */
+CBlockIndex* FindForkInGlobalIndex(const CChain& chain, const CBlockLocator& locator);
+
 /** The currently-connected chain of blocks. */
 extern CChain chainActive;
 
