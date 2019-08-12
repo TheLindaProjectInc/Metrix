@@ -194,10 +194,8 @@ public:
  * The further back it is, the further before the fork it may be.
  */
 struct CBlockLocator {
-protected:
     std::vector<uint256> vHave;
 
-public:
     CBlockLocator()
     {
     }
@@ -226,8 +224,7 @@ public:
     {
         return vHave.empty();
     }
-
-    friend class CChain;
+    
 };
 
 #endif // BITCOIN_PRIMITIVES_BLOCK_H
