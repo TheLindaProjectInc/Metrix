@@ -123,6 +123,8 @@ static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 1000000;
 static const unsigned int DEFAULT_BLOCK_MIN_SIZE = 0;
 /** Default for -blockprioritysize, maximum space for zero/low-fee transactions **/
 static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 30000;
+/** Default for accepting alerts from the P2P network. */
+static const bool DEFAULT_ALERTS = true;
 /** The maximum allowed number of signature check operations in a block (network rule) */
 static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE / 50;
 /** Maxiumum number of signature check operations in an IsStandard() P2SH script */
@@ -141,8 +143,6 @@ static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; //! 16 MiB
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; //! 1 MiB
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
 static const int COINBASE_MATURITY = 500;
-/** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
-static const unsigned int LOCKTIME_THRESHOLD = 500000000; //! Tue Nov  5 00:53:20 1985 UTC
 /** Maximum number of script-checking threads allowed */
 static const int MAX_SCRIPTCHECK_THREADS = 16;
 /** -par default (number of script-checking threads, 0 = auto) */
@@ -204,9 +204,11 @@ extern CConditionVariable cvBlockChange;
 extern bool fImporting;
 extern bool fReindex;
 extern bool fIsBareMultisigStd;
+extern bool fCheckBlockIndex;
 extern int nScriptCheckThreads;
 extern unsigned int nCoinCacheSize;
 extern CFeeRate minRelayTxFee;
+extern bool fAlerts;
 struct COrphanBlock;
 extern std::map<uint256, COrphanBlock*> mapOrphanBlocks;
 
@@ -236,6 +238,8 @@ void ResendWalletTransactions(bool fForce = false);
 void RegisterNodeSignals(CNodeSignals& nodeSignals);
 /** Unregister a network node */
 void UnregisterNodeSignals(CNodeSignals& nodeSignals);
+
+void PushGetBlocks(CNode* pnode, CBlockIndex* pindexBegin, uint256 hashEnd);
 
 /** Process an incoming block. This only returns after the best known valid
     block is made active. Note that it does not, however, guarantee that the
@@ -650,6 +654,9 @@ bool InvalidateBlock(CValidationState& state, CBlockIndex *pindex);
 
 /** Remove invalidity status from a block and its descendants. */
 bool ReconsiderBlock(CValidationState& state, CBlockIndex *pindex);
+
+/** Find the last common block between the parameter chain and a locator. */
+CBlockIndex* FindForkInGlobalIndex(const CChain& chain, const CBlockLocator& locator);
 
 /** The currently-connected chain of blocks. */
 extern CChain chainActive;

@@ -65,7 +65,7 @@ bool AppInit(int argc, char* argv[])
             return false;
         }
 
-        if (mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
+        if (mapArgs.count("-?") || mapArgs.count("-h") ||  mapArgs.count("-help") || mapArgs.count("-version")) {
             std::string strUsage = _("Metrix Version") + " " + _("version") + " " + FormatFullVersion() + "\n";
 
             if (!mapArgs.count("-version")) {

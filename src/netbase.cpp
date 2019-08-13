@@ -276,6 +276,9 @@ bool static InterruptibleRecv(char* data, size_t len, int timeout, SOCKET& hSock
         } else { //! Other error or blocking
             int nErr = WSAGetLastError();
             if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL) {
+                if (!IsSelectableSocket(hSocket)) {
+                    return false;
+                }
                 struct timeval tval = MillisToTimeval(std::min(endTime - curTime, maxWait));
                 fd_set fdset;
                 FD_ZERO(&fdset);
@@ -414,10 +417,18 @@ bool static ConnectSocketDirectly(const CService& addrConnect, SOCKET& hSocketRe
     SOCKET hSocket = socket(((struct sockaddr*)&sockaddr)->sa_family, SOCK_STREAM, IPPROTO_TCP);
     if (hSocket == INVALID_SOCKET)
         return false;
-#ifdef SO_NOSIGPIPE
+
     int set = 1;
+#ifdef SO_NOSIGPIPE
     //! Different way of disabling SIGPIPE on BSD
     setsockopt(hSocket, SOL_SOCKET, SO_NOSIGPIPE, (void*)&set, sizeof(int));
+#endif
+
+//! Disable Nagle's algorithm
+#ifdef WIN32
+    setsockopt(hSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&set, sizeof(int));
+#else
+    setsockopt(hSocket, IPPROTO_TCP, TCP_NODELAY, (void*)&set, sizeof(int));
 #endif
 
 #ifdef WIN32
@@ -977,7 +988,7 @@ std::vector<unsigned char> CNetAddr::GetGroup() const
         nBits -= 8;
     }
     if (nBits > 0)
-        vchRet.push_back(GetByte(15 - nStartByte) | ((1 << nBits) - 1));
+        vchRet.push_back(GetByte(15 - nStartByte) | ((1 << (8 - nBits)) - 1));
 
     return vchRet;
 }
@@ -1271,15 +1282,15 @@ CSubNet::CSubNet(const std::string& strSubnet, bool fAllowLookup)
             std::string strNetmask = strSubnet.substr(slash + 1);
             int32_t n;
             //! IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
-            int noffset = network.IsIPv4() ? (12 * 8) : 0;
+            const int astartofs = network.IsIPv4() ? 12 : 0;
             if (ParseInt32(strNetmask, &n)) //! If valid number, assume /24 symtex
             {
-                if (n >= 0 && n <= (128 - noffset)) //! Only valid if in range of bits of address
+                if(n >= 0 && n <= (128 - astartofs*8)) // Only valid if in range of bits of address
                 {
-                    n += noffset;
+                    n += astartofs*8;
                     //! Clear bits [n..127]
                     for (; n < 128; ++n)
-                        netmask[n >> 3] &= ~(1 << (n & 7));
+                        netmask[n >> 3] &= ~(1 << (7 - (n & 7)));
                 } else {
                     valid = false;
                 }
@@ -1288,13 +1299,11 @@ CSubNet::CSubNet(const std::string& strSubnet, bool fAllowLookup)
                 if (LookupHost(strNetmask.c_str(), vIP, 1, false)) //! Never allow lookup for netmask
                 {
                     /**
-                     * Remember: GetByte returns bytes in reversed order
                      * Copy only the *last* four bytes in case of IPv4, the rest of the mask should stay 1's as
                      * we don't want pchIPv4 to be part of the mask.
                      */
-                    int asize = network.IsIPv4() ? 4 : 16;
-                    for (int x = 0; x < asize; ++x)
-                        netmask[15 - x] = vIP[0].GetByte(x);
+                    for(int x=astartofs; x<16; ++x)
+                        netmask[x] = vIP[0].ip[x];
                 } else {
                     valid = false;
                 }
@@ -1303,6 +1312,10 @@ CSubNet::CSubNet(const std::string& strSubnet, bool fAllowLookup)
     } else {
         valid = false;
     }
+
+    //! Normalize network according to netmask
+    for(int x=0; x<16; ++x)
+        network.ip[x] &= netmask[x];
 }
 
 bool CSubNet::Match(const CNetAddr& addr) const
@@ -1310,7 +1323,7 @@ bool CSubNet::Match(const CNetAddr& addr) const
     if (!valid || !addr.IsValid())
         return false;
     for (int x = 0; x < 16; ++x)
-        if ((addr.GetByte(x) & netmask[15 - x]) != network.GetByte(x))
+        if ((addr.ip[x] & netmask[x]) != network.ip[x])
             return false;
     return true;
 }

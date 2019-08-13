@@ -101,6 +101,8 @@ public:
     {
         READWRITE(FLATDATA(ip));
     }
+
+    friend class CSubNet;
 };
 
 class CSubNet

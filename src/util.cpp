@@ -76,9 +76,11 @@
 #include <boost/foreach.hpp>
 #include <boost/program_options/detail/config_file.hpp>
 #include <boost/program_options/parsers.hpp>
+#include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+
 
 /**
  * Work around clang compilation problem in Boost 1.46:
@@ -148,6 +150,15 @@ public:
         for (int i = 0; i < CRYPTO_num_locks(); i++)
             ppmutexOpenSSL[i] = new CCriticalSection();
         CRYPTO_set_locking_callback(locking_callback);
+
+        /**
+         * OpenSSL can optionally load a config file which lists optional loadable modules and engines.
+         * We don't use them so we don't require the config. However some of our libs may call functions
+         * which attempt to load the config file, possibly resulting in an exit() or crash if it is missing
+         * or corrupt. Explicitly tell OpenSSL not to try to load the file. The result for our libs will be
+         * that the config appears to have been loaded and there are no modules/engines available.
+         */
+        OPENSSL_no_config();
 
 #ifdef WIN32
         //! Seed OpenSSL PRNG with current contents of the screen
@@ -360,17 +371,21 @@ bool SoftSetBoolArg(const std::string& strArg, bool fValue)
 
 void SetupEnvironment()
 {
-#ifndef WIN32
+    //! On most POSIX systems (e.g. Linux, but not BSD) the environment's locale
+    //! may be invalid, in which case the "C" locale is used as fallback.
+#if !defined(WIN32) && !defined(MAC_OSX) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
     try {
-#if BOOST_FILESYSTEM_VERSION == 3
-        boost::filesystem::path::codecvt(); //! Raises runtime error if current locale is invalid
-#else                                       //! boost filesystem v2
-        std::locale(); //! Raises runtime error if current locale is invalid
-#endif
-    } catch (std::runtime_error& e) {
-        setenv("LC_ALL", "C", 1); //! Force C locale
+        std::locale(""); //! Raises a runtime error if current locale is invalid
+    } catch (const std::runtime_error&) {
+        setenv("LC_ALL", "C", 1);
     }
 #endif
+    //! The path locale is lazy initialized and to avoid deinitialization errors
+    //! in multithreading environments, it is set explicitly by the main thread.
+    //! A dummy locale is used to extract the internal default locale, used by
+    //! boost::filesystem::path, which is then used to explicitly imbue the path.
+    std::locale loc = boost::filesystem::path::imbue(std::locale::classic());
+    boost::filesystem::path::imbue(loc);
 }
 
 static std::string FormatException(std::exception* pex, const char* pszThread)

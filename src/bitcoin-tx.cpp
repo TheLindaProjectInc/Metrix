@@ -45,7 +45,7 @@ static bool AppInitRawTx(int argc, char* argv[])
 
     fCreateBlank = GetBoolArg("-create", false);
 
-    if (argc < 2 || mapArgs.count("-?") || mapArgs.count("-help")) {
+    if (argc<2 || mapArgs.count("-?") || mapArgs.count("-h") || mapArgs.count("-help")) {
         //! First part of help message is specific to this utility
         std::string strUsage = _("Metrix metrix-tx utility version") + " " + FormatFullVersion() + "\n\n" +
                                _("Usage:") + "\n" +
@@ -148,12 +148,13 @@ static void RegisterLoad(const string& strInput)
         valStr.insert(valStr.size(), buf, bread);
     }
 
-    if (ferror(f)) {
+    int error = ferror(f);
+    fclose(f);
+
+    if (error) {
         string strErr = "Error reading file " + filename;
         throw runtime_error(strErr);
     }
-
-    fclose(f);
 
     //! evaluate as JSON buffer register
     RegisterSetJson(key, valStr);

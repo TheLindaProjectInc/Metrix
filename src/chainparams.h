@@ -59,8 +59,8 @@ public:
 
     const CBlock& GenesisBlock() const { return genesis; }
     bool RequireRPCPassword() const { return fRequireRPCPassword; }
-    /** Default value for -checkmempool argument */
-    bool DefaultCheckMemPool() const { return fDefaultCheckMemPool; }
+    /** Default value for -checkmempool and -checkblockindex argument */
+    bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Make standard checks */
     bool RequireStandard() const { return fRequireStandard; }
     int64_t TargetTimespan() const { return nTargetTimespan; }
@@ -99,9 +99,9 @@ protected:
     CBlock genesis;
     std::vector<CAddress> vFixedSeeds;
     bool fRequireRPCPassword;
-    bool fDefaultCheckMemPool;
     bool fRequireStandard;
     bool fTestnetToBeDeprecatedFieldRPC;
+    bool fDefaultConsistencyChecks;
 };
 
 /**
