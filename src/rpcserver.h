@@ -156,6 +156,7 @@ extern UniValue getsubsidy(const UniValue& params, bool fHelp);
 extern UniValue getstakesubsidy(const UniValue& params, bool fHelp);
 extern UniValue getmininginfo(const UniValue& params, bool fHelp);
 extern UniValue getstakinginfo(const UniValue& params, bool fHelp);
+extern UniValue setstakesplitthreshold(const UniValue& params, bool fHelp);
 extern UniValue checkkernel(const UniValue& params, bool fHelp);
 extern UniValue getblocktemplate(const UniValue& params, bool fHelp);
 extern UniValue estimatefee(const UniValue& params, bool fHelp);

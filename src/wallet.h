@@ -182,6 +182,7 @@ public:
 
     uint32_t nStealth, nFoundStealth; //! for reporting, zero before use
 
+    uint64_t nStakeSplitThreshold;
 
     typedef std::map<unsigned int, CMasterKey> MasterKeyMap;
     MasterKeyMap mapMasterKeys;
@@ -220,6 +221,7 @@ public:
         nNextResend = 0;
         nLastResend = 0;
         nTimeFirstKey = 0;
+        nStakeSplitThreshold = 1000000;
     }
 
     std::map<uint256, CWalletTx> mapWallet;

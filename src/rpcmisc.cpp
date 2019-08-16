@@ -71,6 +71,7 @@ UniValue getinfo(const UniValue& params, bool fHelp)
             "  \"encryption status\": xxxx,  (string) status of the wallet encryption\n"
             "  \"paytxfee\": x.xxxx,         (numeric) the transaction fee set in MRX\n"
             "  \"relayfee\": x.xxxx,         (numeric) minimum relay fee for non-free transactions in MRX/kb\n"
+            "  \"stakesplitthreshold\":xx,   (numeric) Staking outputs will split above this threshold in MRX\n"
             "  \"errors\": \"...\"           (string) any error messages\n"
             "}\n"
             "\nExamples:\n" +
@@ -128,6 +129,7 @@ UniValue getinfo(const UniValue& params, bool fHelp)
     obj.push_back(Pair("paytxfee", ValueFromAmount(payTxFee.GetFeePerK())));
 #endif
     obj.push_back(Pair("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK())));
+    obj.push_back(Pair("stakesplitthreshold", pwalletMain->nStakeSplitThreshold));
     obj.push_back(Pair("errors", GetWarnings("statusbar")));
     return obj;
 }
