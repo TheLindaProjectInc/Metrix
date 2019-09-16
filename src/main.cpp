@@ -3553,7 +3553,7 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     // Duplicate stake allowed only when there is orphan child block
     // if the block header is already known, allow it (to account for headers being sent before the block itself)
     uint256 hash = pblock->GetHash();
-    if (!fReindex && !fImporting && pblock->IsProofOfStake() && setStakeSeen.count(pblock->GetProofOfStake()) && !mapBlockIndex.count(hash) && !mapOrphanBlocksByPrev.count(hash))
+    if (!fReindex && !fImporting && pblock->IsProofOfStake() && setStakeSeen.count(pblock->GetProofOfStake()) > 1 && !mapOrphanBlocksByPrev.count(hash))
         return error("ProcessNewBlock() : duplicate proof-of-stake (%s, %d) for block %s", pblock->GetProofOfStake().first.ToString(), pblock->GetProofOfStake().second, hash.ToString());
 
 
