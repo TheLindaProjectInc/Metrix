@@ -16,8 +16,8 @@
 #include "rpcprotocol.h"
 #include "serialize.h"
 #include "wallet_ismine.h"
-#include "json/json_spirit_reader_template.h"
-#include "json/json_spirit_writer_template.h"
+
+#include "univalue/univalue.h"
 //#include "script/script.h" // Necessary to prevent compile errors due to forward declaration of
 //! CScript in serialize.h (included from crypter.h)
 #include "wallet.h"
@@ -60,7 +60,7 @@ void CKeePassIntegrator::init()
 
 void CKeePassIntegrator::CKeePassRequest::addStrParameter(std::string sName, std::string sValue)
 {
-    requestObj.push_back(json_spirit::Pair(sName, sValue));
+    requestObj.push_back(Pair(sName, sValue));
 }
 
 void CKeePassIntegrator::CKeePassRequest::addStrParameter(std::string sName, SecureString sValue)
@@ -76,7 +76,7 @@ void CKeePassIntegrator::CKeePassRequest::addStrParameter(std::string sName, Sec
 
 std::string CKeePassIntegrator::CKeePassRequest::getJson()
 {
-    return json_spirit::write_string(json_spirit::Value(requestObj), false);
+    return requestObj.write();
 }
 
 void CKeePassIntegrator::CKeePassRequest::init()
@@ -92,28 +92,27 @@ void CKeePassIntegrator::CKeePassRequest::init()
 
 void CKeePassIntegrator::CKeePassResponse::parseResponse(std::string sResponse)
 {
-    json_spirit::Value responseValue;
-    if (!json_spirit::read_string(sResponse, responseValue)) {
+    UniValue responseValue;
+    if (!responseValue.read(sResponse)) {
         throw std::runtime_error("Unable to parse KeePassHttp response");
     }
 
-    responseObj = responseValue.get_obj();
+    responseObj = responseValue;
 
     //! retrieve main values
-    bSuccess = json_spirit::find_value(responseObj, "Success").get_bool();
+    bSuccess = responseObj["Success"].get_bool();
     sType = getStr("RequestType");
     sIV = DecodeBase64(getStr("Nonce"));
 }
 
 std::string CKeePassIntegrator::CKeePassResponse::getStr(std::string sName)
 {
-    std::string sValue(json_spirit::find_value(responseObj, sName).get_str());
-    return sValue;
+    return responseObj[sName].get_str();
 }
 
 SecureString CKeePassIntegrator::CKeePassResponse::getSecureStr(std::string sName)
 {
-    std::string sValueBase64Encrypted(json_spirit::find_value(responseObj, sName).get_str());
+    std::string sValueBase64Encrypted(responseObj[sName].get_str());
     SecureString sValue;
     try {
         sValue = decrypt(sValueBase64Encrypted);
@@ -139,13 +138,14 @@ std::vector<CKeePassIntegrator::CKeePassEntry> CKeePassIntegrator::CKeePassRespo
 {
     std::vector<CKeePassEntry> vEntries;
 
-    json_spirit::Array aEntries = json_spirit::find_value(responseObj, "Entries").get_array();
-    for (json_spirit::Array::iterator it = aEntries.begin(); it != aEntries.end(); ++it) {
-        SecureString sEntryUuid(decrypt(json_spirit::find_value((*it).get_obj(), "Uuid").get_str().c_str()));
-        SecureString sEntryName(decrypt(json_spirit::find_value((*it).get_obj(), "Name").get_str().c_str()));
-        SecureString sEntryLogin(decrypt(json_spirit::find_value((*it).get_obj(), "Login").get_str().c_str()));
-        SecureString sEntryPassword(decrypt(json_spirit::find_value((*it).get_obj(), "Password").get_str().c_str()));
-        CKeePassEntry entry(sEntryUuid, sEntryUuid, sEntryLogin, sEntryPassword);
+    UniValue aEntries = responseObj["Entries"].get_array();
+    for(size_t i = 0; i < aEntries.size(); i++)
+    {
+        SecureString sEntryUuid(decrypt(aEntries[i]["Uuid"].get_str().c_str()));
+        SecureString sEntryName(decrypt(aEntries[i]["Name"].get_str().c_str()));
+        SecureString sEntryLogin(decrypt(aEntries[i]["Login"].get_str().c_str()));
+        SecureString sEntryPassword(decrypt(aEntries[i]["Password"].get_str().c_str()));
+        CKeePassEntry entry(sEntryUuid, sEntryName, sEntryLogin, sEntryPassword);
         vEntries.push_back(entry);
     }
 
