@@ -7,7 +7,7 @@
 
 #include "kernel.h"
 #include "txdb.h"
-
+#include "bignum.h"
 using namespace std;
 
 //! Get time weight
@@ -220,15 +220,15 @@ bool CheckStakeKernelHash(CBlockIndex* pindexPrev, unsigned int nBits, unsigned 
         return error("CheckStakeKernelHash() : min age violation");
 
     //! Base target
-    uint256 bnTarget;
+    CBigNum bnTarget;
     bnTarget.SetCompact(nBits);
-
+    
     //! Weighted target
     CAmount nValueIn = txPrev.vout[prevout.n].nValue;
     uint256 bnWeight = uint256(nValueIn);
-    bnTarget *= bnWeight;
+    bnTarget *= CBigNum(bnWeight);
 
-    targetProofOfStake = bnTarget;
+    targetProofOfStake = bnTarget.getuint256();
 
     uint64_t nStakeModifier = pindexPrev->nStakeModifier;
     int nStakeModifierHeight = pindexPrev->nHeight;
@@ -251,19 +251,8 @@ bool CheckStakeKernelHash(CBlockIndex* pindexPrev, unsigned int nBits, unsigned 
     }
 
     //! Now check if proof-of-stake hash meets target protocol
-    if (hashProofOfStake > bnTarget)
+    if (CBigNum(hashProofOfStake) > bnTarget)
         return false;
-
-    if (fDebug && !fPrintProofOfStake) {
-        LogPrintf("CheckStakeKernelHash() : using modifier 0x%016x at height=%d timestamp=%s for block from timestamp=%s\n",
-                  nStakeModifier, nStakeModifierHeight,
-                  DateTimeStrFormat(nStakeModifierTime),
-                  DateTimeStrFormat(nTimeBlockFrom));
-        LogPrintf("CheckStakeKernelHash() : pass modifier=0x%016x nTimeBlockFrom=%u nTimeTxPrev=%u nPrevout=%u nTimeTx=%u hashProof=%s\n",
-                  nStakeModifier,
-                  nTimeBlockFrom, txPrev.nTime, prevout.n, nTimeTx,
-                  hashProofOfStake.ToString());
-    }
 
     return true;
 }
