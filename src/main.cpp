@@ -1607,6 +1607,11 @@ bool CaughtUp()
     return ((chainActive.Height() >= Checkpoints::GetTotalBlocksEstimate()) && nTimeBestReceived > GetTime() - 90 * 60);
 }
 
+bool CanRequestMoreHeaders()
+{
+    return ((pindexBestHeader ? pindexBestHeader->nHeight : -1) - chainActive.Height()) < MAX_HEADERS_PENDING;
+}
+
 bool IsInitialBlockDownload()
 {
     LOCK(cs_main);
@@ -4825,7 +4830,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
             if (inv.type == MSG_BLOCK) {
                 UpdateBlockAvailability(pfrom->GetId(), inv.hash);
-                 if (!fAlreadyHave && !fImporting && !fReindex && !mapBlocksInFlight.count(inv.hash)) {
+                 if (!fAlreadyHave && !fImporting && !fReindex && !mapBlocksInFlight.count(inv.hash) && CanRequestMoreHeaders()) {
                     /**
                      * First request the headers preceeding the announced block. In the normal fully-synced
                      * case where a new block is announced that succeeds the current tip (no reorganization),
@@ -5052,7 +5057,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
-    else if (strCommand == "headers" && !fImporting && !fReindex) //! Ignore headers received while importing
+    else if (strCommand == "headers" && !fImporting && !fReindex && CanRequestMoreHeaders()) //! Ignore headers received while importing
     {
         std::vector<CBlockHeader> headers;
 
@@ -5097,7 +5102,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         if (pindexLast)
             UpdateBlockAvailability(pfrom->GetId(), pindexLast->GetBlockHash());
 
-        if (nCount == MAX_HEADERS_RESULTS && pindexLast) {
+        if (nCount == MAX_HEADERS_RESULTS && pindexLast && CanRequestMoreHeaders()) {
             /**
              * Headers message had its maximum size; the peer may have more headers.
              * TODO: optimize: if pindexLast is an ancestor of chainActive.Tip or pindexBestHeader, continue
@@ -5540,7 +5545,7 @@ bool SendMessages(CNode* pto)
         if (pindexBestHeader == NULL)
             pindexBestHeader = chainActive.Tip();
         bool fFetch = !pto->fInbound || (pindexBestHeader && (state.pindexLastCommonBlock ? state.pindexLastCommonBlock->nHeight : 0) + 144 > pindexBestHeader->nHeight);
-        if (!state.fSyncStarted && !pto->fClient && fFetch && !fImporting && !fReindex) {
+        if (!state.fSyncStarted && !pto->fClient && fFetch && !fImporting && !fReindex && CanRequestMoreHeaders()) {
             //! Only actively request headers from a single peer, unless we're close to today.
             if (nSyncStarted == 0 || pindexBestHeader->GetBlockTime() > GetAdjustedTime() - 24 * 60 * 60) {
                 state.fSyncStarted = true;
