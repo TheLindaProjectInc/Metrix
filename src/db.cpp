@@ -9,7 +9,6 @@
 #include "hash.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "utiltime.h"
 
 #ifndef WIN32
 #include <sys/stat.h>

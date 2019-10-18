@@ -6,7 +6,6 @@
 
 #include "spork.h"
 #include "base58.h"
-#include "bignum.h"
 #include "key.h"
 #include "main.h"
 #include "net.h"

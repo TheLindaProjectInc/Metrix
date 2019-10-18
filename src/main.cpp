@@ -9,7 +9,6 @@
 #include <boost/thread.hpp>
 
 #include "alert.h"
-#include "bignum.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "checkqueue.h"
@@ -1493,9 +1492,9 @@ CAmount GetProofOfWorkReward(const CAmount& nFees)
 
 CAmount GetProofOfStakeReward(int64_t nCoinAge, const CAmount& nFees, unsigned int nHeight)
 {
-    int64_t nSubsidy = 0;
+    CAmount nSubsidy = 0;
     if (chainActive.Tip()->nMoneySupply < MAX_MONEY) {
-        int64_t nCoinYearReward = COIN_YEAR_REWARD;
+        CAmount nCoinYearReward = COIN_YEAR_REWARD;
 
         if (nHeight >= V3_START_BLOCK)
             nCoinYearReward = COIN_YEAR_REWARD_V3;
@@ -1554,7 +1553,7 @@ const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfSta
 
 unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfStake)
 {
-    CBigNum bnTargetLimit = CBigNum(fProofOfStake ? GetProofOfStakeLimit(pindexLast->nHeight) : Params().ProofOfWorkLimit());
+    uint256 bnTargetLimit = fProofOfStake ? GetProofOfStakeLimit(pindexLast->nHeight) : Params().ProofOfWorkLimit();
     
     if (pindexLast == NULL)
         return bnTargetLimit.GetCompact(); //! genesis block
@@ -1573,7 +1572,7 @@ unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfS
 
     //! ppcoin: target change every block
     //! ppcoin: retarget with exponential moving toward target spacing
-    CBigNum bnNew;
+    uint256 bnNew;
     bnNew.SetCompact(pindexPrev->nBits);
     int64_t nInterval = Params().Interval();
     bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
@@ -2656,7 +2655,7 @@ bool ActivateBestChain(CValidationState& state, CBlock* pblock)
  */
 bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache& view, uint64_t& nCoinAge, unsigned int nHeight)
 {
-    CBigNum bnCentSecond = 0; //! coin age in the unit of cent-seconds
+    uint256 bnCentSecond = 0; //! coin age in the unit of cent-seconds
     nCoinAge = 0;
 
     if (tx.IsCoinBase())
@@ -2701,7 +2700,7 @@ bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache
                 nTimeWeight = min(tx.nTime - txPrev.nTime, nStakeMaxAge);
             }
 
-            bnCentSecond += CBigNum(nValueIn) * nTimeWeight / CENT;
+            bnCentSecond += uint256(nValueIn) * nTimeWeight / CENT;
 
             if (fDebug && GetBoolArg("-printcoinage", false)) {
                 LogPrint("getcoinage", "GetCoinAge::RAW  nValueIn=%d nTimeDiff=%d\n", txPrev.vout[txin.prevout.n].nValue, tx.nTime - txPrev.nTime);
@@ -2712,10 +2711,10 @@ bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache
             return error("%s() : tx missing in tx index in GetCoinAge()", __func__);
     }
 
-    CBigNum bnCoinDay = bnCentSecond * CENT / COIN / (24 * 60 * 60);
+    uint256 bnCoinDay = bnCentSecond * CENT / COIN / (24 * 60 * 60);
     if (fDebug && GetBoolArg("-printcoinage", false))
         LogPrintf("coin age bnCoinDay=%s\n", bnCoinDay.ToString());
-    nCoinAge = bnCoinDay.getuint64();
+    nCoinAge = bnCoinDay.GetLow64();
     return true;
 }
 

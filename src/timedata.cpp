@@ -9,7 +9,6 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "utiltime.h"
 
 #include <boost/foreach.hpp>
 

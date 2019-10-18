@@ -16,7 +16,6 @@
 #include "sync.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "utiltime.h"
 
 #ifndef WIN32
 #ifdef HAVE_INET_PTON

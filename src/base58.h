@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "allocators.h"
-#include "bignum.h"
 #include "chainparams.h"
 #include "key.h"
 #include "pubkey.h"

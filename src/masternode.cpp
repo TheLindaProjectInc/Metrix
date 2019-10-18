@@ -12,7 +12,6 @@
 #include "addrman.h"
 #include "main.h"
 #include "util.h"
-#include "utiltime.h"
 #include <boost/lexical_cast.hpp>
 
 

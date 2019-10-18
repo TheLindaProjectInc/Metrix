@@ -7,7 +7,6 @@
 #define BITCOIN_SPORK_H
 
 #include "base58.h"
-#include "bignum.h"
 #include "darksend.h"
 #include "key.h"
 #include "main.h"

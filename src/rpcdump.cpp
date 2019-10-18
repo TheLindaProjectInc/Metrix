@@ -12,7 +12,6 @@
 #include "script/standard.h"
 #include "ui_interface.h"
 #include "util.h"
-#include "utiltime.h"
 #include "wallet.h"
 
 #include <boost/algorithm/string.hpp>

@@ -13,6 +13,7 @@
 #include "univalue/univalue.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "utilstrencodings.h"
 
 #include <boost/foreach.hpp>
 
