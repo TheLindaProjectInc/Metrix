@@ -3310,16 +3310,12 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
             }
        
         //! Enforce rule that the coinbase starts with serialized block height
-        //! Enforce block.nVersion=7 rule that the coinbase starts with serialized block height
-        if (block.nVersion >= 7 &&
-            CBlockIndex::IsSuperMajority(7, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
-            {
-                CScript expect = CScript() << nHeight;
-                if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
-                    !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
-                    pindex->nStatus |= BLOCK_FAILED_VALID;
-                    return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"), REJECT_INVALID, "bad-cb-height");
-                }
+        {
+            CScript expect = CScript() << nHeight;
+            if (block.vtx[0].vin[0].scriptSig.size() < expect.size() ||
+                !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
+                pindex->nStatus |= BLOCK_FAILED_VALID;
+                return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"), REJECT_INVALID, "bad-cb-height");
             }
         }
     }
