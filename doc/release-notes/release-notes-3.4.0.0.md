@@ -5,7 +5,7 @@ This is a major version release, bringing both new features and bug fixes.
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/metrix/issues
 
 ## How to Upgrade
-Shut down Linda, wait until it has completely shut down (which might take a few minutes
+Shut down Metrix, wait until it has completely shut down (which might take a few minutes
 for older versions), then just copy over the appropriate metrixd file.
 
 If you are upgrading from 3.1.0.1 or older, the first time you run after the upgrade
@@ -35,13 +35,22 @@ supported and may break as soon as the older version attempts to reindex.
 ## metrix-cli
 We are moving away from the metrixd executable functioning both as a server and
 as a RPC client. The RPC client functionality ("tell the running metrix daemon
-to do THIS") was split into a separate executable, 'metrix-cli'. 
-The RPC client code will eventually be removed from metrixd, but will be kept
-for backwards compatibility for a release or two.
+to do THIS") was split into a separate executable, 'metrix-cli'.
 
 ## About this Release
 
 ### What's New
+
+#### BIP65 soft fork to enforce OP_CHECKLOCKTIMEVERIFY opcode
+This release includes several changes related to the BIP65 soft fork which redefines the existing OP_NOP2 opcode as OP_CHECKLOCKTIMEVERIFY (CLTV) so that a transaction output can be made unspendable until a specified point in the future.
+
+This release will only relay and mine transactions spending a CLTV output if they comply with the BIP65 rules as provided in code.
+
+This release will produce version 8 blocks by default.
+
+Once 5,701 out of a sequence of 6,001 blocks on the local node's best block chain contain version 8 (or higher) blocks, this release will no longer accept new version 7 blocks and it will only accept version 8 blocks if they comply with the BIP65 rules for CLTV.
+
+For more information about the soft-forking change, please see https://github.com/bitcoin/bitcoin/pull/6351
 
 #### Faster synchronization
 Metrix Core now uses 'headers-first synchronization'. This means that we first
@@ -178,7 +187,7 @@ manipulation of metrix transactions. A summary of its operation may be
 obtained via "metrix-tx --help" Transactions may be created or signed in a
 manner similar to the RPC raw tx API. Transactions may be updated, deleting
 inputs or outputs, or appending new inputs and outputs. Custom scripts may be
-easily composed using a simple text notation, borrowed from the bitcoin test
+easily composed using a simple text notation, borrowed from the metrix test
 suite.
 This tool may be used for experimenting with new transaction types, signing
 multi-party transactions, and many other uses. Long term, the goal is to
@@ -192,7 +201,7 @@ For 3.4 the security of signing against unusual attacks has been
 improved by making the signatures constant time and deterministic.
 This change is a result of switching signing to use libsecp256k1
 instead of OpenSSL. Libsecp256k1 is a cryptographic library
-optimized for the curve Bitcoin uses which was created by Bitcoin
+optimized for the curve Metrix uses which was created by Bitcoin
 Core developer Pieter Wuille.
 There exist attacks[1] against most ECC implementations where an
 attacker on shared virtual machine hardware could extract a private
@@ -205,23 +214,8 @@ long time, but this functionality has still not made its
 way into a released version of OpenSSL. Libsecp256k1 achieves
 significantly stronger protection: As far as we're aware this is
 the only deployed implementation of constant time signing for
-the curve Bitcoin uses and we have reason to believe that
+the curve Metrix uses and we have reason to believe that
 libsecp256k1 is better tested and more thoroughly reviewed
 than the implementation in OpenSSL.
 [1] https://eprint.iacr.org/2014/161.pdf
 
-#### Consensus library
-Starting from 0.10.0, the Bitcoin Core distribution includes a consensus library.
-The purpose of this library is to make the verification functionality that is
-critical to Bitcoin's consensus available to other applications, e.g. to language
-bindings such as [python_bitcoinlib](https://pypi.python.org/pypi/python-bitcoinlib) or
-alternative node implementations.
-This library is called `libbitcoinconsensus.so` (or, `.dll` for Windows).
-Its interface is defined in the C header [bitcoinconsensus.h](https://github.com/bitcoin/bitcoin/blob/0.10/src/script/bitcoinconsensus.h).
-In its initial version the API includes two functions:
-- `bitcoinconsensus_verify_script` verifies a script. It returns whether the indicated
-input of the provided serialized transaction correctly spends the passed scriptPubKey
-under additional constraints indicated by flags
-- `bitcoinconsensus_version` returns the API version, currently at an experimental `0`
-The functionality is planned to be extended to e.g. UTXO management in upcoming releases,
-but the interface for existing methods should remain stable.
