@@ -4,9 +4,9 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "amount.h"
 #include "masternode.h"
 #include "activemasternode.h"
+#include "amount.h"
 #include "darksend.h"
 //#include "primitives/transaction.h"
 #include "addrman.h"
@@ -464,7 +464,7 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
 
     /**
      * Metrix:
-     * masternodes show be payed at most once per day
+     * masternodes should be payed at most once per day
      * and rewards should be shared evenly amongst all contributors
      * this can be accomplished by checking the last cycle of blocks
      * and removing all already paid masternodes from the
@@ -497,6 +497,18 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
     BOOST_FOREACH (CMasterNode mn, vecMasternodes) {
         CScript mnScript = GetScriptForDestination(mn.pubkey.GetID());
         if (IsMasternodePaidInList(vecPaidMasternodes, mnScript)) {
+            i++;
+            continue;
+        }
+
+        /**
+         * Metrix:
+         * masternodes should be online for at least 24 hours
+         * before they are eligible to receive a reward
+         */
+        int64_t activeSeconds = mn.lastTimeSeen - mn.now;
+        if (activeSeconds < 24 * 60 * 60)
+        {
             i++;
             continue;
         }

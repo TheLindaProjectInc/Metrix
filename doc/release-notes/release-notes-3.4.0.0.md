@@ -219,3 +219,6 @@ libsecp256k1 is better tested and more thoroughly reviewed
 than the implementation in OpenSSL.
 [1] https://eprint.iacr.org/2014/161.pdf
 
+### Minimum Masternode online time
+Starting 3.4 Masternodes will not be eligible for rewards until they
+have been online for at least 24 hours.
