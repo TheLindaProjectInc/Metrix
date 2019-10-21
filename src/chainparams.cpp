@@ -99,9 +99,9 @@ public:
         vAlertPubKey = ParseHex("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
         nDefaultPort = 33820;
         bnProofOfWorkLimit = ~uint256(0) >> 20;
-        nEnforceBlockUpgradeMajority = 750;
-        nRejectBlockOutdatedMajority = 950;
-        nToCheckBlockUpgradeMajority = 1000;
+        nEnforceBlockUpgradeMajority = 4500;
+        nRejectBlockOutdatedMajority = 5700;
+        nToCheckBlockUpgradeMajority = 6000;
 
         nTargetTimespan = 10 * 60;
         nTargetSpacing = 90;
