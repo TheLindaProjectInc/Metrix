@@ -5053,8 +5053,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
-    else if (strCommand == "headers" && !fImporting && !fReindex && CanRequestMoreHeaders()) //! Ignore headers received while importing
+    else if (strCommand == "headers" && !fImporting && !fReindex) //! Ignore headers received while importing
     {
+        //! Ignore headers received if we have enough and didn't ask for more
+        CNodeState *nodestate = State(pfrom->GetId());
+        if (!CanRequestMoreHeaders() && !nodestate->fSyncStarted)
+            return error("ignoring headers we did not request");
+
         std::vector<CBlockHeader> headers;
 
         //! Bypass the normal CBlock deserialization, as we don't want to risk deserializing 2000 full blocks.
@@ -5541,7 +5546,7 @@ bool SendMessages(CNode* pto)
         if (pindexBestHeader == NULL)
             pindexBestHeader = chainActive.Tip();
         bool fFetch = !pto->fInbound || (pindexBestHeader && (state.pindexLastCommonBlock ? state.pindexLastCommonBlock->nHeight : 0) + 144 > pindexBestHeader->nHeight);
-        if (!state.fSyncStarted && !pto->fClient && fFetch && !fImporting && !fReindex && CanRequestMoreHeaders()) {
+        if (!state.fSyncStarted && !pto->fClient && fFetch && !fImporting && !fReindex) {
             //! Only actively request headers from a single peer, unless we're close to today.
             if (nSyncStarted == 0 || pindexBestHeader->GetBlockTime() > GetAdjustedTime() - 24 * 60 * 60) {
                 state.fSyncStarted = true;
