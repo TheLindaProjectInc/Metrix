@@ -1098,7 +1098,8 @@ int CWallet::ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate)
             pindex = chainActive.Next(pindex);
             if (GetTime() >= nNow + 60) {
                 nNow = GetTime();
-                LogPrintf("Still rescanning. At block %d. Progress=%f\n", pindex->nHeight, Checkpoints::GuessVerificationProgress(pindex));
+                string strMsg = strprintf("Still rescanning. At block %d. Progress=%f%%\n", pindex->nHeight, Checkpoints::GuessVerificationProgress(pindex)*100);
+                uiInterface.InitMessage(_(strMsg.c_str()));
             }
         }
     }
