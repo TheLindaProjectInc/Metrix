@@ -3699,7 +3699,6 @@ bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
     if (block.IsProofOfStake())
         return true;
 
-    static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); //! startup timestamp
     CKey key;
     CMutableTransaction txCoinStake;
     CTransaction txNew;
