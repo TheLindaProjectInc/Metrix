@@ -133,7 +133,10 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("flags", strprintf("%s%s", blockindex->IsProofOfStake() ? "proof-of-stake" : "proof-of-work", blockindex->GeneratedStakeModifier() ? " stake-modifier" : "")));
     result.push_back(Pair("proofhash", blockindex->hashProof.GetHex()));
     result.push_back(Pair("entropybit", (int)blockindex->GetStakeEntropyBit()));
-    result.push_back(Pair("modifier", strprintf("%016x", blockindex->nStakeModifier)));
+    if (blockindex->nStakeModifierV2 != uint256(0))
+        result.push_back(Pair("modifier", blockindex->nStakeModifierV2.GetHex()));
+    else
+        result.push_back(Pair("modifier", strprintf("%016x", blockindex->nStakeModifier)));
     UniValue txs(UniValue::VARR);
     BOOST_FOREACH(const CTransaction&tx, block.vtx)
     {

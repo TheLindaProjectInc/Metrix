@@ -219,6 +219,13 @@ libsecp256k1 is better tested and more thoroughly reviewed
 than the implementation in OpenSSL.
 [1] https://eprint.iacr.org/2014/161.pdf
 
-### Minimum Masternode online time
+#### Minimum Masternode online time
 Starting 3.4 Masternodes will not be eligible for rewards until they
 have been online for at least 24 hours.
+
+#### Stake Modifier V2 soft fork
+This release includes an update that defines a new 256-bit modifier for the proof of stake protocol, CBlockIndex::nStakeModifierV2.
+It is computed at every block, by taking the hash of the modifier of previous block along with the coinstake input.
+To meet the protocol, the PoS kernel must comprise the modifier of the previous block.
+
+Enforcement will be take place once 5,701 out of a sequence of 6,001 blocks on the local node's best block chain contain version 8 (or higher) blocks, this release will no longer accept new version 7 blocks and it will only accept version 8 blocks if they comply with the Stake Modifier V2 rules.

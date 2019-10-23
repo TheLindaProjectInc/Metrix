@@ -3373,12 +3373,20 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
         pindex->hashProof = hashProof;
     }
 
-    //! ppcoin: compute stake modifier
-    uint64_t nStakeModifier = 0;
-    bool fGeneratedStakeModifier = false;
-    if (!ComputeNextStakeModifier(pindexPrev, nStakeModifier, fGeneratedStakeModifier))
-        return error("UpdateHashProof() : ComputeNextStakeModifier() failed");
-    pindex->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
+    if (CBlockIndex::IsSuperMajority(8, chainActive.Tip(), Params().EnforceBlockUpgradeMajority()))
+    {
+        // compute v2 stake modifier
+        pindex->nStakeModifierV2 = ComputeStakeModifier(pindex->pprev,block.IsProofOfWork() ? hash : block.vtx[1].vin[0].prevout.hash);
+    }
+    else
+    {
+        //! ppcoin: compute stake modifier
+        uint64_t nStakeModifier = 0;
+        bool fGeneratedStakeModifier = false;
+        if (!ComputeNextStakeModifier(pindexPrev, nStakeModifier, fGeneratedStakeModifier))
+            return error("UpdateHashProof() : ComputeNextStakeModifier() failed");
+        pindex->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
+    } 
 
     return true;
 }

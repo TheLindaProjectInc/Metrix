@@ -148,6 +148,7 @@ public:
     };
 
     uint64_t nStakeModifier; //! hash modifier for proof-of-stake
+    uint256 nStakeModifierV2; //! hash modifier for proof-of-stake
 
     //! proof-of-stake specific fields
     COutPoint prevoutStake;
@@ -186,6 +187,7 @@ public:
         nMoneySupply = 0;
         nFlags = 0;
         nStakeModifier = 0;
+        nStakeModifierV2 = uint256(0);
         hashProof = 0;
         prevoutStake.SetNull();
         nStakeTime = 0;
@@ -441,7 +443,14 @@ public:
         READWRITE(VARINT(nMint));
         READWRITE(VARINT(nMoneySupply));
         READWRITE(nFlags);
-        READWRITE(nStakeModifier);
+        if (nStakeModifierV2 != uint256(0))
+        {
+            READWRITE(nStakeModifierV2);
+        }
+        else
+        {
+            READWRITE(nStakeModifier);
+        }
         const_cast<CDiskBlockIndex*>(this)->POSDetailSet = true;
         if (IsProofOfStake()) {
             READWRITE(prevoutStake);

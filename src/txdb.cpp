@@ -234,7 +234,14 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nMint = diskindex.nMint;
                 pindexNew->nMoneySupply = diskindex.nMoneySupply;
                 pindexNew->nFlags = diskindex.nFlags;
-                pindexNew->nStakeModifier = diskindex.nStakeModifier;
+                if (diskindex.nStakeModifierV2 != uint256(0))
+                {
+                    pindexNew->nStakeModifierV2 = diskindex.nStakeModifierV2;
+                }
+                else
+                {
+                    pindexNew->nStakeModifier = diskindex.nStakeModifier;
+                }
                 pindexNew->prevoutStake = diskindex.prevoutStake;
                 pindexNew->nStakeTime = diskindex.nStakeTime;
                 pindexNew->hashProof = diskindex.hashProof;
