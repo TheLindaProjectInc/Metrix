@@ -89,6 +89,8 @@ static const int64_t MAX_STAKE_VALUE = (100 * 1000000 * COIN); //! POS rewards w
 #define MASTERNODE_EXPIRATION_SECONDS (65 * 60)
 #define MASTERNODE_REMOVAL_SECONDS (70 * 60)
 
+inline int64_t IsValidMasternodeCollateral(CAmount collateral) { return collateral == MASTERNODE_COLLATERAL; }
+
 
 /** "reject" message codes **/
 static const unsigned char REJECT_MALFORMED = 0x01;

@@ -65,11 +65,12 @@ public:
     bool unitTest;
     bool allowFreeTx;
     int protocolVersion;
+    CAmount collateral;
 
     //!the dsq count from the last dsq broadcast of this node
     int64_t nLastDsq;
 
-    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64_t newNow, CPubKey newPubkey2, int protocolVersionIn)
+    CMasterNode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64_t newNow, CPubKey newPubkey2, int protocolVersionIn, CAmount newCollateral)
     {
         addr = newAddr;
         vin = newVin;
@@ -86,6 +87,7 @@ public:
         lastDseep = 0;
         allowFreeTx = true;
         protocolVersion = protocolVersionIn;
+        collateral = newCollateral;
     }
 
     uint256 CalculateScore(int64_t nBlockHeight = 0);

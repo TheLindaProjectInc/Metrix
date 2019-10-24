@@ -648,11 +648,12 @@ UniValue masternode(const UniValue& params, bool fHelp)
                 mnObj.push_back(Pair("allowFreeTx", mn.allowFreeTx));
                 mnObj.push_back(Pair("protocolVersion", mn.protocolVersion));
                 mnObj.push_back(Pair("nLastDsq", mn.nLastDsq));
+                mnObj.push_back(Pair("collateral", mn.collateral / COIN));
 
                 // check if me to include activeMasternode.status
                 if (mn.vin == activeMasternode.vin)
                     mnObj.push_back(Pair("status", activeMasternode.status));
-
+    
                 resultObj.push_back(mnObj);
             }
         }

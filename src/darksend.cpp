@@ -2106,7 +2106,7 @@ int CDarkSendPool::GetDenominationsByAmount(int64_t nAmount, int nDenomTarget)
     return GetDenominations(vout1);
 }
 
-bool CDarkSendSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey)
+bool CDarkSendSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey, CAmount *collateral)
 {
     CScript payee2;
     payee2 = GetScriptForDestination(pubkey.GetID());
@@ -2114,12 +2114,14 @@ bool CDarkSendSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey)
     CTransaction txVin;
     uint256 hash;
 
-    if (GetTransaction(vin.prevout.hash, txVin, hash, true)) {
-        BOOST_FOREACH (CTxOut out, txVin.vout) {
-            //! MBK: Corrected calculation. *COIN is done in main.h and should have been removed
-            if (out.nValue == MASTERNODE_COLLATERAL) {
-                if (out.scriptPubKey == payee2)
-                    return true;
+    if (GetTransaction(vin.prevout.hash, txVin, hash, true))
+    {
+        BOOST_FOREACH (CTxOut out, txVin.vout)
+        {
+            if (IsValidMasternodeCollateral(out.nValue) && out.scriptPubKey == payee2)
+            {
+                *collateral = out.nValue;
+                return true;
             }
         }
     }

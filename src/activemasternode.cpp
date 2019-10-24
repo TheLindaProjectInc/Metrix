@@ -287,8 +287,12 @@ bool CActiveMasternode::Register(CTxIn vin, CService service, CKey keyCollateral
             found = true;
 
     if (!found) {
+        // extract masternode collateral
+        CAmount mnCollateral;
+        darkSendSigner.IsVinAssociatedWithPubkey(vin, pubKeyCollateralAddress, &mnCollateral);
+
         LogPrintf("CActiveMasternode::Register() - Adding to masternode list service: %s - vin: %s\n", service.ToString(), vin.ToString());
-        CMasterNode mn(service, vin, pubKeyCollateralAddress, vchMasterNodeSignature, masterNodeSignatureTime, pubKeyMasternode, PROTOCOL_VERSION);
+        CMasterNode mn(service, vin, pubKeyCollateralAddress, vchMasterNodeSignature, masterNodeSignatureTime, pubKeyMasternode, PROTOCOL_VERSION, mnCollateral);
         mn.UpdateLastSeen(masterNodeSignatureTime);
         vecMasternodes.push_back(mn);
     }
@@ -389,7 +393,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
     //! Filter
     BOOST_FOREACH (const COutput& out, vCoins) {
         //! MBK: Have reached the blockheight when swap to 2m masternode activation starts
-        if (out.tx->vout[out.i].nValue == MASTERNODE_COLLATERAL)
+        if (IsValidMasternodeCollateral(out.tx->vout[out.i].nValue))
             filteredCoins.push_back(out);
     }
 

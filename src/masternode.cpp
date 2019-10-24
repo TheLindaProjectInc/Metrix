@@ -163,7 +163,8 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
          * make sure the vout that was signed is related to the transaction that spawned the masternode
          *  - this is expensive, so it's only done once per masternode
          */
-        if (!darkSendSigner.IsVinAssociatedWithPubkey(vin, pubkey)) {
+        CAmount mnCollateral;
+        if (!darkSendSigner.IsVinAssociatedWithPubkey(vin, pubkey, &mnCollateral)) {
             LogPrintf("dsee - Got mismatched pubkey and vin\n");
             Misbehaving(pfrom->GetId(), 100);
             return;
@@ -179,7 +180,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
 
         CValidationState state;
         CMutableTransaction tx = CMutableTransaction();
-        int64_t nTempTxOut = (MASTERNODE_COLLATERAL / COIN) - 1;
+        int64_t nTempTxOut = (mnCollateral / COIN) - 1;
 
         CTxOut vout = CTxOut(nTempTxOut * COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
@@ -199,7 +200,7 @@ void ProcessMessageMasternode(CNode* pfrom, std::string& strCommand, CDataStream
             addrman.Add(CAddress(addr), pfrom->addr, 2 * 60 * 60);
 
             //! add our masternode
-            CMasterNode mn(addr, vin, pubkey, vchSig, sigTime, pubkey2, protocolVersion);
+            CMasterNode mn(addr, vin, pubkey, vchSig, sigTime, pubkey2, protocolVersion, mnCollateral);
             mn.UpdateLastSeen(lastUpdated);
             vecMasternodes.push_back(mn);
 
@@ -712,7 +713,7 @@ void CMasterNode::Check()
     if (!unitTest) {
         CValidationState state;
         CMutableTransaction tx = CMutableTransaction();
-        int64_t nTempTxOut = (MASTERNODE_COLLATERAL / COIN) - 1;
+        int64_t nTempTxOut = (collateral / COIN) - 1;
         CTxOut vout = CTxOut(nTempTxOut * COIN, darkSendPool.collateralPubKey);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);

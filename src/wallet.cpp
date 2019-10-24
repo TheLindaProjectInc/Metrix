@@ -1581,7 +1581,7 @@ void CWallet::AvailableCoins(
 */
 bool CWallet::HasMasternodePayment(const CTxOut vout, int nDepth) const
 {
-    if (vout.nValue == MASTERNODE_COLLATERAL) {
+    if (IsValidMasternodeCollateral(vout.nValue)) {
         LOCK(cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
             const CWalletTx* pcoin = &(*it).second;
