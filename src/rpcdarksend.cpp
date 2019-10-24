@@ -582,7 +582,7 @@ UniValue masternode(const UniValue& params, bool fHelp)
         std::vector<CMasternodeConfig::CMasternodeEntry> mnEntries;
         mnEntries = masternodeConfig.getEntries();
 
-        UniValue resultObj(UniValue::VOBJ);
+        UniValue resultObj(UniValue::VARR);
 
         BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
             UniValue mnObj(UniValue::VOBJ);
@@ -618,7 +618,7 @@ UniValue masternode(const UniValue& params, bool fHelp)
         }
 
         //! get masternode status
-        UniValue resultObj(UniValue::VOBJ);
+        UniValue resultObj(UniValue::VARR);
         std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(chainActive.Height(), MIN_INSTANTX_PROTO_VERSION);
 
         BOOST_FOREACH (CMasterNode mn, vecMasternodes) {
