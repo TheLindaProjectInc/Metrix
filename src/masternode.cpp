@@ -457,13 +457,9 @@ bool IsMasternodePaidInList(std::vector<CScript> vecPaidMasternodes, CScript sAd
     return std::find(vecPaidMasternodes.begin(), vecPaidMasternodes.end(), sAddress) != vecPaidMasternodes.end();
 }
 
-int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
+std::vector<CScript> GetPaidMasternodes()
 {
-    int i = 0;
-    unsigned int score = 0;
-    int winner = -1;
-
-    /**
+  /**
      * Metrix:
      * masternodes should be payed at most once per day
      * and rewards should be shared evenly amongst all contributors
@@ -493,6 +489,16 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
         }
         pblockindex = pblockindex->pprev;
     }
+    return vecPaidMasternodes;
+}
+
+int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
+{
+    int i = 0;
+    unsigned int score = 0;
+    int winner = -1;
+
+    std::vector<CScript> vecPaidMasternodes = GetPaidMasternodes();
 
     //! scan for winner
     BOOST_FOREACH (CMasterNode mn, vecMasternodes) {
@@ -537,6 +543,72 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
 
     return winner;
 }
+
+bool IsValidMasternodePayment(int64_t nBlockHeight, const CBlock& block)
+{
+    // get expected payment amount
+    CAmount expectedPaymentAmount = GetMasternodePayment(nBlockHeight, block.vtx[0].GetValueOut());
+    CAmount actualPaymentAmount = 0;
+    // get paid masternode
+    CScript mnScript;
+    if (block.vtx[1].vout.size() == 3)
+    {
+        mnScript = block.vtx[1].vout[2].scriptPubKey;
+        actualPaymentAmount = block.vtx[1].vout[2].nValue;
+    }
+    else if (block.vtx[1].vout.size() == 4)
+    {
+        mnScript = block.vtx[1].vout[3].scriptPubKey;
+        actualPaymentAmount = block.vtx[1].vout[3].nValue;
+    }
+
+    if (actualPaymentAmount > expectedPaymentAmount)
+    {
+        LogPrint("masternode", "IsValidMasternodePayment() : Block reward is too high. Expected %i actual %i\n", expectedPaymentAmount, actualPaymentAmount);
+        return false;
+    }
+    // get paid masternode address 
+    CTxDestination address1;
+    ExtractDestination(mnScript, address1);
+    CBitcoinAddress mnAddress(address1); 
+    // masternode should be in our masternode list
+    int64_t activeSeconds = 0;
+    BOOST_FOREACH (CMasterNode mn, vecMasternodes)
+    {
+        CScript pubkey;
+        pubkey = GetScriptForDestination(mn.pubkey.GetID());
+        ExtractDestination(pubkey, address1);
+        CBitcoinAddress address2(address1);
+
+        if (mnAddress == address2)
+        {
+            activeSeconds = mn.lastTimeSeen - mn.now;
+            break;
+        }
+    }
+    // active seconds should be greater than 0 if masternode is in our list
+    if (activeSeconds == 0)
+    {
+        LogPrint("masternode", "IsValidMasternodePayment() : Masternode not in masternode list\n");
+        return false;
+    }
+    // should be active for at least 24 hours
+    if (activeSeconds < 24 * 60 * 60)
+    {
+       LogPrint("masternode", "IsValidMasternodePayment() : Masternode has not been active for 24 hours %i\n", activeSeconds);
+       return false;
+    }
+    // should not have earned already
+    std::vector<CScript> vecPaidMasternodes = GetPaidMasternodes();
+    if (IsMasternodePaidInList(vecPaidMasternodes, mnScript))
+    {
+        LogPrint("masternode", "IsValidMasternodePayment() : Masternode has already been paid\n");
+        return false;
+    }
+
+    return true;
+}
+
 
 int GetMasternodeByRank(int findRank, int64_t nBlockHeight, int minProtocol)
 {

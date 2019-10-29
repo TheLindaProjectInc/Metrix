@@ -3102,86 +3102,54 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
 
     //! ----------- masternode payments -----------
-
-    bool MasternodePayments = false;
-
-    if (block.nTime > START_MASTERNODE_PAYMENTS)
-        MasternodePayments = true;
-
-    if (!IsSporkActive(SPORK_1_MASTERNODE_PAYMENTS_ENFORCEMENT)) {
-        MasternodePayments = false;
-        if (fDebug)
-            LogPrintf("CheckBlock() : Masternode payment enforcement is off\n");
-    }
-
-    if (MasternodePayments) {
+    //! Start enforcing for block.nVersion=8 blocks 
+    //! when 75% of the network has upgraded
+    if (block.HasMasternodePayment())
+    {
         LOCK2(cs_main, mempool.cs);
-
         CBlockIndex* pindex = chainActive.Tip();
-        if (pindex != NULL) {
-            if (pindex->GetBlockHash() == block.hashPrevBlock) {
-                bool fIsInitialDownload = IsInitialBlockDownload();
-
-                //! If we don't already have its previous block, skip masternode payment step
-                if (!fIsInitialDownload) {
-                    CAmount masternodePaymentAmount = GetMasternodePayment(pindex->nHeight + 1, block.vtx[0].GetValueOut());
-                    bool foundPaymentAmount = false;
-                    bool foundPayee = false;
-                    bool foundPaymentAndPayee = false;
-
-                    CScript payee;
-                    if (!masternodePayments.GetBlockPayee(chainActive.Height() + 1, payee) || payee == CScript()) {
-                        foundPayee = true; //!doesn't require a specific payee
-                        foundPaymentAmount = true;
-                        foundPaymentAndPayee = true;
-                        if (fDebug) {
-                            LogPrintf("CheckBlock() : Using non-specific masternode payments %d\n", chainActive.Height() + 1);
+        if (pindex != NULL)
+        {
+            if (CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+            {
+                if (block.nTime > GetTime() - MASTERNODE_MIN_DSEEP_SECONDS)
+                {
+                    if (vecMasternodes.size() == 0)
+                    {
+                        if (!IsValidMasternodePayment(pindex->nHeight + 1, block))
+                        {
+                            LogPrint("masternode", "CheckBlock() : Invalid masternode payment at block %i\n", chainActive.Height() + 1);
+                            return state.DoS(100, error("CheckBlock() : Invalid masternode payment"),
+                                            REJECT_INVALID, "invalid masternode payment");
+                        }
+                        else
+                        {
+                            LogPrint("masternode", "CheckBlock() : Valid masternode payment at block %i\n", chainActive.Height() + 1); 
                         }
                     }
-
-                    for (unsigned int i = 0; i < block.vtx[0].vout.size(); i++) {
-                        if (block.vtx[0].vout[i].nValue == masternodePaymentAmount)
-                            foundPaymentAmount = true;
-                        if (block.vtx[0].vout[i].scriptPubKey == payee)
-                            foundPayee = true;
-                        if (block.vtx[0].vout[i].nValue == masternodePaymentAmount && block.vtx[0].vout[i].scriptPubKey == payee)
-                            foundPaymentAndPayee = true;
-                    }
-
-                    if (!foundPaymentAndPayee) {
-                        CTxDestination address1;
-                        ExtractDestination(payee, address1);
-                        CBitcoinAddress address2(address1);
-
-                        if (fDebug) {
-                            LogPrintf("CheckBlock() : Couldn't find masternode payment(%d|%d) or payee(%d|%s) nHeight %d. \n", foundPaymentAmount, masternodePaymentAmount, foundPayee, address2.ToString().c_str(), chainActive.Height() + 1);
-                        }
-                        return state.DoS(100, error("CheckBlock() : Couldn't find masternode payment or payee"),
-                                         REJECT_INVALID, "no masternode payee");
-                    } else {
-                        if (fDebug) {
-                            LogPrintf("CheckBlock() : Found masternode payment %d\n", chainActive.Height() + 1);
-                        }
-                    }
-                } else {
-                    if (fDebug) {
-                        LogPrintf("CheckBlock() : Is initial download, skipping masternode payment check %d\n", chainActive.Height() + 1);
+                    else
+                    {
+                        LogPrint("masternode", "CheckBlock() : Have not synced masternode list \n");
                     }
                 }
-            } else {
-                if (fDebug) {
-                    LogPrintf("CheckBlock() : Skipping masternode payment check - nHeight %d Hash %s\n", chainActive.Height() + 1, block.GetHash().ToString().c_str());
+                else
+                {
+                    LogPrint("masternode", "CheckBlock() : Block is older than dseep time, skipping masternode payment check %d\n", chainActive.Height() + 1);
                 }
             }
-        } else {
-            if (fDebug) {
-                LogPrintf("CheckBlock() : pindex is null, skipping masternode payment check\n");
+            else
+            {
+                LogPrint("masternode", "CheckBlock() : Skipping masternode payment check - is not super majority nHeight %d Hash %s\n", chainActive.Height() + 1, block.GetHash().ToString().c_str());
             }
         }
-    } else {
-        if (fDebug) {
-            LogPrintf("CheckBlock() : skipping masternode payment checks\n");
+        else
+        {
+            LogPrint("masternode", "CheckBlock() : pindex is null, skipping masternode payment check\n");
         }
+    }
+    else
+    {
+        LogPrint("masternode", "CheckBlock() : skipping masternode payment checks\n");
     }
 
 
@@ -3373,7 +3341,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
         pindex->hashProof = hashProof;
     }
 
-    if (CBlockIndex::IsSuperMajority(8, chainActive.Tip(), Params().EnforceBlockUpgradeMajority()))
+    if (CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority()))
     {
         // compute v2 stake modifier
         pindex->nStakeModifierV2 = ComputeStakeModifier(pindex->pprev,block.IsProofOfWork() ? hash : block.vtx[1].vin[0].prevout.hash);

@@ -144,7 +144,8 @@ public:
 
 //! Get the current winner for this block
 int GetCurrentMasterNode(int64_t nBlockHeight = 0, int minProtocol = CMasterNode::minProtoVersion);
-
+//! Check if masternode payment is valid
+bool IsValidMasternodePayment(int64_t nHeight, const CBlock& block);
 int GetMasternodeByVin(CTxIn& vin);
 int GetMasternodeRank(CTxIn& vin, int64_t nBlockHeight = 0, int minProtocol = CMasterNode::minProtoVersion);
 int GetMasternodeRank(CTxIn& vin, std::vector<pair<unsigned int, CTxIn> >& vecMasternodeScores);
