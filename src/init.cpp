@@ -17,6 +17,7 @@
 #include "net.h"
 #include "rpcserver.h"
 #include "script/standard.h"
+#include "scheduler.h"
 #include "spork.h"
 #include "txdb.h"
 #include "ui_interface.h"
@@ -535,7 +536,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 /** Initialize Metrix.
  *  @pre Parameters should be parsed and config file should be read.
  */
-bool AppInit2(boost::thread_group& threadGroup)
+bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 {
     //! ********************************************************* Step 1: setup
 #ifdef _MSC_VER
@@ -840,6 +841,11 @@ bool AppInit2(boost::thread_group& threadGroup)
         for (int i = 0; i < nScriptCheckThreads - 1; i++)
             threadGroup.create_thread(&ThreadScriptCheck);
     }
+
+    // Start the lightweight task scheduler thread
+    CScheduler::Function serviceLoop = boost::bind(&CScheduler::serviceQueue, &scheduler);
+    threadGroup.create_thread(boost::bind(&TraceThread<CScheduler::Function>, "scheduler", serviceLoop));
+
 
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
