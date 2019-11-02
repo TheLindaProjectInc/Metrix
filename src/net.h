@@ -37,6 +37,7 @@
 class CAddrMan;
 class CNode;
 class CBlockIndex;
+class CScheduler;
 
 /** Time between pings automatically sent out for latency probing and keepalive (in seconds). */
 static const int PING_INTERVAL = 2 * 60;
@@ -70,7 +71,7 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest = NULL, bool darkSe
 void MapPort(bool fUseUPnP);
 unsigned short GetListenPort();
 bool BindListenPort(const CService& bindAddr, std::string& strError, bool fWhitelisted = false);
-void StartNode(boost::thread_group& threadGroup);
+void StartNode(boost::thread_group& threadGroup, CScheduler& scheduler);
 bool StopNode();
 void SocketSendData(CNode* pnode);
 
