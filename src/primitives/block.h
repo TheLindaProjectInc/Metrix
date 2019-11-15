@@ -156,6 +156,23 @@ public:
             (vtx[1].vout.size() == 4 || (vtx[1].vout.size() == 3 && vtx[1].vout[1].scriptPubKey != vtx[1].vout[2].scriptPubKey)));
     }
 
+    CAmount GetMasternodePayment() const
+    {
+        if (HasMasternodePayment())
+        {
+            if (vtx[1].vout.size() == 3)
+            {
+                return vtx[1].vout[2].nValue;
+            }
+            else if (vtx[1].vout.size() == 4)
+            {
+                return vtx[1].vout[3].nValue;
+            }
+        }
+
+        return 0;
+    }
+
     bool IsProofOfWork() const
     {
         return !IsProofOfStake();

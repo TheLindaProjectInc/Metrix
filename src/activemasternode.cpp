@@ -392,8 +392,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode(bool includeLocked)
 
     //! Filter
     BOOST_FOREACH (const COutput& out, vCoins) {
-        //! MBK: Have reached the blockheight when swap to 2m masternode activation starts
-        if (IsValidMasternodeCollateral(out.tx->vout[out.i].nValue))
+        if (IsValidMasternodeCollateral(out.tx->vout[out.i].nValue, chainActive.Tip()))
             filteredCoins.push_back(out);
     }
 

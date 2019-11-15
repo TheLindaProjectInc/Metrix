@@ -546,10 +546,8 @@ int GetCurrentMasterNode(int64_t nBlockHeight, int minProtocol)
 
 bool IsValidMasternodePayment(int64_t nBlockHeight, const CBlock& block)
 {
-    // get expected payment amount
-    CAmount expectedPaymentAmount = GetMasternodePayment(nBlockHeight, block.vtx[0].GetValueOut());
+    // get actual payment amount & masternode paid
     CAmount actualPaymentAmount = 0;
-    // get paid masternode
     CScript mnScript;
     if (block.vtx[1].vout.size() == 3)
     {
@@ -561,18 +559,13 @@ bool IsValidMasternodePayment(int64_t nBlockHeight, const CBlock& block)
         mnScript = block.vtx[1].vout[3].scriptPubKey;
         actualPaymentAmount = block.vtx[1].vout[3].nValue;
     }
-
-    if (actualPaymentAmount > expectedPaymentAmount)
-    {
-        LogPrint("masternode", "IsValidMasternodePayment() : Block reward is too high. Expected %i actual %i\n", expectedPaymentAmount, actualPaymentAmount);
-        return false;
-    }
     // get paid masternode address 
     CTxDestination address1;
     ExtractDestination(mnScript, address1);
     CBitcoinAddress mnAddress(address1); 
     // masternode should be in our masternode list
     int64_t activeSeconds = 0;
+    CAmount masternodeCollateral = 0;
     BOOST_FOREACH (CMasterNode mn, vecMasternodes)
     {
         CScript pubkey;
@@ -582,6 +575,7 @@ bool IsValidMasternodePayment(int64_t nBlockHeight, const CBlock& block)
 
         if (mnAddress == address2)
         {
+            masternodeCollateral = mn.collateral;
             activeSeconds = mn.lastTimeSeen - mn.now;
             break;
         }
@@ -603,6 +597,13 @@ bool IsValidMasternodePayment(int64_t nBlockHeight, const CBlock& block)
     if (IsMasternodePaidInList(vecPaidMasternodes, mnScript))
     {
         LogPrint("masternode", "IsValidMasternodePayment() : Masternode has already been paid\n");
+        return false;
+    }
+    // check reward amount
+    CAmount expectedPaymentAmount = GetMasternodePayment(nBlockHeight, block.vtx[0].GetValueOut(), masternodeCollateral);
+    if (actualPaymentAmount > expectedPaymentAmount)
+    {
+        LogPrint("masternode", "IsValidMasternodePayment() : Block reward is too high. Expected %i actual %i\n", expectedPaymentAmount, actualPaymentAmount);
         return false;
     }
 

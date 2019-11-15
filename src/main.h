@@ -49,6 +49,7 @@ static const int64_t MASTERNODE_COLLATERAL = (2000000 * COIN);
 static const int64_t COIN_YEAR_REWARD_V2 = (99 * CENT);
 static const int64_t DARKSEND_FEE = (0.01 * COIN);
 static const int64_t DARKSEND_POOL_MAX = (1111.99 * COIN);
+static const std::array<int64_t,5> MASTERNODE_COLLATERALS = { 2000000 * COIN, 5000000 * COIN, 25000000 * COIN, 50000000 * COIN, 100000000 * COIN };
 //! MBK: Following are block heights to begin V2 swap
 static const int POS_REWARD_V2_START_BLOCK = 359930; //! ~03312018 (March 31, 2018)
 static const int POW_REWARD_V2_START_BLOCK = 378230; //! ~04052018 (April 5, 2018)
@@ -61,7 +62,6 @@ static const int POW_REWARD_V2_FULL = 13726; //! ~3% reduction from V1 block rew
 //! V3 block rewards
 static const int V3_START_BLOCK = 580000; //! (April 7, 2018)
 static const int64_t COIN_YEAR_REWARD_V3 = (50 * CENT);
-static const int64_t MASTERNODE_REWARD_V3 = (3200 * COIN);     //! ~60% ROI over 12 months
 static const int64_t MAX_STAKE_VALUE = (100 * 1000000 * COIN); //! POS rewards will be capped to 100 million MRX
 
 /*
@@ -89,7 +89,30 @@ static const int64_t MAX_STAKE_VALUE = (100 * 1000000 * COIN); //! POS rewards w
 #define MASTERNODE_EXPIRATION_SECONDS (65 * 60)
 #define MASTERNODE_REMOVAL_SECONDS (70 * 60)
 
-inline int64_t IsValidMasternodeCollateral(CAmount collateral) { return collateral == MASTERNODE_COLLATERAL; }
+
+inline void GetMasternodeCollaterals(std::vector<CAmount>& vCollaterals, CBlockIndex* pindex)
+{
+    //! Allow different Masternode tiers for block.nVersion=8 blocks 
+    //! when 75% of the network has upgraded
+    if (pindex != NULL && CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+    {
+        BOOST_FOREACH (CAmount collateral, MASTERNODE_COLLATERALS)
+        {
+            vCollaterals.push_back(collateral);
+        }
+    }
+    else
+    {
+        vCollaterals.push_back(MASTERNODE_COLLATERAL);
+    }
+}
+
+inline int64_t IsValidMasternodeCollateral(CAmount collateral, CBlockIndex* pindex)
+{ 
+    std::vector<CAmount> vCollaterals;
+    GetMasternodeCollaterals(vCollaterals, pindex);
+    return std::find(std::begin(vCollaterals), std::end(vCollaterals), collateral) != std::end(vCollaterals);  
+}
 
 
 /** "reject" message codes **/
@@ -318,7 +341,8 @@ bool GetNodeStateStats(NodeId nodeid, CNodeStateStats& stats);
 void Misbehaving(NodeId nodeid, int howmuch);
 /** Flush all state, indexes and buffers to disk. */
 void FlushStateToDisk();
-int64_t GetMasternodePayment(int nHeight, int64_t blockValue);
+bool IsBlockMasternodePaymentValid(CBlockIndex *pindex, CAmount masternodePayment);
+int64_t GetMasternodePayment(int nHeight, int64_t blockValue, CAmount masternodeCollateral);
 
 struct CNodeStateStats {
     int nMisbehavior;

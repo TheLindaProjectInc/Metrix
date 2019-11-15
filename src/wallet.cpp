@@ -1581,7 +1581,7 @@ void CWallet::AvailableCoins(
 */
 bool CWallet::HasMasternodePayment(const CTxOut vout, int nDepth) const
 {
-    if (IsValidMasternodeCollateral(vout.nValue)) {
+    if (IsValidMasternodeCollateral(vout.nValue, chainActive.Tip())) {
         LOCK(cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
             const CWalletTx* pcoin = &(*it).second;
@@ -3516,10 +3516,12 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     //! start masternode payments
     CScript payee;
     bool hasPayment = true;
+    CAmount winningMasternodeCollateral = 0;
     if (!masternodePayments.GetBlockPayee(nHeight, payee)) {
         int winningNode = GetCurrentMasterNode();
         if (winningNode >= 0) {
             payee = GetScriptForDestination(vecMasternodes[winningNode].pubkey.GetID());
+            winningMasternodeCollateral = vecMasternodes[winningNode].collateral;
         } else {
             LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
             hasPayment = false;
@@ -3541,7 +3543,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     }
 
     CAmount blockValue = nCredit;
-    CAmount masternodePayment = GetMasternodePayment(nHeight, nReward);
+    CAmount masternodePayment = GetMasternodePayment(nHeight, nReward, winningMasternodeCollateral);
 
     LogPrint("coinstake", "CWallet::CreateCoinStake() -> blockValue=%d(%s), masternodePayment=%d(%s)\n", blockValue, FormatMoney(blockValue), masternodePayment, FormatMoney(masternodePayment));
 

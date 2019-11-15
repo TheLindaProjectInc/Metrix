@@ -2146,10 +2146,18 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         CAmount nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindex->nHeight);
 
         if (pindex->nHeight >= V3_START_BLOCK) {
-            //! if we are paying a masternode we need to adjust the calculated stake reward
-            if (block.HasMasternodePayment()) {
-                LogPrint("connectblock", "ConnectBlock(): HasMasternodePayment=%i\n", pindex->nHeight);
-                nCalculatedStakeReward += GetMasternodePayment(pindex->nHeight, 0);
+            //! if we are paying a masternode we need to validate this reward
+            //! and adjust the calculated stake reward
+            if (block.HasMasternodePayment())
+            {
+                CAmount nMasternodePayment = block.GetMasternodePayment();
+                LogPrint("connectblock", "ConnectBlock(): HasMasternodePayment=%i amount=%d\n", pindex->nHeight, nMasternodePayment);
+                if (!IsBlockMasternodePaymentValid(pindex, nMasternodePayment))
+                {
+                    return state.DoS(50, error("ConnectBlock() : masternode reward exceeded (actual=%d)", nMasternodePayment),
+                             REJECT_INVALID, "bad-mn-amount");
+                }
+                nCalculatedStakeReward += nMasternodePayment;
             }
         }
 
@@ -5684,7 +5692,22 @@ bool SendMessages(CNode* pto)
     return true;
 }
 
-int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
+bool IsBlockMasternodePaymentValid(CBlockIndex *pindex, CAmount masternodePayment)
+{
+    std::vector<CAmount> vCollaterals;
+    GetMasternodeCollaterals(vCollaterals, pindex);
+    BOOST_FOREACH (CAmount collateral, vCollaterals)
+    {
+        int64_t calculatedPayment = GetMasternodePayment(pindex->nHeight, 0, collateral);
+        if (calculatedPayment <= masternodePayment)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+int64_t GetMasternodePayment(int nHeight, int64_t blockValue, CAmount masternodeCollateral)
 {
     if (chainActive.Tip()->nMoneySupply < MAX_MONEY) {
         if (nHeight < V3_START_BLOCK) {
@@ -5692,7 +5715,7 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
             return static_cast<int64_t>(blockValue * 0.677777777777777777); //! ~2/3 masternode stake reward
         } else {
             //! starting V3 masternodes will earn a constant block reward ~60% over the year
-            return MASTERNODE_REWARD_V3;
+            return static_cast<int64_t>(masternodeCollateral * 0.0016);
         }
     }
     return 0;

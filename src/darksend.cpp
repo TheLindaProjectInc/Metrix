@@ -2118,7 +2118,7 @@ bool CDarkSendSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey, CAm
     {
         BOOST_FOREACH (CTxOut out, txVin.vout)
         {
-            if (IsValidMasternodeCollateral(out.nValue) && out.scriptPubKey == payee2)
+            if (IsValidMasternodeCollateral(out.nValue, chainActive.Tip()) && out.scriptPubKey == payee2)
             {
                 *collateral = out.nValue;
                 return true;
