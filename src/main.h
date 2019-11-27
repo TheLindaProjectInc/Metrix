@@ -63,7 +63,8 @@ static const int POW_REWARD_V2_FULL = 13726; //! ~3% reduction from V1 block rew
 static const int V3_START_BLOCK = 580000; //! (April 7, 2018)
 static const int64_t COIN_YEAR_REWARD_V3 = (50 * CENT);
 static const int64_t MAX_STAKE_VALUE = (100 * 1000000 * COIN); //! POS rewards will be capped to 100 million MRX
-
+//! Start soft-fork v8 THIS WILL BE MODIFIED BEFORE RELEASE
+static const int V8_START_BLOCK = 2000000;
 /*
     At 15 signatures, 1/2 of the masternode network can be owned by
     one party without comprimising the security of InstantX
