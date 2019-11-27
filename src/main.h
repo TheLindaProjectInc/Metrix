@@ -49,7 +49,7 @@ static const int64_t MASTERNODE_COLLATERAL = (2000000 * COIN);
 static const int64_t COIN_YEAR_REWARD_V2 = (99 * CENT);
 static const int64_t DARKSEND_FEE = (0.01 * COIN);
 static const int64_t DARKSEND_POOL_MAX = (1111.99 * COIN);
-static const std::array<int64_t,5> MASTERNODE_COLLATERALS = { 2000000 * COIN, 5000000 * COIN, 25000000 * COIN, 50000000 * COIN, 100000000 * COIN };
+static const std::vector<int64_t> MASTERNODE_COLLATERALS = { 2000000 * COIN, 5000000 * COIN, 25000000 * COIN, 50000000 * COIN, 100000000 * COIN };
 //! MBK: Following are block heights to begin V2 swap
 static const int POS_REWARD_V2_START_BLOCK = 359930; //! ~03312018 (March 31, 2018)
 static const int POW_REWARD_V2_START_BLOCK = 378230; //! ~04052018 (April 5, 2018)
