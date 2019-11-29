@@ -112,7 +112,7 @@ inline int64_t IsValidMasternodeCollateral(CAmount collateral, CBlockIndex* pind
 { 
     std::vector<CAmount> vCollaterals;
     GetMasternodeCollaterals(vCollaterals, pindex);
-    return std::find(std::begin(vCollaterals), std::end(vCollaterals), collateral) != std::end(vCollaterals);  
+    return std::find(vCollaterals.begin(), vCollaterals.end(), collateral) != vCollaterals.end();
 }
 
 
