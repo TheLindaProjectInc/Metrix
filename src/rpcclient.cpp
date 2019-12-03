@@ -95,6 +95,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"importaddress", 2},
         {"checkkernel", 0},
         {"checkkernel", 1},
+        {"setstakesplitthreshold", 0},
         {"sendtostealthaddress", 1},
         {"searchrawtransactions", 1},
         {"searchrawtransactions", 2},
