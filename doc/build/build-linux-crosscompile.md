@@ -2,7 +2,7 @@ Copyright (c) 2017-2019 Metrix Developers
 Distributed under the MIT/X11 software license, see the accompanying
 file license.txt or http://www.opensource.org/licenses/mit-license.php.
 This product includes software developed by the OpenSSL Project for use in
-the OpenSSL Toolkit (http://www.openssl.org/).  This product includes
+the OpenSSL Toolkit (https://www.openssl.org/).  This product includes
 cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP
 software written by Thomas Bernard.
 
@@ -14,7 +14,6 @@ These dependencies are required:
  Library     | Purpose          | Description
  ------------|------------------|----------------------
  libssl      | Crypto           | Random Number Generation
- libgmp      | Secp256k1        | Secp256k1 Dependency
  libboost    | Utility          | Library for threading, data structures, etc
  libevent    | Networking       | OS independent asynchronous networking
  libdb5.0    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
@@ -40,7 +39,7 @@ Dependency Build Instructions: Ubuntu & Debian
 ----------------------------------------------
 Build requirements:
 
-    sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg-config libssl-dev libgmp3-dev libevent-dev bsdmainutils gcc-multilib g++-multilib
+    sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg-config libssl-dev libevent-dev bsdmainutils gcc-multilib g++-multilib
 
 To cross compile for 32bit and 64bit systems both these below will be required. If you only want to compile for one architecture, just install the one you want.
 

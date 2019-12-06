@@ -11,6 +11,11 @@ debug/
 *.a
 *.Tpo
 *.in~
+*.Plo
+
+#libtool object files
+*.lo
+*.la
 
 #Dev tools & build testing
 .vscode/
@@ -18,7 +23,7 @@ debug/
 
 src/obj/build.h
 src/univalue/gen
-
+    
 # daemons
 src/metrix-tx
 src/metrix-cli
@@ -55,6 +60,7 @@ depends/SDKs/*
 depends/work/*
 libtool
 .dirstamp
+.libs
 share/setup.nsi
 **/bitcoin-config.*
 **/stamp-h1
@@ -62,3 +68,5 @@ share/setup.nsi
 
 # Resources cpp
 qrc_*.cpp
+
+!src/leveldb*/Makefile

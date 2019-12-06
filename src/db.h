@@ -6,7 +6,9 @@
 #ifndef BITCOIN_DB_H
 #define BITCOIN_DB_H
 
+#include "clientversion.h"
 #include "serialize.h"
+#include "streams.h"
 #include "sync.h"
 #include "version.h"
 
@@ -15,14 +17,15 @@
 #include <vector>
 
 #include <boost/filesystem/path.hpp>
+
 #include <db_cxx.h>
 
-class CAddrMan;
-struct CBlockLocator;
 class CDiskBlockIndex;
 class CDiskTxPos;
 class COutPoint;
 class CTxIndex;
+
+struct CBlockLocator;
 
 extern unsigned int nWalletDBUpdated;
 
@@ -56,7 +59,9 @@ public:
      * This must be called BEFORE strFile is opened.
      * Returns true if strFile is OK.
      */
-    enum VerifyResult { VERIFY_OK, RECOVER_OK, RECOVER_FAIL };
+    enum VerifyResult { VERIFY_OK,
+                        RECOVER_OK,
+                        RECOVER_FAIL };
     VerifyResult Verify(std::string strFile, bool (*recoverFunc)(CDBEnv& dbenv, std::string strFile));
     /*
      * Salvage data from a file that Verify says is bad.
@@ -76,7 +81,7 @@ public:
     void CloseDb(const std::string& strFile);
     bool RemoveDb(const std::string& strFile);
 
-    DbTxn *TxnBegin(int flags=DB_TXN_WRITE_NOSYNC)
+    DbTxn* TxnBegin(int flags = DB_TXN_WRITE_NOSYNC)
     {
         DbTxn* ptxn = NULL;
         int ret = dbenv.txn_begin(NULL, &ptxn, flags);
@@ -95,10 +100,10 @@ class CDB
 protected:
     Db* pdb;
     std::string strFile;
-    DbTxn *activeTxn;
+    DbTxn* activeTxn;
     bool fReadOnly;
 
-    explicit CDB(const std::string& strFilename, const char* pszMode="r+");
+    explicit CDB(const std::string& strFilename, const char* pszMode = "r+");
     ~CDB() { Close(); }
 
 public:
@@ -109,19 +114,19 @@ private:
     void operator=(const CDB&);
 
 protected:
-    template<typename K, typename T>
+    template <typename K, typename T>
     bool Read(const K& key, T& value)
     {
         if (!pdb)
             return false;
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Read
+        //! Read
         Dbt datValue;
         datValue.set_flags(DB_DBT_MALLOC);
         int ret = pdb->get(activeTxn, &datKey, &datValue, 0);
@@ -129,51 +134,50 @@ protected:
         if (datValue.get_data() == NULL)
             return false;
 
-        // Unserialize value
+        //! Unserialize value
         try {
             CDataStream ssValue((char*)datValue.get_data(), (char*)datValue.get_data() + datValue.get_size(), SER_DISK, CLIENT_VERSION);
             ssValue >> value;
-        }
-        catch (std::exception &e) {
+        } catch (const std::exception&) {
             return false;
         }
 
-        // Clear and free memory
+        //! Clear and free memory
         memset(datValue.get_data(), 0, datValue.get_size());
         free(datValue.get_data());
         return (ret == 0);
     }
 
-    template<typename K, typename T>
-    bool Write(const K& key, const T& value, bool fOverwrite=true)
+    template <typename K, typename T>
+    bool Write(const K& key, const T& value, bool fOverwrite = true)
     {
         if (!pdb)
             return false;
         if (fReadOnly)
             assert(!"Write called on database in read-only mode");
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Value
+        //! Value
         CDataStream ssValue(SER_DISK, CLIENT_VERSION);
         ssValue.reserve(10000);
         ssValue << value;
         Dbt datValue(&ssValue[0], ssValue.size());
 
-        // Write
+        //! Write
         int ret = pdb->put(activeTxn, &datKey, &datValue, (fOverwrite ? 0 : DB_NOOVERWRITE));
 
-        // Clear memory in case it was a private key
+        //! Clear memory in case it was a private key
         memset(datKey.get_data(), 0, datKey.get_size());
         memset(datValue.get_data(), 0, datValue.get_size());
         return (ret == 0);
     }
 
-    template<typename K>
+    template <typename K>
     bool Erase(const K& key)
     {
         if (!pdb)
@@ -181,36 +185,36 @@ protected:
         if (fReadOnly)
             assert(!"Erase called on database in read-only mode");
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Erase
+        //! Erase
         int ret = pdb->del(activeTxn, &datKey, 0);
 
-        // Clear memory
+        //! Clear memory
         memset(datKey.get_data(), 0, datKey.get_size());
         return (ret == 0 || ret == DB_NOTFOUND);
     }
 
-    template<typename K>
+    template <typename K>
     bool Exists(const K& key)
     {
         if (!pdb)
             return false;
 
-        // Key
+        //! Key
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         ssKey.reserve(1000);
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Exists
+        //! Exists
         int ret = pdb->exists(activeTxn, &datKey, 0);
 
-        // Clear memory
+        //! Clear memory
         memset(datKey.get_data(), 0, datKey.get_size());
         return (ret == 0);
     }
@@ -226,18 +230,16 @@ protected:
         return pcursor;
     }
 
-    int ReadAtCursor(Dbc* pcursor, CDataStream& ssKey, CDataStream& ssValue, unsigned int fFlags=DB_NEXT)
+    int ReadAtCursor(Dbc* pcursor, CDataStream& ssKey, CDataStream& ssValue, unsigned int fFlags = DB_NEXT)
     {
-        // Read at cursor
+        //! Read at cursor
         Dbt datKey;
-        if (fFlags == DB_SET || fFlags == DB_SET_RANGE || fFlags == DB_GET_BOTH || fFlags == DB_GET_BOTH_RANGE)
-        {
+        if (fFlags == DB_SET || fFlags == DB_SET_RANGE || fFlags == DB_GET_BOTH || fFlags == DB_GET_BOTH_RANGE) {
             datKey.set_data(&ssKey[0]);
             datKey.set_size(ssKey.size());
         }
         Dbt datValue;
-        if (fFlags == DB_GET_BOTH || fFlags == DB_GET_BOTH_RANGE)
-        {
+        if (fFlags == DB_GET_BOTH || fFlags == DB_GET_BOTH_RANGE) {
             datValue.set_data(&ssValue[0]);
             datValue.set_size(ssValue.size());
         }
@@ -249,7 +251,7 @@ protected:
         else if (datKey.get_data() == NULL || datValue.get_data() == NULL)
             return 99999;
 
-        // Convert to streams
+        //! Convert to streams
         ssKey.SetType(SER_DISK);
         ssKey.clear();
         ssKey.write((char*)datKey.get_data(), datKey.get_size());
@@ -257,7 +259,7 @@ protected:
         ssValue.clear();
         ssValue.write((char*)datValue.get_data(), datValue.get_size());
 
-        // Clear and free memory
+        //! Clear and free memory
         memset(datKey.get_data(), 0, datKey.get_size());
         memset(datValue.get_data(), 0, datValue.get_size());
         free(datKey.get_data());

@@ -4,32 +4,21 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "protocol.h"
+
+#include "chainparams.h"
 #include "util.h"
-#include "netbase.h"
+#include "utilstrencodings.h"
 
 #ifndef WIN32
-# include <arpa/inet.h>
+#include <arpa/inet.h>
 #endif
 
 static const char* ppszTypeName[] =
-{
-    "ERROR",
-    "tx",
-    "block",
-    "filtered block"
-};
-
-enum {
-    MSG_TX = 1,
-    MSG_BLOCK,
-    // Nodes may always request a MSG_FILTERED_BLOCK in a getdata, however,
-    // MSG_FILTERED_BLOCK should not appear in any invs except as a part of getdata.
-    MSG_FILTERED_BLOCK,
-    MSG_TXLOCK_REQUEST,
-    MSG_TXLOCK_VOTE,
-    MSG_SPORK,
-    MSG_MASTERNODE_WINNER
-};
+    {
+        "ERROR",
+        "tx",
+        "block",
+        "filtered block"};
 
 CMessageHeader::CMessageHeader()
 {
@@ -50,39 +39,34 @@ CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSize
 
 std::string CMessageHeader::GetCommand() const
 {
-    return std::string(pchCommand, pchCommand + strnlen(pchCommand, COMMAND_SIZE));
+    return std::string(pchCommand, pchCommand + strnlen_int(pchCommand, COMMAND_SIZE));
 }
 
 bool CMessageHeader::IsValid() const
 {
-    // Check start string
+    //! Check start string
     if (memcmp(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE) != 0)
         return false;
 
-    // Check the command string for errors
-    for (const char* p1 = pchCommand; p1 < pchCommand + COMMAND_SIZE; p1++)
-    {
-        if (*p1 == 0)
-        {
-            // Must be all zeros after the first zero
+    //! Check the command string for errors
+    for (const char* p1 = pchCommand; p1 < pchCommand + COMMAND_SIZE; p1++) {
+        if (*p1 == 0) {
+            //! Must be all zeros after the first zero
             for (; p1 < pchCommand + COMMAND_SIZE; p1++)
                 if (*p1 != 0)
                     return false;
-        }
-        else if (*p1 < ' ' || *p1 > 0x7E)
+        } else if (*p1 < ' ' || *p1 > 0x7E)
             return false;
     }
 
-    // Message size
-    if (nMessageSize > MAX_SIZE)
-    {
+    //! Message size
+    if (nMessageSize > MAX_SIZE) {
         LogPrintf("CMessageHeader::IsValid() : (%s, %u bytes) nMessageSize > MAX_SIZE\n", GetCommand(), nMessageSize);
         return false;
     }
 
     return true;
 }
-
 
 
 CAddress::CAddress() : CService()
@@ -118,10 +102,8 @@ CInv::CInv(int typeIn, const uint256& hashIn)
 CInv::CInv(const std::string& strType, const uint256& hashIn)
 {
     unsigned int i;
-    for (i = 1; i < ARRAYLEN(ppszTypeName); i++)
-    {
-        if (strType == ppszTypeName[i])
-        {
+    for (i = 1; i < ARRAYLEN(ppszTypeName); i++) {
+        if (strType == ppszTypeName[i]) {
             type = i;
             break;
         }
@@ -153,7 +135,7 @@ std::string CInv::ToString() const
     if (type == MSG_BLOCK)
         return strprintf("%s %s", GetCommand(), hash.ToString());
     if (type == MSG_TX)
-        return strprintf("%s %s", GetCommand(), hash.ToString().substr(0,10).c_str());
+        return strprintf("%s %s", GetCommand(), hash.ToString().substr(0, 10).c_str());
 
     return strprintf("%s %s", GetCommand(), hash.ToString());
 }

@@ -2,67 +2,74 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
-#include "init.h" // for pwalletMain
-#include "wallet.h"
-#include "rpcserver.h"
-#include "ui_interface.h"
 #include "base58.h"
+#include "init.h" //! for pwalletMain
+#include "rpcserver.h"
+#include "script/script.h"
+#include "script/standard.h"
+#include "ui_interface.h"
+#include "util.h"
+#include "wallet.h"
 
+#include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/variant/get.hpp>
-#include <boost/algorithm/string.hpp>
 
-using namespace json_spirit;
+#include "univalue/univalue.h"
+
 using namespace std;
 
 void EnsureWalletIsUnlocked();
 
 namespace bt = boost::posix_time;
 
-// Extended DecodeDumpTime implementation, see this page for details:
-// http://stackoverflow.com/questions/3786201/parsing-of-date-time-from-string-boost
+/**
+ * Extended DecodeDumpTime implementation, see this page for details:
+ * http://stackoverflow.com/questions/3786201/parsing-of-date-time-from-string-boost
+ */
 const std::locale formats[] = {
-    std::locale(std::locale::classic(),new bt::time_input_facet("%Y-%m-%dT%H:%M:%SZ")),
-    std::locale(std::locale::classic(),new bt::time_input_facet("%Y-%m-%d %H:%M:%S")),
-    std::locale(std::locale::classic(),new bt::time_input_facet("%Y/%m/%d %H:%M:%S")),
-    std::locale(std::locale::classic(),new bt::time_input_facet("%d.%m.%Y %H:%M:%S")),
-    std::locale(std::locale::classic(),new bt::time_input_facet("%Y-%m-%d"))
-};
+    std::locale(std::locale::classic(), new bt::time_input_facet("%Y-%m-%dT%H:%M:%SZ")),
+    std::locale(std::locale::classic(), new bt::time_input_facet("%Y-%m-%d %H:%M:%S")),
+    std::locale(std::locale::classic(), new bt::time_input_facet("%Y/%m/%d %H:%M:%S")),
+    std::locale(std::locale::classic(), new bt::time_input_facet("%d.%m.%Y %H:%M:%S")),
+    std::locale(std::locale::classic(), new bt::time_input_facet("%Y-%m-%d"))};
 
-const size_t formats_n = sizeof(formats)/sizeof(formats[0]);
+const size_t formats_n = sizeof(formats) / sizeof(formats[0]);
 
 std::time_t pt_to_time_t(const bt::ptime& pt)
 {
-    bt::ptime timet_start(boost::gregorian::date(1970,1,1));
+    bt::ptime timet_start(boost::gregorian::date(1970, 1, 1));
     bt::time_duration diff = pt - timet_start;
-    return diff.ticks()/bt::time_duration::rep_type::ticks_per_second;
+    return diff.ticks() / bt::time_duration::rep_type::ticks_per_second;
 }
 
 int64_t DecodeDumpTime(const std::string& s)
 {
     bt::ptime pt;
 
-    for(size_t i=0; i<formats_n; ++i)
-    {
+    for (size_t i = 0; i < formats_n; ++i) {
         std::istringstream is(s);
         is.imbue(formats[i]);
         is >> pt;
-        if(pt != bt::ptime()) break;
+        if (pt != bt::ptime())
+            break;
     }
 
     return pt_to_time_t(pt);
 }
 
-std::string static EncodeDumpTime(int64_t nTime) {
+std::string static EncodeDumpTime(int64_t nTime)
+{
     return DateTimeStrFormat("%Y-%m-%dT%H:%M:%SZ", nTime);
 }
 
-std::string static EncodeDumpString(const std::string &str) {
+std::string static EncodeDumpString(const std::string& str)
+{
     std::stringstream ret;
-    BOOST_FOREACH(unsigned char c, str) {
+    BOOST_FOREACH (unsigned char c, str) {
         if (c <= 32 || c >= 128 || c == '%') {
             ret << '%' << HexStr(&c, &c + 1);
         } else {
@@ -72,13 +79,14 @@ std::string static EncodeDumpString(const std::string &str) {
     return ret.str();
 }
 
-std::string DecodeDumpString(const std::string &str) {
+std::string DecodeDumpString(const std::string& str)
+{
     std::stringstream ret;
     for (unsigned int pos = 0; pos < str.length(); pos++) {
         unsigned char c = str[pos];
-        if (c == '%' && pos+2 < str.length()) {
-            c = (((str[pos+1]>>6)*9+((str[pos+1]-'0')&15)) << 4) | 
-                ((str[pos+2]>>6)*9+((str[pos+2]-'0')&15));
+        if (c == '%' && pos + 2 < str.length()) {
+            c = (((str[pos + 1] >> 6) * 9 + ((str[pos + 1] - '0') & 15)) << 4) |
+                ((str[pos + 2] >> 6) * 9 + ((str[pos + 2] - '0') & 15));
             pos += 2;
         }
         ret << c;
@@ -89,7 +97,7 @@ std::string DecodeDumpString(const std::string &str) {
 class CTxDump
 {
 public:
-    CBlockIndex *pindex;
+    CBlockIndex* pindex;
     int64_t nValue;
     bool fSpent;
     CWalletTx* ptx;
@@ -104,7 +112,7 @@ public:
     }
 };
 
-Value importprivkey(const Array& params, bool fHelp)
+UniValue importprivkey(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
@@ -112,27 +120,24 @@ Value importprivkey(const Array& params, bool fHelp)
             "\nAdds a private key (as returned by dumpprivkey) to your wallet.\n"
             "\nArguments:\n"
             "1. \"Metrixprivkey\"   (string, required) The private key (see dumpprivkey)\n"
-            "2. \"label\"            (string, optional) an optional label\n"
+            "2. \"label\"            (string, optional, default=\"\") An an optional label\n"
             "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
+            "\nNote: This call can take minutes to complete if rescan is true.\n"
             "\nExamples:\n"
-            "\nDump a private key\n"
-            + HelpExampleCli("dumpprivkey", "\"myaddress\"") +
-            "\nImport the private key\n"
-            + HelpExampleCli("importprivkey", "\"mykey\"") +
-            "\nImport using a label\n"
-            + HelpExampleCli("importprivkey", "\"mykey\" \"testing\" false") +
-            "\nAs a json rpc call\n"
-            + HelpExampleRpc("importprivkey", "\"mykey\", \"testing\", false")
-        );
+            "\nDump a private key\n" +
+            HelpExampleCli("dumpprivkey", "\"myaddress\"") +
+            "\nImport the private key with rescan\n" + HelpExampleCli("importprivkey", "\"mykey\"") +
+            "\nImport using a label and without rescan\n" + HelpExampleCli("importprivkey", "\"mykey\" \"testing\" false") +
+            "\nAs a JSON-RPC call\n" + HelpExampleRpc("importprivkey", "\"mykey\", \"testing\", false"));
 
     EnsureWalletIsUnlocked();
-    
+
     string strSecret = params[0].get_str();
     string strLabel = "";
     if (params.size() > 1)
         strLabel = params[1].get_str();
 
-    // Whether to perform rescan after import
+    //! Whether to perform rescan after import
     bool fRescan = true;
     if (params.size() > 2)
         fRescan = params[2].get_bool();
@@ -140,31 +145,31 @@ Value importprivkey(const Array& params, bool fHelp)
     CBitcoinSecret vchSecret;
     bool fGood = vchSecret.SetString(strSecret);
 
-    if (!fGood) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
+    if (!fGood)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
     if (fWalletUnlockStakingOnly)
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Wallet is unlocked for staking only.");
 
     CKey key = vchSecret.GetKey();
-    if (!key.IsValid()) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
-    
+    if (!key.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+
     CPubKey pubkey = key.GetPubKey();
     CKeyID vchAddress = pubkey.GetID();
     {
-        LOCK2(cs_main, pwalletMain->cs_wallet);
-
         pwalletMain->MarkDirty();
         pwalletMain->SetAddressBook(vchAddress, strLabel, "receive");
 
-        // Don't throw error in case a key is already there
+        //! Don't throw error in case a key is already there
         if (pwalletMain->HaveKey(vchAddress))
-            return Value::null;
+            return NullUniValue;
 
         pwalletMain->mapKeyMetadata[vchAddress].nCreateTime = 1;
 
         if (!pwalletMain->AddKeyPubKey(key, pubkey))
             throw JSONRPCError(RPC_WALLET_ERROR, "Error adding key to wallet");
 
-        // whenever a key is imported, we need to scan the whole chain
+        //! whenever a key is imported, we need to scan the whole chain
         pwalletMain->nTimeFirstKey = 1; // 0 would be considered 'no value'
 
         if (fRescan) {
@@ -172,10 +177,74 @@ Value importprivkey(const Array& params, bool fHelp)
         }
     }
 
-    return Value::null;
+    return NullUniValue;
 }
 
-Value importwallet(const Array& params, bool fHelp)
+UniValue importaddress(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 3)
+        throw runtime_error(
+            "importaddress \"address\" ( \"label\" rescan )\n"
+            "\nAdds an address or script (in hex) that can be watched as if it were in your wallet but cannot be used to spend.\n"
+            "\nArguments:\n"
+            "1. \"address\"          (string, required) The address\n"
+            "2. \"label\"            (string, optional, default=\"\") An optional label\n"
+            "3. rescan               (boolean, optional, default=true) Rescan the wallet for transactions\n"
+            "\nNote: This call can take minutes to complete if rescan is true.\n"
+            "\nExamples:\n"
+            "\nImport an address with rescan\n" +
+            HelpExampleCli("importaddress", "\"myaddress\"") +
+            "\nImport using a label without rescan\n" + HelpExampleCli("importaddress", "\"myaddress\" \"testing\" false") +
+            "\nAs a JSON-RPC call\n" + HelpExampleRpc("importaddress", "\"myaddress\", \"testing\", false"));
+
+    CScript script;
+
+    CBitcoinAddress address(params[0].get_str());
+    if (address.IsValid()) {
+        script = GetScriptForDestination(address.Get());
+    } else if (IsHex(params[0].get_str())) {
+        std::vector<unsigned char> data(ParseHex(params[0].get_str()));
+        script = CScript(data.begin(), data.end());
+    } else {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Metrix address or script");
+    }
+
+    string strLabel = "";
+    if (params.size() > 1)
+        strLabel = params[1].get_str();
+
+    //! Whether to perform rescan after import
+    bool fRescan = true;
+    if (params.size() > 2)
+        fRescan = params[2].get_bool();
+
+    {
+        if (::IsMine(*pwalletMain, script) == ISMINE_SPENDABLE)
+            throw JSONRPCError(RPC_WALLET_ERROR, "The wallet already contains the private key for this address or script");
+            
+        //! add to address book or update label
+        if (address.IsValid())
+            pwalletMain->SetAddressBook(address.Get(), strLabel, "receive");
+
+        //! Don't throw error in case an address is already there
+        if (pwalletMain->HaveWatchOnly(script))
+            return NullUniValue;
+
+        pwalletMain->MarkDirty();
+
+        if (!pwalletMain->AddWatchOnly(script))
+            throw JSONRPCError(RPC_WALLET_ERROR, "Error adding address to wallet");
+
+        if (fRescan) {
+            pwalletMain->ScanForWalletTransactions(chainActive.Genesis(), true);
+            pwalletMain->ReacceptWalletTransactions();
+        }
+    }
+
+    return NullUniValue;
+}
+
+UniValue importwallet(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
@@ -184,13 +253,10 @@ Value importwallet(const Array& params, bool fHelp)
             "\nArguments:\n"
             "1. \"filename\"    (string, required) The wallet file\n"
             "\nExamples:\n"
-            "\nDump the wallet\n"
-            + HelpExampleCli("dumpwallet", "\"test\"") +
-            "\nImport the wallet\n"
-            + HelpExampleCli("importwallet", "\"test\"") +
-            "\nImport using the json rpc call\n"
-            + HelpExampleRpc("importwallet", "\"test\"")
-        );
+            "\nDump the wallet\n" +
+            HelpExampleCli("dumpwallet", "\"test\"") +
+            "\nImport the wallet\n" + HelpExampleCli("importwallet", "\"test\"") +
+            "\nImport using the json rpc call\n" + HelpExampleRpc("importwallet", "\"test\""));
 
     EnsureWalletIsUnlocked();
 
@@ -199,7 +265,7 @@ Value importwallet(const Array& params, bool fHelp)
     if (!file.is_open())
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Cannot open wallet dump file");
 
-    int64_t nTimeBegin = chainActive.Tip()->nTime;
+    int64_t nTimeBegin = chainActive.Tip()->GetBlockTime();
 
     bool fGood = true;
 
@@ -250,8 +316,8 @@ Value importwallet(const Array& params, bool fHelp)
     }
     file.close();
 
-    CBlockIndex *pindex = chainActive.Tip();
-    while (pindex && pindex->pprev && pindex->nTime > nTimeBegin - 7200)
+    CBlockIndex* pindex = chainActive.Tip();
+    while (pindex && pindex->pprev && pindex->GetBlockTime() > nTimeBegin - 7200)
         pindex = pindex->pprev;
 
     if (!pwalletMain->nTimeFirstKey || nTimeBegin < pwalletMain->nTimeFirstKey)
@@ -264,11 +330,11 @@ Value importwallet(const Array& params, bool fHelp)
     if (!fGood)
         throw JSONRPCError(RPC_WALLET_ERROR, "Error adding some keys to wallet");
 
-    return Value::null;
+    return NullUniValue;
 }
 
 
-Value dumpprivkey(const Array& params, bool fHelp)
+UniValue dumpprivkey(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
@@ -279,11 +345,8 @@ Value dumpprivkey(const Array& params, bool fHelp)
             "1. \"Metrixaddress\"   (string, required) The Metrix address for the private key\n"
             "\nResult:\n"
             "\"key\"                (string) The private key\n"
-            "\nExamples:\n"
-            + HelpExampleCli("dumpprivkey", "\"myaddress\"")
-            + HelpExampleCli("importprivkey", "\"mykey\"")
-            + HelpExampleRpc("dumpprivkey", "\"myaddress\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("dumpprivkey", "\"myaddress\"") + HelpExampleCli("importprivkey", "\"mykey\"") + HelpExampleRpc("dumpprivkey", "\"myaddress\""));
 
     EnsureWalletIsUnlocked();
 
@@ -302,7 +365,7 @@ Value dumpprivkey(const Array& params, bool fHelp)
     return CBitcoinSecret(vchSecret).ToString();
 }
 
-Value dumpwallet(const Array& params, bool fHelp)
+UniValue dumpwallet(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
@@ -310,10 +373,8 @@ Value dumpwallet(const Array& params, bool fHelp)
             "\nDumps all wallet keys in a human-readable format.\n"
             "\nArguments:\n"
             "1. \"filename\"    (string, required) The filename\n"
-            "\nExamples:\n"
-            + HelpExampleCli("dumpwallet", "\"test\"")
-            + HelpExampleRpc("dumpwallet", "\"test\"")
-        );
+            "\nExamples:\n" +
+            HelpExampleCli("dumpwallet", "\"test\"") + HelpExampleRpc("dumpwallet", "\"test\""));
 
     EnsureWalletIsUnlocked();
 
@@ -330,7 +391,7 @@ Value dumpwallet(const Array& params, bool fHelp)
 
     pwalletMain->GetAllReserveKeys(setKeyPool);
 
-    // sort time/key pairs
+    //! sort time/key pairs
     std::vector<std::pair<int64_t, CKeyID> > vKeyBirth;
     for (std::map<CKeyID, int64_t>::const_iterator it = mapKeyBirth.begin(); it != mapKeyBirth.end(); it++) {
         vKeyBirth.push_back(std::make_pair(it->second, it->first));
@@ -338,14 +399,14 @@ Value dumpwallet(const Array& params, bool fHelp)
     mapKeyBirth.clear();
     std::sort(vKeyBirth.begin(), vKeyBirth.end());
 
-    // produce output
+    //! produce output
     file << strprintf("# Wallet dump created by Metrix %s (%s)\n", CLIENT_BUILD, CLIENT_DATE);
     file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()));
     file << strprintf("# * Best block at time of backup was %i (%s),\n", chainActive.Height(), chainActive.Tip()->GetBlockHash().ToString());
-    file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->nTime));
+    file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->GetBlockTime()));
     file << "\n";
     for (std::vector<std::pair<int64_t, CKeyID> >::const_iterator it = vKeyBirth.begin(); it != vKeyBirth.end(); it++) {
-        const CKeyID &keyid = it->second;
+        const CKeyID& keyid = it->second;
         std::string strTime = EncodeDumpTime(it->first);
         std::string strAddr = CBitcoinAddress(keyid).ToString();
 
@@ -363,5 +424,5 @@ Value dumpwallet(const Array& params, bool fHelp)
     file << "\n";
     file << "# End of dump\n";
     file.close();
-    return Value::null;
+    return NullUniValue;
 }

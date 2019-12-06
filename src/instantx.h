@@ -2,19 +2,20 @@
 // Copyright (c) 2009-2012 The Darkcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef INSTANTX_H
 #define INSTANTX_H
 
-#include "uint256.h"
-#include "sync.h"
-#include "net.h"
-#include "key.h"
-//#include "primitives/transaction.h"
-#include "util.h"
-//#include "script/script.h"
-#include "script.h"
 #include "base58.h"
+#include "key.h"
 #include "main.h"
+#include "net.h"
+//#include "primitives/transaction.h"
+//#include "script/script.h"
+#include "sync.h"
+#include "uint256.h"
+#include "util.h"
+#include "wallet_ismine.h"
 
 using namespace std;
 using namespace boost;
@@ -35,18 +36,18 @@ int64_t CreateNewLock(CTransaction tx);
 
 bool IsIXTXValid(const CTransaction& txCollateral);
 
-// if two conflicting locks are approved by the network, they will cancel out
+//! if two conflicting locks are approved by the network, they will cancel out
 bool CheckForConflictingLocks(CTransaction& tx);
 
 void ProcessMessageInstantX(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
-//check if we need to vote on this transaction
+//!check if we need to vote on this transaction
 void DoConsensusVote(CTransaction& tx, int64_t nBlockHeight);
 
-//process consensus vote message
+//!process consensus vote message
 bool ProcessConsensusVote(CConsensusVote& ctx);
 
-// keep transaction locks in memory for an hour
+//! keep transaction locks in memory for an hour
 void CleanTransactionLocksList();
 
 int64_t GetAverageVoteTime();
@@ -67,8 +68,8 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
-	unsigned int nSerSize = 0;
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(txHash);
         READWRITE(vinMasternode);
         READWRITE(vchMasterNodeSignature);
@@ -96,4 +97,4 @@ public:
 };
 
 
-#endif
+#endif //! INSTANTX_H

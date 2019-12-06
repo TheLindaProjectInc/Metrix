@@ -2,8 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef NITRO_CRYPTO_COMMON_H
-#define NITRO_CRYPTO_COMMON_H
+#ifndef BITCOIN_CRYPTO_COMMON_H
+#define BITCOIN_CRYPTO_COMMON_H
+
+#if defined(HAVE_CONFIG_H)
+#include "config/bitcoin-config.h"
+#endif
 
 #include <stdint.h>
 
@@ -113,4 +117,4 @@ void static inline WriteBE64(unsigned char* ptr, uint64_t x)
 #endif
 }
 
-#endif // Metrix_CRYPTO_COMMON_H
+#endif // BITCOIN_CRYPTO_COMMON_H

@@ -8,6 +8,7 @@
 
 #include "serialize.h"
 #include "uint256.h"
+#include "utilstrencodings.h"
 #include "version.h"
 
 #include <openssl/bn.h>
@@ -65,8 +66,7 @@ public:
     CBigNum(const CBigNum& b)
     {
         BN_init(this);
-        if (!BN_copy(this, &b))
-        {
+        if (!BN_copy(this, &b)) {
             BN_clear_free(this);
             throw bignum_error("CBigNum::CBigNum(const CBigNum&) : BN_copy failed");
         }
@@ -84,18 +84,74 @@ public:
         BN_clear_free(this);
     }
 
-    //CBigNum(char n) is not portable.  Use 'signed char' or 'unsigned char'.
-    CBigNum(signed char n)        { BN_init(this); if (n >= 0) setulong(n); else setint64(n); }
-    CBigNum(short n)              { BN_init(this); if (n >= 0) setulong(n); else setint64(n); }
-    CBigNum(int n)                { BN_init(this); if (n >= 0) setulong(n); else setint64(n); }
-    CBigNum(long n)               { BN_init(this); if (n >= 0) setulong(n); else setint64(n); }
-    CBigNum(long long n)          { BN_init(this); setint64(n); }
-    CBigNum(unsigned char n)      { BN_init(this); setulong(n); }
-    CBigNum(unsigned short n)     { BN_init(this); setulong(n); }
-    CBigNum(unsigned int n)       { BN_init(this); setulong(n); }
-    CBigNum(unsigned long n)      { BN_init(this); setulong(n); }
-    CBigNum(unsigned long long n) { BN_init(this); setuint64(n); }
-    explicit CBigNum(uint256 n)   { BN_init(this); setuint256(n); }
+    //! CBigNum(char n) is not portable.  Use 'signed char' or 'unsigned char'.
+    CBigNum(signed char n)
+    {
+        BN_init(this);
+        if (n >= 0)
+            setulong(n);
+        else
+            setint64(n);
+    }
+    CBigNum(short n)
+    {
+        BN_init(this);
+        if (n >= 0)
+            setulong(n);
+        else
+            setint64(n);
+    }
+    CBigNum(int n)
+    {
+        BN_init(this);
+        if (n >= 0)
+            setulong(n);
+        else
+            setint64(n);
+    }
+    CBigNum(long n)
+    {
+        BN_init(this);
+        if (n >= 0)
+            setulong(n);
+        else
+            setint64(n);
+    }
+    CBigNum(long long n)
+    {
+        BN_init(this);
+        setint64(n);
+    }
+    CBigNum(unsigned char n)
+    {
+        BN_init(this);
+        setulong(n);
+    }
+    CBigNum(unsigned short n)
+    {
+        BN_init(this);
+        setulong(n);
+    }
+    CBigNum(unsigned int n)
+    {
+        BN_init(this);
+        setulong(n);
+    }
+    CBigNum(unsigned long n)
+    {
+        BN_init(this);
+        setulong(n);
+    }
+    CBigNum(unsigned long long n)
+    {
+        BN_init(this);
+        setuint64(n);
+    }
+    explicit CBigNum(uint256 n)
+    {
+        BN_init(this);
+        setuint256(n);
+    }
 
     explicit CBigNum(const std::vector<unsigned char>& vch)
     {
@@ -108,9 +164,10 @@ public:
     * @param range The upper bound on the number.
     * @return
     */
-    static CBigNum  randBignum(const CBigNum& range) {
+    static CBigNum randBignum(const CBigNum& range)
+    {
         CBigNum ret;
-        if(!BN_rand_range(&ret, &range)){
+        if (!BN_rand_range(&ret, &range)) {
             throw bignum_error("CBigNum:rand element : BN_rand_range failed");
         }
         return ret;
@@ -120,9 +177,10 @@ public:
     * @param k The bit length of the number.
     * @return
     */
-    static CBigNum RandKBitBigum(const uint32_t k){
+    static CBigNum RandKBitBigum(const uint32_t k)
+    {
         CBigNum ret;
-        if(!BN_rand(&ret, k, -1, 0)){
+        if (!BN_rand(&ret, k, -1, 0)) {
             throw bignum_error("CBigNum:rand element : BN_rand failed");
         }
         return ret;
@@ -132,8 +190,9 @@ public:
      *
      * @return the size
      */
-    int bitSize() const{
-        return  BN_num_bits(this);
+    int bitSize() const
+    {
+        return BN_num_bits(this);
     }
 
 
@@ -169,9 +228,8 @@ public:
         bool fNegative;
         uint64_t n;
 
-        if (sn < (int64_t)0)
-        {
-            // Since the minimum signed integer cannot be represented as positive so long as its type is signed, and it's not well-defined what happens if you make it unsigned before negating it, we instead increment the negative integer by 1, convert it, then increment the (now positive) unsigned integer by 1 to compensate
+        if (sn < (int64_t)0) {
+            //! Since the minimum signed integer cannot be represented as positive so long as its type is signed, and it's not well-defined what happens if you make it unsigned before negating it, we instead increment the negative integer by 1, convert it, then increment the (now positive) unsigned integer by 1 to compensate
             n = -(sn + 1);
             ++n;
             fNegative = true;
@@ -181,12 +239,10 @@ public:
         }
 
         bool fLeadingZeroes = true;
-        for (int i = 0; i < 8; i++)
-        {
+        for (int i = 0; i < 8; i++) {
             unsigned char c = (n >> 56) & 0xff;
             n <<= 8;
-            if (fLeadingZeroes)
-            {
+            if (fLeadingZeroes) {
                 if (c == 0)
                     continue;
                 if (c & 0x80)
@@ -201,7 +257,7 @@ public:
         pch[0] = (nSize >> 24) & 0xff;
         pch[1] = (nSize >> 16) & 0xff;
         pch[2] = (nSize >> 8) & 0xff;
-        pch[3] = (nSize) & 0xff;
+        pch[3] = (nSize)&0xff;
         BN_mpi2bn(pch, p - pch, this);
     }
 
@@ -215,7 +271,7 @@ public:
         if (vch.size() > 4)
             vch[4] &= 0x7f;
         uint64_t n = 0;
-        for (unsigned int i = 0, j = vch.size()-1; i < sizeof(n) && j >= 4; i++, j--)
+        for (unsigned int i = 0, j = vch.size() - 1; i < sizeof(n) && j >= 4; i++, j--)
             ((unsigned char*)&n)[i] = vch[j];
         return n;
     }
@@ -225,12 +281,10 @@ public:
         unsigned char pch[sizeof(n) + 6];
         unsigned char* p = pch + 4;
         bool fLeadingZeroes = true;
-        for (int i = 0; i < 8; i++)
-        {
+        for (int i = 0; i < 8; i++) {
             unsigned char c = (n >> 56) & 0xff;
             n <<= 8;
-            if (fLeadingZeroes)
-            {
+            if (fLeadingZeroes) {
                 if (c == 0)
                     continue;
                 if (c & 0x80)
@@ -243,7 +297,7 @@ public:
         pch[0] = (nSize >> 24) & 0xff;
         pch[1] = (nSize >> 16) & 0xff;
         pch[2] = (nSize >> 8) & 0xff;
-        pch[3] = (nSize) & 0xff;
+        pch[3] = (nSize)&0xff;
         BN_mpi2bn(pch, p - pch, this);
     }
 
@@ -254,11 +308,9 @@ public:
         bool fLeadingZeroes = true;
         unsigned char* pbegin = (unsigned char*)&n;
         unsigned char* psrc = pbegin + sizeof(n);
-        while (psrc != pbegin)
-        {
+        while (psrc != pbegin) {
             unsigned char c = *(--psrc);
-            if (fLeadingZeroes)
-            {
+            if (fLeadingZeroes) {
                 if (c == 0)
                     continue;
                 if (c & 0x80)
@@ -285,7 +337,7 @@ public:
         if (vch.size() > 4)
             vch[4] &= 0x7f;
         uint256 n = 0;
-        for (unsigned int i = 0, j = vch.size()-1; i < sizeof(n) && j >= 4; i++, j--)
+        for (unsigned int i = 0, j = vch.size() - 1; i < sizeof(n) && j >= 4; i++, j--)
             ((unsigned char*)&n)[i] = vch[j];
         return n;
     }
@@ -295,13 +347,15 @@ public:
     {
         std::vector<unsigned char> vch2(vch.size() + 4);
         unsigned int nSize = vch.size();
-        // BIGNUM's byte stream format expects 4 bytes of
-        // big endian size data info at the front
+        /** 
+         * BIGNUM's byte stream format expects 4 bytes of
+         * big endian size data info at the front
+         */
         vch2[0] = (nSize >> 24) & 0xff;
         vch2[1] = (nSize >> 16) & 0xff;
         vch2[2] = (nSize >> 8) & 0xff;
         vch2[3] = (nSize >> 0) & 0xff;
-        // swap data to big endian
+        //! swap data to big endian
         reverse_copy(vch.begin(), vch.end(), vch2.begin() + 4);
         BN_mpi2bn(&vch2[0], vch2.size(), this);
     }
@@ -323,9 +377,12 @@ public:
         unsigned int nSize = nCompact >> 24;
         std::vector<unsigned char> vch(4 + nSize);
         vch[3] = nSize;
-        if (nSize >= 1) vch[4] = (nCompact >> 16) & 0xff;
-        if (nSize >= 2) vch[5] = (nCompact >> 8) & 0xff;
-        if (nSize >= 3) vch[6] = (nCompact >> 0) & 0xff;
+        if (nSize >= 1)
+            vch[4] = (nCompact >> 16) & 0xff;
+        if (nSize >= 2)
+            vch[5] = (nCompact >> 8) & 0xff;
+        if (nSize >= 3)
+            vch[6] = (nCompact >> 0) & 0xff;
         BN_mpi2bn(&vch[0], vch.size(), this);
         return *this;
     }
@@ -337,21 +394,23 @@ public:
         nSize -= 4;
         BN_bn2mpi(this, &vch[0]);
         unsigned int nCompact = nSize << 24;
-        if (nSize >= 1) nCompact |= (vch[4] << 16);
-        if (nSize >= 2) nCompact |= (vch[5] << 8);
-        if (nSize >= 3) nCompact |= (vch[6] << 0);
+        if (nSize >= 1)
+            nCompact |= (vch[4] << 16);
+        if (nSize >= 2)
+            nCompact |= (vch[5] << 8);
+        if (nSize >= 3)
+            nCompact |= (vch[6] << 0);
         return nCompact;
     }
 
     void SetHex(const std::string& str)
     {
-        // skip 0x
+        //! skip 0x
         const char* psz = str.c_str();
         while (isspace(*psz))
             psz++;
         bool fNegative = false;
-        if (*psz == '-')
-        {
+        if (*psz == '-') {
             fNegative = true;
             psz++;
         }
@@ -360,11 +419,10 @@ public:
         while (isspace(*psz))
             psz++;
 
-        // hex string to bignum
+        //! hex string to bignum
         *this = 0;
         int n;
-        while ((n = HexDigit(*psz)) != -1)
-        {
+        while ((n = HexDigit(*psz)) != -1) {
             *this <<= 4;
             *this += n;
             ++psz;
@@ -373,7 +431,7 @@ public:
             *this = 0 - *this;
     }
 
-    std::string ToString(int nBase=10) const
+    std::string ToString(int nBase = 10) const
     {
         CAutoBN_CTX pctx;
         CBigNum bnBase = nBase;
@@ -385,8 +443,7 @@ public:
         CBigNum rem;
         if (BN_cmp(&bn, &bn0) == 0)
             return "0";
-        while (BN_cmp(&bn, &bn0) > 0)
-        {
+        while (BN_cmp(&bn, &bn0) > 0) {
             if (!BN_div(&dv, &rem, &bn, &bnBase, pctx))
                 throw bignum_error("CBigNum::ToString() : BN_div failed");
             bn = dv;
@@ -404,19 +461,19 @@ public:
         return ToString(16);
     }
 
-    unsigned int GetSerializeSize(int nType=0, int nVersion=PROTOCOL_VERSION) const
+    unsigned int GetSerializeSize(int nType = 0, int nVersion = PROTOCOL_VERSION) const
     {
         return ::GetSerializeSize(getvch(), nType, nVersion);
     }
 
-    template<typename Stream>
-    void Serialize(Stream& s, int nType=0, int nVersion=PROTOCOL_VERSION) const
+    template <typename Stream>
+    void Serialize(Stream& s, int nType = 0, int nVersion = PROTOCOL_VERSION) const
     {
         ::Serialize(s, getvch(), nType, nVersion);
     }
 
-    template<typename Stream>
-    void Unserialize(Stream& s, int nType=0, int nVersion=PROTOCOL_VERSION)
+    template <typename Stream>
+    void Unserialize(Stream& s, int nType = 0, int nVersion = PROTOCOL_VERSION)
     {
         std::vector<unsigned char> vch;
         ::Unserialize(s, vch, nType, nVersion);
@@ -428,7 +485,8 @@ public:
     * @param e the exponent as an int
     * @return
     */
-    CBigNum pow(const int e) const {
+    CBigNum pow(const int e) const
+    {
         return this->pow(CBigNum(e));
     }
 
@@ -437,7 +495,8 @@ public:
      * @param e the exponent
      * @return
      */
-    CBigNum pow(const CBigNum& e) const {
+    CBigNum pow(const CBigNum& e) const
+    {
         CAutoBN_CTX pctx;
         CBigNum ret;
         if (!BN_exp(&ret, this, &e, pctx))
@@ -450,12 +509,13 @@ public:
      * @param b operand
      * @param m modulus
      */
-    CBigNum mul_mod(const CBigNum& b, const CBigNum& m) const {
+    CBigNum mul_mod(const CBigNum& b, const CBigNum& m) const
+    {
         CAutoBN_CTX pctx;
         CBigNum ret;
         if (!BN_mod_mul(&ret, this, &b, &m, pctx))
             throw bignum_error("CBigNum::mul_mod : BN_mod_mul failed");
-        
+
         return ret;
     }
 
@@ -464,18 +524,18 @@ public:
      * @param e exponent
      * @param m modulus
      */
-    CBigNum pow_mod(const CBigNum& e, const CBigNum& m) const {
+    CBigNum pow_mod(const CBigNum& e, const CBigNum& m) const
+    {
         CAutoBN_CTX pctx;
         CBigNum ret;
-        if( e < 0){
+        if (e < 0) {
             // g^-x = (g^-1)^x
             CBigNum inv = this->inverse(m);
             CBigNum posE = e * -1;
             if (!BN_mod_exp(&ret, &inv, &posE, &m, pctx))
                 throw bignum_error("CBigNum::pow_mod: BN_mod_exp failed on negative exponent");
-        }else
-            if (!BN_mod_exp(&ret, this, &e, &m, pctx))
-                throw bignum_error("CBigNum::pow_mod : BN_mod_exp failed");
+        } else if (!BN_mod_exp(&ret, this, &e, &m, pctx))
+            throw bignum_error("CBigNum::pow_mod : BN_mod_exp failed");
 
         return ret;
     }
@@ -486,7 +546,8 @@ public:
     * @param m the modu
     * @return the inverse
     */
-    CBigNum inverse(const CBigNum& m) const {
+    CBigNum inverse(const CBigNum& m) const
+    {
         CAutoBN_CTX pctx;
         CBigNum ret;
         if (!BN_mod_inverse(&ret, this, &m, pctx))
@@ -500,9 +561,10 @@ public:
      * @param safe true for a safe prime
      * @return the prime
      */
-    static CBigNum generatePrime(const unsigned int numBits, bool safe = false) {
+    static CBigNum generatePrime(const unsigned int numBits, bool safe = false)
+    {
         CBigNum ret;
-        if(!BN_generate_prime_ex(&ret, numBits, (safe == true), NULL, NULL, NULL))
+        if (!BN_generate_prime_ex(&ret, numBits, (safe == true), NULL, NULL, NULL))
             throw bignum_error("CBigNum::generatePrime*= :BN_generate_prime_ex");
         return ret;
     }
@@ -512,7 +574,8 @@ public:
      * @param m the second element
      * @return the GCD
      */
-    CBigNum gcd( const CBigNum& b) const{
+    CBigNum gcd(const CBigNum& b) const
+    {
         CAutoBN_CTX pctx;
         CBigNum ret;
         if (!BN_gcd(&ret, this, &b, pctx))
@@ -526,16 +589,18 @@ public:
     * default causes error rate of 2^-80.
     * @return true if prime
     */
-    bool isPrime(const int checks=BN_prime_checks) const {
+    bool isPrime(const int checks = BN_prime_checks) const
+    {
         CAutoBN_CTX pctx;
         int ret = BN_is_prime(this, checks, NULL, pctx, NULL);
-        if(ret < 0){
+        if (ret < 0) {
             throw bignum_error("CBigNum::isPrime :BN_is_prime");
         }
         return ret;
     }
 
-    bool isOne() const {
+    bool isOne() const
+    {
         return BN_is_one(this);
     }
 
@@ -587,12 +652,11 @@ public:
 
     CBigNum& operator>>=(unsigned int shift)
     {
-        // Note: BN_rshift segfaults on 64-bit if 2^shift is greater than the number
-        //   if built on ubuntu 9.04 or 9.10, probably depends on version of OpenSSL
+        //! Note: BN_rshift segfaults on 64-bit if 2^shift is greater than the number
+        //!   if built on ubuntu 9.04 or 9.10, probably depends on version of OpenSSL
         CBigNum a = 1;
         a <<= shift;
-        if (BN_cmp(&a, this) > 0)
-        {
+        if (BN_cmp(&a, this) > 0) {
             *this = 0;
             return *this;
         }
@@ -605,7 +669,7 @@ public:
 
     CBigNum& operator++()
     {
-        // prefix operator
+        //! prefix operator
         if (!BN_add(this, this, BN_value_one()))
             throw bignum_error("CBigNum::operator++ : BN_add failed");
         return *this;
@@ -613,7 +677,7 @@ public:
 
     const CBigNum operator++(int)
     {
-        // postfix operator
+        //! postfix operator
         const CBigNum ret = *this;
         ++(*this);
         return ret;
@@ -621,7 +685,7 @@ public:
 
     CBigNum& operator--()
     {
-        // prefix operator
+        //! prefix operator
         CBigNum r;
         if (!BN_sub(&r, this, BN_value_one()))
             throw bignum_error("CBigNum::operator-- : BN_sub failed");
@@ -631,7 +695,7 @@ public:
 
     const CBigNum operator--(int)
     {
-        // postfix operator
+        //! postfix operator
         const CBigNum ret = *this;
         --(*this);
         return ret;
@@ -644,7 +708,6 @@ public:
     friend inline const CBigNum operator*(const CBigNum& a, const CBigNum& b);
     friend inline bool operator<(const CBigNum& a, const CBigNum& b);
 };
-
 
 
 inline const CBigNum operator+(const CBigNum& a, const CBigNum& b)
@@ -716,11 +779,11 @@ inline bool operator==(const CBigNum& a, const CBigNum& b) { return (BN_cmp(&a, 
 inline bool operator!=(const CBigNum& a, const CBigNum& b) { return (BN_cmp(&a, &b) != 0); }
 inline bool operator<=(const CBigNum& a, const CBigNum& b) { return (BN_cmp(&a, &b) <= 0); }
 inline bool operator>=(const CBigNum& a, const CBigNum& b) { return (BN_cmp(&a, &b) >= 0); }
-inline bool operator<(const CBigNum& a, const CBigNum& b)  { return (BN_cmp(&a, &b) < 0); }
-inline bool operator>(const CBigNum& a, const CBigNum& b)  { return (BN_cmp(&a, &b) > 0); }
+inline bool operator<(const CBigNum& a, const CBigNum& b) { return (BN_cmp(&a, &b) < 0); }
+inline bool operator>(const CBigNum& a, const CBigNum& b) { return (BN_cmp(&a, &b) > 0); }
 
-inline std::ostream& operator<<(std::ostream &strm, const CBigNum &b) { return strm << b.ToString(10); }
+inline std::ostream& operator<<(std::ostream& strm, const CBigNum& b) { return strm << b.ToString(10); }
 
-typedef  CBigNum Bignum;
+typedef CBigNum Bignum;
 
 #endif

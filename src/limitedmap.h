@@ -1,14 +1,16 @@
 // Copyright (c) 2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef BITCOIN_LIMITEDMAP_H
 #define BITCOIN_LIMITEDMAP_H
 
-#include <map>
 #include <deque>
+#include <map>
 
 /** STL-like map container that only keeps the N elements with the highest value. */
-template <typename K, typename V> class limitedmap
+template <typename K, typename V>
+class limitedmap
 {
 public:
     typedef K key_type;
@@ -35,10 +37,8 @@ public:
     void insert(const value_type& x)
     {
         std::pair<iterator, bool> ret = map.insert(x);
-        if (ret.second)
-        {
-            if (nMaxSize && map.size() == nMaxSize)
-            {
+        if (ret.second) {
+            if (nMaxSize && map.size() == nMaxSize) {
                 map.erase(rmap.begin()->second);
                 rmap.erase(rmap.begin());
             }
@@ -53,33 +53,31 @@ public:
             return;
         std::pair<rmap_iterator, rmap_iterator> itPair = rmap.equal_range(itTarget->second);
         for (rmap_iterator it = itPair.first; it != itPair.second; ++it)
-            if (it->second == itTarget)
-            {
+            if (it->second == itTarget) {
                 rmap.erase(it);
                 map.erase(itTarget);
                 return;
             }
-        // Shouldn't ever get here
-        assert(0); //TODO remove me
+        //! Shouldn't ever get here
+        assert(0); //! TODO remove me
         map.erase(itTarget);
     }
     void update(const_iterator itIn, const mapped_type& v)
     {
-        //TODO: When we switch to C++11, use map.erase(itIn, itIn) to get the non-const iterator
+        //! TODO: When we switch to C++11, use map.erase(itIn, itIn) to get the non-const iterator
         iterator itTarget = map.find(itIn->first);
         if (itTarget == map.end())
             return;
         std::pair<rmap_iterator, rmap_iterator> itPair = rmap.equal_range(itTarget->second);
         for (rmap_iterator it = itPair.first; it != itPair.second; ++it)
-            if (it->second == itTarget)
-            {
+            if (it->second == itTarget) {
                 rmap.erase(it);
                 itTarget->second = v;
                 rmap.insert(make_pair(v, itTarget));
                 return;
             }
-        // Shouldn't ever get here
-        assert(0); //TODO remove me
+        //! Shouldn't ever get here
+        assert(0); //! TODO remove me
         itTarget->second = v;
         rmap.insert(make_pair(v, itTarget));
     }
@@ -87,8 +85,7 @@ public:
     size_type max_size(size_type s)
     {
         if (s)
-            while (map.size() > s)
-            {
+            while (map.size() > s) {
                 map.erase(rmap.begin()->second);
                 rmap.erase(rmap.begin());
             }
@@ -97,4 +94,4 @@ public:
     }
 };
 
-#endif
+#endif // BITCOIN_LIMITEDMAP_H

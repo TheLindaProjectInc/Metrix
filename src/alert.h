@@ -3,8 +3,8 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef _BITCOINALERT_H_
-#define _BITCOINALERT_H_ 1
+#ifndef BITCOIN_ALERT_H
+#define BITCOIN_ALERT_H
 
 #include "serialize.h"
 #include "sync.h"
@@ -31,23 +31,26 @@ class CUnsignedAlert
 {
 public:
     int nVersion;
-    int64_t nRelayUntil;      // when newer nodes stop relaying to newer nodes
+    int64_t nRelayUntil; //! when newer nodes stop relaying to newer nodes
     int64_t nExpiration;
     int nID;
     int nCancel;
     std::set<int> setCancel;
-    int nMinVer;            // lowest version inclusive
-    int nMaxVer;            // highest version inclusive
-    std::set<std::string> setSubVer;  // empty matches all
+    int nMinVer;                     //! lowest version inclusive
+    int nMaxVer;                     //! highest version inclusive
+    std::set<std::string> setSubVer; //! empty matches all
     int nPriority;
 
-    // Actions
+    //! Actions
     std::string strComment;
     std::string strStatusBar;
     std::string strReserved;
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
         READWRITE(nRelayUntil);
@@ -63,12 +66,11 @@ public:
         READWRITE(LIMITED_STRING(strComment, 65536));
         READWRITE(LIMITED_STRING(strStatusBar, 256));
         READWRITE(LIMITED_STRING(strReserved, 256));
-    )
+    }
 
     void SetNull();
 
     std::string ToString() const;
-    void print() const;
 };
 
 /** An alert is a combination of a serialized CUnsignedAlert and a signature. */
@@ -83,11 +85,14 @@ public:
         SetNull();
     }
 
-    IMPLEMENT_SERIALIZE
-    (
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    {
         READWRITE(vchMsg);
         READWRITE(vchSig);
-    )
+    }
 
     void SetNull();
     bool IsNull() const;
@@ -98,12 +103,13 @@ public:
     bool AppliesToMe() const;
     bool RelayTo(CNode* pnode) const;
     bool CheckSignature() const;
-    bool ProcessAlert(bool fThread = true);
+    bool ProcessAlert(bool fThread = true); //! fThread means run -alertnotify in a free-running thread
+    static void Notify(const std::string& strMessage, bool fThread);
 
     /*
      * Get copy of (active) alert object by hash. Returns a null alert if it is not found.
      */
-    static CAlert getAlertByHash(const uint256 &hash);
+    static CAlert getAlertByHash(const uint256& hash);
 };
 
-#endif
+#endif //! BITCOIN_ALERT_H

@@ -1,10 +1,11 @@
 ACLOCAL_AMFLAGS = -I build-aux/m4
 SUBDIRS = src
-.PHONY: deploy
+.PHONY: deploy FORCE
 
 GZIP_ENV="-9n"
 
 BITCOIND_BIN=$(top_builddir)/src/metrixd$(EXEEXT)
+BITCOIN_CLI_BIN=$(top_builddir)/src/metrix-cli$(EXEEXT)
 BITCOIN_WIN_INSTALLER=$(PACKAGE)-$(PACKAGE_VERSION)-win32-setup$(EXEEXT)
 
 WINDOWS_PACKAGING = $(top_srcdir)/share/pixmaps/bitcoin.ico \
@@ -18,7 +19,8 @@ COVERAGE_INFO = baseline_filtered_combined.info baseline.info block_test.info \
 
 dist-hook:
 	-$(MAKE) -C $(top_distdir)/src/leveldb clean
-	-$(GIT) archive --format=tar HEAD -- src/version.cpp | $(AMTAR) -C $(top_distdir) -xf -
+	-$(MAKE) -C $(top_distdir)/src/secp256k1 distclean
+	-$(GIT) archive --format=tar HEAD -- src/clientversion.cpp | $(AMTAR) -C $(top_distdir) -xf -
 
 distcheck-hook:
 	$(MKDIR_P) $(top_distdir)/_build/src/leveldb
@@ -36,12 +38,18 @@ $(BITCOIN_WIN_INSTALLER): $(BITCOIND_BIN)
 	@test -f $(MAKENSIS) && $(MAKENSIS) $(top_builddir)/share/setup.nsi || \
 	  echo error: could not build $@
 
-$(BITCOIND_BIN):
-	make -C $(top_srcdir)/src metrixd$(EXEEXT)
+$(if $(findstring src/,$(MAKECMDGOALS)),$(MAKECMDGOALS), none): FORCE
+	$(MAKE) -C src $(patsubst src/%,%,$@)
 
 if TARGET_WINDOWS
 deploy: $(BITCOIN_WIN_INSTALLER)
 endif
+
+$(BITCOIND_BIN): FORCE
+	$(MAKE) -C src $(@F)
+
+$(BITCOIN_CLI_BIN): FORCE
+	$(MAKE) -C src $(@F)
 
 if USE_LCOV
 

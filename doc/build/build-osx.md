@@ -2,7 +2,7 @@ Copyright (c) 2009-2012 Bitcoin Developers
 Distributed under the MIT/X11 software license, see the accompanying
 file license.txt or http://www.opensource.org/licenses/mit-license.php.
 This product includes software developed by the OpenSSL Project for use in
-the OpenSSL Toolkit (http://www.openssl.org/).  This product includes
+the OpenSSL Toolkit (https://www.openssl.org/).  This product includes
 cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP
 software written by Thomas Bernard.
 
@@ -41,7 +41,6 @@ These dependencies are required:
  Library     | Purpose          | Description
  ------------|------------------|----------------------
  libssl      | Crypto           | Random Number Generation
- libgmp      | Secp256k1        | Secp256k1 Dependency
  libboost    | Utility          | Library for threading, data structures, etc
  libevent    | Networking       | OS independent asynchronous networking
  libdb5.0    | Berkeley DB      | Wallet storage (only needed when wallet enabled)

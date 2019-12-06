@@ -3,7 +3,7 @@ Copyright (c) 2017-2019 Metrix Developers
 Distributed under the MIT/X11 software license, see the accompanying
 file license.txt or http://www.opensource.org/licenses/mit-license.php.
 This product includes software developed by the OpenSSL Project for use in
-the OpenSSL Toolkit (http://www.openssl.org/).  This product includes
+the OpenSSL Toolkit (https://www.openssl.org/).  This product includes
 cryptographic software written by Eric Young (eay@cryptsoft.com) and UPnP
 software written by Thomas Bernard.
 
@@ -20,7 +20,6 @@ These dependencies are required:
  Library     | Purpose          | Description
  ------------|------------------|----------------------
  libssl      | Crypto           | Random Number Generation
- libgmp      | Secp256k1        | Secp256k1 Dependency
  libboost    | Utility          | Library for threading, data structures, etc
  libevent    | Networking       | OS independent asynchronous networking
  libdb5.0    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
@@ -45,7 +44,7 @@ Dependency Build Instructions: Ubuntu & Debian
 ----------------------------------------------
 Build requirements:
 
-    sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg-config libssl-dev libgmp3-dev libevent-dev bsdmainutils
+    sudo apt-get install build-essential libtool automake autotools-dev autoconf pkg-config libssl-dev libevent-dev bsdmainutils
 
 On at least Ubuntu 14.04+ and Debian 7+ there are generic names for the
 individual boost development packages, so the following can be used to only
@@ -103,7 +102,7 @@ This builds metrixd and metrix-cli using the dynamic dependancies of the current
 ./configure --with-incompatible-bdb BDB_LIBS="-L/usr/local/BerkeleyDB.5.0/lib -ldb_cxx-5.0" BDB_CFLAGS="-I/usr/local/BerkeleyDB.5.0/include"
 make
 strip src/metrixd
-strip src/metrixd-cli
+strip src/metrix-cli
 ```
 
 If you receive an error on x64 Linux machines during the configure command about missing boost libraries add the following configure flag. Boost libraries may be somewhere else on x64 machines.
@@ -162,6 +161,6 @@ cd ..
 ./configure
 make
 strip src/metrixd
-strip src/metrixd-cli
+strip src/metrix-cli
 
 ```

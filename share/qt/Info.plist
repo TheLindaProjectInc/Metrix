@@ -7,13 +7,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Metrix-Qt</string>
+	<string>metrix-Qt</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleExecutable</key>
-	<string>Metrix-Qt</string>
+	<string>metrix-Qt</string>
 	<key>CFBundleIdentifier</key>
-	<string>co.Metrix.Metrix-Qt</string>
+	<string>co.metrix.metrix-Qt</string>
         <key>CFBundleURLTypes</key>
         <array>
           <dict>

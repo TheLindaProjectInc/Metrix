@@ -1,0 +1,86 @@
+#!/sbin/runscript
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/Metrix/.Metrix" ]; then
+	METRIXD_DEFAULT_DATADIR="/var/lib/Metrix/.Metrix"
+else
+	METRIXD_DEFAULT_DATADIR="/var/lib/metrixd"
+fi
+
+METRIXD_CONFIGFILE=${METRIXD_CONFIGFILE:-/etc/metrix/metrix.conf}
+METRIXD_PIDDIR=${METRIXD_PIDDIR:-/var/run/metrixd}
+METRIXD_PIDFILE=${METRIXD_PIDFILE:-${METRIXD_PIDDIR}/metrixd.pid}
+METRIXD_DATADIR=${METRIXD_DATADIR:-${METRIXD_DEFAULT_DATADIR}}
+METRIXD_USER=${METRIXD_USER:-Metrix}
+METRIXD_GROUP=${METRIXD_GROUP:-Metrix}
+METRIXD_BIN=${METRIXD_BIN:-/usr/bin/metrixd}
+
+name="Metrix Core Daemon"
+description="Metrix crypto-currency p2p network daemon"
+
+command="/usr/bin/metrixd"
+command_args="-pid=\"${METRIXD_PIDFILE}\" \
+		-conf=\"${METRIXD_CONFIGFILE}\" \
+		-datadir=\"${METRIXD_DATADIR}\" \
+		-daemon \
+		${METRIXD_OPTS}"
+
+required_files="${METRIXD_CONFIGFILE}"
+start_stop_daemon_args="-u ${METRIXD_USER} \
+			-N ${METRIXD_NICE:-0} -w 2000"
+pidfile="${METRIXD_PIDFILE}"
+retry=60
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${METRIXD_USER}:${METRIXD_GROUP}" \
+	"${METRIXD_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${METRIXD_USER}:${METRIXD_GROUP}" \
+	"${METRIXD_PIDDIR}"
+
+	checkpath -f \
+	-o ${METRIXD_USER}:${METRIXD_GROUP} \
+	-m 0660 \
+	${METRIXD_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${METRIXD_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run metrixd."
+		eerror "The setting must appear in ${METRIXD_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following"
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is also recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Metrix Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

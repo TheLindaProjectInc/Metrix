@@ -4,25 +4,26 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-//
-// Why base-58 instead of standard base-64 encoding?
-// - Don't want 0OIl characters that look the same in some fonts and
-//      could be used to create visually identical looking account numbers.
-// - A string with non-alphanumeric characters is not as easily accepted as an account number.
-// - E-mail usually won't line-break if there's no punctuation to break at.
-// - Double-clicking selects the whole number as one word if it's all alphanumeric.
-//
+/**
+ * Why base-58 instead of standard base-64 encoding?
+ * - Don't want 0OIl characters that look the same in some fonts and
+ *      could be used to create visually identical looking account numbers.
+ * - A string with non-alphanumeric characters is not as easily accepted as an account number.
+ * - E-mail usually won't line-break if there's no punctuation to break at.
+ * - Double-clicking selects the whole number as one word if it's all alphanumeric.
+ */
 #ifndef BITCOIN_BASE58_H
 #define BITCOIN_BASE58_H
 
 #include <string>
 #include <vector>
 
-#include "chainparams.h"
-#include "bignum.h"
-#include "key.h"
-#include "script.h"
 #include "allocators.h"
+#include "chainparams.h"
+#include "key.h"
+#include "pubkey.h"
+#include "script/script.h"
+#include "script/standard.h"
 #include "util.h"
 
 /**
@@ -31,7 +32,7 @@
  */
 std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend);
 
-// Encode a byte vector as a base58-encoded string
+//! Encode a byte vector as a base58-encoded string
 std::string EncodeBase58(const std::vector<unsigned char>& vch);
 
 /**
@@ -41,22 +42,26 @@ std::string EncodeBase58(const std::vector<unsigned char>& vch);
  */
 bool DecodeBase58(const char* psz, std::vector<unsigned char>& vchRet);
 
- /**
+/**
 
   * Decode a base58-encoded string (str) into a byte vector (vchRet).
   * return true if decoding is successful.
   */
 bool DecodeBase58(const std::string& str, std::vector<unsigned char>& vchRet);
 
-// Encode a byte vector to a base58-encoded string, including checksum
+//! Encode a byte vector to a base58-encoded string, including checksum
 std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn);
 
-// Decode a base58-encoded string psz that includes a checksum, into byte vector vchRet
-// returns true if decoding is successful
+/**
+ * Decode a base58-encoded string psz that includes a checksum, into byte vector vchRet
+ * returns true if decoding is successful
+ */
 inline bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet);
 
-// Decode a base58-encoded string str that includes a checksum, into byte vector vchRet
-// returns true if decoding is successful
+/**
+ * Decode a base58-encoded string str that includes a checksum, into byte vector vchRet
+ * returns true if decoding is successful
+ */
 inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
 
 /**
@@ -65,15 +70,15 @@ inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>
 class CBase58Data
 {
 protected:
-    // the version byte(s)
+    //! the version byte(s)
     std::vector<unsigned char> vchVersion;
-    // the actually encoded data
+    //! the actually encoded data
     typedef std::vector<unsigned char, zero_after_free_allocator<unsigned char> > vector_uchar;
     vector_uchar vchData;
 
     CBase58Data();
-    void SetData(const std::vector<unsigned char> &vchVersionIn, const void* pdata, size_t nSize);
-    void SetData(const std::vector<unsigned char> &vchVersionIn, const unsigned char *pbegin, const unsigned char *pend);
+    void SetData(const std::vector<unsigned char>& vchVersionIn, const void* pdata, size_t nSize);
+    void SetData(const std::vector<unsigned char>& vchVersionIn, const unsigned char* pbegin, const unsigned char* pend);
 
 public:
     bool SetString(const char* psz, unsigned int nVersionBytes = 1);
@@ -84,8 +89,8 @@ public:
     bool operator==(const CBase58Data& b58) const { return CompareTo(b58) == 0; }
     bool operator<=(const CBase58Data& b58) const { return CompareTo(b58) <= 0; }
     bool operator>=(const CBase58Data& b58) const { return CompareTo(b58) >= 0; }
-    bool operator< (const CBase58Data& b58) const { return CompareTo(b58) <  0; }
-    bool operator> (const CBase58Data& b58) const { return CompareTo(b58) >  0; }
+    bool operator<(const CBase58Data& b58) const { return CompareTo(b58) < 0; }
+    bool operator>(const CBase58Data& b58) const { return CompareTo(b58) > 0; }
 };
 
 /** base58-encoded addresses.
@@ -94,21 +99,23 @@ public:
  * Script-hash-addresses have version 85 (or 196 testnet).
  * The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
  */
-class CBitcoinAddress : public CBase58Data {
+class CBitcoinAddress : public CBase58Data
+{
 public:
-    bool Set(const CKeyID &id);
-    bool Set(const CScriptID &id);
-    bool Set(const CStealthAddress &stxAddr) const;
-    bool Set(const CTxDestination &dest);
+    bool Set(const CKeyID& id);
+    bool Set(const CScriptID& id);
+    bool Set(const CStealthAddress& stxAddr) const;
+    bool Set(const CTxDestination& dest);
     bool IsValid() const;
+    bool IsValid(const CChainParams& params) const;
 
     CBitcoinAddress() {}
-    CBitcoinAddress(const CTxDestination &dest) { Set(dest); }
+    CBitcoinAddress(const CTxDestination& dest) { Set(dest); }
     CBitcoinAddress(const std::string& strAddress) { SetString(strAddress); }
     CBitcoinAddress(const char* pszAddress) { SetString(pszAddress); }
 
     CTxDestination Get() const;
-    bool GetKeyID(CKeyID &keyID) const;
+    bool GetKeyID(CKeyID& keyID) const;
     bool IsScript() const;
 };
 
@@ -127,22 +134,26 @@ public:
 };
 
 
-template<typename K, int Size, CChainParams::Base58Type Type> class CBitcoinExtKeyBase : public CBase58Data
+template <typename K, int Size, CChainParams::Base58Type Type>
+class CBitcoinExtKeyBase : public CBase58Data
 {
 public:
-    void SetKey(const K &key) {
+    void SetKey(const K& key)
+    {
         unsigned char vch[Size];
         key.Encode(vch);
-        SetData(Params().Base58Prefix(Type), vch, vch+Size);
+        SetData(Params().Base58Prefix(Type), vch, vch + Size);
     }
 
-    K GetKey() {
+    K GetKey()
+    {
         K ret;
         ret.Decode(&vchData[0], &vchData[Size]);
         return ret;
     }
 
-    CBitcoinExtKeyBase(const K &key) {
+    CBitcoinExtKeyBase(const K& key)
+    {
         SetKey(key);
     }
 
@@ -152,4 +163,4 @@ public:
 typedef CBitcoinExtKeyBase<CExtKey, 74, CChainParams::EXT_SECRET_KEY> CBitcoinExtKey;
 typedef CBitcoinExtKeyBase<CExtPubKey, 74, CChainParams::EXT_PUBLIC_KEY> CBitcoinExtPubKey;
 
-#endif // BITCOIN_BASE58_H
+#endif //! BITCOIN_BASE58_H
