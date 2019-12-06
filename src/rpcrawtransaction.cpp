@@ -395,9 +395,31 @@ UniValue createpreciserawtransaction(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 2)
         throw runtime_error(
-            "Functions the same as createrawtransaction but allows sending of numbers as strings and in satoshis.\n"
-            "\nThe pruprose of this is to handle creating transactions from languages that have a limit on the size of numbers."
-            "\nBe very careful when using this function and make sure you output values are strings in satoshis.");
+                "createpreciserawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":\"amount\",...}\n"
+                "Functions the same as createrawtransaction but allows sending of numbers as strings and in satoshis.\n"
+                "\nThe pruprose of this is to handle creating transactions from languages that have a limit on the size of numbers."
+                "\nBe very careful when using this function and make sure you output values are strings in satoshis."
+
+                "\nArguments:\n"
+                "1. \"transactions\"        (string, required) A json array of json objects\n"
+                "     [\n"
+                "       {\n"
+                "         \"txid\":\"id\",  (string, required) The transaction id\n"
+                "         \"vout\":n        (numeric, required) The output number\n"
+                "       }\n"
+                "       ,...\n"
+                "     ]\n"
+                "2. \"addresses\"           (string, required) a json object with addresses as keys and amounts as values\n"
+                "    {\n"
+                "      \"address\": \"xxx\"  (string, required) The key is the Metrix address, the value is the MRX amount in satoshi\n"
+                "      ,...\n"
+                "    }\n"
+
+                "\nResult:\n"
+                "\"transaction\"            (string) hex string of the transaction\n"
+
+                "\nExamples\n" +
+                HelpExampleCli("createpreciserawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\" \"{\\\"address\\\":\\\"1000000\\\"}\"") + HelpExampleRpc("createpreciserawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\", \"{\\\"address\\\":\\\"1000000\\\"}\""));
 
     RPCTypeCheck(params, list_of(UniValue::VARR)(UniValue::VOBJ));
 
