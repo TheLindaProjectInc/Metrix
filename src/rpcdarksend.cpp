@@ -609,7 +609,8 @@ UniValue masternode(const UniValue& params, bool fHelp)
         return obj;
     }
 
-    if (strCommand == "status" || strCommand == "status-all") {
+    if (strCommand == "status" || strCommand == "status-all")
+    {
         //! This will take a pubkey parameter for filtering
         bool searchMode = false;
         if (params.size() == 2) {
@@ -621,7 +622,8 @@ UniValue masternode(const UniValue& params, bool fHelp)
         UniValue resultObj(UniValue::VARR);
         std::vector<pair<unsigned int, CTxIn> > vecMasternodeScores = GetMasternodeScores(chainActive.Height(), MIN_INSTANTX_PROTO_VERSION);
 
-        BOOST_FOREACH (CMasterNode mn, vecMasternodes) {
+        BOOST_FOREACH (CMasterNode mn, vecMasternodes)
+        {
             // get masternode address
             CScript pubkey;
             pubkey = GetScriptForDestination(mn.pubkey.GetID());

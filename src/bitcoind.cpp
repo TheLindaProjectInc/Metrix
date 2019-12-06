@@ -91,7 +91,8 @@ bool AppInit(int argc, char* argv[])
         }
 #ifndef WIN32
         fDaemon = GetBoolArg("-daemon", false);
-        if (fDaemon) {
+        if (fDaemon)
+        {
             fprintf(stdout, "Metrix server starting\n");
 
             //! Daemonize

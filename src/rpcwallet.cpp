@@ -2326,7 +2326,8 @@ UniValue sendtostealthaddress(const UniValue& params, bool fHelp)
     CStealthAddress sxAddr;
     UniValue result(UniValue::VOBJ);
 
-    if (!sxAddr.SetEncoded(sEncoded)) {
+    if (!sxAddr.SetEncoded(sEncoded))
+    {
         result.push_back(Pair("result", "Invalid Metrix stealth address."));
         return result;
     };

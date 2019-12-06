@@ -47,7 +47,7 @@ public:
     bool Register(std::string strService, std::string strKey, std::string txHash, std::string strOutputIndex, std::string& errorMessage);             //! register remote masternode
     bool Register(CTxIn vin, CService service, CKey key, CPubKey pubKey, CKey keyMasternode, CPubKey pubKeyMasternode, std::string& retErrorMessage); //! register any masternode
 
-    //! get 1000Metrix input that can be used for the masternode
+    //! get 2m Metrix input that can be used for the masternode
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey);
     bool GetMasterNodeVin(CTxIn& vin, CPubKey& pubkey, CKey& secretKey, std::string strTxHash, std::string strOutputIndex, bool includeLocked = false);
     vector<COutput> SelectCoinsMasternode(bool includeLocked = false);

@@ -3380,21 +3380,25 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
 
     CAmount nCredit = 0;
     CScript scriptPubKeyKernel;
-    BOOST_FOREACH (PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins) {
+    BOOST_FOREACH (PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)
+    {
         static int nMaxStakeSearchInterval = 60;
         bool fKernelFound = false;
-        for (unsigned int n = 0; n < min(nSearchInterval, (int64_t)nMaxStakeSearchInterval) && !fKernelFound && pindexPrev == chainActive.Tip(); n++) {
+        for (unsigned int n = 0; n < min(nSearchInterval, (int64_t)nMaxStakeSearchInterval) && !fKernelFound && pindexPrev == chainActive.Tip(); n++)
+        {
             //! Metrix: make sure our coinstake search time satisfies the protocol
             //! it would be more efficient to increase n by (STAKE_TIMESTAMP_MASK+1)
             //! but this way will catch if txNew.nTime for some reason didn't start as a safe timestamp
             unsigned int nCoinStaketime = txNew.nTime - n;
-            if (CheckCoinStakeTimestamp(nCoinStaketime, nCoinStaketime)) {
+            if (CheckCoinStakeTimestamp(nCoinStaketime, nCoinStaketime))
+            {
                 boost::this_thread::interruption_point();
                 //! Search backward in time from the given txNew timestamp 
                 //! Search nSearchInterval seconds back up to nMaxStakeSearchInterval
                 COutPoint prevoutStake = COutPoint(pcoin.first->GetHash(), pcoin.second);
                 int64_t nBlockTime;
-                if (CheckKernel(pindexPrev, nBits, nCoinStaketime, prevoutStake, &nBlockTime)) {
+                if (CheckKernel(pindexPrev, nBits, nCoinStaketime, prevoutStake, &nBlockTime))
+                {
                     //! Found a kernel
                     LogPrint("coinstake", "CreateCoinStake : kernel found\n");
                     vector<valtype> vSolutions;
