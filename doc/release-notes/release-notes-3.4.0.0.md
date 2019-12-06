@@ -1,6 +1,7 @@
 # Metrix 3.4.0.0
 
 This is a major version release, bringing both new features and bug fixes.
+#### This is a mandatory update. Starting block 990 000 nodes will begin mining version 8 blocks which will be ignored by older nodes. Make sure you update before block 990 000 to avoid any service interruptions.
 
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/metrix/issues
 
@@ -48,7 +49,7 @@ This release will only relay and mine transactions spending a CLTV output if the
 
 This release will produce version 8 blocks by default.
 
-Once 5,701 out of a sequence of 6,001 blocks on the local node's best block chain contain version 8 (or higher) blocks, this release will no longer accept new version 7 blocks and it will only accept version 8 blocks if they comply with the BIP65 rules for CLTV.
+Once 5,701 out of a sequence of 6,001 blocks on the local node's best block chain contain version 8 (or higher) blocks, this release will only accept version 8 blocks if they comply with the BIP65 rules for CLTV.
 
 For more information about the soft-forking change, please see https://github.com/bitcoin/bitcoin/pull/6351
 
@@ -108,6 +109,11 @@ transactions have been observed to compute a good estimate.
 a zero-fee transaction to begin confirmation within nblocks. Returns -1 if not
 enough free transactions have been observed to compute a good
 estimate.
+
+#### New RPC commands for split stake threshold:
+- `-stakesplitthreshold=n` : adjust the stake split threshold to not split 
+coins when creating a coin stake unless they are above the n threshold. This
+setting overwrites the default value of 100 000 Metrix.
 
 #### RPC access control changes
 Subnet matching for the purpose of access control is now done
@@ -224,8 +230,20 @@ Starting 3.4 Masternodes will not be eligible for rewards until they
 have been online for at least 24 hours.
 
 #### Stake Modifier V2 soft fork
-This release includes an update that defines a new 256-bit modifier for the proof of stake protocol, CBlockIndex::nStakeModifierV2.
-It is computed at every block, by taking the hash of the modifier of previous block along with the coinstake input.
-To meet the protocol, the PoS kernel must comprise the modifier of the previous block.
+This release includes an update that defines a new 256-bit modifier for 
+the proof of stake protocol, CBlockIndex::nStakeModifierV2. It is computed 
+at every block, by taking the hash of the modifier of previous block along 
+with the coinstake input. To meet the protocol, the PoS kernel must comprise 
+the modifier of the previous block.
 
-Enforcement will be take place once 5,701 out of a sequence of 6,001 blocks on the local node's best block chain contain version 8 (or higher) blocks, this release will no longer accept new version 7 blocks and it will only accept version 8 blocks if they comply with the Stake Modifier V2 rules.
+Enforcement will be take place once 5,701 out of a sequence of 6,001 blocks 
+on the local node's best block chain contain version 8 (or higher) blocks, 
+this release will only accept version 8 blocks if they comply with the 
+Stake Modifier V2 rules.
+
+#### Multi-level Masternodes
+This release includes an update that allows Masternodes to run with collaterals 
+of 2m,5m,25m,50m and 100m Metrix .
+
+Enforcement will be take place once 5,701 out of a sequence of 6,001 blocks 
+on the local node's best block chain contain version 8 (or higher) blocks.
