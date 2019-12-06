@@ -44,7 +44,6 @@ bool bSpendZeroConfChange = true;
 bool fSendFreeTransactions = false;
 bool fPayAtLeastCustomFee = true;
 
-static int64_t GetStakeSplitAmount() { return 1000000 * COIN; }
 static unsigned int GetStakeMaxCombineInputs() { return 100; }
 static int64_t GetStakeCombineThreshold() { return 500000 * COIN; }
 
@@ -3445,7 +3444,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                     vwtxPrev.push_back(pcoin.first);
                     txNew.vout.push_back(CTxOut(0, scriptPubKeyOut));
 
-                    if (nCredit > GetStakeSplitAmount())
+                    if (nCredit > (nStakeSplitThreshold * COIN))
                         txNew.vout.push_back(CTxOut(0, scriptPubKeyOut)); //! split stake
                     LogPrint("coinstake", "CreateCoinStake : added kernel type=%d\n", whichType);
                     fKernelFound = true;

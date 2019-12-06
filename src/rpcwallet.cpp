@@ -2689,3 +2689,37 @@ UniValue listlockunspent(const UniValue& params, bool fHelp)
 
     return ret;
 }
+
+UniValue setstakesplitthreshold(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "setstakesplitthreshold\n"
+            "\nSet the threshold at which stakes will split into multiple inputs.\n"
+            "\nSet the threshold to 1500000\n" + HelpExampleCli("setstakesplitthreshold", "1500000") +
+            "\nAs a json rpc call\n" + HelpExampleRpc("setstakesplitthreshold", "1500000"));
+    
+    EnsureWalletIsUnlocked();
+
+    uint64_t nStakeSplitThreshold = params[0].get_int();
+
+    if (nStakeSplitThreshold > 0) {
+        if (pwalletMain && pwalletMain->nStakeSplitThreshold != nStakeSplitThreshold) {
+            CWalletDB walletdb(pwalletMain->strWalletFile);
+            LOCK(pwalletMain->cs_wallet);
+            {
+                bool fFileBacked = pwalletMain->fFileBacked;
+                UniValue result(UniValue::VOBJ);
+                pwalletMain->nStakeSplitThreshold = nStakeSplitThreshold;
+                result.push_back(Pair("threshold", int(pwalletMain->nStakeSplitThreshold)));
+                if (fFileBacked) {
+                    walletdb.WriteStakeSplitThreshold(nStakeSplitThreshold);
+                    result.push_back(Pair("saved", "true"));
+                } else
+                    result.push_back(Pair("saved", "false"));
+                
+                return result;
+            }
+        }
+    }
+}
