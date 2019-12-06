@@ -247,3 +247,6 @@ of 2m,5m,25m,50m and 100m Metrix .
 
 Enforcement will be take place once 5,701 out of a sequence of 6,001 blocks 
 on the local node's best block chain contain version 8 (or higher) blocks.
+
+#### Protocol and network:
+- Bump protocol version to 70005
