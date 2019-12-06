@@ -1,6 +1,5 @@
 DIST_SUBDIRS = secp256k1
 AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS)
-=======
 include Makefile.include
 AM_CPPFLAGS =  $(INCLUDES) -I$(top_builddir)/src/obj \
   -I$(top_srcdir)/src/leveldb/include -I$(top_srcdir)/src/leveldb/helpers \
