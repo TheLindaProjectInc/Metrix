@@ -1,6 +1,6 @@
 # Metrix 3.4.0.0
 
-This is a major version release, bringing both new features and bug fixes.
+This is a minor version release, bringing both new features and bug fixes.
 #### This is a mandatory update. Starting block 990 000 nodes will begin mining version 8 blocks which will be ignored by older nodes. Make sure you update before block 990 000 to avoid any service interruptions.
 
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/metrix/issues

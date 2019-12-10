@@ -1,6 +1,6 @@
 # Linda 3.2.0.0
 
-This is a major release designed to improve performance and handle the increasing volume of transactions on the network.
+This is a minor release designed to improve performance and handle the increasing volume of transactions on the network.
 
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/linda/issues
 
