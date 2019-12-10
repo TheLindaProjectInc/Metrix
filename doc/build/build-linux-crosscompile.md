@@ -196,6 +196,6 @@ strip src/metrixd && strip src/metrix-cli
 ```
 cd ..
 ./autogen.sh
-./configure --prefix=`pwd`/depends/x86_64-apple-darwin14 --disable-ccache --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0" CPPFLAGS="-DNDEBUG"
+./configure --prefix=`pwd`/depends/x86_64-apple-darwin14 --disable-ccache --with-incompatible-bdb BDB_LIBS="-ldb_cxx-5.0"
 make
 ```
