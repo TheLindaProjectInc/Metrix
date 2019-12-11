@@ -113,7 +113,7 @@ estimate.
 #### New RPC commands for split stake threshold:
 - `-stakesplitthreshold=n` : adjust the stake split threshold to not split 
 coins when creating a coin stake unless they are above the n threshold. This
-setting overwrites the default value of 100 000 Metrix.
+setting overwrites the default value of 1 000 000 Metrix.
 
 #### RPC access control changes
 Subnet matching for the purpose of access control is now done
