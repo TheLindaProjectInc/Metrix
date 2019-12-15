@@ -966,6 +966,13 @@ CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes)
 
     nMinFee = ::minRelayTxFee.GetFee(nBytes);
 
+    // hard set minimum fee as 0.001MRX for backwards compatibility
+    CAmount nBaseFee = 100000;
+    if (nMinFee < nBaseFee)
+    {
+        nMinFee = nBaseFee;
+    }
+
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;
     return nMinFee;
