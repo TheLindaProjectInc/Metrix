@@ -3320,6 +3320,18 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
         if (dbp == NULL)
             if (!WriteBlockToDisk(block, blockPos))
                 return state.Abort("Failed to write block");
+        //! safety check corrupted database files
+        CBlock block2;
+        if (ReadBlockFromDisk(block2, blockPos))
+        {
+            uint256 hashMerkleRoot2 = block2.BuildMerkleTree();
+            if (block2.hashMerkleRoot != hashMerkleRoot2)
+                return error("AcceptBlock() : Failed to read block");
+        }
+        else
+        {
+            return error("AcceptBlock() : Failed to read block after writing");
+        }
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, NULL))
             return error("AcceptBlock() : ReceivedBlockTransactions failed");
     } catch (std::runtime_error& e) {
