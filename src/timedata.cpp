@@ -27,7 +27,9 @@ static int64_t nTimeOffset = 0;
  */
 int64_t GetTimeOffset()
 {
+#ifndef __APPLE__
     LOCK(cs_nTimeOffset);
+#endif
     return nTimeOffset;
 }
 

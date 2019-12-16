@@ -1616,7 +1616,7 @@ bool CaughtUp()
 
 bool CanRequestMoreHeaders()
 {
-    return ((pindexBestHeader ? pindexBestHeader->nHeight : -1) - chainActive.Height()) < MAX_HEADERS_PENDING;
+    return ((pindexBestHeader ? pindexBestHeader->nHeight : -1) - chainActive.Height()) < (int)MAX_HEADERS_PENDING;
 }
 
 bool IsInitialBlockDownload()
