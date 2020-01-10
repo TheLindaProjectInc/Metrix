@@ -830,13 +830,13 @@ public:
         return debit;
     }
 
-    CAmount GetCredit(const isminefilter& filter) const
+    CAmount GetCredit(const isminefilter& filter, bool fCheckMaturity=true) const
     {
         //! Must wait until coinbase is safely deep enough in the chain before valuing it
-        if ((IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0)
+        if (fCheckMaturity && (IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0)
             return 0;
-
-int64_t credit = 0;
+        
+        int64_t credit = 0;
         if (filter & ISMINE_SPENDABLE)
         {
             //! GetBalance can assume transactions in mapWallet won't change
