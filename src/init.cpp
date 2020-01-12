@@ -462,6 +462,16 @@ bool InitSanityCheck(void)
     return true;
 }
 
+static void BlockNotifyCallback(const uint256& hashNewTip)
+{
+    std::string strCmd = GetArg("-blocknotify", "");
+
+    if (!strCmd.empty()) {
+        boost::replace_all(strCmd, "%s", hashNewTip.GetHex());
+        boost::thread t(runCommand, strCmd); // thread runs free
+    }
+}
+
 struct CImportingNow {
     CImportingNow()
     {
@@ -1277,6 +1287,9 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif //! !ENABLE_WALLET
     //! ********************************************************* Step 9: import blocks
 
+    if (mapArgs.count("-blocknotify"))
+        uiInterface.NotifyBlockTip.connect(BlockNotifyCallback);
+    
     //! scan for better chains in the block chain database, that are not yet connected in the active best chain
     uiInterface.InitMessage(_("Importing blocks from block database..."));
     CValidationState state;
