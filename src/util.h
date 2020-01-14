@@ -144,7 +144,7 @@ static inline bool error(const char* format)
 }
 
 
-void PrintExceptionContinue(std::exception* pex, const char* pszThread);
+void PrintExceptionContinue(const std::exception *pex, const char* pszThread);
 void ParseParameters(int argc, const char* const argv[]);
 void FileCommit(FILE* fileout);
 bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest);
@@ -254,10 +254,10 @@ void LoopForever(const char* name, Callable func, int64_t msecs)
             MilliSleep(msecs);
             func();
         }
-    } catch (boost::thread_interrupted) {
+    } catch (const boost::thread_interrupted&) {
         LogPrintf("%s thread stop\n", name);
         throw;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, name);
         throw;
     } catch (...) {
@@ -275,10 +275,10 @@ void TraceThread(const char* name, Callable func)
         LogPrintf("%s thread start\n", name);
         func();
         LogPrintf("%s thread exit\n", name);
-    } catch (boost::thread_interrupted) {
+    } catch (const boost::thread_interrupted&) {
         LogPrintf("%s thread interrupt\n", name);
         throw;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, name);
         throw;
     } catch (...) {

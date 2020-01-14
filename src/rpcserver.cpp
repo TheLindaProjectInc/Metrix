@@ -183,7 +183,7 @@ string CRPCTable::help(string strCommand) const
             rpcfn_type pfn = pcmd->actor;
             if (setDone.insert(pfn).second)
                 (*pfn)(params, true);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             //! Help text is returned in an exception
             string strHelp = string(e.what());
             if (strCommand == "") {
@@ -698,7 +698,7 @@ void StartRPCThreads()
             //! If dual IPv6/IPv4 bind succesful, skip binding to IPv4 separately
             if (bBindAny && bindAddress == asio::ip::address_v6::any() && !v6_only_error)
                 break;
-        } catch (boost::system::system_error& e) {
+        } catch (const boost::system::system_error& e) {
             LogPrintf("ERROR: Binding RPC on address %s port %i failed: %s\n", straddress, endpoint.port(), e.what());
             strerr = strprintf(_("An error occurred while setting up the RPC address %s port %u for listening: %s"), straddress, endpoint.port(), e.what());
         }
@@ -848,9 +848,9 @@ static UniValue JSONRPCExecOne(const UniValue& req)
 
         UniValue result = tableRPC.execute(jreq.strMethod, jreq.params);
         rpc_result = JSONRPCReplyObj(result, NullUniValue, jreq.id);
-    } catch (UniValue& objError) {
+    } catch (const UniValue& objError) {
         rpc_result = JSONRPCReplyObj(NullUniValue, objError, jreq.id);
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         rpc_result = JSONRPCReplyObj(NullUniValue,
                                      JSONRPCError(RPC_PARSE_ERROR, e.what()), jreq.id);
     }
@@ -922,10 +922,10 @@ static bool HTTPReq_JSONRPC(AcceptedConnection* conn,
             throw JSONRPCError(RPC_PARSE_ERROR, "Top-level object parse error");
 
         conn->stream() << HTTPReplyHeader(HTTP_OK, fRun, strReply.size()) << strReply << std::flush;
-    } catch (UniValue& objError) {
+    } catch (const UniValue& objError) {
         ErrorReply(conn->stream(), objError, jreq.id);
         return false;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         ErrorReply(conn->stream(), JSONRPCError(RPC_PARSE_ERROR, e.what()), jreq.id);
         return false;
     }
@@ -1007,7 +1007,7 @@ UniValue CRPCTable::execute(const std::string& strMethod, const UniValue& params
 #endif //! ENABLE_WALLET
         }
         return result;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         throw JSONRPCError(RPC_MISC_ERROR, e.what());
     }
 }
