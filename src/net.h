@@ -50,6 +50,8 @@ static const unsigned int MAX_ADDR_TO_SEND = 1000;
 static const unsigned int MAX_PROTOCOL_MESSAGE_LENGTH = 2 * 1024 * 1024;
 /** The maximum number of entries in mapAskFor */
 static const size_t MAPASKFOR_MAX_SZ = MAX_INV_SZ;
+/** -listen default */
+static const bool DEFAULT_LISTEN = true;
 /** -upnp default */
 #ifdef USE_UPNP
 static const bool DEFAULT_UPNP = USE_UPNP;
