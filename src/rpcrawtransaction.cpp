@@ -461,7 +461,7 @@ UniValue createpreciserawtransaction(const UniValue& params, bool fHelp)
         CAmount nAmount = 0;
         try {
             nAmount = boost::lexical_cast<long long>(sAmount);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             throw JSONRPCError(RPC_TYPE_ERROR, "Amount parse failed");
         }
         if (!MoneyRange(nAmount))

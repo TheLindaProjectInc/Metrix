@@ -275,7 +275,7 @@ bool CWallet::Unlock(const SecureString& strWalletPassphrase, bool anonymizeOnly
     if (strWalletPassphrase == "keepass" && GetBoolArg("-keepass", false)) {
         try {
             strWalletPassphraseFinal = keePassInt.retrievePassphrase();
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LogPrintf("CWallet::Unlock could not retrieve passphrase from KeePass: Error: %s\n", e.what());
             return false;
         }
@@ -317,7 +317,7 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
         bUseKeePass = true;
         try {
             strOldWalletPassphraseFinal = keePassInt.retrievePassphrase();
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LogPrintf("CWallet::ChangeWalletPassphrase could not retrieve passphrase from KeePass: Error: %s\n", e.what());
             return false;
         }
@@ -364,7 +364,7 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
                     LogPrintf("CWallet::ChangeWalletPassphrase - Updating KeePass with new passphrase");
                     try {
                         keePassInt.updatePassphrase(strNewWalletPassphrase);
-                    } catch (std::exception& e) {
+                    } catch (const std::exception& e) {
                         LogPrintf("CWallet::ChangeWalletPassphrase - could not update passphrase in KeePass: Error: %s\n", e.what());
                         return false;
                     }
@@ -635,7 +635,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
             LogPrintf("CWallet::EncryptWallet - Updating KeePass with new passphrase");
             try {
                 keePassInt.updatePassphrase(strWalletPassphrase);
-            } catch (std::exception& e) {
+            } catch (const std::exception& e) {
                 LogPrintf("CWallet::EncryptWallet - could not update passphrase in KeePass: Error: %s\n", e.what());
             }
         }
@@ -2890,7 +2890,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         try {
             ckey.Set(vchSecret.begin(), vchSecret.end(), true);
             //! ckey.SetSecret(vchSecret, true);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LogPrintf("ckey.SetSecret() threw: %s.\n", e.what());
             continue;
         };
@@ -3271,7 +3271,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     try {
                         ckey.Set(vchSecret.begin(), vchSecret.end(), true);
                         //! ckey.SetSecret(vchSecret, true);
-                    } catch (std::exception& e) {
+                    } catch (const std::exception& e) {
                         LogPrintf("ckey.SetSecret() threw: %s.\n", e.what());
                         continue;
                     };

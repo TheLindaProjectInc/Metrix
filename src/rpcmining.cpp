@@ -47,7 +47,7 @@ UniValue getstakesubsidy(const UniValue& params, bool fHelp)
     CTransaction tx;
     try {
         ssData >> tx;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
 

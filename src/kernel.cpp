@@ -308,7 +308,7 @@ bool CheckProofOfStake(CValidationState& state, CBlockIndex* pindexPrev, const C
             file >> header;
             fseek(file, postx.nTxOffset, SEEK_CUR);
             file >> txPrev;
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             return error("%s() : deserialize or I/O error in CheckProofOfStake()", __func__);
         }
         if (txPrev.GetHash() != txin.prevout.hash)
@@ -354,7 +354,7 @@ bool CheckKernel(CBlockIndex* pindexPrev, unsigned int nBits, int64_t nTime, con
             file >> header;
             fseek(file, postx.nTxOffset, SEEK_CUR);
             file >> txPrev;
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             return false;
         }
         if (txPrev.GetHash() != prevout.hash)

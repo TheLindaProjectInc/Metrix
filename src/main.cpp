@@ -2698,8 +2698,8 @@ bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache
                 file >> header;
                 fseek(file, postx.nTxOffset, SEEK_CUR);
                 file >> txPrev;
-            } catch (std::exception& e) {
-                return error("%s() : deserialize or I/O error in GetCoinAge()", __func__);
+            } catch (const std::exception& e) {
+                return error("%s() : Deserialize or I/O error in GetCoinAge()", __func__);
             }
             if (txPrev.GetHash() != prevout.hash)
                 return error("%s() : txid mismatch in GetCoinAge()", __func__);
