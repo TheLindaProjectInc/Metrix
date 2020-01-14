@@ -24,7 +24,6 @@
 #include "sync.h"
 #include "txmempool.h"
 #include "utilmoneystr.h"
-#include "undo.h"
 
 #include <algorithm>
 #include <exception>
@@ -404,24 +403,6 @@ bool CheckTransaction(const CTransaction& tx, CValidationState& state);
 
 //! ppcoin: get transaction coin age
 bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache& view, uint64_t& nCoinAge, unsigned int nHeight);
-
-
-/** Undo information for a CBlock */
-class CBlockUndo
-{
-public:
-    std::vector<CTxUndo> vtxundo; //! for all but the coinbase
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
-    {
-        READWRITE(vtxundo);
-    }
-
-};
-
 
 /** Closure representing one script verification
  *  Note that this stores references to the spending transaction */

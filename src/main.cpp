@@ -24,6 +24,7 @@
 #include "txdb.h"
 #include "txmempool.h"
 #include "ui_interface.h"
+#include "undo.h"
 #include "utilmoneystr.h"
 
 using namespace boost;
