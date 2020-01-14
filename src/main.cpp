@@ -2693,6 +2693,8 @@ bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache
         CTransaction txPrev;
         if (pblocktree->ReadTxIndex(prevout.hash, postx)) {
             CAutoFile file(OpenBlockFile(postx, true), SER_DISK, CLIENT_VERSION);
+            if (file.IsNull())
+                return error("%s: OpenBlockFile failed", __func__);
             CBlockHeader header;
             try {
                 file >> header;
