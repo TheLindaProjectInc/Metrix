@@ -90,12 +90,18 @@ static const int V8_START_BLOCK = 990000;
 #define MASTERNODE_EXPIRATION_SECONDS (65 * 60)
 #define MASTERNODE_REMOVAL_SECONDS (70 * 60)
 
+/**
+ * Returns true if there are nRequired or more blocks of minVersion or above
+ * in the last Params().ToCheckBlockUpgradeMajority() blocks, starting at pstart 
+ * and going backwards.
+ */
+extern bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired);
 
 inline void GetMasternodeCollaterals(std::vector<CAmount>& vCollaterals, CBlockIndex* pindex)
 {
     //! Allow different Masternode tiers for block.nVersion=8 blocks 
     //! when 75% of the network has upgraded
-    if (pindex != NULL && CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+    if (pindex != NULL && IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
     {
         BOOST_FOREACH (CAmount collateral, MASTERNODE_COLLATERALS)
         {

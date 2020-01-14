@@ -2055,7 +2055,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=8
     // blocks, when 75% of the network has upgraded:
-    if (block.nVersion >= 7 && CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
+    if (block.nVersion >= 7 && IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
         flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     }
 
@@ -3009,7 +3009,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
     }
 
     //! Reject block.nVersion=8 blocks when 95% (75% on testnet) of the network has upgraded:
-    if (block.nVersion < 8 && CBlockIndex::IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
+    if (block.nVersion < 8 && IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
     {
         return state.Invalid(error("%s : rejected nVersion=7 block", __func__),
                              REJECT_OBSOLETE, "bad-version");
@@ -3123,7 +3123,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         CBlockIndex* pindex = chainActive.Tip();
         if (pindex != NULL)
         {
-            if (CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+            if (IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
             {
                 if (block.nTime > GetTime() - MASTERNODE_MIN_DSEEP_SECONDS)
                 {
@@ -3354,7 +3354,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
         pindex->hashProof = hashProof;
     }
 
-    if (CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority()))
+    if (IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority()))
     {
         // compute v2 stake modifier
         pindex->nStakeModifierV2 = ComputeStakeModifier(pindex->pprev,block.IsProofOfWork() ? hash : block.vtx[1].vin[0].prevout.hash);
@@ -3389,7 +3389,7 @@ uint256 CBlockIndex::GetBlockTrust() const
     return (~bnTarget / (bnTarget + 1)) + 1;
 }
 
-bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired)
+bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired)
 {
     unsigned int nToCheck = Params().ToCheckBlockUpgradeMajority();
     unsigned int nFound = 0;
