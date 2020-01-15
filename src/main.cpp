@@ -27,7 +27,6 @@
 #include "undo.h"
 #include "utilmoneystr.h"
 
-using namespace boost;
 using namespace std;
 
 #if defined(NDEBUG)
@@ -3773,7 +3772,7 @@ bool CheckBlockSignature(const CBlock& block)
 
 bool CheckDiskSpace(uint64_t nAdditionalBytes)
 {
-    uint64_t nFreeBytesAvailable = filesystem::space(GetDataDir()).available;
+    uint64_t nFreeBytesAvailable = boost::filesystem::space(GetDataDir()).available;
 
     //! Check for nMinDiskSpace bytes (currently 50MB)
     if (nFreeBytesAvailable < nMinDiskSpace + nAdditionalBytes)

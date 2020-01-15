@@ -26,7 +26,6 @@
 #include "univalue/univalue.h"
 
 using namespace std;
-using namespace boost;
 using namespace boost::asio;
 
 //! Number of bytes to allocate and read at most at once in post data

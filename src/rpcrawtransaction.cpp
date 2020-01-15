@@ -25,7 +25,6 @@
 #include "univalue/univalue.h"
 
 using namespace std;
-using namespace boost;
 using namespace boost::assign;
 
 void ScriptPubKeyToJSON(const CScript& scriptPubKey, UniValue& out, bool fIncludeHex)

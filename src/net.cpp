@@ -50,7 +50,6 @@
 #endif
 #endif
 
-using namespace boost;
 using namespace std;
 
 namespace

@@ -22,7 +22,6 @@
 #include "univalue/univalue.h"
 
 using namespace std;
-using namespace boost;
 using namespace boost::assign;
 
 int64_t nWalletUnlockTime;

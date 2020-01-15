@@ -19,8 +19,6 @@
 #include <openssl/rand.h>
 
 using namespace std;
-using namespace boost;
-
 
 unsigned int nWalletDBUpdated;
 
@@ -68,11 +66,11 @@ bool CDBEnv::Open(boost::filesystem::path pathEnv_)
     boost::this_thread::interruption_point();
 
     pathEnv = pathEnv_;
-    filesystem::path pathDataDir = pathEnv;
+    boost::filesystem::path pathDataDir = pathEnv;
     strPath = pathDataDir.string();
-    filesystem::path pathLogDir = pathDataDir / "database";
+    boost::filesystem::path pathLogDir = pathDataDir / "database";
     TryCreateDirectory(pathLogDir);
-    filesystem::path pathErrorFile = pathDataDir / "db.log";
+    boost::filesystem::path pathErrorFile = pathDataDir / "db.log";
     LogPrintf("CDBEnv::Open : LogDir=%s ErrorFile=%s\n", pathLogDir.string(), pathErrorFile.string());
 
     unsigned int nEnvFlags = 0;
