@@ -25,7 +25,6 @@
 
 #include "univalue/univalue.h"
 
-using namespace boost::assign;
 using namespace std;
 
 /**
