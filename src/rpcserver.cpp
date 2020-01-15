@@ -473,7 +473,7 @@ public:
 
 private:
     SSLIOStreamDevice<Protocol> _d;
-    iostreams::stream<SSLIOStreamDevice<Protocol> > _stream;
+    boost::iostreams::stream<SSLIOStreamDevice<Protocol> > _stream;
 };
 
 void ServiceConnection(AcceptedConnection* conn);

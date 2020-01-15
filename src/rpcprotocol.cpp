@@ -26,7 +26,6 @@
 #include "univalue/univalue.h"
 
 using namespace std;
-using namespace boost::asio;
 
 //! Number of bytes to allocate and read at most at once in post data
 const size_t POST_READ_SIZE = 256 * 1024;

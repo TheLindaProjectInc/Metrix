@@ -22,7 +22,6 @@
 #include "univalue/univalue.h"
 
 using namespace std;
-using namespace boost::assign;
 
 int64_t nWalletUnlockTime;
 static CCriticalSection cs_nWalletUnlockTime;
@@ -2611,9 +2610,9 @@ UniValue lockunspent(const UniValue& params, bool fHelp)
             "\nAs a json rpc call\n" + HelpExampleRpc("lockunspent", "false, \"[{\\\"txid\\\":\\\"57c872aca011a57823d593df3a6bc972ab4a80a9a376912e528e070cbe076dc8 \\\",\\\"vout\\\":1}]\""));
 
     if (params.size() == 1)
-        RPCTypeCheck(params, list_of(UniValue::VBOOL));
+        RPCTypeCheck(params, boost::assign::list_of(UniValue::VBOOL));
     else
-        RPCTypeCheck(params, list_of(UniValue::VBOOL)(UniValue::VARR));
+        RPCTypeCheck(params, boost::assign::list_of(UniValue::VBOOL)(UniValue::VARR));
 
     bool fUnlock = params[0].get_bool();
 
@@ -2630,7 +2629,7 @@ UniValue lockunspent(const UniValue& params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected object");
         const UniValue& o = output.get_obj();
 
-        RPCTypeCheckObj(o, map_list_of("txid", UniValue::VSTR)("vout", UniValue::VNUM));
+        RPCTypeCheckObj(o, boost::assign::map_list_of("txid", UniValue::VSTR)("vout", UniValue::VNUM));
 
         string txid = find_value(o, "txid").get_str();
         if (!IsHex(txid))
