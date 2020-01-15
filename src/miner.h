@@ -17,9 +17,6 @@ CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, CWallet* pwallet,
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 
-/** Check mined proof-of-work block */
-bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey);
-
 /** Check mined proof-of-stake block */
 bool CheckStake(CBlock* pblock, CWallet& wallet);
 
