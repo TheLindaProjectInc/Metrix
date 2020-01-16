@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2013 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_RPC_PROTOCOL_H
@@ -124,7 +124,7 @@ public:
             tcp::resolver::query query(server.c_str(), port.c_str());
             endpoint_iterator = resolver.resolve(query);
 #if BOOST_VERSION >= 104300
-        } catch (boost::system::system_error& e) {
+        } catch (const boost::system::system_error&) {
             //! If we at first don't succeed, try blanket lookup (IPv4+IPv6 independent of configured interfaces)
             tcp::resolver::query query(server.c_str(), port.c_str(), resolver_query_base::flags());
             endpoint_iterator = resolver.resolve(query);

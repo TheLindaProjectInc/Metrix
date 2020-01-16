@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The Darkcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "keepass.h"
@@ -116,7 +116,7 @@ SecureString CKeePassIntegrator::CKeePassResponse::getSecureStr(std::string sNam
     SecureString sValue;
     try {
         sValue = decrypt(sValueBase64Encrypted);
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         std::string sErrorMessage = "Exception occured while decrypting ";
         sErrorMessage += sName + ": " + e.what();
         throw std::runtime_error(sErrorMessage);

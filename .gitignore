@@ -70,3 +70,5 @@ share/setup.nsi
 qrc_*.cpp
 
 !src/leveldb*/Makefile
+
+libbitcoinconsensus.pc

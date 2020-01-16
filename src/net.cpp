@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
@@ -50,7 +50,6 @@
 #endif
 #endif
 
-using namespace boost;
 using namespace std;
 
 namespace
@@ -444,7 +443,6 @@ void CNode::PushVersion()
 {
     int nBestHeight = g_signals.GetHeight().get_value_or(0);
 
-    //!/ when NTP implemented, change to just nTime = GetAdjustedTime()
     int64_t nTime = (fInbound ? GetAdjustedTime() : GetTime());
     CAddress addrYou = (addr.IsRoutable() && !IsProxy(addr) ? addr : CAddress(CService("0.0.0.0", 0)));
     CAddress addrMe = GetLocalAddress(&addr);
@@ -1044,7 +1042,7 @@ void ThreadMapPort()
 
                 MilliSleep(20 * 60 * 1000); //! Refresh every 20 minutes
             }
-        } catch (boost::thread_interrupted) {
+        } catch (const boost::thread_interrupted) {
             r = UPNP_DeletePortMapping(urls.controlURL, data.first.servicetype, port.c_str(), "TCP", 0);
             LogPrintf("UPNP_DeletePortMapping() returned : %d\n", r);
             freeUPNPDevlist(devlist);
@@ -1878,7 +1876,7 @@ bool CAddrDB::Write(const CAddrMan& addr)
     //! Write and commit header, data
     try {
         fileout << ssPeers;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         return error("%s : Serialize or I / O error - %s", __func__, e.what());
     }
     FileCommit(fileout);
@@ -1913,7 +1911,7 @@ bool CAddrDB::Read(CAddrMan& addr)
     try {
         filein.read((char*)&vchData[0], dataSize);
         filein >> hashIn;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         return error("%s : Deserialize or I/O error - %s", __func__, e.what());
     }
     filein.fclose();
@@ -1936,7 +1934,7 @@ bool CAddrDB::Read(CAddrMan& addr)
 
         //! de-serialize address data into one CAddrMan object
         ssPeers >> addr;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         return error("%s : Deserialize or I/O error - %s", __func__, e.what());
     }
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_MAIN_H
@@ -24,7 +24,6 @@
 #include "sync.h"
 #include "txmempool.h"
 #include "utilmoneystr.h"
-#include "undo.h"
 
 #include <algorithm>
 #include <exception>
@@ -90,12 +89,18 @@ static const int V8_START_BLOCK = 990000;
 #define MASTERNODE_EXPIRATION_SECONDS (65 * 60)
 #define MASTERNODE_REMOVAL_SECONDS (70 * 60)
 
+/**
+ * Returns true if there are nRequired or more blocks of minVersion or above
+ * in the last Params().ToCheckBlockUpgradeMajority() blocks, starting at pstart 
+ * and going backwards.
+ */
+extern bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired);
 
 inline void GetMasternodeCollaterals(std::vector<CAmount>& vCollaterals, CBlockIndex* pindex)
 {
     //! Allow different Masternode tiers for block.nVersion=8 blocks 
     //! when 75% of the network has upgraded
-    if (pindex != NULL && CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+    if (pindex != NULL && IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
     {
         BOOST_FOREACH (CAmount collateral, MASTERNODE_COLLATERALS)
         {
@@ -391,33 +396,13 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                  unsigned int flags, bool cacheStore, std::vector<CScriptCheck> *pvChecks = NULL);
 
 //! Apply the effects of this transaction on the UTXO set represented by view
-void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCache& view, CTxUndo& txundo, int nHeight);
+void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCache& view, int nHeight);
 
 //! Context-independent validity checks
 bool CheckTransaction(const CTransaction& tx, CValidationState& state);
 
 //! ppcoin: get transaction coin age
 bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache& view, uint64_t& nCoinAge, unsigned int nHeight);
-
-
-/** Undo information for a CBlock */
-class CBlockUndo
-{
-public:
-    std::vector<CTxUndo> vtxundo; //! for all but the coinbase
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
-    {
-        READWRITE(vtxundo);
-    }
-
-    bool WriteToDisk(CDiskBlockPos& pos, const uint256& hashBlock);
-    bool ReadFromDisk(const CDiskBlockPos& pos, const uint256& hashBlock);
-};
-
 
 /** Closure representing one script verification
  *  Note that this stores references to the spending transaction */

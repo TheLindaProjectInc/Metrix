@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <boost/algorithm/string/replace.hpp>
@@ -24,9 +24,9 @@
 #include "txdb.h"
 #include "txmempool.h"
 #include "ui_interface.h"
+#include "undo.h"
 #include "utilmoneystr.h"
 
-using namespace boost;
 using namespace std;
 
 #if defined(NDEBUG)
@@ -686,35 +686,11 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 
 bool IsStandardTx(const CTransaction& tx, string& reason)
 {
-    AssertLockHeld(cs_main);
     if (tx.nVersion > CTransaction::CURRENT_VERSION || tx.nVersion < 1) {
         reason = "version";
         return false;
     }
 
-    /** 
-     * Treat non-final transactions as non-standard to prevent a specific type
-     * of double-spend attack, as well as DoS attacks. (if the transaction
-     * can't be mined, the attacker isn't expending resources broadcasting it)
-     * Basically we don't want to propagate transactions that can't be included in
-     * the next block.
-     *
-     * However, IsFinalTx() is confusing... Without arguments, it uses
-     * chainActive.Height() to evaluate nLockTime; when a block is accepted, chainActive.Height()
-     * is set to the value of nHeight in the block. However, when IsFinalTx()
-     * is called within CBlock::AcceptBlock(), the height of the block *being*
-     * evaluated is what is used. Thus if we want to know if a transaction can
-     * be part of the *next* block, we need to call IsFinalTx() with one more
-     * than chainActive.Height().
-     *
-     * Timestamps on the other hand don't get any special treatment, because we
-     * can't know what timestamp the next block will have, and there aren't
-     * timestamp applications where it matters.
-     */
-    if (!IsFinalTx(tx, chainActive.Height() + 1)) {
-        reason = "non-final";
-        return false;
-    }
     //! nTime has different purpose from nLockTime but can be used in similar attacks
     if (tx.nTime > FutureDrift(GetAdjustedTime())) {
         reason = "time-too-new";
@@ -1022,6 +998,26 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
                          REJECT_NONSTANDARD, reason);
     }
 
+    //! Only accept nLockTime-using transactions that can be mined in the next
+    //! block; we don't want our mempool filled up with transactions that can't
+    //! be mined yet.
+    //!
+    //! However, IsFinalTx() is confusing... Without arguments, it uses
+    //! chainActive.Height() to evaluate nLockTime; when a block is accepted,
+    //! chainActive.Height() is set to the value of nHeight in the block.
+    //! However, when IsFinalTx() is called within CBlock::AcceptBlock(), the
+    //! height of the block *being* evaluated is what is used. Thus if we want
+    //! to know if a transaction can be part of the *next* block, we need to
+    //! call IsFinalTx() with one more than chainActive.Height().
+    //!
+    //! Timestamps on the other hand don't get any special treatment, because we
+    //! can't know what timestamp the next block will have, and there aren't
+    //! timestamp applications where it matters.
+    if (!IsFinalTx(tx, chainActive.Height() + 1))
+        return state.DoS(0,
+                         error("AcceptToMemoryPool : non-final"),
+                         REJECT_NONSTANDARD, "non-final");
+
     //! is it already in the memory pool?
     uint256 hash = tx.GetHash();
     if (pool.exists(hash)) {
@@ -1131,7 +1127,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         }
      
         /**
-         * Continuously rate-limit free (really, very-low-fee)transactions
+         * Continuously rate-limit free (really, very-low-fee) transactions
          * This mitigates 'penny-flooding' -- sending thousands of free transactions just to
          * be annoying or make others' transactions take longer to confirm.
          */
@@ -1370,8 +1366,8 @@ bool GetTransaction(const uint256& hash, CTransaction& txOut, uint256& hashBlock
             file >> header;
             fseek(file, postx.nTxOffset, SEEK_CUR);
             file >> txOut;
-        } catch (std::exception& e) {
-            return error("%s() : deserialize or I/O error", __func__);
+        } catch (const std::exception& e) {
+            return error("%s() : Deserialize or I/O error", __func__);
         }
         hashBlock = header.GetHash();
         if (txOut.GetHash() != hash)
@@ -1446,8 +1442,8 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
     //! Read block
     try {
         filein >> block;
-    } catch (std::exception& e) {
-        return error("%s() : deserialize or I/O error", __func__);
+    } catch (const std::exception& e) {
+        return error("%s() : Deserialize or I/O error", __func__);
     }
 
     //! Check the header
@@ -1759,14 +1755,33 @@ void UpdateCoins(const CTransaction& tx, CValidationState& state, CCoinsViewCach
     if (!tx.IsCoinBase()) {
         txundo.vprevout.reserve(tx.vin.size());
         BOOST_FOREACH(const CTxIn &txin, tx.vin) {
-            txundo.vprevout.push_back(CTxInUndo());
-            bool ret = inputs.ModifyCoins(txin.prevout.hash)->Spend(txin.prevout, txundo.vprevout.back());
-            assert(ret);
+            CCoinsModifier coins = inputs.ModifyCoins(txin.prevout.hash);
+            unsigned nPos = txin.prevout.n;
+
+            if (nPos >= coins->vout.size() || coins->vout[nPos].IsNull())
+                assert(false);
+            // mark an outpoint spent, and construct undo information
+            txundo.vprevout.push_back(CTxInUndo(coins->vout[nPos]));
+            coins->Spend(nPos);
+            if (coins->vout.size() == 0) {
+                CTxInUndo& undo = txundo.vprevout.back();
+                undo.nHeight = coins->nHeight;
+                undo.fCoinBase = coins->fCoinBase;
+                undo.nVersion = coins->nVersion;
+                undo.fCoinStake = coins->fCoinStake; //! ppcoin
+                undo.nTime = coins->nTime;           //! ppcoin
+            }
         }
     }
 
     //! add outputs
     inputs.ModifyCoins(tx.GetHash())->FromTx(tx, nHeight);
+}
+
+void UpdateCoins(const CTransaction& tx, CValidationState &state, CCoinsViewCache &inputs, int nHeight)
+{
+    CTxUndo txundo;
+    UpdateCoins(tx, state, inputs, txundo, nHeight);
 }
 
 bool CScriptCheck::operator()()
@@ -1907,6 +1922,63 @@ bool CheckInputs(const CTransaction& tx, CValidationState& state, const CCoinsVi
     return true;
 }
 
+namespace {
+
+bool UndoWriteToDisk(const CBlockUndo& blockundo, CDiskBlockPos& pos, const uint256& hashBlock)
+{
+    //! Open history file to append
+    CAutoFile fileout(OpenUndoFile(pos), SER_DISK, CLIENT_VERSION);
+    if (fileout.IsNull())
+        return error("%s : OpenUndoFile failed", __func__);
+
+    //! Write index header
+    unsigned int nSize = fileout.GetSerializeSize(blockundo);
+    fileout << FLATDATA(Params().MessageStart()) << nSize;
+
+    //! Write undo data
+    long fileOutPos = ftell(fileout);
+    if (fileOutPos < 0)
+        return error("%s : ftell failed", __func__);
+    pos.nPos = (unsigned int)fileOutPos;
+    fileout << blockundo;
+
+    //! calculate & write checksum
+    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
+    hasher << hashBlock;
+    hasher << blockundo;
+    fileout << hasher.GetHash();
+
+    return true;
+}
+
+bool UndoReadFromDisk(CBlockUndo& blockundo, const CDiskBlockPos& pos, const uint256& hashBlock)
+{
+    //! Open history file to read
+    CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
+    if (filein.IsNull())
+        return error("%s : OpenBlockFile failed", __func__);
+
+    //! Read block
+    uint256 hashChecksum;
+    try {
+        filein >> blockundo;
+        filein >> hashChecksum;
+    } catch (const std::exception& e) {
+        return error("%s() : Deserialize or I/O error", __func__);
+    }
+
+    //! Verify checksum
+    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
+    hasher << hashBlock;
+    hasher << blockundo;
+    if (hashChecksum != hasher.GetHash())
+        return error("%s : Checksum mismatch", __func__);
+
+    return true;
+}
+
+} // anon namespace
+
 bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& view, bool* pfClean)
 {
     assert(pindex->GetBlockHash() == view.GetBestBlock());
@@ -1920,7 +1992,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
     CDiskBlockPos pos = pindex->GetUndoPos();
     if (pos.IsNull())
         return error("DisconnectBlock() : no undo data available");
-    if (!blockUndo.ReadFromDisk(pos, pindex->pprev->GetBlockHash()))
+    if (!UndoReadFromDisk(blockUndo, pos, pindex->pprev->GetBlockHash()))
         return error("DisconnectBlock() : failure reading undo data");
 
     if (blockUndo.vtxundo.size() + 1 != block.vtx.size())
@@ -2062,7 +2134,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=8
     // blocks, when 75% of the network has upgraded:
-    if (block.nVersion >= 7 && CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
+    if (block.nVersion >= 7 && IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
         flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     }
 
@@ -2194,7 +2266,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             CDiskBlockPos pos;
             if (!FindUndoPos(state, pindex->nFile, pos, ::GetSerializeSize(blockundo, SER_DISK, CLIENT_VERSION) + 40))
                 return error("ConnectBlock() : FindUndoPos failed");
-            if (!blockundo.WriteToDisk(pos, pindex->pprev->GetBlockHash()))
+            if (!UndoWriteToDisk(blockundo, pos, pindex->pprev->GetBlockHash()))
                 return state.Abort("Failed to write undo data");
 
             //! update nUndoPos in block index
@@ -2286,24 +2358,24 @@ bool static FlushStateToDisk(CValidationState &state, FlushStateMode mode)
         // First make sure all block and undo data is flushed to disk.
         FlushBlockFile();
         // Then update all block file information (which may refer to block and undo files).
-        bool fileschanged = false;
-        for (set<int>::iterator it = setDirtyFileInfo.begin(); it != setDirtyFileInfo.end(); ) {
-            if (!pblocktree->WriteBlockFileInfo(*it, vinfoBlockFile[*it])) {
-                return state.Abort("Failed to write to block index");
+        {
+            std::vector<std::pair<int, const CBlockFileInfo*> > vFiles;
+            vFiles.reserve(setDirtyFileInfo.size());
+            for (set<int>::iterator it = setDirtyFileInfo.begin(); it != setDirtyFileInfo.end(); ) {
+                vFiles.push_back(make_pair(*it, &vinfoBlockFile[*it]));
+                setDirtyFileInfo.erase(it++);
             }
-            fileschanged = true;
-            setDirtyFileInfo.erase(it++);
+            std::vector<const CBlockIndex*> vBlocks;
+            vBlocks.reserve(setDirtyBlockIndex.size());
+            for (set<CBlockIndex*>::iterator it = setDirtyBlockIndex.begin(); it != setDirtyBlockIndex.end(); ) {
+                vBlocks.push_back(*it);
+                setDirtyBlockIndex.erase(it++);
+            }
+            if (!pblocktree->WriteBatchSync(vFiles, nLastBlockFile, vBlocks)) {
+                return state.Abort("Files to write to block index database");
+            }
         }
-        if (fileschanged && !pblocktree->WriteLastBlockFile(nLastBlockFile)) {
-            return state.Abort("Failed to write to block index");
-        }
-        for (set<CBlockIndex*>::iterator it = setDirtyBlockIndex.begin(); it != setDirtyBlockIndex.end(); ) {
-             if (!pblocktree->WriteBlockIndex(CDiskBlockIndex(*it))) {
-                 return state.Abort("Failed to write to block index");
-             }
-             setDirtyBlockIndex.erase(it++);
-        }
-        pblocktree->Sync();
+        // Finally flush the chainstate (which may refer to block index entries).
         if (!pcoinsTip->Flush())
             return state.Abort("Failed to write to coin database");
         // Update best block in wallet (so we can detect restored wallets).
@@ -2700,13 +2772,15 @@ bool GetCoinAge(const CTransaction& tx, CValidationState& state, CCoinsViewCache
         CTransaction txPrev;
         if (pblocktree->ReadTxIndex(prevout.hash, postx)) {
             CAutoFile file(OpenBlockFile(postx, true), SER_DISK, CLIENT_VERSION);
+            if (file.IsNull())
+                return error("%s: OpenBlockFile failed", __func__);
             CBlockHeader header;
             try {
                 file >> header;
                 fseek(file, postx.nTxOffset, SEEK_CUR);
                 file >> txPrev;
-            } catch (std::exception& e) {
-                return error("%s() : deserialize or I/O error in GetCoinAge()", __func__);
+            } catch (const std::exception& e) {
+                return error("%s() : Deserialize or I/O error in GetCoinAge()", __func__);
             }
             if (txPrev.GetHash() != prevout.hash)
                 return error("%s() : txid mismatch in GetCoinAge()", __func__);
@@ -3016,7 +3090,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
     }
 
     //! Reject block.nVersion=8 blocks when 95% (75% on testnet) of the network has upgraded:
-    if (block.nVersion < 8 && CBlockIndex::IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
+    if (block.nVersion < 8 && IsSuperMajority(8, pindexPrev, Params().RejectBlockOutdatedMajority()))
     {
         return state.Invalid(error("%s : rejected nVersion=7 block", __func__),
                              REJECT_OBSOLETE, "bad-version");
@@ -3130,7 +3204,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         CBlockIndex* pindex = chainActive.Tip();
         if (pindex != NULL)
         {
-            if (CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+            if (IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
             {
                 if (block.nTime > GetTime() - MASTERNODE_MIN_DSEEP_SECONDS)
                 {
@@ -3334,7 +3408,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
         }
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos, NULL))
             return error("AcceptBlock() : ReceivedBlockTransactions failed");
-    } catch (std::runtime_error& e) {
+    } catch (const std::runtime_error& e) {
         return state.Abort(std::string("System error: ") + e.what());
     }
 
@@ -3373,7 +3447,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
         pindex->hashProof = hashProof;
     }
 
-    if (CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority()))
+    if (IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority()))
     {
         // compute v2 stake modifier
         pindex->nStakeModifierV2 = ComputeStakeModifier(pindex->pprev,block.IsProofOfWork() ? hash : block.vtx[1].vin[0].prevout.hash);
@@ -3408,7 +3482,7 @@ uint256 CBlockIndex::GetBlockTrust() const
     return (~bnTarget / (bnTarget + 1)) + 1;
 }
 
-bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired)
+bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired)
 {
     unsigned int nToCheck = Params().ToCheckBlockUpgradeMajority();
     unsigned int nFound = 0;
@@ -3418,58 +3492,6 @@ bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, uns
         pstart = pstart->pprev;
     }
     return (nFound >= nRequired);
-}
-
-/** Turn the lowest '1' bit in the binary representation of a number into a '0'. */
-int static inline InvertLowestOne(int n) { return n & (n - 1); }
-
-/** Compute what height to jump back to with the CBlockIndex::pskip pointer. */
-int static inline GetSkipHeight(int height)
-{
-    if (height < 2)
-        return 0;
-    
-    /**
-     * Determine which height to jump back to. Any number strictly lower than height is acceptable,
-     * but the following expression seems to perform well in simulations (max 110 steps to go back
-     * up to 2**18 blocks).
-     */
-    return (height & 1) ? InvertLowestOne(InvertLowestOne(height - 1)) + 1 : InvertLowestOne(height);
-}
-
-CBlockIndex* CBlockIndex::GetAncestor(int height)
-{
-    if (height > nHeight || height < 0)
-        return NULL;
-
-    CBlockIndex* pindexWalk = this;
-    int heightWalk = nHeight;
-    while (heightWalk > height) {
-        int heightSkip = GetSkipHeight(heightWalk);
-        int heightSkipPrev = GetSkipHeight(heightWalk - 1);
-        if (heightSkip == height ||
-            (heightSkip > height && !(heightSkipPrev < heightSkip - 2 &&
-                                      heightSkipPrev >= height))) {
-            //! Only follow pskip if pprev->pskip isn't better than pskip->pprev.
-            pindexWalk = pindexWalk->pskip;
-            heightWalk = heightSkip;
-        } else {
-            pindexWalk = pindexWalk->pprev;
-            heightWalk--;
-        }
-    }
-    return pindexWalk;
-}
-
-const CBlockIndex* CBlockIndex::GetAncestor(int height) const
-{
-    return const_cast<CBlockIndex*>(this)->GetAncestor(height);
-}
-
-void CBlockIndex::BuildSkip()
-{
-    if (pprev)
-        pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
 }
 
 void PushGetBlocks(CNode* pnode, CBlockIndex* pindexBegin, uint256 hashEnd)
@@ -3765,7 +3787,7 @@ bool CheckBlockSignature(const CBlock& block)
 
 bool CheckDiskSpace(uint64_t nAdditionalBytes)
 {
-    uint64_t nFreeBytesAvailable = filesystem::space(GetDataDir()).available;
+    uint64_t nFreeBytesAvailable = boost::filesystem::space(GetDataDir()).available;
 
     //! Check for nMinDiskSpace bytes (currently 50MB)
     if (nFreeBytesAvailable < nMinDiskSpace + nAdditionalBytes)
@@ -3966,7 +3988,7 @@ bool CVerifyDB::VerifyDB(CCoinsView* coinsview, int nCheckLevel, int nCheckDepth
             CBlockUndo undo;
             CDiskBlockPos pos = pindex->GetUndoPos();
             if (!pos.IsNull()) {
-                if (!undo.ReadFromDisk(pos, pindex->pprev->GetBlockHash()))
+                if (!UndoReadFromDisk(undo, pos, pindex->pprev->GetBlockHash()))
                     return error("VerifyDB() : *** found bad undo data at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
             }
         }
@@ -4062,9 +4084,9 @@ bool InitBlockIndex()
                 return error("LoadBlockIndex() : genesis block not accepted");
             if (!ActivateBestChain(state, &block))
                 return error("LoadBlockIndex() : genesis block cannot be activated");
-            //! Force a chainstate write so that when we VerifyDB in a moment, it doesnt check stale data
+            //! Force a chainstate write so that when we VerifyDB in a moment, it doesn't check stale data
             return FlushStateToDisk(state, FLUSH_STATE_ALWAYS);
-        } catch (std::runtime_error& e) {
+        } catch (const std::runtime_error& e) {
             return error("LoadBlockIndex() : failed to initialize block database: %s", e.what());
         }
     }
@@ -4159,11 +4181,11 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos* dbp)
                         mapBlocksUnknownParent.erase(it);
                     }
                 }
-            } catch (std::exception& e) {
+            } catch (const std::exception& e) {
                 LogPrintf("%s() : Deserialize or I/O error caught during load:%s\n", __func__, e.what());
             }
         }
-    } catch (std::runtime_error& e) {
+    } catch (const std::runtime_error& e) {
         AbortNode(std::string("System error: ") + e.what());
     }
     if (nLoaded > 0)
@@ -5354,7 +5376,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                     ss << ": hash " << hash.ToString();
                 }
                 LogPrint("net", "Reject %s\n", SanitizeString(ss.str()));
-            } catch (std::ios_base::failure& e) {
+            } catch (const std::ios_base::failure& e) {
                 //! Avoid feedback loops by preventing reject messages from triggering a new reject message.
                 LogPrint("net", "Unparseable reject message received\n");
             }
@@ -5461,7 +5483,7 @@ bool ProcessMessages(CNode* pfrom)
         try {
             fRet = ProcessMessage(pfrom, strCommand, vRecv, msg.nTime);
             boost::this_thread::interruption_point();
-        } catch (std::ios_base::failure& e) {
+        } catch (const std::ios_base::failure& e) {
             pfrom->PushMessage("reject", strCommand, REJECT_MALFORMED, string("error parsing message"));
             if (strstr(e.what(), "end of data")) {
                 //! Allow exceptions from under-length message on vRecv
@@ -5472,9 +5494,9 @@ bool ProcessMessages(CNode* pfrom)
             } else {
                 PrintExceptionContinue(&e, "ProcessMessages()");
             }
-        } catch (boost::thread_interrupted) {
+        } catch (const boost::thread_interrupted) {
             throw;
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             PrintExceptionContinue(&e, "ProcessMessages()");
         } catch (...) {
             PrintExceptionContinue(NULL, "ProcessMessages()");
@@ -5743,59 +5765,6 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue, CAmount masternode
         }
     }
     return 0;
-}
-
-bool CBlockUndo::WriteToDisk(CDiskBlockPos& pos, const uint256& hashBlock)
-{
-    //! Open history file to append
-    CAutoFile fileout(OpenUndoFile(pos), SER_DISK, CLIENT_VERSION);
-    if (fileout.IsNull())
-        return error("CBlockUndo::WriteToDisk() : OpenUndoFile failed");
-
-    //! Write index header
-    unsigned int nSize = fileout.GetSerializeSize(*this);
-    fileout << FLATDATA(Params().MessageStart()) << nSize;
-
-    //! Write undo data
-    long fileOutPos = ftell(fileout);
-    if (fileOutPos < 0)
-        return error("CBlockUndo::WriteToDisk() : ftell failed");
-    pos.nPos = (unsigned int)fileOutPos;
-    fileout << *this;
-
-    //! calculate & write checksum
-    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
-    hasher << hashBlock;
-    hasher << *this;
-    fileout << hasher.GetHash();
-
-    return true;
-}
-
-bool CBlockUndo::ReadFromDisk(const CDiskBlockPos& pos, const uint256& hashBlock)
-{
-    //! Open history file to read
-    CAutoFile filein(OpenUndoFile(pos, true), SER_DISK, CLIENT_VERSION);
-    if (filein.IsNull())
-        return error("CBlockUndo::ReadFromDisk() : OpenBlockFile failed");
-
-    //! Read block
-    uint256 hashChecksum;
-    try {
-        filein >> *this;
-        filein >> hashChecksum;
-    } catch (std::exception& e) {
-        return error("%s() : deserialize or I/O error", __func__);
-    }
-
-    //! Verify checksum
-    CHashWriter hasher(SER_GETHASH, PROTOCOL_VERSION);
-    hasher << hashBlock;
-    hasher << *this;
-    if (hashChecksum != hasher.GetHash())
-        return error("CBlockUndo::ReadFromDisk() : checksum mismatch");
-
-    return true;
 }
 
 std::string CBlockFileInfo::ToString() const

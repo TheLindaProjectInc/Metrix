@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "db.h"
@@ -19,8 +19,6 @@
 #include <openssl/rand.h>
 
 using namespace std;
-using namespace boost;
-
 
 unsigned int nWalletDBUpdated;
 
@@ -68,11 +66,11 @@ bool CDBEnv::Open(boost::filesystem::path pathEnv_)
     boost::this_thread::interruption_point();
 
     pathEnv = pathEnv_;
-    filesystem::path pathDataDir = pathEnv;
+    boost::filesystem::path pathDataDir = pathEnv;
     strPath = pathDataDir.string();
-    filesystem::path pathLogDir = pathDataDir / "database";
+    boost::filesystem::path pathLogDir = pathDataDir / "database";
     TryCreateDirectory(pathLogDir);
-    filesystem::path pathErrorFile = pathDataDir / "db.log";
+    boost::filesystem::path pathErrorFile = pathDataDir / "db.log";
     LogPrintf("CDBEnv::Open : LogDir=%s ErrorFile=%s\n", pathLogDir.string(), pathErrorFile.string());
 
     unsigned int nEnvFlags = 0;

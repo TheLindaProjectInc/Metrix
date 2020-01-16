@@ -4,6 +4,11 @@ SUBDIRS = src
 
 GZIP_ENV="-9n"
 
+if BUILD_BITCOIN_LIBS
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libbitcoinconsensus.pc
+endif
+
 BITCOIND_BIN=$(top_builddir)/src/metrixd$(EXEEXT)
 BITCOIN_CLI_BIN=$(top_builddir)/src/metrix-cli$(EXEEXT)
 BITCOIN_WIN_INSTALLER=$(PACKAGE)-$(PACKAGE_VERSION)-win32-setup$(EXEEXT)

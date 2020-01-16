@@ -275,7 +275,7 @@ bool CWallet::Unlock(const SecureString& strWalletPassphrase, bool anonymizeOnly
     if (strWalletPassphrase == "keepass" && GetBoolArg("-keepass", false)) {
         try {
             strWalletPassphraseFinal = keePassInt.retrievePassphrase();
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LogPrintf("CWallet::Unlock could not retrieve passphrase from KeePass: Error: %s\n", e.what());
             return false;
         }
@@ -317,7 +317,7 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
         bUseKeePass = true;
         try {
             strOldWalletPassphraseFinal = keePassInt.retrievePassphrase();
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LogPrintf("CWallet::ChangeWalletPassphrase could not retrieve passphrase from KeePass: Error: %s\n", e.what());
             return false;
         }
@@ -364,7 +364,7 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
                     LogPrintf("CWallet::ChangeWalletPassphrase - Updating KeePass with new passphrase");
                     try {
                         keePassInt.updatePassphrase(strNewWalletPassphrase);
-                    } catch (std::exception& e) {
+                    } catch (const std::exception& e) {
                         LogPrintf("CWallet::ChangeWalletPassphrase - could not update passphrase in KeePass: Error: %s\n", e.what());
                         return false;
                     }
@@ -635,7 +635,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
             LogPrintf("CWallet::EncryptWallet - Updating KeePass with new passphrase");
             try {
                 keePassInt.updatePassphrase(strWalletPassphrase);
-            } catch (std::exception& e) {
+            } catch (const std::exception& e) {
                 LogPrintf("CWallet::EncryptWallet - could not update passphrase in KeePass: Error: %s\n", e.what());
             }
         }
@@ -2477,6 +2477,28 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
     wtxNew.BindWallet(this);
     CMutableTransaction txNew;
 
+    // Discourage fee sniping.
+    //
+    // However because of a off-by-one-error in previous versions we need to
+    // neuter it by setting nLockTime to at least one less than nBestHeight.
+    // Secondly currently propagation of transactions created for block heights
+    // corresponding to blocks that were just mined may be iffy - transactions
+    // aren't re-accepted into the mempool - we additionally neuter the code by
+    // going ten blocks back. Doesn't yet do anything for sniping, but does act
+    // to shake out wallet bugs like not showing nLockTime'd transactions at
+    // all.
+    txNew.nLockTime = std::max(0, chainActive.Height() - 10);
+
+    // Secondly occasionally randomly pick a nLockTime even further back, so
+    // that transactions that are delayed after signing for whatever reason,
+    // e.g. high-latency mix networks and some CoinJoin implementations, have
+    // better privacy.
+    if (GetRandInt(10) == 0)
+        txNew.nLockTime = std::max(0, (int)txNew.nLockTime - GetRandInt(100));
+
+    assert(txNew.nLockTime <= (unsigned int)chainActive.Height());
+    assert(txNew.nLockTime < LOCKTIME_THRESHOLD);
+
     {
         LOCK2(cs_main, cs_wallet);
         {
@@ -2589,8 +2611,12 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
                     reservekey.ReturnKey();
 
                 //! Fill vin
+                //
+                // Note how the sequence number is set to max()-1 so that the
+                // nLockTime set above actually works.
                 BOOST_FOREACH (const PAIRTYPE(const CWalletTx*, unsigned int) & coin, setCoins)
-                    txNew.vin.push_back(CTxIn(coin.first->GetHash(), coin.second));
+                    txNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second,CScript(),
+                                              std::numeric_limits<unsigned int>::max()-1));
 
                 //! Sign
                 int nIn = 0;
@@ -2864,7 +2890,7 @@ bool CWallet::UnlockStealthAddresses(const CKeyingMaterial& vMasterKeyIn)
         try {
             ckey.Set(vchSecret.begin(), vchSecret.end(), true);
             //! ckey.SetSecret(vchSecret, true);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LogPrintf("ckey.SetSecret() threw: %s.\n", e.what());
             continue;
         };
@@ -3245,7 +3271,7 @@ bool CWallet::FindStealthTransactions(const CTransaction& tx, mapValue_t& mapNar
                     try {
                         ckey.Set(vchSecret.begin(), vchSecret.end(), true);
                         //! ckey.SetSecret(vchSecret, true);
-                    } catch (std::exception& e) {
+                    } catch (const std::exception& e) {
                         LogPrintf("ckey.SetSecret() threw: %s.\n", e.what());
                         continue;
                     };

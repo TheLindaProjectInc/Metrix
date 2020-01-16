@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2013 The NovaCoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <inttypes.h>
@@ -283,8 +283,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
             if (!CheckInputs(tx, state, view, true, SCRIPT_VERIFY_P2SH, true))
                 continue;
-            CTxUndo txundo;
-            UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight + 1);
+
+            UpdateCoins(tx, state, view, pindexPrev->nHeight + 1);
 
 
             //! Added
@@ -380,7 +380,7 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 }
 
-bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
+static bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 {
     if (!pblock->IsProofOfWork())
         return error("ProcessBlockFound() : %s is not a proof-of-work block", pblock->GetHash().GetHex());
