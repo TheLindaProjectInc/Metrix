@@ -2061,8 +2061,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     flags |= SCRIPT_VERIFY_DERSIG;
 
     // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=8
-    // blocks, when 75% of the network has upgraded:
-    if (block.nVersion >= 7 && CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority())) {
+    // blocks, this occured at block 994 500 and can be check by height 
+    // instead of IsSuperMajority since it is post fork
+    if (Params().IsSoftForkActive(8, pindex->pprev->nHeight))
+    {
         flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     }
 
@@ -2563,43 +2565,44 @@ static bool ActivateBestChainStep(CValidationState& state, CBlockIndex* pindexMo
     std::vector<CBlockIndex*> vpindexToConnect;
     bool fContinue = true;
     int nHeight = pindexFork ? pindexFork->nHeight : -1;
-    while (fContinue && nHeight != pindexMostWork->nHeight) {
-    //! Don't iterate the entire list of potential improvements toward the best tip, as we likely only need
-    //! a few blocks along the way.
-    int nTargetHeight = std::min(nHeight + 32, pindexMostWork->nHeight);
-    vpindexToConnect.clear();
-    vpindexToConnect.reserve(nTargetHeight - nHeight);
-    CBlockIndex *pindexIter = pindexMostWork->GetAncestor(nTargetHeight);
-    while (pindexIter && pindexIter->nHeight != nHeight) {
-        vpindexToConnect.push_back(pindexIter);
-        pindexIter = pindexIter->pprev;
-    }
-    nHeight = nTargetHeight;
+    while (fContinue && nHeight != pindexMostWork->nHeight)
+    {
+        //! Don't iterate the entire list of potential improvements toward the best tip, as we likely only need
+        //! a few blocks along the way.
+        int nTargetHeight = std::min(nHeight + 32, pindexMostWork->nHeight);
+        vpindexToConnect.clear();
+        vpindexToConnect.reserve(nTargetHeight - nHeight);
+        CBlockIndex *pindexIter = pindexMostWork->GetAncestor(nTargetHeight);
+        while (pindexIter && pindexIter->nHeight != nHeight) {
+            vpindexToConnect.push_back(pindexIter);
+            pindexIter = pindexIter->pprev;
+        }
+        nHeight = nTargetHeight;
 
-    //! Connect new blocks.
-    BOOST_REVERSE_FOREACH(CBlockIndex *pindexConnect, vpindexToConnect) {
-        if (!ConnectTip(state, pindexConnect, pindexConnect == pindexMostWork ? pblock : NULL)) {
-            if (state.IsInvalid()) {
-                //! The block violates a consensus rule.
-                if (!state.CorruptionPossible())
-                    InvalidChainFound(vpindexToConnect.back());
-                state = CValidationState();
-                fInvalidFound = true;
-                fContinue = false;
-                break;
+        //! Connect new blocks.
+        BOOST_REVERSE_FOREACH(CBlockIndex *pindexConnect, vpindexToConnect) {
+            if (!ConnectTip(state, pindexConnect, pindexConnect == pindexMostWork ? pblock : NULL)) {
+                if (state.IsInvalid()) {
+                    //! The block violates a consensus rule.
+                    if (!state.CorruptionPossible())
+                        InvalidChainFound(vpindexToConnect.back());
+                    state = CValidationState();
+                    fInvalidFound = true;
+                    fContinue = false;
+                    break;
+                } else {
+                    //! A system error occurred (disk space, database error, ...).
+                    return false;
+                }
             } else {
-                //! A system error occurred (disk space, database error, ...).
-                return false;
-            }
-        } else {
-            PruneBlockIndexCandidates();
-            if (!pindexOldTip || chainActive.Tip()->nChainTrust > pindexOldTip->nChainTrust) {
-                //! We're in a better position than we were. Return temporarily to release the lock.
-                fContinue = false;
-                break;
+                PruneBlockIndexCandidates();
+                if (!pindexOldTip || chainActive.Tip()->nChainTrust > pindexOldTip->nChainTrust) {
+                    //! We're in a better position than we were. Return temporarily to release the lock.
+                    fContinue = false;
+                    break;
+                }
             }
         }
-    }
     }
 
     //! Callbacks/notifications for a new best chain.
@@ -3122,44 +3125,37 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
 
     //! ----------- masternode payments -----------
-    //! Start enforcing for block.nVersion=8 blocks 
-    //! when 75% of the network has upgraded
+    //! Masternode payment enforcement started after
+    //! the block.nVersion=8 soft fork
     if (block.HasMasternodePayment())
     {
         LOCK2(cs_main, mempool.cs);
         CBlockIndex* pindex = chainActive.Tip();
         if (pindex != NULL)
         {
-            if (CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+            if (block.nTime > GetTime() - MASTERNODE_MIN_DSEEP_SECONDS)
             {
-                if (block.nTime > GetTime() - MASTERNODE_MIN_DSEEP_SECONDS)
+                if (vecMasternodes.size() > 0 && nMasternodeSyncStartTime && GetTime() - MASTERNODE_MIN_DSEE_SECONDS > nMasternodeSyncStartTime)
                 {
-                    if (vecMasternodes.size() == 0)
+                    if (!IsValidMasternodePayment(pindex->nHeight + 1, block))
                     {
-                        if (!IsValidMasternodePayment(pindex->nHeight + 1, block))
-                        {
-                            LogPrint("masternode", "CheckBlock() : Invalid masternode payment at block %i\n", chainActive.Height() + 1);
-                            return state.DoS(100, error("CheckBlock() : Invalid masternode payment"),
-                                            REJECT_INVALID, "invalid masternode payment");
-                        }
-                        else
-                        {
-                            LogPrint("masternode", "CheckBlock() : Valid masternode payment at block %i\n", chainActive.Height() + 1); 
-                        }
+                        LogPrint("masternode", "CheckBlock() : Invalid masternode payment at block %i\n", chainActive.Height() + 1);
+                        return state.DoS(100, error("CheckBlock() : Invalid masternode payment"),
+                                        REJECT_INVALID, "invalid masternode payment");
                     }
                     else
                     {
-                        LogPrint("masternode", "CheckBlock() : Have not synced masternode list \n");
+                        LogPrint("masternode", "CheckBlock() : Valid masternode payment at block %i\n", chainActive.Height() + 1); 
                     }
                 }
                 else
                 {
-                    LogPrint("masternode", "CheckBlock() : Block is older than dseep time, skipping masternode payment check %d\n", chainActive.Height() + 1);
+                    LogPrint("masternode", "CheckBlock() : Have not synced masternode list \n");
                 }
             }
             else
             {
-                LogPrint("masternode", "CheckBlock() : Skipping masternode payment check - is not super majority nHeight %d Hash %s\n", chainActive.Height() + 1, block.GetHash().ToString().c_str());
+                LogPrint("masternode", "CheckBlock() : Block is older than dseep time, skipping masternode payment check %d\n", chainActive.Height() + 1);
             }
         }
         else
@@ -3373,10 +3369,10 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
         pindex->hashProof = hashProof;
     }
 
-    if (CBlockIndex::IsSuperMajority(8, pindex->pprev, Params().EnforceBlockUpgradeMajority()))
+    if (Params().IsSoftForkActive(8, pindex->pprev->nHeight))
     {
         // compute v2 stake modifier
-        pindex->nStakeModifierV2 = ComputeStakeModifier(pindex->pprev,block.IsProofOfWork() ? hash : block.vtx[1].vin[0].prevout.hash);
+        pindex->nStakeModifierV2 = ComputeStakeModifier(pindex->pprev,block.vtx[1].vin[0].prevout.hash);
     }
     else
     {
@@ -3386,7 +3382,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
         if (!ComputeNextStakeModifier(pindexPrev, nStakeModifier, fGeneratedStakeModifier))
             return error("UpdateHashProof() : ComputeNextStakeModifier() failed");
         pindex->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
-    } 
+    }
 
     return true;
 }

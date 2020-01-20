@@ -42,3 +42,5 @@ to do THIS") was split into a separate executable, 'metrix-cli'.
 - Fix the amount displayed in `gettransaction`
 - Add exception logging if the miner thread has an error
 - Fix a badly formatted LogPrint
+- Fix database corruption due to nStakeModifierV2 not being correctly read
+- Fix incorrect Masternode payment enforcement logic

@@ -93,18 +93,11 @@ static const int V8_START_BLOCK = 990000;
 
 inline void GetMasternodeCollaterals(std::vector<CAmount>& vCollaterals, CBlockIndex* pindex)
 {
-    //! Allow different Masternode tiers for block.nVersion=8 blocks 
-    //! when 75% of the network has upgraded
-    if (pindex != NULL && CBlockIndex::IsSuperMajority(8, pindex, Params().EnforceBlockUpgradeMajority()))
+    //! As of block.nVersion=8 different Masternode tiers 
+    //! are available
+    BOOST_FOREACH (CAmount collateral, MASTERNODE_COLLATERALS)
     {
-        BOOST_FOREACH (CAmount collateral, MASTERNODE_COLLATERALS)
-        {
-            vCollaterals.push_back(collateral);
-        }
-    }
-    else
-    {
-        vCollaterals.push_back(MASTERNODE_COLLATERAL);
+        vCollaterals.push_back(collateral);
     }
 }
 
@@ -228,6 +221,7 @@ extern uint64_t nLastBlockTx;
 extern uint64_t nLastBlockSize;
 extern int64_t nLastCoinStakeSearchInterval;
 extern int64_t nLastCoinStakeSearchTime;
+extern int64_t nMasternodeSyncStartTime;
 extern const std::string strMessageMagic;
 extern int64_t nTimeBestReceived;
 extern CWaitableCriticalSection csBestBlock;
