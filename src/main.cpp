@@ -3125,9 +3125,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
 
 
     //! ----------- masternode payments -----------
-    //! Masternode payment enforcement started after
-    //! the block.nVersion=8 soft fork
-    if (block.HasMasternodePayment())
+    //! Masternode payment enforcement
+    if (block.HasMasternodePayment() && false)
     {
         LOCK2(cs_main, mempool.cs);
         CBlockIndex* pindex = chainActive.Tip();
