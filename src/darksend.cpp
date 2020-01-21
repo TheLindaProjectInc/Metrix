@@ -43,6 +43,8 @@ CActiveMasternode activeMasternode;
 // count peers we've requested the list from
 int RequestedMasterNodeList = 0;
 
+int64_t nMasternodeSyncStartTime;
+
 /* *** BEGIN DARKSEND MAGIC  **********
     Copyright 2014, Darkcoin Developers
         eduffield - evan@darkcoin.io
@@ -2298,6 +2300,8 @@ void ThreadCheckDarkSendPool()
                         pnode->FulfilledRequest("mnsync");
 
                         LogPrintf("Successfully synced, asking for Masternode list and payment list\n");
+
+                        nMasternodeSyncStartTime = GetTime();
 
                         pnode->PushMessage("dseg", CTxIn()); //!request full mn list
                         pnode->PushMessage("mnget");         //!sync payees

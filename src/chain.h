@@ -6,6 +6,7 @@
 #ifndef BITCOIN_CHAIN_H
 #define BITCOIN_CHAIN_H
 
+#include "chainparams.h"
 #include "primitives/block.h"
 #include "init.h"
 #include "timedata.h"
@@ -443,7 +444,16 @@ public:
         READWRITE(VARINT(nMint));
         READWRITE(VARINT(nMoneySupply));
         READWRITE(nFlags);
-        if (nStakeModifierV2 != uint256(0))
+        // account for corruption issue where older nodes saved nStakeModifier
+        // to file instead of nStakeModifierV2. The size of a PoS block with 
+        // nStakeModifierV2 is 216 bytes so only attempt to parse nStakeModifierV2
+        // if the block is after the soft fork and it is the right length.
+        // This length check can probably be removed on the next update
+        // as it is unlikely that people will still have corruption by then
+        if (
+            Params().IsSoftForkActive(8, nHeight - 1) && 
+            (!ser_action.ForRead() || (ser_action.ForRead() && s.size() == 216))
+            )
         {
             READWRITE(nStakeModifierV2);
         }
@@ -452,10 +462,13 @@ public:
             READWRITE(nStakeModifier);
         }
         const_cast<CDiskBlockIndex*>(this)->POSDetailSet = true;
-        if (IsProofOfStake()) {
+        if (IsProofOfStake())
+        {
             READWRITE(prevoutStake);
             READWRITE(nStakeTime);
-        } else if (ser_action.ForRead()) {
+        }
+        else if (ser_action.ForRead())
+        {
             const_cast<CDiskBlockIndex*>(this)->prevoutStake.SetNull();
             const_cast<CDiskBlockIndex*>(this)->nStakeTime = 0;
         }

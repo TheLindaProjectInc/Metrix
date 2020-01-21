@@ -73,6 +73,7 @@ public:
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
     int LastPOWBlock() const { return nLastPOWBlock; }
+    bool IsSoftForkActive(const int nVersion, const int nHeight) const { if (nVersion == 8) return nHeight >= nSoftFork8ActivationHeight; return false; }
     virtual const Checkpoints::CCheckpointData& Checkpoints() const = 0;
 
 protected:
@@ -93,6 +94,7 @@ protected:
     std::vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     int nLastPOWBlock;
+    int nSoftFork8ActivationHeight;
     CBaseChainParams::Network networkID;
     std::string strNetworkID;
     CBlock genesis;

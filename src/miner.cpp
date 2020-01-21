@@ -460,45 +460,59 @@ void ThreadStakeMiner(CWallet* pwallet, bool fProofOfStake)
     CReserveKey reservekey(pwallet);
 
     bool fTryToSync = true;
-
-    while (true) {
-        while (pwallet->IsLocked(true)) {
-            nLastCoinStakeSearchInterval = 0;
-            MilliSleep(10000);
-        }
-
-        while (vNodes.empty() || IsInitialBlockDownload()) {
-            nLastCoinStakeSearchInterval = 0;
-            fTryToSync = true;
-            MilliSleep(10000);
-        }
-
-        if (fTryToSync) {
-            fTryToSync = false;
-            if (vNodes.size() < 3 || chainActive.Tip()->GetBlockTime() < GetTime() - 10 * 60) {
-                MilliSleep(60000);
-                continue;
+    try {
+        while (true) {
+            while (pwallet->IsLocked(true)) {
+                nLastCoinStakeSearchInterval = 0;
+                MilliSleep(10000);
             }
-        }
 
-        /*
-         * Create new block
-         */
-        CAmount nFees = 0;
-        auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwallet, fProofOfStake));
-        if (!pblocktemplate.get()) {
-            LogPrintf("Error in ThreadStakeMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
-            return;
-        }
+            while (vNodes.empty() || IsInitialBlockDownload()) {
+                nLastCoinStakeSearchInterval = 0;
+                fTryToSync = true;
+                MilliSleep(10000);
+            }
 
-        CBlock* pblock = &pblocktemplate->block;
-        //! Trying to sign a block
-        if (SignBlock(*pblock, *pwallet, nFees)) {
-            SetThreadPriority(THREAD_PRIORITY_NORMAL);
-            CheckStake(pblock, *pwallet);
-            SetThreadPriority(THREAD_PRIORITY_LOWEST);
-            MilliSleep(500);
-        } else
-            MilliSleep(nMinerSleep);
+            if (fTryToSync) {
+                fTryToSync = false;
+                if (vNodes.size() < 3 || chainActive.Tip()->GetBlockTime() < GetTime() - 10 * 60) {
+                    MilliSleep(60000);
+                    continue;
+                }
+            }
+
+            /*
+            * Create new block
+            */
+            CAmount nFees = 0;
+            auto_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwallet, fProofOfStake));
+            if (!pblocktemplate.get()) {
+                LogPrintf("Error in ThreadStakeMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
+                return;
+            }
+
+            CBlock* pblock = &pblocktemplate->block;
+            //! Trying to sign a block
+            if (SignBlock(*pblock, *pwallet, nFees)) {
+                SetThreadPriority(THREAD_PRIORITY_NORMAL);
+                CheckStake(pblock, *pwallet);
+                SetThreadPriority(THREAD_PRIORITY_LOWEST);
+                MilliSleep(500);
+            } else
+                MilliSleep(nMinerSleep);
+        }
+    }
+    catch (const boost::thread_interrupted&)
+    {
+        LogPrintf("%s thread interrupt\n", "ThreadStakeMiner()");
+        throw;
+    }
+    catch (std::exception& e) {
+        PrintExceptionContinue(&e,  "ThreadStakeMiner()");
+        throw;
+    }
+    catch (...) {
+        PrintExceptionContinue(NULL, "ThreadStakeMiner()");
+        throw;
     }
 }

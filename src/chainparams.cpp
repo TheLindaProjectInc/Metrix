@@ -146,7 +146,7 @@ public:
         convertSeed6(vFixedSeeds, pnSeed6_main, ARRAYLEN(pnSeed6_main));
 
         nLastPOWBlock = 580000;
-
+        nSoftFork8ActivationHeight = 994500;
         fRequireRPCPassword = true;
         fRequireStandard = true;
         fTestnetToBeDeprecatedFieldRPC = false;
@@ -203,6 +203,8 @@ public:
         convertSeed6(vFixedSeeds, pnSeed6_test, ARRAYLEN(pnSeed6_test));
 
         nLastPOWBlock = 0x7fffffff;
+        
+        nSoftFork8ActivationHeight = 10;
 
         fRequireRPCPassword = true;
         fRequireStandard = false;
