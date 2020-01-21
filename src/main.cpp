@@ -3140,7 +3140,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                     if (!IsValidMasternodePayment(pindex->nHeight + 1, block))
                     {
                         LogPrint("masternode", "CheckBlock() : Invalid masternode payment at block %i\n", chainActive.Height() + 1);
-                        return state.DoS(100, error("CheckBlock() : Invalid masternode payment"),
+                        return state.DoS(10, error("CheckBlock() : Invalid masternode payment"),
                                         REJECT_INVALID, "invalid masternode payment");
                     }
                     else
