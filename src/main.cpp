@@ -2063,7 +2063,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=8
     // blocks, this occured at block 994 500 and can be check by height 
     // instead of IsSuperMajority since it is post fork
-    if (Params().IsSoftForkActive(8, pindex->pprev->nHeight))
+    if (pindex->pprev && Params().IsSoftForkActive(8, pindex->pprev->nHeight))
     {
         flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
     }
@@ -3368,7 +3368,7 @@ bool UpdateHashProof(CBlock& block, CValidationState& state, CBlockIndex* pindex
         pindex->hashProof = hashProof;
     }
 
-    if (Params().IsSoftForkActive(8, pindex->pprev->nHeight))
+    if (pindex->pprev && Params().IsSoftForkActive(8, pindex->pprev->nHeight))
     {
         // compute v2 stake modifier
         pindex->nStakeModifierV2 = ComputeStakeModifier(pindex->pprev,block.vtx[1].vin[0].prevout.hash);

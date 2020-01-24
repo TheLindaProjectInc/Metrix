@@ -451,6 +451,7 @@ public:
         // This length check can probably be removed on the next update
         // as it is unlikely that people will still have corruption by then
         if (
+            nHeight > 0 &&
             Params().IsSoftForkActive(8, nHeight - 1) && 
             (!ser_action.ForRead() || (ser_action.ForRead() && s.size() == 216))
             )
