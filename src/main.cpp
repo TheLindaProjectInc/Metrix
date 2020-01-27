@@ -2357,7 +2357,7 @@ void static UpdateTip(CBlockIndex* pindexNew)
             pindex = pindex->pprev;
         }
         if (nUpgraded > 0)
-            LogPrintf("SetBestChain: %d of last 100 blocks above version %d\n", nUpgraded, CBlock::CURRENT_VERSION);
+            LogPrintf("SetBestChain: %d of last 100 blocks above version %d\n", nUpgraded, (int)CBlock::CURRENT_VERSION);
         if (nUpgraded > 100 / 2)
         {
                     //! strMiscWarning is read by GetWarnings(), called by Qt and the JSON-RPC code to warn the user:
@@ -3200,7 +3200,7 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
             *ppindex = pindex;
         if (pindex->nStatus & BLOCK_FAILED_MASK)
             return state.Invalid(error("%s : block is marked invalid", __func__), 0, "duplicate");
-            return true;
+        return true;
     }
 
     CBlockIndex* pindexPrev = NULL;
