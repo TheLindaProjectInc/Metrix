@@ -93,13 +93,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
     CBlockIndex* pindexPrev = chainActive.Tip();
     int nHeight = pindexPrev->nHeight + 1;
 
-    // initiate soft fork after block X to give nodes time to update.
-    // older nodes will not accept higher block versions than 7
-    if (nHeight > V8_START_BLOCK)
-    {
-       pblocktemplate->block.nVersion = 8; 
-    }
-
     //! Create coinbase tx
     CMutableTransaction txNew;
     txNew.vin.resize(1);

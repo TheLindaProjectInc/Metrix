@@ -1125,12 +1125,11 @@ bool AppInit2(boost::thread_group& threadGroup)
         } while (false);
 
         if (!fLoaded) {
-            //! first suggest a reindex
+            //! force a reindex
             if (!fReset) {
-                bool fRet = uiInterface.ThreadSafeMessageBox(
-                    strLoadError + ".\n\n" + _("Do you want to rebuild the block database now?"),
-                    "", CClientUIInterface::MSG_ERROR | CClientUIInterface::BTN_ABORT);
+                bool fRet = true;
                 if (fRet) {
+                    uiInterface.InitMessage(_("Corruption detected. Rebuilding block database..."));
                     fReindex = true;
                     fRequestShutdown = false;
                 } else {

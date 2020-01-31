@@ -296,7 +296,7 @@ bool CCryptoKeyStore::AddKeyPubKey(const CKey& key, const CPubKey& pubkey)
         if (!IsCrypted())
             return CBasicKeyStore::AddKeyPubKey(key, pubkey);
 
-        if (IsLocked())
+        if (IsLocked(true))
             return false;
 
         std::vector<unsigned char> vchCryptedSecret;
