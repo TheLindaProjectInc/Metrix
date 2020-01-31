@@ -3965,7 +3965,7 @@ bool CWallet::TopUpKeyPool(unsigned int nSize)
     {
         LOCK(cs_wallet);
 
-        if (IsLocked())
+        if (IsLocked(true))
             return false;
 
         CWalletDB walletdb(strWalletFile);
@@ -3997,7 +3997,7 @@ void CWallet::ReserveKeyFromKeyPool(int64_t& nIndex, CKeyPool& keypool)
     {
         LOCK(cs_wallet);
 
-        if (!IsLocked())
+        if (!IsLocked(true))
             TopUpKeyPool();
 
         //! Get the oldest key
@@ -4045,7 +4045,7 @@ bool CWallet::GetKeyFromPool(CPubKey& result)
         LOCK(cs_wallet);
         ReserveKeyFromKeyPool(nIndex, keypool);
         if (nIndex == -1) {
-            if (IsLocked())
+            if (IsLocked(true))
                 return false;
             result = GenerateNewKey();
             return true;

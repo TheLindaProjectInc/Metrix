@@ -111,7 +111,7 @@ UniValue getnewpubkey(const UniValue& params, bool fHelp)
     if (params.size() > 0)
         strAccount = AccountFromValue(params[0]);
 
-    if (!pwalletMain->IsLocked())
+    if (!pwalletMain->IsLocked(true))
         pwalletMain->TopUpKeyPool();
 
     //! Generate a new key that is added to wallet
@@ -149,7 +149,7 @@ UniValue getnewaddress(const UniValue& params, bool fHelp)
     if (params.size() > 0)
         strAccount = AccountFromValue(params[0]);
 
-    if (!pwalletMain->IsLocked())
+    if (!pwalletMain->IsLocked(true))
         pwalletMain->TopUpKeyPool();
 
     //! Generate a new key that is added to wallet
@@ -232,7 +232,7 @@ UniValue getrawchangeaddress(const UniValue& params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getrawchangeaddress", "") + HelpExampleRpc("getrawchangeaddress", ""));
 
-    if (!pwalletMain->IsLocked())
+    if (!pwalletMain->IsLocked(true))
         pwalletMain->TopUpKeyPool();
 
     CReserveKey reservekey(pwalletMain);
