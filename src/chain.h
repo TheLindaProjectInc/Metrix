@@ -444,17 +444,7 @@ public:
         READWRITE(VARINT(nMint));
         READWRITE(VARINT(nMoneySupply));
         READWRITE(nFlags);
-        // account for corruption issue where older nodes saved nStakeModifier
-        // to file instead of nStakeModifierV2. The size of a PoS block with 
-        // nStakeModifierV2 is 216 bytes so only attempt to parse nStakeModifierV2
-        // if the block is after the soft fork and it is the right length.
-        // This length check can probably be removed on the next update
-        // as it is unlikely that people will still have corruption by then
-        if (
-            nHeight > 0 &&
-            Params().IsSoftForkActive(8, nHeight - 1) && 
-            (!ser_action.ForRead() || (ser_action.ForRead() && s.size() == 216))
-            )
+        if (nHeight > 0 && Params().IsSoftForkActive(8, nHeight - 1))
         {
             READWRITE(nStakeModifierV2);
         }
