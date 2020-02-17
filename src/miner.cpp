@@ -346,9 +346,15 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
 CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfStake)
 {
+    if (!pwalletMain->IsLocked(true))
+        pwalletMain->TopUpKeyPool();
+
     CPubKey pubkey;
     if (!reservekey.GetReservedKey(pubkey))
+    {
+        LogPrintf("CreateNewBlockWithKey() failed to get reserved key\n");
         return NULL;
+    }
 
     CScript scriptPubKey = CScript() << ToByteVector(pubkey) << OP_CHECKSIG;
     return CreateNewBlock(scriptPubKey, pwallet, fProofOfStake);
