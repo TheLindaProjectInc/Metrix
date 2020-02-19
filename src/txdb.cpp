@@ -234,7 +234,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nMint = diskindex.nMint;
                 pindexNew->nMoneySupply = diskindex.nMoneySupply;
                 pindexNew->nFlags = diskindex.nFlags;
-                if (diskindex.nStakeModifierV2 != uint256(0))
+                if (diskindex.nHeight > 0 && Params().IsSoftForkActive(8, diskindex.nHeight - 1))
                 {
                     pindexNew->nStakeModifierV2 = diskindex.nStakeModifierV2;
                 }
