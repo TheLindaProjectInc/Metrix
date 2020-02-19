@@ -3703,6 +3703,8 @@ bool SignBlock(CBlock& block, CWallet& wallet, CAmount nFees)
 
                 *static_cast<CTransaction*>(&txNew) = CTransaction(txCoinStake);
                 block.vtx.insert(block.vtx.begin() + 1, txCoinStake);
+                // Metrix update coinbase hash due to 3.4 issues
+                block.vtx[0].UpdateHash();
                 block.hashMerkleRoot = block.BuildMerkleTree();
 
                 //! append a signature to our block

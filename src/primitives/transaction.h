@@ -194,9 +194,10 @@ class CTransaction
 private:
     /** Memory only. */
     const uint256 hash;
-    void UpdateHash() const;
+    
 
 public:
+    void UpdateHash() const; //metrix make this public so it can be manually called
     static const int32_t CURRENT_VERSION = 1;
 
     // The local variables are made const to prevent unintended modification
