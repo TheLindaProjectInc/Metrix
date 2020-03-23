@@ -19,7 +19,7 @@
 #include "wallet.h"
 #include "walletdb.h"
 
-#include "univalue/univalue.h"
+#include <univalue.h>
 
 using namespace std;
 using namespace boost;
