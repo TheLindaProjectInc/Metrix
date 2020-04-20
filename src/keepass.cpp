@@ -17,7 +17,7 @@
 #include "serialize.h"
 #include "wallet_ismine.h"
 
-#include "univalue/univalue.h"
+#include <univalue.h>
 //#include "script/script.h" // Necessary to prevent compile errors due to forward declaration of
 //! CScript in serialize.h (included from crypter.h)
 #include "wallet.h"

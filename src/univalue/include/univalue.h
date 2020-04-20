@@ -1,11 +1,13 @@
 // Copyright 2014 BitPay Inc.
+// Copyright 2015 Bitcoin Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_UNIVALUE_UNIVALUE_H
-#define BITCOIN_UNIVALUE_UNIVALUE_H
+#ifndef __UNIVALUE_H__
+#define __UNIVALUE_H__
 
 #include <stdint.h>
+
 #include <string>
 #include <vector>
 #include <map>
@@ -16,7 +18,7 @@
 
 class UniValue {
 public:
-    enum VType { VNULL, VOBJ, VARR, VSTR, VNUM, VREAL, VBOOL, };
+    enum VType { VNULL, VOBJ, VARR, VSTR, VNUM, VBOOL, };
 
     UniValue() { typ = VNULL; }
     UniValue(UniValue::VType initialType, const std::string& initialStr = "") {
@@ -61,7 +63,7 @@ public:
     bool setObject();
 
     enum VType getType() const { return typ; }
-    std::string getValStr() const { return val; }
+    const std::string& getValStr() const { return val; }
     bool empty() const { return (values.size() == 0); }
 
     size_t size() const { return values.size(); }
@@ -78,7 +80,6 @@ public:
     bool isBool() const { return (typ == VBOOL); }
     bool isStr() const { return (typ == VSTR); }
     bool isNum() const { return (typ == VNUM); }
-    bool isReal() const { return (typ == VREAL); }
     bool isArray() const { return (typ == VARR); }
     bool isObject() const { return (typ == VOBJ); }
 
@@ -242,8 +243,41 @@ extern enum jtokentype getJsonToken(std::string& tokenVal,
                                     unsigned int& consumed, const char *raw);
 extern const char *uvTypeName(UniValue::VType t);
 
+static inline bool jsonTokenIsValue(enum jtokentype jtt)
+{
+    switch (jtt) {
+    case JTOK_KW_NULL:
+    case JTOK_KW_TRUE:
+    case JTOK_KW_FALSE:
+    case JTOK_NUMBER:
+    case JTOK_STRING:
+        return true;
+
+    default:
+        return false;
+    }
+
+    // not reached
+}
+
+static inline bool json_isspace(int ch)
+{
+    switch (ch) {
+    case 0x20:
+    case 0x09:
+    case 0x0a:
+    case 0x0d:
+        return true;
+
+    default:
+        return false;
+    }
+
+    // not reached
+}
+
 extern const UniValue NullUniValue;
 
 const UniValue& find_value( const UniValue& obj, const std::string& name);
 
-#endif // BITCOIN_UNIVALUE_UNIVALUE_H
+#endif // __UNIVALUE_H__

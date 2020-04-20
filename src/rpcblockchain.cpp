@@ -9,7 +9,7 @@
 #include "rpcserver.h"
 #include "util.h"
 
-#include "univalue/univalue.h"
+#include <univalue.h>
 
 using namespace std;
 

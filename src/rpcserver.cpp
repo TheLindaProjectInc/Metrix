@@ -31,7 +31,7 @@
 #include <boost/thread.hpp>
 #include <list>
 
-#include "univalue/univalue.h"
+#include <univalue.h>
 
 using namespace boost;
 using namespace boost::asio;
