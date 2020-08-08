@@ -2,32 +2,105 @@
 <!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
 <plist version="0.9">
 <dict>
-	<key>CFBundleIconFile</key>
-	<string>bitcoin.icns</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleGetInfoString</key>
-	<string>metrix-Qt</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleExecutable</key>
-	<string>metrix-Qt</string>
-	<key>CFBundleIdentifier</key>
-	<string>co.metrix.metrix-Qt</string>
-        <key>CFBundleURLTypes</key>
+  <key>LSMinimumSystemVersion</key>
+  <string>10.10.0</string>
+
+  <key>LSArchitecturePriority</key>
+  <array>
+    <string>x86_64</string>
+  </array>
+
+  <key>CFBundleIconFile</key>
+  <string>bitcoin.icns</string>
+
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+
+  <key>CFBundleGetInfoString</key>
+  <string>0.19.0.1, Copyright © 2009-2020 The Metrix Core Developers</string>
+
+  <key>CFBundleShortVersionString</key>
+  <string>0.19.0</string>
+
+  <key>CFBundleVersion</key>
+  <string>0.19.0</string>
+
+  <key>CFBundleSignature</key>
+  <string>????</string>
+
+  <key>CFBundleExecutable</key>
+  <string>Metrix-Qt</string>
+
+  <key>CFBundleName</key>
+  <string>Metrix-Qt</string>
+
+  <key>LSHasLocalizedDisplayName</key>
+  <true/>
+
+  <key>CFBundleIdentifier</key>
+  <string>org.TheLindaProjectInc.Metrix-Qt</string>
+
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleURLName</key>
+      <string>org.metrix.QtumPayment</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>metrix</string>
+      </array>
+    </dict>
+  </array>
+
+  <key>UTExportedTypeDeclarations</key>
+  <array>
+    <dict>
+      <key>UTTypeIdentifier</key>
+      <string>org.metrix.paymentrequest</string>
+      <key>UTTypeDescription</key>
+      <string>Metrix payment request</string>
+      <key>UTTypeConformsTo</key>
+      <array>
+        <string>public.data</string>
+      </array>
+      <key>UTTypeTagSpecification</key>
+      <dict>
+        <key>public.mime-type</key>
+        <string>application/x-metrix-payment-request</string>
+        <key>public.filename-extension</key>
         <array>
-          <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLName</key>
-            <string>co.Metrix.MetrixPayment</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-              <string>Metrix</string>
-            </array>
-          </dict>
+          <string>metrixpaymentrequest</string>
         </array>
-        <key>LSAppNapIsDisabled</key>
-          <string>True</string>
+      </dict>
+    </dict>
+  </array>
+
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSItemContentTypes</key>
+      <array>
+        <string>org.metrix.paymentrequest</string>
+      </array>
+      <key>LSHandlerRank</key>
+      <string>Owner</string>
+    </dict>
+  </array>
+
+  <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+  <key>NSHighResolutionCapable</key>
+    <string>True</string>
+
+  <key>NSRequiresAquaSystemAppearance</key>
+    <string>True</string>
+
+  <key>LSApplicationCategoryType</key>
+    <string>public.app-category.finance</string>
 </dict>
 </plist>

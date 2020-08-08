@@ -1,17 +1,14 @@
 ---
-name: "metrix-win-3.4"
+name: "metrix-core-win-0.19"
 enable_cache: true
+distro: "ubuntu"
 suites:
-- "xenial"
+- "bionic"
 architectures:
 - "amd64"
 packages:
 - "curl"
-- "ca-certificates"
-- "g++-multilib"
-- "gcc-multilib"
-- "g++-mingw-w64-x86-64"
-- "g++-mingw-w64-i686"
+- "g++"
 - "git"
 - "pkg-config"
 - "autoconf"
@@ -19,22 +16,37 @@ packages:
 - "automake"
 - "faketime"
 - "bsdmainutils"
-- "binutils-gold"
-reference_datetime: "2013-06-01 00:00:00"
+- "mingw-w64"
+- "g++-mingw-w64"
+- "nsis"
+- "zip"
+- "ca-certificates"
+- "python3"
+- "rename"
 remotes:
-- "url": "https://github.com/TheLindaProjectInc/metrix.git"
+- "url": "https://github.com/TheLindaProjectInc/metrix-qtum.git"
   "dir": "metrix"
+- "url": "https://github.com/TheLindaProjectInc/cpp-eth-metrix.git"
+  "dir": "cpp-eth-metrix"
 files: []
 script: |
+  set -e -o pipefail
+
+  #this is a hack since gitian has no natural support for submodules
+  cp -r cpp-eth-metrix/* metrix/src/cpp-ethereum
+  #make sure this file exists... 
+  cat metrix/src/cpp-ethereum/utils/libscrypt/b64.c
+
   WRAP_DIR=$HOME/wrapped
-  HOSTS="i686-w64-mingw32 x86_64-w64-mingw32"
-  CONFIGFLAGS="--with-incompatible-bdb BDB_LIBS='-ldb_cxx-5.0' --with-miniupnpc CPPFLAGS='-DSTATICLIB -DMINIUPNP_STATICLIB' LDFLAGS='-static-libgcc -static-libstdc++'"
-  FAKETIME_HOST_PROGS=""
-  FAKETIME_PROGS="date ar ranlib nm strip"
+  HOSTS="x86_64-w64-mingw32"
+  CONFIGFLAGS="--enable-reduce-exports --disable-bench --disable-gui-tests"
+  FAKETIME_HOST_PROGS="ar ranlib nm windres strip objcopy"
+  FAKETIME_PROGS="date makensis zip"
+  HOST_CFLAGS="-O2 -g"
+  HOST_CXXFLAGS="-O2 -g"
 
   export QT_RCC_TEST=1
-  export GZIP="-9n"
-  export TAR_OPTIONS="--mtime="$REFERENCE_DATE\\\ $REFERENCE_TIME""
+  export QT_RCC_SOURCE_DATE_OVERRIDE=1
   export TZ="UTC"
   export BUILD_DIR=`pwd`
   mkdir -p ${WRAP_DIR}
@@ -44,49 +56,93 @@ script: |
     mkdir -p ${BASE_CACHE} ${SOURCES_PATH}
   fi
 
-  # Create global faketime wrappers
+  function create_global_faketime_wrappers {
   for prog in ${FAKETIME_PROGS}; do
-    echo '#!/bin/bash' > ${WRAP_DIR}/${prog}
+    echo '#!/usr/bin/env bash' > ${WRAP_DIR}/${prog}
     echo "REAL=\`which -a ${prog} | grep -v ${WRAP_DIR}/${prog} | head -1\`" >> ${WRAP_DIR}/${prog}
-    echo 'export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1' >> ${WRAP_DIR}/${prog}
-    echo "export FAKETIME=\"${REFERENCE_DATETIME}\"" >> ${WRAP_DIR}/${prog}
+    echo 'export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1' >> ${WRAP_DIR}/${prog}
+    echo "export FAKETIME=\"$1\"" >> ${WRAP_DIR}/${prog}
     echo "\$REAL \$@" >> $WRAP_DIR/${prog}
     chmod +x ${WRAP_DIR}/${prog}
   done
+  }
 
-  # Create per-host faketime wrappers
+  function create_per-host_faketime_wrappers {
   for i in $HOSTS; do
     for prog in ${FAKETIME_HOST_PROGS}; do
-        echo '#!/bin/bash' > ${WRAP_DIR}/${i}-${prog}
+        echo '#!/usr/bin/env bash' > ${WRAP_DIR}/${i}-${prog}
         echo "REAL=\`which -a ${i}-${prog} | grep -v ${WRAP_DIR}/${i}-${prog} | head -1\`" >> ${WRAP_DIR}/${i}-${prog}
-        echo 'export LD_PRELOAD=/usr/lib/faketime/libfaketime.so.1' >> ${WRAP_DIR}/${i}-${prog}
-        echo "export FAKETIME=\"${REFERENCE_DATETIME}\"" >> ${WRAP_DIR}/${i}-${prog}
+        echo 'export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1' >> ${WRAP_DIR}/${i}-${prog}
+        echo "export FAKETIME=\"$1\"" >> ${WRAP_DIR}/${i}-${prog}
         echo "\$REAL \$@" >> $WRAP_DIR/${i}-${prog}
         chmod +x ${WRAP_DIR}/${i}-${prog}
     done
   done
+  }
+
+  function create_per-host_linker_wrapper {
+  # This is only needed for trusty, as the mingw linker leaks a few bytes of
+  # heap, causing non-determinism. See discussion in https://github.com/bitcoin/bitcoin/pull/6900
+  for i in $HOSTS; do
+    mkdir -p ${WRAP_DIR}/${i}
+    for prog in collect2; do
+        echo '#!/usr/bin/env bash' > ${WRAP_DIR}/${i}/${prog}
+        REAL=$(${i}-gcc -print-prog-name=${prog})
+        echo "export MALLOC_PERTURB_=255" >> ${WRAP_DIR}/${i}/${prog}
+        echo "${REAL} \$@" >> $WRAP_DIR/${i}/${prog}
+        chmod +x ${WRAP_DIR}/${i}/${prog}
+    done
+    for prog in gcc g++; do
+        echo '#!/usr/bin/env bash' > ${WRAP_DIR}/${i}-${prog}
+        echo "REAL=\`which -a ${i}-${prog}-posix | grep -v ${WRAP_DIR}/${i}-${prog} | head -1\`" >> ${WRAP_DIR}/${i}-${prog}
+        echo 'export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1' >> ${WRAP_DIR}/${i}-${prog}
+        echo "export FAKETIME=\"$1\"" >> ${WRAP_DIR}/${i}-${prog}
+        echo "export COMPILER_PATH=${WRAP_DIR}/${i}" >> ${WRAP_DIR}/${i}-${prog}
+        echo "\$REAL \$@" >> $WRAP_DIR/${i}-${prog}
+        chmod +x ${WRAP_DIR}/${i}-${prog}
+    done
+  done
+  }
+
+  # Faketime for depends so intermediate results are comparable
+  export PATH_orig=${PATH}
+  create_global_faketime_wrappers "2000-01-01 12:00:00"
+  create_per-host_faketime_wrappers "2000-01-01 12:00:00"
+  create_per-host_linker_wrapper "2000-01-01 12:00:00"
   export PATH=${WRAP_DIR}:${PATH}
 
   cd metrix
   BASEPREFIX=`pwd`/depends
-  MAKEOPTS="NO_QT=1"
   # Build dependencies for each host
   for i in $HOSTS; do
     make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}"
   done
 
+  # Faketime for binaries
+  export PATH=${PATH_orig}
+  create_global_faketime_wrappers "${REFERENCE_DATETIME}"
+  create_per-host_faketime_wrappers "${REFERENCE_DATETIME}"
+  create_per-host_linker_wrapper "${REFERENCE_DATETIME}"
+  export PATH=${WRAP_DIR}:${PATH}
+
   # Create the release tarball using (arbitrarily) the first host
   ./autogen.sh
-  ./configure --prefix=${BASEPREFIX}/`echo "${HOSTS}"| awk '{print $1;}'` ${CONFIGFLAGS}
+  CONFIG_SITE=${BASEPREFIX}/`echo "${HOSTS}" | awk '{print $1;}'`/share/config.site ./configure --prefix=/
   make dist
   SOURCEDIST=`echo metrix-*.tar.gz`
   DISTNAME=`echo ${SOURCEDIST} | sed 's/.tar.*//'`
+
   # Correct tar file order
   mkdir -p temp
   pushd temp
-  tar xf ../$SOURCEDIST
-  find metrix-* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
+  tar -xf ../$SOURCEDIST
+  find metrix-* | sort | tar --mtime="$REFERENCE_DATETIME" --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
+  mkdir -p $OUTDIR/src
+  cp ../$SOURCEDIST $OUTDIR/src
   popd
+
+  # Workaround for tarball not building with the bare tag version (prep)
+  make -C src obj/build.h
 
   ORIGPATH="$PATH"
   # Extract the release tarball into a dir for each host and build
@@ -98,17 +154,34 @@ script: |
     mkdir -p ${INSTALLPATH}
     tar --strip-components=1 -xf ../$SOURCEDIST
 
-    ./configure --prefix=${BASEPREFIX}/${i} --bindir=${INSTALLPATH}/bin --includedir=${INSTALLPATH}/include --libdir=${INSTALLPATH}/lib --disable-ccache ${CONFIGFLAGS}
-    make
-    make install-strip
+    # Workaround for tarball not building with the bare tag version
+    echo '#!/bin/true' >share/genbuild.sh
+    mkdir src/obj
+    cp ../src/obj/build.h src/obj/
+
+    CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}"
+    make ${MAKEOPTS}
+    make ${MAKEOPTS} -C src check-security
+    make deploy
+    make install DESTDIR=${INSTALLPATH}
+    rename 's/-setup\.exe$/-setup-unsigned.exe/' *-setup.exe
+    cp -f metrix-*setup*.exe $OUTDIR/
     cd installed
+    mv ${DISTNAME}/bin/*.dll ${DISTNAME}/lib/
     find . -name "lib*.la" -delete
     find . -name "lib*.a" -delete
     rm -rf ${DISTNAME}/lib/pkgconfig
-    find ${DISTNAME} | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ${OUTDIR}/${DISTNAME}-${i}.tar.gz
+    find ${DISTNAME}/bin -type f -executable -exec ${i}-objcopy --only-keep-debug {} {}.dbg \; -exec ${i}-strip -s {} \; -exec ${i}-objcopy --add-gnu-debuglink={}.dbg {} \;
+    find ${DISTNAME}/lib -type f -exec ${i}-objcopy --only-keep-debug {} {}.dbg \; -exec ${i}-strip -s {} \; -exec ${i}-objcopy --add-gnu-debuglink={}.dbg {} \;
+    find ${DISTNAME} -not -name "*.dbg"  -type f | sort | zip -X@ ${OUTDIR}/${DISTNAME}-${i}.zip
+    find ${DISTNAME} -name "*.dbg"  -type f | sort | zip -X@ ${OUTDIR}/${DISTNAME}-${i}-debug.zip
     cd ../../
+    rm -rf distsrc-${i}
   done
-  mkdir -p $OUTDIR/src
-  mv $SOURCEDIST $OUTDIR/src
-  mv ${OUTDIR}/${DISTNAME}-x86_64-*.tar.gz ${OUTDIR}/${DISTNAME}-win64.tar.gz
-  mv ${OUTDIR}/${DISTNAME}-i686-*.tar.gz ${OUTDIR}/${DISTNAME}-win32.tar.gz
+  cp -rf contrib/windeploy $BUILD_DIR
+  cd $BUILD_DIR/windeploy
+  mkdir unsigned
+  cp $OUTDIR/metrix-*setup-unsigned.exe unsigned/
+  find . | sort | tar --mtime="$REFERENCE_DATETIME" --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ${OUTDIR}/${DISTNAME}-win-unsigned.tar.gz
+  mv ${OUTDIR}/${DISTNAME}-x86_64-*-debug.zip ${OUTDIR}/${DISTNAME}-win64-debug.zip
+  mv ${OUTDIR}/${DISTNAME}-x86_64-*.zip ${OUTDIR}/${DISTNAME}-win64.zip

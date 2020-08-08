@@ -1,149 +1,177 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2012 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Copyright (c) 2009-2019 The Bitcoin Core developers
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "clientversion.h"
-#include "init.h"
-#include "main.h"
-#include "noui.h"
-#include "rpcserver.h"
-#include "ui_interface.h"
-#include "util.h"
+#if defined(HAVE_CONFIG_H)
+#include <config/bitcoin-config.h>
+#endif
 
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/thread.hpp>
+#include <chainparams.h>
+#include <clientversion.h>
+#include <compat.h>
+#include <fs.h>
+#include <init.h>
+#include <interfaces/chain.h>
+#include <noui.h>
+#include <shutdown.h>
+#include <ui_interface.h>
+#include <util/strencodings.h>
+#include <util/system.h>
+#include <util/threadnames.h>
+#include <util/translation.h>
 
-static bool fDaemon;
+#include <functional>
 
-void WaitForShutdown(boost::thread_group* threadGroup)
+const std::function<std::string(const char*)> G_TRANSLATION_FUN = nullptr;
+
+static void WaitForShutdown()
 {
-    bool fShutdown = ShutdownRequested();
-    //! Tell the main threads to shutdown.
-    while (!fShutdown) {
+    while (!ShutdownRequested())
+    {
         MilliSleep(200);
-        fShutdown = ShutdownRequested();
     }
-    if (threadGroup) {
-        threadGroup->interrupt_all();
-        threadGroup->join_all();
-    }
+    Interrupt();
 }
 
 //////////////////////////////////////////////////////////////////////////////
-/**
- * Start
- */
-bool AppInit(int argc, char* argv[])
+//
+// Start
+//
+static bool AppInit(int argc, char* argv[])
 {
-    boost::thread_group threadGroup;
+    InitInterfaces interfaces;
+    interfaces.chain = interfaces::MakeChain();
 
     bool fRet = false;
-    try {
-        /**
-         * Parameters
-         *
-         * If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
-         */
-        ParseParameters(argc, argv);
-        //! check migrate linda datadir to metrix datadir
-        checkMigrateDataDir();
-        if (!boost::filesystem::is_directory(GetDataDir(false))) {
-            fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
-            return false;
-        }
-        try 
+
+    util::ThreadSetInternalName("init");
+
+    //
+    // Parameters
+    //
+    // If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
+    SetupServerArgs();
+    std::string error;
+    if (!gArgs.ParseParameters(argc, argv, error)) {
+        return InitError(strprintf("Error parsing command line arguments: %s\n", error));
+    }
+
+    // Process help and version before taking care about datadir
+    if (HelpRequested(gArgs) || gArgs.IsArgSet("-version")) {
+        std::string strUsage = PACKAGE_NAME " version " + FormatFullVersion() + "\n";
+
+        if (gArgs.IsArgSet("-version"))
         {
-            ReadConfigFile(mapArgs, mapMultiArgs);
-        } catch (std::exception& e) {
-            fprintf(stderr, "Error reading configuration file: %s\n", e.what());
-            return false;
+            strUsage += FormatParagraph(LicenseInfo()) + "\n";
         }
-        //! Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
-        if (!SelectParamsFromCommandLine()) {
-            fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
-            return false;
-        }
-
-        if (mapArgs.count("-?") || mapArgs.count("-h") ||  mapArgs.count("-help") || mapArgs.count("-version")) {
-            std::string strUsage = _("Metrix Version") + " " + _("version") + " " + FormatFullVersion() + "\n";
-
-            if (!mapArgs.count("-version")) {
-                strUsage += LicenseInfo();
-            } else {
-                strUsage += "\n" + _("Usage:") + "\n" +
-                            "  metrixd [options]                     " + _("Start Metrix Core Daemon") + "\n";
-
-                strUsage += "\n" + HelpMessage(HMM_BITCOIND);
-            }
-            fprintf(stdout, "%s", strUsage.c_str());
-            return false;
-        }
-
-        //! Command-line RPC
-        for (int i = 1; i < argc; i++)
-            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "Metrix:"))
-                fCommandLine = true;
-
-        if (fCommandLine) {
-            fprintf(stderr, "Error: There is no RPC client functionality in metrixd anymore. Use the metrix-cli utility instead.\n");
-            exit(1);
-        }
-#ifndef WIN32
-        fDaemon = GetBoolArg("-daemon", false);
-        if (fDaemon)
+        else
         {
-            fprintf(stdout, "Metrix server starting\n");
-
-            //! Daemonize
-            pid_t pid = fork();
-            if (pid < 0) {
-                fprintf(stderr, "Error: fork() returned %d errno %d\n", pid, errno);
-                return false;
-            }
-            if (pid > 0) //! Parent process, pid is child process id
-            {
-                return true;
-            }
-            //! Child process falls through to rest of initialization
-
-            pid_t sid = setsid();
-            if (sid < 0)
-                fprintf(stderr, "Error: setsid() returned %d errno %d\n", sid, errno);
+            strUsage += "\nUsage:  metrixd [options]                     Start " PACKAGE_NAME "\n";
+            strUsage += "\n" + gArgs.GetHelpMessage();
         }
+
+        tfm::format(std::cout, "%s", strUsage.c_str());
+        return true;
+    }
+
+    try
+    {
+        if (!CheckDataDirOption()) {
+            return InitError(strprintf("Specified data directory \"%s\" does not exist.\n", gArgs.GetArg("-datadir", "")));
+        }
+        if (!gArgs.ReadConfigFiles(error, true)) {
+            return InitError(strprintf("Error reading configuration file: %s\n", error));
+        }
+        // Check for -chain, -testnet or -regtest parameter (Params() calls are only valid after this clause)
+        try {
+            SelectParams(gArgs.GetChainName());
+        } catch (const std::exception& e) {
+            return InitError(strprintf("%s\n", e.what()));
+        }
+
+        // Error out when loose non-argument tokens are encountered on command line
+        for (int i = 1; i < argc; i++) {
+            if (!IsSwitchChar(argv[i][0])) {
+                return InitError(strprintf("Command line contains unexpected token '%s', see metrixd -h for a list of options.\n", argv[i]));
+            }
+        }
+
+        // -server defaults to true for bitcoind but not for the GUI so do this here
+        gArgs.SoftSetBoolArg("-server", true);
+        // Set this early so that parameter interactions go to console
+        InitLogging();
+        InitParameterInteraction();
+        if (!AppInitBasicSetup())
+        {
+            // InitError will have been called with detailed error, which ends up on console
+            return false;
+        }
+        if (!AppInitParameterInteraction())
+        {
+            // InitError will have been called with detailed error, which ends up on console
+            return false;
+        }
+        if (!AppInitSanityChecks())
+        {
+            // InitError will have been called with detailed error, which ends up on console
+            return false;
+        }
+        if (gArgs.GetBoolArg("-daemon", false))
+        {
+#if HAVE_DECL_DAEMON
+#if defined(MAC_OSX)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-        SoftSetBoolArg("-server", true);
+            tfm::format(std::cout, PACKAGE_NAME " starting\n");
 
-        fRet = AppInit2(threadGroup);
-    } catch (std::exception& e) {
+            // Daemonize
+            if (daemon(1, 0)) { // don't chdir (1), do close FDs (0)
+                return InitError(strprintf("daemon() failed: %s\n", strerror(errno)));
+            }
+#if defined(MAC_OSX)
+#pragma GCC diagnostic pop
+#endif
+#else
+            return InitError("-daemon is not supported on this operating system\n");
+#endif // HAVE_DECL_DAEMON
+        }
+        // Lock data directory after daemonization
+        if (!AppInitLockDataDirectory())
+        {
+            // If locking the data directory failed, exit immediately
+            return false;
+        }
+        fRet = AppInitMain(interfaces);
+    }
+    catch (const std::exception& e) {
         PrintExceptionContinue(&e, "AppInit()");
-        throw;
     } catch (...) {
-        PrintExceptionContinue(NULL, "AppInit()");
-        throw;
+        PrintExceptionContinue(nullptr, "AppInit()");
     }
 
-    if (!fRet) {
-        threadGroup.interrupt_all();
-        /**
-         * threadGroup.join_all(); was left out intentionally here, because we didn't re-test all of
-         * the startup-failure cases to make sure they don't result in a hang due to some
-         * thread-blocking-waiting-for-another-thread-during-startup case
-         */
+    if (!fRet)
+    {
+        Interrupt();
     } else {
-        WaitForShutdown(&threadGroup);
+        WaitForShutdown();
     }
-    Shutdown();
+    Shutdown(interfaces);
 
     return fRet;
 }
 
 int main(int argc, char* argv[])
 {
+#ifdef WIN32
+    util::WinCmdLineArgs winArgs;
+    std::tie(argc, argv) = winArgs.get();
+#endif
     SetupEnvironment();
 
-    //! Connect bitcoind signal handlers
+    // Connect bitcoind signal handlers
     noui_connect();
 
-    return (AppInit(argc, argv) ? 0 : 1);
+    return (AppInit(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);
 }

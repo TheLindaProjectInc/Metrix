@@ -4,10 +4,11 @@
  * file COPYING or http://www.opensource.org/licenses/mit-license.php.*
  **********************************************************************/
 
-#ifndef _SECP256K1_BENCH_H_
-#define _SECP256K1_BENCH_H_
+#ifndef SECP256K1_BENCH_H
+#define SECP256K1_BENCH_H
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "sys/time.h"
 
@@ -20,8 +21,10 @@ static double gettimedouble(void) {
 void print_number(double x) {
     double y = x;
     int c = 0;
-    if (y < 0.0) y = -y;
-    while (y < 100.0) {
+    if (y < 0.0) {
+        y = -y;
+    }
+    while (y > 0 && y < 100.0) {
         y *= 10.0;
         c++;
     }
@@ -35,13 +38,21 @@ void run_benchmark(char *name, void (*benchmark)(void*), void (*setup)(void*), v
     double max = 0.0;
     for (i = 0; i < count; i++) {
         double begin, total;
-        if (setup) setup(data);
+        if (setup != NULL) {
+            setup(data);
+        }
         begin = gettimedouble();
         benchmark(data);
         total = gettimedouble() - begin;
-        if (teardown) teardown(data);
-        if (total < min) min = total;
-        if (total > max) max = total;
+        if (teardown != NULL) {
+            teardown(data);
+        }
+        if (total < min) {
+            min = total;
+        }
+        if (total > max) {
+            max = total;
+        }
         sum += total;
     }
     printf("%s: min ", name);
@@ -53,4 +64,19 @@ void run_benchmark(char *name, void (*benchmark)(void*), void (*setup)(void*), v
     printf("us\n");
 }
 
-#endif
+int have_flag(int argc, char** argv, char *flag) {
+    char** argm = argv + argc;
+    argv++;
+    if (argv == argm) {
+        return 1;
+    }
+    while (argv != NULL && argv != argm) {
+        if (strcmp(*argv, flag) == 0) {
+            return 1;
+        }
+        argv++;
+    }
+    return 0;
+}
+
+#endif /* SECP256K1_BENCH_H */
