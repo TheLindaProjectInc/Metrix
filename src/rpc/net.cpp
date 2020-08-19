@@ -230,8 +230,8 @@ static UniValue addnode(const JSONRPCRequest& request)
                 },
                 RPCResults{},
                 RPCExamples{
-                    HelpExampleCli("addnode", "\"192.168.0.6:33820\" \"onetry\"")
-            + HelpExampleRpc("addnode", "\"192.168.0.6:33820\", \"onetry\"")
+                    HelpExampleCli("addnode", "\"192.168.0.6:33830\" \"onetry\"")
+            + HelpExampleRpc("addnode", "\"192.168.0.6:33830\", \"onetry\"")
                 },
             }.ToString());
 
@@ -273,9 +273,9 @@ static UniValue disconnectnode(const JSONRPCRequest& request)
                 },
                 RPCResults{},
                 RPCExamples{
-                    HelpExampleCli("disconnectnode", "\"192.168.0.6:33820\"")
+                    HelpExampleCli("disconnectnode", "\"192.168.0.6:33830\"")
             + HelpExampleCli("disconnectnode", "\"\" 1")
-            + HelpExampleRpc("disconnectnode", "\"192.168.0.6:33820\"")
+            + HelpExampleRpc("disconnectnode", "\"192.168.0.6:33830\"")
             + HelpExampleRpc("disconnectnode", "\"\", 1")
                 },
             }.Check(request);
@@ -320,7 +320,7 @@ static UniValue getaddednodeinfo(const JSONRPCRequest& request)
             "    \"connected\" : true|false,          (boolean) If connected\n"
             "    \"addresses\" : [                    (list of objects) Only when connected = true\n"
             "       {\n"
-            "         \"address\" : \"192.168.0.201:33820\",  (string) The metrix server IP and port we're connected to\n"
+            "         \"address\" : \"192.168.0.201:33830\",  (string) The metrix server IP and port we're connected to\n"
             "         \"connected\" : \"outbound\"           (string) connection, inbound or outbound\n"
             "       }\n"
             "     ]\n"
