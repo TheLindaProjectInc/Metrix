@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/TheLindaProjectInc/metrix-qtum.svg?branch=master)](https://travis-ci.com/TheLindaProjectInc/metrix-qtum)
+[![Build Status](https://travis-ci.com/TheLindaProjectInc/metrix.svg?branch=master)](https://travis-ci.com/TheLindaProjectInc/metrix)
 <p align="center">
     <img src="logo.png">
 </p>
@@ -112,7 +112,7 @@ Make sure to check out these resources as well for more information and to keep 
 
 ### Validate and Reproduce Binaries
 
-Metrix uses a tool called Gitian to make reproducible builds that can be verified by anyone. Instructions on setting up a Gitian VM and building Metrix are provided in [Gitan Building](https://github.com/TheLindaProjectInc/metrix-qtum/blob/master/doc/gitian-building.md)
+Metrix uses a tool called Gitian to make reproducible builds that can be verified by anyone. Instructions on setting up a Gitian VM and building Metrix are provided in [Gitan Building](https://github.com/TheLindaProjectInc/metrix/blob/master/doc/gitian-building.md)
 
 ### Build on Ubuntu
 
@@ -128,8 +128,8 @@ This is a quick start script for compiling Metrix on Ubuntu
     # If you want to build the Qt GUI:
     sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler qrencode
 
-    git clone https://github.com/TheLindaProjectInc/metrix-qtum --recursive
-    cd metrix-qtum
+    git clone https://github.com/TheLindaProjectInc/metrix --recursive
+    cd metrix
 
     # Note autogen will prompt to install some more dependencies if needed
     ./autogen.sh
@@ -138,7 +138,7 @@ This is a quick start script for compiling Metrix on Ubuntu
     
 ### Build on CentOS
 
-Here is a brief description for compiling Metrix on CentOS, for more details please refer to [the specific document](https://github.com/TheLindaProjectInc/metrix-qtum/blob/master/doc/build-unix.md)
+Here is a brief description for compiling Metrix on CentOS, for more details please refer to [the specific document](https://github.com/TheLindaProjectInc/metrix/blob/master/doc/build-unix.md)
 
     # Compiling boost manually
     sudo yum install python-devel bzip2-devel
@@ -158,7 +158,7 @@ Here is a brief description for compiling Metrix on CentOS, for more details ple
     sudo yum install qt5-qttools-devel protobuf-devel qrencode-devel
     
     # Building Metrix
-    git clone --recursive https://github.com/TheLindaProjectInc/metrix-qtum.git
+    git clone --recursive https://github.com/TheLindaProjectInc/metrix.git
     cd qtum
     ./autogen.sh
     ./configure
@@ -189,7 +189,7 @@ NOTE: Building with Qt4 is still supported, however, could result in a broken UI
 
 1. Clone the qtum source code and cd into `qtum`
 
-        git clone --recursive https://github.com/TheLindaProjectInc/metrix-qtum.git
+        git clone --recursive https://github.com/TheLindaProjectInc/metrix.git
         cd qtum
 
 2.  Build qtum-core:
@@ -220,10 +220,10 @@ Development Process
 -------------------
 
 The `master` branch is regularly built and tested, but is not guaranteed to be
-completely stable. [Tags](https://github.com/TheLindaProjectInc/metrix-qtum/tags) are created
+completely stable. [Tags](https://github.com/TheLindaProjectInc/metrix/tags) are created
 regularly to indicate new official, stable release versions of Metrix.
 
-The contribution workflow is described in [CONTRIBUTING.md](https://github.com/TheLindaProjectInc/metrix-qtum/blob/master/CONTRIBUTING.md).
+The contribution workflow is described in [CONTRIBUTING.md](https://github.com/TheLindaProjectInc/metrix/blob/master/CONTRIBUTING.md).
 
 
 Testing

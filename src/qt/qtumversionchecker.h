@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#define QTUM_RELEASES "https://github.com/TheLindaProjectInc/metrix-qtum/releases"
+#define QTUM_RELEASES "https://github.com/TheLindaProjectInc/metrix/releases"
 
 class Version {
 

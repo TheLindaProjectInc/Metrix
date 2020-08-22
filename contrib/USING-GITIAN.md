@@ -7,14 +7,14 @@ Generate GPG key on your computer:
 3. ```gpg --armor --export 3AA5C34371567BD2```(Enter the hash from previous command)
 Copy got gpg key into the /contrib/gitian-keys/ folder with .pgp format.
 ### Setting up Gitian
-1. Replace .yml files in metrix/contrib/gitian-descriptors folder. Replace gitian-build.sh in metrix/contrib folder. Add windeploy/ folder into the metrix/contrib. Push these changes to remote repository https://github.com/TheLindaProjectInc/metrix-qtum/. Also very important, windeploy/ folder should be The same version as you want to build. You will couldn't build win binaries without this folder in version which you want to build.
+1. Replace .yml files in metrix/contrib/gitian-descriptors folder. Replace gitian-build.sh in metrix/contrib folder. Add windeploy/ folder into the metrix/contrib. Push these changes to remote repository https://github.com/TheLindaProjectInc/metrix/. Also very important, windeploy/ folder should be The same version as you want to build. You will couldn't build win binaries without this folder in version which you want to build.
 2. gitian-build.sh script should be started from directory where metrix places(like in instruction).
 ##### First time / New Gitian builders
 These actions are executed once when first using gitian-builder. If you have used gitian-builder for metrix skip these steps.
 1. ```metrix/contrib/gitian-build.sh --setup``` This command create and setup virtual machines to build your binaries files. This command may take a while (about 40 minutes). If you want to use KVM as build VM , run script with ```--kvm```.
     ```metrix/contrib/gitian-build.sh --setup --kvm```
 
-2. Create the OS X SDK tarball( https://github.com/TheLindaProjectInc/metrix-qtum/blob/master/doc/README_osx.md), create inputs/ folder in gitian-builder/ . Copy MacOSX10.11.sdk.tar.gz into the inputs/ directory.
+2. Create the OS X SDK tarball( https://github.com/TheLindaProjectInc/metrix/blob/master/doc/README_osx.md), create inputs/ folder in gitian-builder/ . Copy MacOSX10.11.sdk.tar.gz into the inputs/ directory.
 ##### Not first time
 Ensure that the ./gitian.sigs directory is up to date for signs verifying.
 
@@ -52,7 +52,7 @@ Output will look something like:
     remote: Total 57959 (delta 0), reused 0 (delta 0), pack-reused 57958
     Receiving objects: 100% (57959/57959), 53.76 MiB | 484.00 KiB/s, done.
     Resolving deltas: 100% (41590/41590), done.
-    From https://github.com/TheLindaProjectInc/metrix-qtum
+    From https://github.com/TheLindaProjectInc/metrix
     ... (new tags, new branch etc)
     --- Building for trusty amd64 ---
     Stopping target if it is up

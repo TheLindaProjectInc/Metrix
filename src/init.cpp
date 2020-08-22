@@ -591,7 +591,7 @@ void SetupServerArgs()
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/TheLindaProjectInc/metrix-qtum>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/TheLindaProjectInc/metrix>";
     const std::string URL_WEBSITE = "<https://metrixcoin.com>";
 
     return CopyrightHolders(strprintf(_("Copyright (C) %i").translated, COPYRIGHT_YEAR) + " ") + "\n" +

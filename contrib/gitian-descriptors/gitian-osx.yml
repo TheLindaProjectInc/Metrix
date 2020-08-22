@@ -29,7 +29,7 @@ packages:
 - "python3-setuptools"
 - "fonts-tuffy"
 remotes:
-- "url": "https://github.com/TheLindaProjectInc/metrix-qtum.git"
+- "url": "https://github.com/TheLindaProjectInc/metrix.git"
   "dir": "metrix"
 - "url": "https://github.com/TheLindaProjectInc/cpp-eth-metrix.git"
   "dir": "cpp-eth-metrix"
