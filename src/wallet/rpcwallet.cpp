@@ -3356,18 +3356,21 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
     }
     if (pwallet->IsCrypted()) {
         obj.pushKV("unlocked_until", pwallet->nRelockTime);
-        
-        if (!pwallet->IsCrypted())
-            obj.pushKV("encryption_status", "Unencrypted");
-        else if (pwallet->IsLocked())
-        {
-            if (pwallet->m_wallet_unlock_staking_only)
-                obj.pushKV("encryption_status", "LockedForStaking");
-            else
-                obj.pushKV("encryption_status", "Locked");
-        }
+    }
+    if (pwallet->IsLocked())
+    {
+        obj.pushKV("encryption_status", "Locked");
+    }
+    else if (pwallet->IsCrypted())
+    {
+        if (pwallet->m_wallet_unlock_staking_only)
+            obj.pushKV("encryption_status", "LockedForStaking");
         else
             obj.pushKV("encryption_status", "Unlocked");
+    }
+    else 
+    {
+        obj.pushKV("encryption_status", "Unencrypted");
     }
     obj.pushKV("paytxfee", ValueFromAmount(pwallet->m_pay_tx_fee.GetFeePerK()));
     if (!seed_id.IsNull()) {
