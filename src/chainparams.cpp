@@ -44,7 +44,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.hashPrevBlock.SetNull();
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
     if (network == CBaseChainParams::MAIN) {
-        genesis.hashStateRoot = uint256(h256Touint(dev::h256("bc3a5d9d464b026c9fd39b613f11d996e1db2574d5561ae4c2dd267f41748166"))); // metrix
+        genesis.hashStateRoot = uint256(h256Touint(dev::h256("e320303a3f7937015d93885a5387ba30ab2874ce77752a7a19929a71ea6052de"))); // metrix
     } else {
         genesis.hashStateRoot = uint256(h256Touint(dev::h256("6ea8bd3931247c33bb5adc02ae5dba0719c890c3e222c0250a681c8a384da051"))); // metrix
     }
@@ -52,16 +52,16 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     return genesis;
 }
 
-/** TODO: metrix
+/**
  * Build the genesis block. Note that the output of its generation
  * transaction cannot be spent since it did not originally exist in the
  * database.
  *
- * CBlock(hash=000000000019d6, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=4a5e1e, nTime=1231006505, nBits=1d00ffff, nNonce=2083236893, vtx=1)
- *   CTransaction(hash=4a5e1e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
- *     CTxIn(COutPoint(000000, -1), coinbase 04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73)
- *     CTxOut(nValue=50.00000000, scriptPubKey=0x5F1DF16B2B704C8A578D0B)
- *   vMerkleTree: 4a5e1e
+ * CBlock(hash=000057c278d417, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=5f121d, nTime=1600679206, nBits=1d00ffff, nNonce=147545, vtx=1)
+ *   CTransaction(hash=5f121d, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+ *     CTxIn(COutPoint(000000, -1), coinbase 0004bf91221d01044c4e4254432023363236333735202d203030303030303030303030303030303030303061626131393536663264303163623531343162373162343137353035323066393436)
+ *     CTxOut(nValue=50.00000000, scriptPubKey=0x410462aa66c43fba23f7fb)
+ *   vMerkleTree: 5f121d
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const std::string network)
 {
@@ -125,19 +125,19 @@ public:
         m_assumed_blockchain_size = 8;
         m_assumed_chain_state_size = 1;
 
-        genesis = CreateGenesisBlock(1587113529, 8026361, 0x1f00ffff, 1, 50 * COIN, CBaseChainParams::MAIN);
+        genesis = CreateGenesisBlock(1600679206, 147545, 0x1f00ffff, 1, 50 * COIN, CBaseChainParams::MAIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        //assert(consensus.hashGenesisBlock == uint256S("0x0")); //TODO: Metrix
-        //assert(genesis.hashMerkleRoot == uint256S("0x5f121ddfab7e4c75f9cf10d106356e9be38e9567c778390153d7ca8eae03607d")); //TODO: Metrix
+        assert(consensus.hashGenesisBlock == uint256S("0x000057c278d417dfca66d2bcde29d4875b06ea7f5935086bf4f1f968c91c3377"));
+        assert(genesis.hashMerkleRoot == uint256S("0x5f121ddfab7e4c75f9cf10d106356e9be38e9567c778390153d7ca8eae03607d"));
 
         // Note that of those which support the service bits prefix, most only support a subset of
         // possible options.
         // This is fine at runtime as we'll fall back to using them as a oneshot if they don't support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
-        //vSeeds.emplace_back("qtum3.dynu.net"); // TODO: Metrix mainnet
+        vSeeds.emplace_back("mainnet.metrixcoin.com");
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,48);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,50);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,85);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,153);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
@@ -153,16 +153,17 @@ public:
 
         checkpointData = {
             {
-                { 0, uint256S("0x0")}, // TODO: metrix
+                { 0, uint256S("0x000057c278d417dfca66d2bcde29d4875b06ea7f5935086bf4f1f968c91c3377")},
+                { 0, uint256S("0x000057c278d417dfca66d2bcde29d4875b06ea7f5935086bf4f1f968c91c3377")},
             }
         };
 
-        chainTxData = ChainTxData{ // TODO: metrix
-            // Data as of block 5c0215809068d3e8520997febc84ca578b4ddf3f8917a86b6c7f5e1deecb5c32 (height 499049)
-            //1575479072, // * UNIX timestamp of last known number of transactions
-           // 3614626, // * total number of transactions between genesis and that timestamp
+        chainTxData = ChainTxData{
+            // Data as of block 000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1 (height 5000)
+            1600765139, // * UNIX timestamp of last known number of transactions
+            5001, // * total number of transactions between genesis and that timestamp
             //   (the tx=... number in the SetBestChain debug.log lines)
-            //0.03358921219453481 // * estimated number of transactions per second after that timestamp
+            0.03358921219453481 // * estimated number of transactions per second after that timestamp
         };
 
         consensus.nLastPOWBlock = 5000;
@@ -233,7 +234,7 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        //vSeeds.emplace_back("qtum4.dynu.net"); // TODO: Metrix testnet
+        vSeeds.emplace_back("testnet1.metrixcoin.com");
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,110);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,187);
@@ -253,14 +254,15 @@ public:
         checkpointData = {
             {
                 {0, uint256S("00007965374994a1a9e0c813c0d935c3ca224dd1cc582d09f11afe134877adf6")},
+                {79475, uint256S("72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9")},
             }
         };
 
-        chainTxData = ChainTxData{ // TODO: metrix
-            // Data as of block babfd02d9dd271a12a2fd1b8ba95a0c73aca9a0b25889d3340a7ca3fb406a2cf (height 496333)
-            /* 1575478816,
-            1080030,
-            0.01624824080589608 */
+        chainTxData = ChainTxData{
+            // Data as of block 72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9 (height 79475)
+            1600679856,
+            228567,
+            0.01624824080589608
         };
 
         consensus.nLastPOWBlock = 5000;

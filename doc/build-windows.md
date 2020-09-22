@@ -95,6 +95,7 @@ This means you cannot use a directory that is located directly on the host Windo
 Build using:
 
     PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g') # strip out problematic Windows %PATH% imported var
+    sudo bash -c "echo 0 > /proc/sys/fs/binfmt_misc/status" # Disable WSL support for Win32 applications.
     cd depends
     make HOST=x86_64-w64-mingw32
     cd ..
