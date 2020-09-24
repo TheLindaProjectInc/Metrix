@@ -1,11 +1,12 @@
-#include <windows.h>             //! needed for VERSIONINFO
-#include "clientversion.h"       //! holds the needed client version information
- #define VER_PRODUCTVERSION     CLIENT_VERSION_MAJOR,CLIENT_VERSION_MINOR,CLIENT_VERSION_REVISION,CLIENT_VERSION_BUILD
+#include <windows.h>             // needed for VERSIONINFO
+#include "clientversion.h"       // holds the needed client version information
+
+#define VER_PRODUCTVERSION     CLIENT_VERSION_MAJOR,CLIENT_VERSION_MINOR,CLIENT_VERSION_REVISION,CLIENT_VERSION_BUILD
 #define VER_PRODUCTVERSION_STR STRINGIZE(CLIENT_VERSION_MAJOR) "." STRINGIZE(CLIENT_VERSION_MINOR) "." STRINGIZE(CLIENT_VERSION_REVISION) "." STRINGIZE(CLIENT_VERSION_BUILD)
 #define VER_FILEVERSION        VER_PRODUCTVERSION
 #define VER_FILEVERSION_STR    VER_PRODUCTVERSION_STR
-#define COPYRIGHT_STR          "2020-" STRINGIZE(COPYRIGHT_YEAR) " The Metrix developers"
- VS_VERSION_INFO VERSIONINFO
+
+VS_VERSION_INFO VERSIONINFO
 FILEVERSION     VER_FILEVERSION
 PRODUCTVERSION  VER_PRODUCTVERSION
 FILEOS          VOS_NT_WINDOWS32
@@ -13,21 +14,22 @@ FILETYPE        VFT_APP
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904E4" //! U.S. English - multilingual (hex)
+        BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
             VALUE "CompanyName",        "Metrix"
-            VALUE "FileDescription",    "metrixd (OSS RPC server for Metrix)"
+            VALUE "FileDescription",    "metrixd (Metrix node with a JSON-RPC server)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "metrixd"
             VALUE "LegalCopyright",     COPYRIGHT_STR
-            VALUE "LegalTrademarks1",   "Distributed under the MIT/X11 software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
+            VALUE "LegalTrademarks1",   "Distributed under the MIT software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
             VALUE "OriginalFilename",   "metrixd.exe"
             VALUE "ProductName",        "metrixd"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END
-     BLOCK "VarFileInfo"
+
+    BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0, 1252 //! language neutral - multilingual (decimal)
+        VALUE "Translation", 0x0, 1252 // language neutral - multilingual (decimal)
     END
 END

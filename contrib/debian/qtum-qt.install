@@ -1,0 +1,6 @@
+usr/local/bin/metrix-qt usr/bin
+share/pixmaps/metrix32.xpm usr/share/pixmaps
+share/pixmaps/metrix16.xpm usr/share/pixmaps
+share/pixmaps/metrix128.png usr/share/pixmaps
+debian/metrix-qt.desktop usr/share/applications
+debian/metrix-qt.protocol usr/share/kde4/services/

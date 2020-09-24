@@ -1,10 +1,14 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2013 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_H
-#define BITCOIN_SCRIPT_H
+#ifndef BITCOIN_SCRIPT_SCRIPT_H
+#define BITCOIN_SCRIPT_SCRIPT_H
+
+#include <crypto/common.h>
+#include <prevector.h>
+#include <serialize.h>
 
 #include <assert.h>
 #include <climits>
@@ -15,20 +19,44 @@
 #include <string>
 #include <vector>
 
+// Maximum number of bytes pushable to the stack
+static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 128000; //(128 kb)
+
+// Maximum number of non-push operations per script
+static const int MAX_OPS_PER_SCRIPT = 201;
+
+// Maximum number of public keys per multisig
+static const int MAX_PUBKEYS_PER_MULTISIG = 20;
+
+// Maximum script length in bytes
+static const int MAX_SCRIPT_SIZE = 129000; // (129 kb)
+
+// Maximum base script length in bytes
+static const int MAX_BASE_SCRIPT_SIZE = 10000;
+
+// Maximum number of values on script interpreter stack
+static const int MAX_STACK_SIZE = 1000;
+
+// Threshold for nLockTime: below this value it is interpreted as block number,
+// otherwise as UNIX timestamp.
+static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
+
+// Maximum nLockTime. Since a lock time indicates the last invalid timestamp, a
+// transaction with this lock time will never be valid unless lock time
+// checking is disabled (by setting all input sequence numbers to
+// SEQUENCE_FINAL).
+static const uint32_t LOCKTIME_MAX = 0xFFFFFFFFU;
+
 template <typename T>
 std::vector<unsigned char> ToByteVector(const T& in)
 {
     return std::vector<unsigned char>(in.begin(), in.end());
 }
 
-static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; //! bytes
-
-/** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp. */
-static const unsigned int LOCKTIME_THRESHOLD = 500000000; //! Tue Nov  5 00:53:20 1985 UTC
-
 /** Script opcodes */
-enum opcodetype {
-    //! push value
+enum opcodetype
+{
+    // push value
     OP_0 = 0x00,
     OP_FALSE = OP_0,
     OP_PUSHDATA1 = 0x4c,
@@ -37,7 +65,7 @@ enum opcodetype {
     OP_1NEGATE = 0x4f,
     OP_RESERVED = 0x50,
     OP_1 = 0x51,
-    OP_TRUE = OP_1,
+    OP_TRUE=OP_1,
     OP_2 = 0x52,
     OP_3 = 0x53,
     OP_4 = 0x54,
@@ -54,7 +82,7 @@ enum opcodetype {
     OP_15 = 0x5f,
     OP_16 = 0x60,
 
-    //! control
+    // control
     OP_NOP = 0x61,
     OP_VER = 0x62,
     OP_IF = 0x63,
@@ -66,7 +94,7 @@ enum opcodetype {
     OP_VERIFY = 0x69,
     OP_RETURN = 0x6a,
 
-    //! stack ops
+    // stack ops
     OP_TOALTSTACK = 0x6b,
     OP_FROMALTSTACK = 0x6c,
     OP_2DROP = 0x6d,
@@ -87,14 +115,14 @@ enum opcodetype {
     OP_SWAP = 0x7c,
     OP_TUCK = 0x7d,
 
-    //! splice ops
+    // splice ops
     OP_CAT = 0x7e,
     OP_SUBSTR = 0x7f,
     OP_LEFT = 0x80,
     OP_RIGHT = 0x81,
     OP_SIZE = 0x82,
 
-    //! bit logic
+    // bit logic
     OP_INVERT = 0x83,
     OP_AND = 0x84,
     OP_OR = 0x85,
@@ -104,7 +132,7 @@ enum opcodetype {
     OP_RESERVED1 = 0x89,
     OP_RESERVED2 = 0x8a,
 
-    //! numeric
+    // numeric
     OP_1ADD = 0x8b,
     OP_1SUB = 0x8c,
     OP_2MUL = 0x8d,
@@ -136,7 +164,7 @@ enum opcodetype {
 
     OP_WITHIN = 0xa5,
 
-    //! crypto
+    // crypto
     OP_RIPEMD160 = 0xa6,
     OP_SHA1 = 0xa7,
     OP_SHA256 = 0xa8,
@@ -148,11 +176,12 @@ enum opcodetype {
     OP_CHECKMULTISIG = 0xae,
     OP_CHECKMULTISIGVERIFY = 0xaf,
 
-    //! expansion
+    // expansion
     OP_NOP1 = 0xb0,
-    OP_NOP2 = 0xb1,
-    OP_CHECKLOCKTIMEVERIFY = OP_NOP2,
-    OP_NOP3 = 0xb2,
+    OP_CHECKLOCKTIMEVERIFY = 0xb1,
+    OP_NOP2 = OP_CHECKLOCKTIMEVERIFY,
+    OP_CHECKSEQUENCEVERIFY = 0xb2,
+    OP_NOP3 = OP_CHECKSEQUENCEVERIFY,
     OP_NOP4 = 0xb3,
     OP_NOP5 = 0xb4,
     OP_NOP6 = 0xb5,
@@ -161,9 +190,20 @@ enum opcodetype {
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
+    // Execute EXT byte code.
+    OP_CREATE = 0xc1,
+    OP_CALL = 0xc2,
+    OP_SPEND = 0xc3,
+    OP_SENDER = 0xc4,
 
-    //! template matching params
-    OP_SMALLDATA = 0xf9,
+    // template matching params
+    OP_ADDRESS_TYPE = 0xf2,
+    OP_ADDRESS = 0xf3,
+    OP_SCRIPT_SIG = 0xf4,
+    OP_GAS_PRICE = 0xf5,
+    OP_VERSION = 0xf6,
+    OP_GAS_LIMIT = 0xf7,
+    OP_DATA = 0xf8,
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
     OP_PUBKEYHASH = 0xfd,
@@ -171,6 +211,9 @@ enum opcodetype {
 
     OP_INVALIDOPCODE = 0xff,
 };
+
+// Maximum value that an opcode can be
+static const unsigned int MAX_OPCODE = OP_NOP10;
 
 const char* GetOpName(opcodetype opcode);
 
@@ -191,6 +234,7 @@ class CScriptNum
  * throwing an exception if arithmetic is done or the result is interpreted as an integer.
  */
 public:
+
     explicit CScriptNum(const int64_t& n)
     {
         m_value = n;
@@ -205,22 +249,18 @@ public:
             throw scriptnum_error("script number overflow");
         }
         if (fRequireMinimal && vch.size() > 0) {
-            /**
-             * Check that the number is encoded with the minimum possible
-             * number of bytes.
-             *
-             * If the most-significant-byte - excluding the sign bit - is zero
-             * then we're not minimal. Note how this test also rejects the
-             * negative-zero encoding, 0x80.
-             */
+            // Check that the number is encoded with the minimum possible
+            // number of bytes.
+            //
+            // If the most-significant-byte - excluding the sign bit - is zero
+            // then we're not minimal. Note how this test also rejects the
+            // negative-zero encoding, 0x80.
             if ((vch.back() & 0x7f) == 0) {
-                /**
-                 * One exception: if there's more than one byte and the most
-                 * significant bit of the second-most-significant-byte is set
-                 * it would conflict with the sign bit. An example of this case
-                 * is +-255, which encode to 0xff00 and 0xff80 respectively.
-                 * (big-endian).
-                 */
+                // One exception: if there's more than one byte and the most
+                // significant bit of the second-most-significant-byte is set
+                // it would conflict with the sign bit. An example of this case
+                // is +-255, which encode to 0xff00 and 0xff80 respectively.
+                // (big-endian).
                 if (vch.size() <= 1 || (vch[vch.size() - 2] & 0x80) == 0) {
                     throw scriptnum_error("non-minimally encoded script number");
                 }
@@ -229,53 +269,64 @@ public:
         m_value = set_vch(vch);
     }
 
-    inline bool operator==(const int64_t& rhs) const { return m_value == rhs; }
-    inline bool operator!=(const int64_t& rhs) const { return m_value != rhs; }
-    inline bool operator<=(const int64_t& rhs) const { return m_value <= rhs; }
-    inline bool operator<(const int64_t& rhs) const { return m_value < rhs; }
-    inline bool operator>=(const int64_t& rhs) const { return m_value >= rhs; }
-    inline bool operator>(const int64_t& rhs) const { return m_value > rhs; }
+    inline bool operator==(const int64_t& rhs) const    { return m_value == rhs; }
+    inline bool operator!=(const int64_t& rhs) const    { return m_value != rhs; }
+    inline bool operator<=(const int64_t& rhs) const    { return m_value <= rhs; }
+    inline bool operator< (const int64_t& rhs) const    { return m_value <  rhs; }
+    inline bool operator>=(const int64_t& rhs) const    { return m_value >= rhs; }
+    inline bool operator> (const int64_t& rhs) const    { return m_value >  rhs; }
 
     inline bool operator==(const CScriptNum& rhs) const { return operator==(rhs.m_value); }
     inline bool operator!=(const CScriptNum& rhs) const { return operator!=(rhs.m_value); }
     inline bool operator<=(const CScriptNum& rhs) const { return operator<=(rhs.m_value); }
-    inline bool operator<(const CScriptNum& rhs) const { return operator<(rhs.m_value); }
+    inline bool operator< (const CScriptNum& rhs) const { return operator< (rhs.m_value); }
     inline bool operator>=(const CScriptNum& rhs) const { return operator>=(rhs.m_value); }
-    inline bool operator>(const CScriptNum& rhs) const { return operator>(rhs.m_value); }
+    inline bool operator> (const CScriptNum& rhs) const { return operator> (rhs.m_value); }
 
-    inline CScriptNum operator+(const int64_t& rhs) const { return CScriptNum(m_value + rhs); }
-    inline CScriptNum operator-(const int64_t& rhs) const { return CScriptNum(m_value - rhs); }
-    inline CScriptNum operator+(const CScriptNum& rhs) const { return operator+(rhs.m_value); }
-    inline CScriptNum operator-(const CScriptNum& rhs) const { return operator-(rhs.m_value); }
+    inline CScriptNum operator+(   const int64_t& rhs)    const { return CScriptNum(m_value + rhs);}
+    inline CScriptNum operator-(   const int64_t& rhs)    const { return CScriptNum(m_value - rhs);}
+    inline CScriptNum operator+(   const CScriptNum& rhs) const { return operator+(rhs.m_value);   }
+    inline CScriptNum operator-(   const CScriptNum& rhs) const { return operator-(rhs.m_value);   }
 
-    inline CScriptNum& operator+=(const CScriptNum& rhs) { return operator+=(rhs.m_value); }
-    inline CScriptNum& operator-=(const CScriptNum& rhs) { return operator-=(rhs.m_value); }
+    inline CScriptNum& operator+=( const CScriptNum& rhs)       { return operator+=(rhs.m_value);  }
+    inline CScriptNum& operator-=( const CScriptNum& rhs)       { return operator-=(rhs.m_value);  }
 
-    inline CScriptNum operator-() const
+    inline CScriptNum operator&(   const int64_t& rhs)    const { return CScriptNum(m_value & rhs);}
+    inline CScriptNum operator&(   const CScriptNum& rhs) const { return operator&(rhs.m_value);   }
+
+    inline CScriptNum& operator&=( const CScriptNum& rhs)       { return operator&=(rhs.m_value);  }
+
+    inline CScriptNum operator-()                         const
     {
         assert(m_value != std::numeric_limits<int64_t>::min());
         return CScriptNum(-m_value);
     }
 
-    inline CScriptNum& operator=(const int64_t& rhs)
+    inline CScriptNum& operator=( const int64_t& rhs)
     {
         m_value = rhs;
         return *this;
     }
 
-    inline CScriptNum& operator+=(const int64_t& rhs)
+    inline CScriptNum& operator+=( const int64_t& rhs)
     {
         assert(rhs == 0 || (rhs > 0 && m_value <= std::numeric_limits<int64_t>::max() - rhs) ||
-               (rhs < 0 && m_value >= std::numeric_limits<int64_t>::min() - rhs));
+                           (rhs < 0 && m_value >= std::numeric_limits<int64_t>::min() - rhs));
         m_value += rhs;
         return *this;
     }
 
-    inline CScriptNum& operator-=(const int64_t& rhs)
+    inline CScriptNum& operator-=( const int64_t& rhs)
     {
         assert(rhs == 0 || (rhs > 0 && m_value >= std::numeric_limits<int64_t>::min() + rhs) ||
-               (rhs < 0 && m_value <= std::numeric_limits<int64_t>::max() + rhs));
+                           (rhs < 0 && m_value <= std::numeric_limits<int64_t>::max() + rhs));
         m_value -= rhs;
+        return *this;
+    }
+
+    inline CScriptNum& operator&=( const int64_t& rhs)
+    {
+        m_value &= rhs;
         return *this;
     }
 
@@ -293,30 +344,55 @@ public:
         return serialize(m_value);
     }
 
+    ///////////////////////////////// qtum
+    static uint64_t vch_to_uint64(const std::vector<unsigned char>& vch)
+    {
+        if (vch.size() > 8) {
+            throw scriptnum_error("script number overflow");
+        }
+
+        if (vch.empty())
+            return 0;
+
+        uint64_t result = 0;
+        for (size_t i = 0; i != vch.size(); ++i)
+            result |= static_cast<uint64_t>(vch[i]) << 8*i;
+
+        // If the input vector's most significant byte is 0x80, remove it from
+        // the result's msb and return a negative.
+        if (vch.back() & 0x80)
+            throw scriptnum_error("Negative gas value.");
+            // return -((uint64_t)(result & ~(0x80ULL << (8 * (vch.size() - 1)))));
+
+        return result;
+    }
+    /////////////////////////////////
+
     static std::vector<unsigned char> serialize(const int64_t& value)
     {
-        if (value == 0)
+        if(value == 0)
             return std::vector<unsigned char>();
 
         std::vector<unsigned char> result;
         const bool neg = value < 0;
         uint64_t absvalue = neg ? -value : value;
 
-        while (absvalue) {
+        while(absvalue)
+        {
             result.push_back(absvalue & 0xff);
             absvalue >>= 8;
         }
-        /**
-         *    - If the most significant byte is >= 0x80 and the value is positive, push a
-         *    new zero-byte to make the significant byte < 0x80 again.
 
-         *    - If the most significant byte is >= 0x80 and the value is negative, push a
-         *    new 0x80 byte that will be popped off when converting to an integral.
+//    - If the most significant byte is >= 0x80 and the value is positive, push a
+//    new zero-byte to make the significant byte < 0x80 again.
 
-         *    - If the most significant byte is < 0x80 and the value is negative, add
-         *    0x80 to it, since it will be subtracted and interpreted as a negative when
-         *    converting to an integral.
-         */
+//    - If the most significant byte is >= 0x80 and the value is negative, push a
+//    new 0x80 byte that will be popped off when converting to an integral.
+
+//    - If the most significant byte is < 0x80 and the value is negative, add
+//    0x80 to it, since it will be subtracted and interpreted as a negative when
+//    converting to an integral.
+
         if (result.back() & 0x80)
             result.push_back(neg ? 0x80 : 0);
         else if (neg)
@@ -328,56 +404,70 @@ public:
 private:
     static int64_t set_vch(const std::vector<unsigned char>& vch)
     {
-        if (vch.empty())
-            return 0;
+      if (vch.empty())
+          return 0;
 
-        int64_t result = 0;
-        for (size_t i = 0; i != vch.size(); ++i)
-            result |= static_cast<int64_t>(vch[i]) << 8 * i;
+      int64_t result = 0;
+      for (size_t i = 0; i != vch.size(); ++i)
+          result |= static_cast<int64_t>(vch[i]) << 8*i;
 
-        //! If the input vector's most significant byte is 0x80, remove it from
-        //! the result's msb and return a negative.
-        if (vch.back() & 0x80)
-            return -((int64_t)(result & ~(0x80ULL << (8 * (vch.size() - 1)))));
+      // If the input vector's most significant byte is 0x80, remove it from
+      // the result's msb and return a negative.
+      if (vch.back() & 0x80)
+          return -((int64_t)(result & ~(0x80ULL << (8 * (vch.size() - 1)))));
 
-        return result;
+      return result;
     }
 
     int64_t m_value;
 };
 
+/**
+ * We use a prevector for the script to reduce the considerable memory overhead
+ *  of vectors in cases where they normally contain a small number of small elements.
+ * Tests in October 2015 showed use of this reduced dbcache memory usage by 23%
+ *  and made an initial sync 13% faster.
+ */
+typedef prevector<28, unsigned char> CScriptBase;
+
+bool GetScriptOp(CScriptBase::const_iterator& pc, CScriptBase::const_iterator end, opcodetype& opcodeRet, std::vector<unsigned char>* pvchRet);
+
 /** Serialized script, used inside transaction inputs and outputs */
-class CScript : public std::vector<unsigned char>
+class CScript : public CScriptBase
 {
 protected:
     CScript& push_int64(int64_t n)
     {
-        if (n == -1 || (n >= 1 && n <= 16)) {
+        if (n == -1 || (n >= 1 && n <= 16))
+        {
             push_back(n + (OP_1 - 1));
         }
         else if (n == 0)
         {
             push_back(OP_0);
         }
-        else 
+        else
         {
             *this << CScriptNum::serialize(n);
         }
         return *this;
     }
-
 public:
-    CScript() {}
-    CScript(const CScript& b) : std::vector<unsigned char>(b.begin(), b.end()) {}
-    CScript(const_iterator pbegin, const_iterator pend) : std::vector<unsigned char>(pbegin, pend) {}
-#ifndef _MSC_VER
-    CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<unsigned char>(pbegin, pend)
-    {
+    CScript() { }
+    CScript(const_iterator pbegin, const_iterator pend) : CScriptBase(pbegin, pend) { }
+    CScript(std::vector<unsigned char>::const_iterator pbegin, std::vector<unsigned char>::const_iterator pend) : CScriptBase(pbegin, pend) { }
+    CScript(const unsigned char* pbegin, const unsigned char* pend) : CScriptBase(pbegin, pend) { }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITEAS(CScriptBase, *this);
     }
-#endif
 
     CScript& operator+=(const CScript& b)
     {
+        reserve(size() + b.size());
         insert(end(), b.begin(), b.end());
         return *this;
     }
@@ -389,12 +479,13 @@ public:
         return ret;
     }
 
+    CScript(int64_t b)        { operator<<(b); }
 
-    CScript(int64_t b) { operator<<(b); }
-
-    explicit CScript(opcodetype b) { operator<<(b); }
+    explicit CScript(opcodetype b)     { operator<<(b); }
     explicit CScript(const CScriptNum& b) { operator<<(b); }
-    explicit CScript(const std::vector<unsigned char>& b) { operator<<(b); }
+    // delete non-existent constructor to defend against future introduction
+    // e.g. via prevector
+    explicit CScript(const std::vector<unsigned char>& b) = delete;
 
 
     CScript& operator<<(int64_t b) { return push_int64(b); }
@@ -402,7 +493,7 @@ public:
     CScript& operator<<(opcodetype opcode)
     {
         if (opcode < 0 || opcode > 0xff)
-            throw std::runtime_error("CScript::operator<<() : invalid opcode");
+            throw std::runtime_error("CScript::operator<<(): invalid opcode");
         insert(end(), (unsigned char)opcode);
         return *this;
     }
@@ -415,19 +506,28 @@ public:
 
     CScript& operator<<(const std::vector<unsigned char>& b)
     {
-        if (b.size() < OP_PUSHDATA1) {
+        if (b.size() < OP_PUSHDATA1)
+        {
             insert(end(), (unsigned char)b.size());
-        } else if (b.size() <= 0xff) {
+        }
+        else if (b.size() <= 0xff)
+        {
             insert(end(), OP_PUSHDATA1);
             insert(end(), (unsigned char)b.size());
-        } else if (b.size() <= 0xffff) {
+        }
+        else if (b.size() <= 0xffff)
+        {
             insert(end(), OP_PUSHDATA2);
-            unsigned short nSize = b.size();
-            insert(end(), (unsigned char*)&nSize, (unsigned char*)&nSize + sizeof(nSize));
-        } else {
+            uint8_t _data[2];
+            WriteLE16(_data, b.size());
+            insert(end(), _data, _data + sizeof(_data));
+        }
+        else
+        {
             insert(end(), OP_PUSHDATA4);
-            unsigned int nSize = b.size();
-            insert(end(), (unsigned char*)&nSize, (unsigned char*)&nSize + sizeof(nSize));
+            uint8_t _data[4];
+            WriteLE32(_data, b.size());
+            insert(end(), _data, _data + sizeof(_data));
         }
         insert(end(), b.begin(), b.end());
         return *this;
@@ -435,86 +535,25 @@ public:
 
     CScript& operator<<(const CScript& b)
     {
-        //! I'm not sure if this should push the script or concatenate scripts.
-        //! If there's ever a use for pushing a script onto a script, delete this member fn
+        // I'm not sure if this should push the script or concatenate scripts.
+        // If there's ever a use for pushing a script onto a script, delete this member fn
         assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
         return *this;
     }
 
 
-    bool GetOp(iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet)
-    {
-        //! Wrapper so it can be called with either iterator or const_iterator
-        const_iterator pc2 = pc;
-        bool fRet = GetOp2(pc2, opcodeRet, &vchRet);
-        pc = begin() + (pc2 - begin());
-        return fRet;
-    }
-
-    bool GetOp(iterator& pc, opcodetype& opcodeRet)
-    {
-        const_iterator pc2 = pc;
-        bool fRet = GetOp2(pc2, opcodeRet, NULL);
-        pc = begin() + (pc2 - begin());
-        return fRet;
-    }
-
     bool GetOp(const_iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet) const
     {
-        return GetOp2(pc, opcodeRet, &vchRet);
+        return GetScriptOp(pc, end(), opcodeRet, &vchRet);
     }
 
     bool GetOp(const_iterator& pc, opcodetype& opcodeRet) const
     {
-        return GetOp2(pc, opcodeRet, NULL);
+        return GetScriptOp(pc, end(), opcodeRet, nullptr);
     }
 
-    bool GetOp2(const_iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>* pvchRet) const
-    {
-        opcodeRet = OP_INVALIDOPCODE;
-        if (pvchRet)
-            pvchRet->clear();
-        if (pc >= end())
-            return false;
 
-        //! Read instruction
-        if (end() - pc < 1)
-            return false;
-        unsigned int opcode = *pc++;
-
-        //! Immediate operand
-        if (opcode <= OP_PUSHDATA4) {
-            unsigned int nSize;
-            if (opcode < OP_PUSHDATA1) {
-                nSize = opcode;
-            } else if (opcode == OP_PUSHDATA1) {
-                if (end() - pc < 1)
-                    return false;
-                nSize = *pc++;
-            } else if (opcode == OP_PUSHDATA2) {
-                if (end() - pc < 2)
-                    return false;
-                nSize = 0;
-                memcpy(&nSize, &pc[0], 2);
-                pc += 2;
-            } else if (opcode == OP_PUSHDATA4) {
-                if (end() - pc < 4)
-                    return false;
-                memcpy(&nSize, &pc[0], 4);
-                pc += 4;
-            }
-            if (end() - pc < 0 || (unsigned int)(end() - pc) < nSize)
-                return false;
-            if (pvchRet)
-                pvchRet->assign(pc, pc + nSize);
-            pc += nSize;
-        }
-
-        opcodeRet = (opcodetype)opcode;
-        return true;
-    }
-
-    //! Encode/decode small integers:
+    /** Encode/decode small integers: */
     static int DecodeOP_N(opcodetype opcode)
     {
         if (opcode == OP_0)
@@ -527,23 +566,7 @@ public:
         assert(n >= 0 && n <= 16);
         if (n == 0)
             return OP_0;
-        return (opcodetype)(OP_1 + n - 1);
-    }
-
-    int FindAndDelete(const CScript& b)
-    {
-        int nFound = 0;
-        if (b.empty())
-            return nFound;
-        iterator pc = begin();
-        opcodetype opcode;
-        do {
-            while (end() - pc >= (long)b.size() && memcmp(&pc[0], &b[0], b.size()) == 0) {
-                pc = erase(pc, pc + b.size());
-                ++nFound;
-            }
-        } while (GetOp(pc, opcode));
-        return nFound;
+        return (opcodetype)(OP_1+n-1);
     }
     int Find(opcodetype op) const
     {
@@ -569,11 +592,21 @@ public:
      * pay-to-script-hash transactions:
      */
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
-    bool IsNormalPaymentScript() const;
-    bool IsPayToScriptHash() const;
 
-    //! Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical).
+    bool IsPayToScriptHash() const;
+    ///////////////////////////////////////////////// // qtum
+    bool IsPayToPubkey() const;
+    bool IsPayToPubkeyHash() const;
+    /////////////////////////////////////////////////
+    bool IsPayToWitnessScriptHash() const;
+    bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
+
+    /** Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical). */
+    bool IsPushOnly(const_iterator pc) const;
     bool IsPushOnly() const;
+
+    /** Check if the script contains valid OP_CODES */
+    bool HasValidOps() const;
 
     /**
      * Returns whether the script is guaranteed to fail at execution,
@@ -582,16 +615,79 @@ public:
      */
     bool IsUnspendable() const
     {
-        return (size() > 0 && *begin() == OP_RETURN);
+        return (size() > 0 && *begin() == OP_RETURN) || (size() > MAX_SCRIPT_SIZE);
     }
 
-    std::string ToString() const;
-        
+    ///////////////////////////////////////// qtum
+    bool HasOpCreate() const
+    {
+        return Find(OP_CREATE) == 1;
+    }
+    
+    bool HasOpCall() const
+    {
+        return Find(OP_CALL) == 1;
+    }
+
+    bool HasOpSpend() const
+    {
+        return size()==1 && *begin() == OP_SPEND;
+    }
+
+    bool HasOpSender() const
+    {
+        return Find(OP_SENDER) == 1;
+    }
+
+    bool UpdateSenderSig(const std::vector<unsigned char>& scriptSig, CScript& scriptRet) const
+    {
+        return ReplaceParam(OP_SENDER, 1, scriptSig, scriptRet);
+    }
+
+    CScript WithoutSenderSig() const
+    {
+        std::vector<unsigned char> scriptSig;
+        CScript scriptRet;
+        if(!UpdateSenderSig(scriptSig, scriptRet))
+            scriptRet = CScript(begin(), end());
+        return scriptRet;
+    }
+
+    bool ReplaceParam(opcodetype findOp, int posBefore, const std::vector<unsigned char>& vchParam, CScript& scriptRet) const;
+    /////////////////////////////////////////
+
+    ///////////////////////////////////////// metrix
+    bool IsBurnt() const;
+
+    bool IsDGPContractCall(std::vector<unsigned char> vContractAddr, std::vector<unsigned char> vContractData) const;
+    /////////////////////////////////////////
+
     void clear()
     {
-        //! The default std::vector::clear() does not release memory.
-        std::vector<unsigned char>().swap(*this);
+        // The default prevector::clear() does not release memory
+        CScriptBase::clear();
+        shrink_to_fit();
     }
+
+#ifdef ENABLE_BITCORE_RPC
+    bool IsPayToWitnessPubkeyHash() const;
+#endif
 };
 
-#endif // BITCOIN_SCRIPT_H
+struct CScriptWitness
+{
+    // Note that this encodes the data elements being pushed, rather than
+    // encoding them as a CScript that pushes them.
+    std::vector<std::vector<unsigned char> > stack;
+
+    // Some compilers complain without a default constructor
+    CScriptWitness() { }
+
+    bool IsNull() const { return stack.empty(); }
+
+    void SetNull() { stack.clear(); stack.shrink_to_fit(); }
+
+    std::string ToString() const;
+};
+
+#endif // BITCOIN_SCRIPT_SCRIPT_H

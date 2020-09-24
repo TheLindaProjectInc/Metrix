@@ -1,19 +1,20 @@
-packages:=boost openssl libevent
-native_packages := native_ccache
+packages:=boost openssl libevent gmp
 
-qt_native_packages = native_protobuf
-qt_packages = qrencode protobuf zlib
+protobuf_native_packages = native_protobuf
+protobuf_packages = protobuf
 
-qt5_linux_packages= qt expat dbus libxcb xcb_proto libXau xproto freetype fontconfig libX11 xextproto libXext xtrans
+qt_packages = qrencode zlib
+
+qt_linux_packages:=qt expat libxcb xcb_proto libXau xproto freetype fontconfig
+
+rapidcheck_packages = rapidcheck
 
 qt_darwin_packages=qt
 qt_mingw32_packages=qt
 
-qt_linux_$(USE_LINUX_STATIC_QT5):=$(qt5_linux_packages)
-qt_linux_:=$(qt46_linux_packages)
-qt_linux_packages:=$(qt_linux_$(USE_LINUX_STATIC_QT5))
-
 wallet_packages=bdb
+
+zmq_packages=zeromq
 
 upnp_packages=miniupnpc
 

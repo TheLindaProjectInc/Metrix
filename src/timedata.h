@@ -1,19 +1,21 @@
-// Copyright (c) 2014 The Bitcoin developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Copyright (c) 2014-2018 The Bitcoin Core developers
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_TIMEDATA_H
 #define BITCOIN_TIMEDATA_H
 
 #include <algorithm>
-#include <vector>
-
 #include <assert.h>
 #include <stdint.h>
+#include <vector>
+
+static const int64_t DEFAULT_MAX_TIME_ADJUSTMENT = 0;
 
 class CNetAddr;
 
-/** Median filter over a stream of values.
+/**
+ * Median filter over a stream of values.
  * Returns the median of the last N numbers
  */
 template <typename T>
@@ -25,9 +27,9 @@ private:
     unsigned int nSize;
 
 public:
-    CMedianFilter(unsigned int size, T initial_value) : nSize(size)
+    CMedianFilter(unsigned int _size, T initial_value) : nSize(_size)
     {
-        vValues.reserve(size);
+        vValues.reserve(_size);
         vValues.push_back(initial_value);
         vSorted = vValues;
     }
@@ -46,14 +48,14 @@ public:
 
     T median() const
     {
-        int size = vSorted.size();
-        assert(size > 0);
-        if (size & 1) //! Odd number of elements
+        int vSortedSize = vSorted.size();
+        assert(vSortedSize > 0);
+        if (vSortedSize & 1) // Odd number of elements
         {
-            return vSorted[size / 2];
-        } else //! Even number of elements
+            return vSorted[vSortedSize / 2];
+        } else // Even number of elements
         {
-            return (vSorted[size / 2 - 1] + vSorted[size / 2]) / 2;
+            return (vSorted[vSortedSize / 2 - 1] + vSorted[vSortedSize / 2]) / 2;
         }
     }
 
@@ -68,7 +70,7 @@ public:
     }
 };
 
-/* Functions to keep track of adjusted P2P time */
+/** Functions to keep track of adjusted P2P time */
 int64_t GetTimeOffset();
 int64_t GetAdjustedTime();
 void AddTimeData(const CNetAddr& ip, int64_t nTime);

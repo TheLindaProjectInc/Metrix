@@ -1,36 +1,17 @@
-/build/
-/bin/
-release/
-debug/
+*.tar.gz
 
-*.P
-*.o
-*.Po
-*.o-*
-*.d
-*.a
-*.Tpo
-*.in~
-*.Plo
+*.exe
+*.pdb
+src/bitcoin
+src/bitcoind
+src/bitcoin-cli
+src/bitcoin-tx
+src/bitcoin-wallet
+src/test/test_bitcoin
+src/test/test_bitcoin_fuzzy
+src/qt/test/test_bitcoin-qt
 
-#libtool object files
-*.lo
-*.la
-
-#Dev tools & build testing
-.vscode/
-.vs/
-
-src/obj/build.h
-src/univalue/gen
-    
-# daemons
-src/metrix-tx
-src/metrix-cli
-src/metrixd
-
-# autotools
-Makefile
+# autoreconf
 Makefile.in
 aclocal.m4
 autom4te.cache/
@@ -50,23 +31,128 @@ build-aux/test-driver
 config.log
 config.status
 configure
-!depends/Makefile
-*plugin_import.cpp
-depends/x86_64-*/*
-depends/i686-*/*
-depends/built/*
-depends/sources/*
-depends/SDKs/*
-depends/work/*
 libtool
+src/config/bitcoin-config.h
+src/config/bitcoin-config.h.in
+src/config/stamp-h1
+src/obj
+share/setup.nsi
+share/qt/Info.plist
+
+src/univalue/gen
+
+src/qt/*.moc
+src/qt/moc_*.cpp
+src/qt/forms/ui_*.h
+
+src/qt/test/moc*.cpp
+
+src/qt/bitcoin-qt.config
+src/qt/bitcoin-qt.creator
+src/qt/bitcoin-qt.creator.user
+src/qt/bitcoin-qt.files
+src/qt/bitcoin-qt.includes
+
+.deps
 .dirstamp
 .libs
-share/setup.nsi
-**/bitcoin-config.*
-**/stamp-h1
-!src/config/.empty
+.*.swp
+*.*~*
+*.bak
+*.rej
+*.orig
+*.pyc
+*.o
+*.o-*
+*.a
+*.pb.cc
+*.pb.h
+*.dat
+*.out
+stmRbXtk
+
+*.log
+*.trs
+*.dmg
+
+*.json.h
+*.raw.h
+
+# Only ignore unexpected patches
+*.patch
+!depends/patches/**/*.patch
+
+#libtool object files
+*.lo
+*.la
+
+# Compilation and Qt preprocessor part
+*.qm
+Makefile
+!depends/Makefile
+bitcoin-qt
+Bitcoin-Qt.app
+background.tiff*
+
+# Qt Creator
+Makefile.am.user
+
+# Unit-tests
+Makefile.test
+bitcoin-qt_test
 
 # Resources cpp
 qrc_*.cpp
 
+# Mac specific
+.DS_Store
+build
+
+#lcov
+*.gcno
+*.gcda
+/*.info
+test_bitcoin.coverage/
+total.coverage/
+coverage_percent.txt
+
+#build tests
+linux-coverage-build
+linux-build
+win32-build
+test/config.ini
+test/cache/*
+
 !src/leveldb*/Makefile
+
+/doc/doxygen/
+
+libbitcoinconsensus.pc
+contrib/devtools/split-debug.sh
+
+# Output from running db4 installation
+db4/
+
+# clang-check
+*.plist
+
+osx_volname
+dist/
+*.background.tiff
+
+.cproject
+.project
+.settings/language.settings.xml
+src/metrix-cli
+src/metrix-tx
+src/metrixd
+src/metrix-wallet
+src/bench/bench_metrix
+src/qt/metrix-qt
+src/qt/test/test_metrix-qt
+src/test/buildenv.py
+src/test/test_metrix
+src/test/test_metrix_fuzzy
+
+# vscode
+.vscode/

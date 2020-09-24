@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=0.17.6
+Name=Metrix Core
+Comment=Connect to the Metrix P2P Network
+Exec=metrix-qt %u
+Terminal=false
+Type=Application
+Icon=metrix128
+MimeType=x-scheme-handler/metrix;
+Categories=Network;
+StartupWMClass=Metrix-qt
+Name[en_US]=metrix-qt

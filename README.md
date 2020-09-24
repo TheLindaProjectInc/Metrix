@@ -1,57 +1,42 @@
-[![Build Status](https://travis-ci.com/TheLindaProjectInc/Metrix.svg?branch=master)](https://travis-ci.com/TheLindaProjectInc/Metrix)
+[![Build Status](https://travis-ci.com/TheLindaProjectInc/metrix.svg?branch=master)](https://travis-ci.com/TheLindaProjectInc/metrix)
 <p align="center">
     <img src="logo.png">
 </p>
 
 # Metrix Coin
-Metrix is a peer to peer hybrid digital currency. It creates utility products that allow Metrix to be used in everyday scenarios. It also offers partnership opportunities to other cryptocurrencies to use the Metrix platform. As the Metrix wallet technology evolves, we strive to simplify the processes of staking or masternode ownership as well as improve your overall wallet experience
 
-## Wallet Information
-The new Metrix wallet Altitude can be downloaded from the [Altitude Repository](https://github.com/TheLindaProjectInc/Altitude/releases/latest).
+What is Metrix?
+-------------
 
-If you need the Metrix daemon, download it from the current [Metrix Repository](https://github.com/TheLindaProjectInc/Metrix/releases/latest).
+Metrix is a decentralized blockchain project forked from Qtum, built on Bitcoin's UTXO model, with support for Ethereum Virtual Machine based smart contracts, and secured by a proof of stake consensus model. It achieves this through the revolutionary Account Abstraction Layer which allows the EVM to communicate with Metrix's Bitcoin-like UTXO blockchain. For more general information about the original Qtum blockchain, go to https://qtum.org
 
-## Specs
-<table>
-<tr><td>Coin Name</td><td>Metrix Coin</td></tr>
-<tr><td>Abbreviation</td><td>MRX</td></tr>
-<tr><td>Coin Type</td><td>PoS (Proof of Stake)</td></tr>
-<tr><td>Max Supply</td><td>30,000,000,000</td></tr>
-<tr><td>Block Time</td><td>90 Seconds</td></tr>
-<tr><td>Maximum Block Size</td><td>4MB</td></tr>
-<tr><td>Minimum Stake Age</td><td>24 Hours</td></tr>
-<tr><td>Maximum Stake Age</td><td>30 Days</td></tr>
-<tr><td>Maximum Stake Amount</td><td>100,000,000</td></tr>
-<tr><td>Masternode Emissions</td><td>~60% Annually</td></tr>
-<tr><td>Staking Emissions</td><td>~50% Annually</td></tr>
-<tr><td>Masternode Port</td><td>33820</td></tr>
-<tr><td>RPC Port</td><td>33821</td></tr>
-</table>
+Welcome to the Metrix Ignition Main Network. This is the main network where the tokens hold value and should be guarded very carefully. If you are testing the network, or developing unstable software on Metrix, we highly recommend using either testnet or regtest mode. 
 
-## Masternode
-Metrix’s use of masternodes enables Metrix to have unique features that are not possible in other cryptocurrencies. The Metrix community will operate these masternodes to help keep the network flowing. Masternodes have huge value in supporting the Metrix network. They are part of what defines Metrix from all of the other cryptocurrencies. Making Metrix more efficient, and more prepared for the future.
+The major features of the Metrix network include:
 
-*A masternode requires 2 million Metrix Coins.
+1. Compatibility with the Ethereum Virtual Machine, which allows for compatibility with most existing Solidity based smart contracts. No special solidity compiler is required to deploy your smart contract to Metrix. 
+2. A Proof of Stake consensus system which is optimized for Metrix's contract model. Any user can stake and help to secure the network. 
+3. The Decentralized Governance Protocol is completely implemented and functional, which allows certain network parameters to be modified without a fork or other network disruption. This currently controls parameters like block size, gas prices, etc. 
+4. Uses the UTXO transaction model and is compatible with Bitcoin, allowing for existing tooling and workflows to be used with Metrix. This allows for the infamous SPV protocol to be used which is ideal for light wallets on mobile phones and IoT devices.
 
-## One Click Masternodes
-Metrix’s new mobile wallet and mobile app offers a turnkey solution, changing the dynamic of which masternodes are implemented to the user.  It is now easier than ever for the Metrix community to get involved in operating a masternode. Currently, masternodes are extremely difficult to set up unless you’re technically experienced and leads to users potentially missing out. TurnKey options are masternodes that are already set up for the user. 
+Note: Metrix Core is considered beta software. We make no warranties or guarantees of its security or stability.
 
-*This is for users who wish to have a more hands off approach to operating masternodes.
+Metrix Documentation and Usage Resources
+---------------
 
-## Staking
-Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It ensures all wallets have a consensus on all transactions. It also weighs the economic stake of each wallet, so the more MRX a wallet has, the more it will have a say in the public blockchain. Unlike Bitcoin, where the algorithm rewards participants who solve cryptographic puzzles (Proof of Work), Metrix uses the PoS system. One of the significant benefits of a PoS system is the energy efficiency. Instead of wasting huge amounts of energy to mine coins, Metrix is a more eco-friendly coin, which means it is more likely to be adopted in the future. Also, a PoS algorithm reduces the chance of centralization. Other coins are likely to be centralized as all their miners are controlled by a few people, but this is not possible with Metrix. Metrix allows all wallets to get involved in staking. By simply holding your coins in a wallet, Metrix will automatically stake your coins for you. Staking helps Metrix stabilize the blockchain and will help Metrix verify transactions.
+These are some resources that might be helpful in understanding Metrix.
 
+Basic usage resources:
+
+* [User guide Wiki](https://wiki.metrixcoin,com)
+* [Block explorer](https://metrixcoin.com/explorer)
 
 ## Core Team
 #### Administrators
 
-•	Stephen Newton - Director of Finances & Legal
-
 •	Justin Tether - Director of Support & Solutions
 
 •	Gaelin McBride - Director of Marketing & Merchandise
-
-•	David Grear - Director of Community Relations & Project Development
 
 •	Chris Bowe - Director of Web-wallet & Pool
 
@@ -59,38 +44,210 @@ Proof of Stake (PoS) is a type of consensus algorithm for public blockchains. It
 
 •	David Grunge - Lead Developer 
 
-## Social
-[Website](https://metrixcoin.com)
+Developer's Tools
+-----------------
 
-[Discord](https://discord.gg/SHNjQBv)
+* Smart contract deployment tool
+  * https://github.com/TheLindaProjectInc/solar
+* DApp JavaScript Library
+  * https://github.com/TheLindaProjectInc/qtumjs
+* A toolkit for building qtum light wallets
+  * https://github.com/TheLindaProjectInc/qtumjs-wallet
+* CORS qtumd RPC proxy for DApp
+  * https://github.com/TheLindaProjectInc/qtumportal
+* Docker images for running qtum services
+  * https://github.com/TheLindaProjectInc/qtum-docker
+* qtum.info API that powers the block explorer and the QTUM Web wallet
+  * https://github.com/TheLindaProjectInc/qtuminfo-api#qtuminfo-api-documentation
 
-[Reddit](https://www.reddit.com/r/Metrix_Official)
 
-[Twitter](https://twitter.com/lindaproject)
+What is Metrix Core?
+------------------
 
-[GitHub](https://github.com/TheLindaProjectInc)
+Metrix Core is our primary mainnet wallet. It implements a full node and is capable of storing, validating, and distributing all history of the Metrix network. Metrix Core is considered the reference implementation for the Metrix network. 
+
+Metrix Core currently implements the following:
+
+* Sending/Receiving MRX coins
+* Sending/Receiving MRX20 tokens on the Metrix network
+* Staking and creating blocks for the Metrix network
+* Creating and interacting with smart contracts
+* Running a full node for distributing the blockchain to other users
+* "Prune" mode, which minimizes disk usage
+* Regtest mode, which enables developers to very quickly build their own private Metrix network for Dapp testing
+* Testnet mode, using the public Metrix Testnet, with faucet available
+* Compatibility with the Bitcoin Core set of RPC commands and APIs
+* Full SegWit capability with p2sh-segwit (legacy) and bech32 (native) addresses
+
+Alternative Wallets
+-------------------
+
+Metrix Core uses a full node model, and thus requires downloading the entire blockchain. If you do not need the entire blockchain, and do not intend on developing smart contracts, it may be more ideal to use an alternative wallet such as one of our light wallets that can be synchronized in a matter of seconds. 
+
+### Altitude
+
+Download: https://github.com/TheLindaProjectInc/Altitude/releases
+
+### Community Resources
+
+Make sure to check out these resources as well for more information and to keep up to date with all the latest news about Metrix. At least 1 developer is always around, so if you're developing on Metrix and need help, we'd love to welcome you to our community.
+
+[Website](https://metrixcoin.com)  
+[Discord](https://discord.gg/SHNjQBv)  
+[Reddit](https://www.reddit.com/r/Metrix_Official)  
+[Twitter](https://twitter.com/lindaproject)  
+[GitHub](https://github.com/TheLindaProjectInc)  
+
+### Metrix Smart Contract Limitations
+
+*	EVM smart contracts cannot receive coins from or send coins to any address type other than pay-to-pubkeyhash (starts with Q) addresses. This is due to a limitation in the EVM
+*	Contracts are not allowed to create contracts with an initial endowment of coins. The contract must first be created, and then be sent coins in a separate transaction. Humans are also not allowed to create contracts with an initial endowment of coins.
+*	Although all of the infrastructure is present, Metrix Core does not currently parse Solidity event data. You must parse this yourself using either searchlogs or -record-log-opcodes features.
+*	It is not possible to send a contract coins without also executing the contract. This is also the case of Ethereum. This was promised in earlier discussions and technically does work, but due to lack of time for testing this feature was disabled. We hope to reenable this feature with release of the x86 virtual machine in 2020.
+*	In Metrix there can be multiple addresses used to create a proof-of-stake block. However, the EVM can only see the first output using the coinbase operation in Solidity (this address is also the one registered for the continuous staker rewards after 500 blocks).
+
+----------
+
+# Building Metrix Core
+
+### Validate and Reproduce Binaries
+
+Metrix uses a tool called Gitian to make reproducible builds that can be verified by anyone. Instructions on setting up a Gitian VM and building Metrix are provided in [Gitan Building](https://github.com/TheLindaProjectInc/metrix/blob/master/doc/gitian-building.md)
+
+### Build on Ubuntu
+
+This is a quick start script for compiling Metrix on Ubuntu
 
 
-## Handy Links
-[FAQ, tips and tutorials](https://github.com/TheLindaProjectInc/Documentation)
+    sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git cmake libboost-all-dev libgmp3-dev
+    sudo apt-get install software-properties-common
+    sudo add-apt-repository ppa:bitcoin/bitcoin
+    sudo apt-get update
+    sudo apt-get install libdb4.8-dev libdb4.8++-dev
 
-[Media](https://github.com/TheLindaProjectInc/Media)
+    # If you want to build the Qt GUI:
+    sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler qrencode
 
-## Realizations
+    git clone https://github.com/TheLindaProjectInc/metrix --recursive
+    cd metrix
 
-### MyStakingWallet - Official Web Wallet (Staking & Masternode)
-[Website](https://www.mystakingwallet.com)
+    # Note autogen will prompt to install some more dependencies if needed
+    ./autogen.sh
+    ./configure 
+    make -j2
+    
+### Build on CentOS
 
-[Discord](https://discord.gg/j4MebEY)
+Here is a brief description for compiling Metrix on CentOS, for more details please refer to [the specific document](https://github.com/TheLindaProjectInc/metrix/blob/master/doc/build-unix.md)
 
-[Android App](https://play.google.com/store/apps/details?id=com.mystakingwallet.app)
+    # Compiling boost manually
+    sudo yum install python-devel bzip2-devel
+    git clone https://github.com/boostorg/boost.git
+    cd boost
+    git checkout boost-1.66.0
+    git submodule update --init --recursive
+    ./bootstrap.sh --prefix=/usr --libdir=/usr/lib64
+    ./b2 headers
+    sudo ./b2 -j4 install
+    
+    # Installing Dependencies for Metrix
+    sudo yum install epel-release
+    sudo yum install libtool libdb4-cxx-devel openssl-devel libevent-devel gmp-devel
+    
+    # If you want to build the Qt GUI:
+    sudo yum install qt5-qttools-devel protobuf-devel qrencode-devel
+    
+    # Building Metrix
+    git clone --recursive https://github.com/TheLindaProjectInc/metrix.git
+    cd qtum
+    ./autogen.sh
+    ./configure
+    make -j4
 
-[iOS App](https://itunes.apple.com/us/app/linda-my-staking-wallet/id1404883927)
+### Build on Mac OS
 
-### MyNodePool - Official Staking Pool
-[Website](https://www.mynodepool.com)
+The commands in this guide should be executed in a Terminal application.
+The built-in one is located in `/Applications/Utilities/Terminal.app`.
 
-[Discord](https://discord.gg/2sMJnjk)
+#### Preparation
 
-### Altitude - Brand New Wallet Interface
-[Github](https://github.com/TheLindaProjectInc/Altitude)
+Install the Mac OS command line tools:
+
+`xcode-select --install`
+
+When the popup appears, click `Install`.
+
+Then install [Homebrew](https://brew.sh).
+
+#### Dependencies
+
+    brew install cmake automake berkeley-db4 libtool boost miniupnpc openssl pkg-config protobuf qt5 libevent imagemagick librsvg qrencode gmp
+
+NOTE: Building with Qt4 is still supported, however, could result in a broken UI. Building with Qt5 is recommended.
+
+#### Build Metrix Core
+
+1. Clone the qtum source code and cd into `qtum`
+
+        git clone --recursive https://github.com/TheLindaProjectInc/metrix.git
+        cd qtum
+
+2.  Build qtum-core:
+
+    Configure and build the headless qtum binaries as well as the GUI (if Qt is found).
+
+    You can disable the GUI build by passing `--without-gui` to configure.
+
+        ./autogen.sh
+        ./configure
+        make
+
+3.  It is recommended to build and run the unit tests:
+
+        make check
+
+### Run
+
+Then you can either run the command-line daemon using `src/metrixd` and `src/metrix-cli`, or you can run the Qt GUI using `src/qt/metrix-qt`
+
+License
+-------
+
+Metrix is GPLv3 licensed.
+
+
+Development Process
+-------------------
+
+The `master` branch is regularly built and tested, but is not guaranteed to be
+completely stable. [Tags](https://github.com/TheLindaProjectInc/metrix/tags) are created
+regularly to indicate new official, stable release versions of Metrix.
+
+The contribution workflow is described in [CONTRIBUTING.md](https://github.com/TheLindaProjectInc/metrix/blob/master/CONTRIBUTING.md).
+
+
+Testing
+-------
+
+Testing and code review is the bottleneck for development; we get more pull
+requests than we can review and test on short notice. Please be patient and help out by testing
+other people's pull requests, and remember this is a security-critical project where any mistake might cost people
+lots of money.
+
+### Automated Testing
+
+Developers are strongly encouraged to write [unit tests](src/test/README.md) for new code, and to
+submit new unit tests for old code. Unit tests can be compiled and run
+(assuming they weren't disabled in configure) with: `make check`. Further details on running
+and extending unit tests can be found in [/src/test/README.md](/src/test/README.md).
+
+There are also [regression and integration tests](/test), written
+in Python, that are run automatically on the build server.
+These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
+
+### Manual Quality Assurance (QA) Testing
+
+Changes should be tested by somebody other than the developer who wrote the
+code. This is especially important for large or high-risk changes. It is useful
+to add a test plan to the pull request description if testing the changes is
+not straightforward.

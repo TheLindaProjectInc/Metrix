@@ -1,27 +1,42 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Bitcoin developers
+// Copyright (c) 2009-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CHAIN_PARAMS_H
-#define BITCOIN_CHAIN_PARAMS_H
+#ifndef BITCOIN_CHAINPARAMS_H
+#define BITCOIN_CHAINPARAMS_H
 
-#include "chainparamsbase.h"
-#include "checkpoints.h"
-#include "primitives/block.h"
-#include "protocol.h"
-#include "uint256.h"
+#include <chainparamsbase.h>
+#include <consensus/params.h>
+#include <primitives/block.h>
+#include <protocol.h>
+#include <libethashseal/GenesisInfo.h>
 
+#include <memory>
 #include <vector>
+#include <string>
 
-using namespace std;
+struct SeedSpec6 {
+    uint8_t addr[16];
+    uint16_t port;
+};
 
-typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
+typedef std::map<int, uint256> MapCheckpoints;
 
+struct CCheckpointData {
+    MapCheckpoints mapCheckpoints;
+};
 
-struct CDNSSeedData {
-    std::string name, host;
-    CDNSSeedData(const std::string& strName, const std::string& strHost) : name(strName), host(strHost) {}
+/**
+ * Holds various statistics on transactions within a chain. Used to estimate
+ * verification progress during chain sync.
+ *
+ * See also: CChainParams::TxData, GuessVerificationProgress.
+ */
+struct ChainTxData {
+    int64_t nTime;    //!< UNIX timestamp of last known number of transactions
+    int64_t nTxCount; //!< total number of transactions between genesis and that timestamp
+    double dTxRate;   //!< estimated number of transactions per second after that timestamp
 };
 
 /**
@@ -44,83 +59,98 @@ public:
         MAX_BASE58_TYPES
     };
 
-    const uint256& HashGenesisBlock() const { return hashGenesisBlock; }
-    const MessageStartChars& MessageStart() const { return pchMessageStart; }
-    const std::vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
+    const Consensus::Params& GetConsensus() const { return consensus; }
+    const CMessageHeader::MessageStartChars& MessageStart() const { return pchMessageStart; }
     int GetDefaultPort() const { return nDefaultPort; }
-    const uint256& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
-    int SubsidyHalvingInterval() const { return nSubsidyHalvingInterval; }
-
-    /** Used to check majorities for block version upgrade */
-    int EnforceBlockUpgradeMajority() const { return nEnforceBlockUpgradeMajority; }
-    int RejectBlockOutdatedMajority() const { return nRejectBlockOutdatedMajority; }
-    int ToCheckBlockUpgradeMajority() const { return nToCheckBlockUpgradeMajority; }
 
     const CBlock& GenesisBlock() const { return genesis; }
-    bool RequireRPCPassword() const { return fRequireRPCPassword; }
     /** Default value for -checkmempool and -checkblockindex argument */
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
-    /** Make standard checks */
+    /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const { return fRequireStandard; }
-    int64_t TargetTimespan() const { return nTargetTimespan; }
-    int64_t TargetSpacing() const { return nTargetSpacing; }
-    int64_t Interval() const { return nTargetTimespan / nTargetSpacing; }
-    /** In the future use NetworkIDString() for RPC fields */
-    bool TestnetToBeDeprecatedFieldRPC() const { return fTestnetToBeDeprecatedFieldRPC; }
+    /** If this chain is exclusively used for testing */
+    bool IsTestChain() const { return m_is_test_chain; }
+    uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
+    /** Minimum free space (in GB) needed for data directory */
+    uint64_t AssumedBlockchainSize() const { return m_assumed_blockchain_size; }
+    /** Minimum free space (in GB) needed for data directory when pruned; Does not include prune target*/
+    uint64_t AssumedChainStateSize() const { return m_assumed_chain_state_size; }
+    /** Whether it is possible to mine blocks on demand (no retargeting) */
+    bool MineBlocksOnDemand() const { return consensus.fPowNoRetargeting; }
     /** Return the BIP70 network string (main, test or regtest) */
     std::string NetworkIDString() const { return strNetworkID; }
-    const std::vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
+    /** Return the list of hostnames to look up for DNS seeds */
+    const std::vector<std::string>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
-    const std::vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
-    int LastPOWBlock() const { return nLastPOWBlock; }
-    bool IsSoftForkActive(const int nVersion, const int nHeight) const { if (nVersion == 8) return nHeight >= nSoftFork8ActivationHeight; return false; }
-    virtual const Checkpoints::CCheckpointData& Checkpoints() const = 0;
-
+    const std::string& Bech32HRP() const { return bech32_hrp; }
+    const std::vector<SeedSpec6>& FixedSeeds() const { return vFixedSeeds; }
+    const CCheckpointData& Checkpoints() const { return checkpointData; }
+    const ChainTxData& TxData() const { return chainTxData; }
+    std::string EVMGenesisInfo(dev::eth::Network network) const;
+    std::string EVMGenesisInfo(dev::eth::Network network, int nHeight) const;
+    void UpdateOpSenderBlockHeight(int nHeight);
+    void UpdateBtcEcrecoverBlockHeight(int nHeight);
+    void UpdateConstantinopleBlockHeight(int nHeight);
+    void UpdateDifficultyChangeBlockHeight(int nHeight);
 protected:
-    CChainParams(){};
+    CChainParams() {}
 
-    uint256 hashGenesisBlock;
-    MessageStartChars pchMessageStart;
-    /** Raw pub key bytes for the broadcast alert signing key. */
-    std::vector<unsigned char> vAlertPubKey;
+    Consensus::Params consensus;
+    CMessageHeader::MessageStartChars pchMessageStart;
     int nDefaultPort;
-    uint256 bnProofOfWorkLimit;
-    int nSubsidyHalvingInterval;
-    int nEnforceBlockUpgradeMajority;
-    int nRejectBlockOutdatedMajority;
-    int nToCheckBlockUpgradeMajority;
-    int64_t nTargetTimespan;
-    int64_t nTargetSpacing;
-    std::vector<CDNSSeedData> vSeeds;
+    uint64_t nPruneAfterHeight;
+    uint64_t m_assumed_blockchain_size;
+    uint64_t m_assumed_chain_state_size;
+    std::vector<std::string> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
-    int nLastPOWBlock;
-    int nSoftFork8ActivationHeight;
-    CBaseChainParams::Network networkID;
+    std::string bech32_hrp;
     std::string strNetworkID;
     CBlock genesis;
-    std::vector<CAddress> vFixedSeeds;
-    bool fRequireRPCPassword;
-    bool fRequireStandard;
-    bool fTestnetToBeDeprecatedFieldRPC;
+    std::vector<SeedSpec6> vFixedSeeds;
     bool fDefaultConsistencyChecks;
+    bool fRequireStandard;
+    bool m_is_test_chain;
+    CCheckpointData checkpointData;
+    ChainTxData chainTxData;
 };
 
 /**
- * Return the currently selected parameters. This won't change after app startup
- * outside of the unit tests.
+ * Creates and returns a std::unique_ptr<CChainParams> of the chosen chain.
+ * @returns a CChainParams* of the chosen chain.
+ * @throws a std::runtime_error if the chain is not supported.
  */
-const CChainParams& Params();
-
-/** Return parameters for the given network. */
-CChainParams& Params(CBaseChainParams::Network network);
-
-/** Sets the params returned by Params() to those for the given network. */
-void SelectParams(CBaseChainParams::Network network);
+std::unique_ptr<const CChainParams> CreateChainParams(const std::string& chain);
 
 /**
- * Looks for -regtest or -testnet and then calls SelectParams as appropriate.
- * Returns false if an invalid combination is given.
+ * Return the currently selected parameters. This won't change after app
+ * startup, except for unit tests.
  */
-bool SelectParamsFromCommandLine();
+const CChainParams &Params();
 
-#endif // BITCOIN_CHAIN_PARAMS_H
+/**
+ * Sets the params returned by Params() to those for the given BIP70 chain name.
+ * @throws std::runtime_error when the chain is not supported.
+ */
+void SelectParams(const std::string& chain);
+
+/**
+ * Allows modifying the Op Sender block height regtest parameter.
+ */
+void UpdateOpSenderBlockHeight(int nHeight);
+
+/**
+ * Allows modifying the btc_ecrecover block height regtest parameter.
+ */
+void UpdateBtcEcrecoverBlockHeight(int nHeight);
+
+/**
+ * Allows modifying the constantinople block height regtest parameter.
+ */
+void UpdateConstantinopleBlockHeight(int nHeight);
+
+/**
+ * Allows modifying the difficulty change block height regtest parameter.
+ */
+void UpdateDifficultyChangeBlockHeight(int nHeight);
+
+#endif // BITCOIN_CHAINPARAMS_H
