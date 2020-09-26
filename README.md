@@ -34,31 +34,15 @@ Basic usage resources:
 ## Core Team
 #### Administrators
 
-•	Justin Tether - Director of Support & Solutions
+•.      Trent Richards - CEO
 
-•	Gaelin McBride - Director of Marketing & Merchandise
+•	Justin Tether - Director of Support & Solutions
 
 •	Chris Bowe - Director of Web-wallet & Pool
 
 #### Developers
 
 •	David Grunge - Lead Developer 
-
-Developer's Tools
------------------
-
-* Smart contract deployment tool
-  * https://github.com/TheLindaProjectInc/solar
-* DApp JavaScript Library
-  * https://github.com/TheLindaProjectInc/qtumjs
-* A toolkit for building qtum light wallets
-  * https://github.com/TheLindaProjectInc/qtumjs-wallet
-* CORS qtumd RPC proxy for DApp
-  * https://github.com/TheLindaProjectInc/qtumportal
-* Docker images for running qtum services
-  * https://github.com/TheLindaProjectInc/qtum-docker
-* qtum.info API that powers the block explorer and the QTUM Web wallet
-  * https://github.com/TheLindaProjectInc/qtuminfo-api#qtuminfo-api-documentation
 
 
 What is Metrix Core?
@@ -187,14 +171,14 @@ NOTE: Building with Qt4 is still supported, however, could result in a broken UI
 
 #### Build Metrix Core
 
-1. Clone the qtum source code and cd into `qtum`
+1. Clone the metrix source code and cd into `metrix`
 
         git clone --recursive https://github.com/TheLindaProjectInc/metrix.git
-        cd qtum
+        cd metrix
 
-2.  Build qtum-core:
+2.  Build metrix-core:
 
-    Configure and build the headless qtum binaries as well as the GUI (if Qt is found).
+    Configure and build the headless metrix binaries as well as the GUI (if Qt is found).
 
     You can disable the GUI build by passing `--without-gui` to configure.
 
