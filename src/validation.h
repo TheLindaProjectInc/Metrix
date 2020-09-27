@@ -306,7 +306,7 @@ bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams,
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams, const CTransactionRef& tx = NULL);
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams, const CMutableTransaction tx);
 CAmount GetGovernorSubsidy(int nHeight, uint64_t nCollateral);
-CAmount GetBudgetSubsidy(CAmount blockReward, CAmount governorReward);
+CAmount GetBudgetSubsidy(CAmount blockReward, CAmount governorReward, int nHeight);
 bool GetDGPVout(std::vector<CTxOut> vTempVouts, std::vector<unsigned char> vContractAddr, std::vector<unsigned char> vContractData, CTxOut& vout, uint32_t& n);
 
 /** Guess verification progress (as a fraction between 0.0=genesis and 1.0=current tip). */

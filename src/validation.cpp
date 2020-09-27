@@ -1550,10 +1550,23 @@ CAmount GetGovernorSubsidy(int nHeight, uint64_t nCollateral)
     return nSubsidy;
 }
 
-CAmount GetBudgetSubsidy(CAmount blockSubsidy, CAmount governorSubsidy)
+CAmount GetBudgetSubsidy(CAmount blockSubsidy, CAmount governorSubsidy, int nHeight)
 {
     // 10% of block reward and gov reward go to budget
-    CAmount nSubsidy = (blockSubsidy * 100 / 90) + (governorSubsidy * 100 / 90); 
+    CAmount nSubsidyFromBlock = (blockSubsidy * 100 / 90);
+    CAmount nSubsidyFromGov = (governorSubsidy * 100 / 90);
+
+    // initial release was allocating an extra 90% to the budget
+    int forkHeight = 0; // regtest/unittest
+    if (gArgs.GetChainName() == CBaseChainParams::MAIN) forkHeight = 38000;
+    if (gArgs.GetChainName() == CBaseChainParams::TESTNET) forkHeight = 90000;
+    if (nHeight > forkHeight)
+    {
+        nSubsidyFromBlock -= blockSubsidy;
+        nSubsidyFromGov -= governorSubsidy;
+    }
+
+    CAmount nSubsidy = nSubsidyFromBlock + nSubsidyFromGov;
     return nSubsidy;
 }
 
@@ -2692,7 +2705,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
         uint64_t nCollateral = qtumDGP.getGovernanceCollateral(nHeight);
         CAmount governorReward = GetGovernorSubsidy(nHeight, nCollateral);
-        CAmount budgetPayment = GetBudgetSubsidy(blockReward, governorReward);
+        CAmount budgetPayment = GetBudgetSubsidy(blockReward, governorReward, nHeight);
         blockReward += nFees;
         CAmount totalReward = blockReward;
         uint32_t n;

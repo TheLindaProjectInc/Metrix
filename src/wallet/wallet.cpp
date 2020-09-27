@@ -3685,7 +3685,7 @@ bool CWallet::CreateCoinStake(interfaces::Chain::Lock& locked_chain, const Filla
     // Calculate reward
     {
         int64_t nBlockSubsidy = GetBlockSubsidy(pindexPrev->nHeight + 1, consensusParams, txNew);
-        nBudgetSubsidyFromCoinstake = GetBudgetSubsidy(nBlockSubsidy, 0);
+        nBudgetSubsidyFromCoinstake = GetBudgetSubsidy(nBlockSubsidy, 0, pindexPrev->nHeight + 1);
         int64_t nReward = nTotalFees + nBlockSubsidy;
         if (nReward < 0)
             return false;

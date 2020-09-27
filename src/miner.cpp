@@ -628,7 +628,7 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
 
     // add budget allowance and settlement
     CScript scriptPubKeyBudget = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("104ad86f") << BudgetDGP.asBytes() << OP_CALL;
-    coinstakeTx->vout[hasGovernorToReward ? 4 : 3].nValue = GetBudgetSubsidy(0, nGovernorSubsidy); // 10% of the coinstake reward is added once the coinstake coins are selected
+    coinstakeTx->vout[hasGovernorToReward ? 4 : 3].nValue = GetBudgetSubsidy(0, nGovernorSubsidy, nHeight); // 10% of the coinstake reward is added once the coinstake coins are selected
     coinstakeTx->vout[hasGovernorToReward ? 4 : 3].scriptPubKey = scriptPubKeyBudget;
 }
 
