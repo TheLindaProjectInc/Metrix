@@ -143,7 +143,7 @@ Here is a brief description for compiling Metrix on CentOS, for more details ple
     
     # Building Metrix
     git clone --recursive https://github.com/TheLindaProjectInc/metrix.git
-    cd qtum
+    cd metrix
     ./autogen.sh
     ./configure
     make -j4
