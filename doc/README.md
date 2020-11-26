@@ -5,7 +5,7 @@ Setup
 ---------------------
 Metrix Core is the original Metrix client and it builds the backbone of the network. It downloads and, by default, stores the entire history of Metrix transactions (which is currently several GBs); depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more.
 
-To download Metrix Core, visit [qtumcore.org](https://www.qtumcore.org/).
+To download Metrix Core, visit [Metrix Github](https://github.com/TheLindaProjectInc/Metrix/releases/latest).
 
 Running
 ---------------------
@@ -15,12 +15,12 @@ The following are some helpful notes on how to run Metrix Core on your native pl
 
 Unpack the files into a directory and run:
 
-- `bin/metrix-qt` (GUI) or
-- `bin/qtumd` (headless)
+- `bin/metrix-qt` (GUI, unsupported use [Altitude](https://github.com/TheLindaProjectInc/Altitude/releases)) or
+- `bin/metrixd` (headless)
 
 ### Windows
 
-Unpack the files into a directory, and then run metrix-qt.exe.
+Unpack the files into a directory, and then run metrix-qt.exe(Unsupported use [Altitude](https://github.com/TheLindaProjectInc/Altitude/releases)).
 
 ### macOS
 

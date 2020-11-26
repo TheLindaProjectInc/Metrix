@@ -83,7 +83,7 @@ In this case there is no dependency on Berkeley DB 4.8.
 Mining is also possible in disable-wallet mode using the `getblocktemplate` RPC call.
 
 ## Running
-Metrix Core is now available at `./src/qtumd`
+Metrix Core is now available at `./src/metrixd`
 
 Before running, you may create an empty configuration file:
 ```shell
@@ -94,7 +94,7 @@ touch "/Users/${USER}/Library/Application Support/Metrix/metrix.conf"
 chmod 600 "/Users/${USER}/Library/Application Support/Metrix/metrix.conf"
 ```
 
-The first time you run qtumd, it will start downloading the blockchain. This process could
+The first time you run metrixd, it will start downloading the blockchain. This process could
 take many hours, or even days on slower than average systems.
 
 You can monitor the download process by looking at the debug.log file:
@@ -104,7 +104,7 @@ tail -f $HOME/Library/Application\ Support/Metrix/debug.log
 
 ## Other commands:
 ```shell
-./src/qtumd -daemon      # Starts the metrix daemon.
+./src/metrixd -daemon      # Starts the metrix daemon.
 ./src/metrix-cli --help    # Outputs a list of command-line options.
 ./src/metrix-cli help      # Outputs a list of RPC commands when the daemon is running.
 ```
