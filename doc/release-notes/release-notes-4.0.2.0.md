@@ -1,6 +1,9 @@
 # Metrix 4.0.2.0
 
-This is a patch version release. Bugfixes to Qtum v0.19.1
+## Mandatory Update
+
+This is a mandatory update.
+Bugfixes to Qtum v0.19.1
 
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/metrix/issues
 
@@ -15,3 +18,4 @@ for older versions), then just copy over the appropriate metrixd file.
 - Fix a bug where decoderawtransaction did not return the correct call type in some cases.
 - Fix a bug where gettransactionreceipt returned wrong cumulativeGasUsed in some cases.
 - Fix a bug where sendmanywithdupes did not set all values correctly in some cases.
+- Increase default blockGasLimit - Fix for Governor reward payouts applies at block 107001
