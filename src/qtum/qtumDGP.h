@@ -21,6 +21,8 @@ static const uint64_t DEFAULT_MIN_GAS_PRICE_DGP = 5000;
 static const uint64_t MIN_BLOCK_GAS_LIMIT_DGP = 1000000;
 static const uint64_t MAX_BLOCK_GAS_LIMIT_DGP = 1000000000;
 static const uint64_t DEFAULT_BLOCK_GAS_LIMIT_DGP = 40000000;
+static const uint64_t DEFAULT_GAS_LIMIT_DGP_OP_SEND = 250000;
+static const uint64_t DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND = 500000;
 
 static const uint64_t MIN_MIN_RELAY_TX_FEE_DGP = 100000;
 static const uint64_t MAX_MIN_RELAY_TX_FEE_DGP = 100000000000;
@@ -67,13 +69,13 @@ public:
 
 private:
 
-    bool initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data = std::vector<unsigned char>());
+    bool initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data = std::vector<unsigned char>(), uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
 
     void initStorageDGP(const dev::Address& addr);
 
     void initStorageTemplate(const dev::Address& addr);
 
-    void initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data);
+    void initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data, uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
 
     void initDataSchedule();
 
@@ -103,7 +105,7 @@ private:
 
     std::vector<uint64_t> getUint64VectorFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data);
     
-    dev::Address getAddressFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data);
+    dev::Address getAddressFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data, uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
 
     dev::eth::EVMSchedule createEVMSchedule(const dev::eth::EVMSchedule& schedule, int blockHeight);
 

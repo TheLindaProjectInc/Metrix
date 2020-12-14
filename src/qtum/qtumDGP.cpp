@@ -140,17 +140,28 @@ uint64_t QtumDGP::getBudgetFee(unsigned int blockHeight){
 
 dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     clear();
-    return getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"));
+    int forkHeight = 0; // regtest/unittest
+    uint64_t defaultGasLimit;
+
+    if (gArgs.GetChainName() == CBaseChainParams::MAIN) forkHeight = 110000;
+    if (gArgs.GetChainName() == CBaseChainParams::TESTNET) forkHeight = 187000;
+
+    if (::ChainActive().Tip()->nHeight > forkHeight) {
+        defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
+    } else {
+        defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
+    }
+    return getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
 }
 
-bool QtumDGP::initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data){
+bool QtumDGP::initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data, uint64_t defaultGasLimit){
     initStorageDGP(addr);
     // metrix DGP contract address does not change so no need to check for it every time
     if(blockHeight > 0){
         if(!dgpevm){
             initStorageTemplate(addr);
         } else {
-            initDataTemplate(addr, data);
+            initDataTemplate(addr, data, defaultGasLimit);
         }
         return true;
     }
@@ -165,9 +176,9 @@ void QtumDGP::initStorageTemplate(const dev::Address& addr){
     storageTemplate = state->storage(addr);
 }
 
-void QtumDGP::initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data){
+void QtumDGP::initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data, uint64_t defaultGasLimit){
     // metrix send default gas limit to prevent recursive call when getting gas limit
-    dataTemplate = CallContract(addr, data, dev::Address(), 0, DEFAULT_GAS_LIMIT_OP_SEND)[0].execRes.output;
+    dataTemplate = CallContract(addr, data, dev::Address(), 0, defaultGasLimit)[0].execRes.output;
 }
 
 void QtumDGP::createParamsInstance(){
@@ -259,9 +270,9 @@ void QtumDGP::parseDataOneAddress(dev::Address& value){
     }
 }
 
-dev::Address QtumDGP::getAddressFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data){
+dev::Address QtumDGP::getAddressFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data, uint64_t defaultGasLimit){
     dev::Address value = dev::Address(0);
-    if(initStorages(contract, blockHeight, data)){
+    if(initStorages(contract, blockHeight, data, defaultGasLimit)){
         if(!dgpevm){
             parseStorageOneAddress(value);
         } else {

@@ -2616,6 +2616,8 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
     {
         dev::Address winner = qtumDGP.getGovernanceWinner(nHeight);
+        LogPrintf("Gov Winner Validation : %s\n", 
+            HexStr(winner.asBytes()));
         qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, GovernanceDGP, "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
     }
 
