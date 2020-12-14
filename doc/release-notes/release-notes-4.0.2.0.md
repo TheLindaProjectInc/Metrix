@@ -18,4 +18,4 @@ for older versions), then just copy over the appropriate metrixd file.
 - Fix a bug where decoderawtransaction did not return the correct call type in some cases.
 - Fix a bug where gettransactionreceipt returned wrong cumulativeGasUsed in some cases.
 - Fix a bug where sendmanywithdupes did not set all values correctly in some cases.
-- Increase default blockGasLimit - Fix for Governor reward payouts applies at block 107001
+- Increase default blockGasLimit for winner contract call - Fix for Governor reward payouts applies at block 110001
