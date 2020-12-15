@@ -610,6 +610,10 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
     CAmount nGasPrice = qtumDGP.getMinGasPrice(nHeight);
     uint64_t nCollateral = qtumDGP.getGovernanceCollateral(nHeight);
     uint64_t nGovernorSubsidy = GetGovernorSubsidy(nHeight, nCollateral);
+    LogPrintf("Gov Winner : %s | hasGovernorToReward : %t | Subsidy : %d\n", 
+        HexStr(addrWinner.asBytes()),
+        hasGovernorToReward,
+        nGovernorSubsidy);
     if (hasGovernorToReward)
     {
         coinstakeTx->vout.resize(5);
