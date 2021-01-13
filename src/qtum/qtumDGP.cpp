@@ -140,17 +140,26 @@ uint64_t QtumDGP::getBudgetFee(unsigned int blockHeight){
 
 dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     clear();
-    int forkHeight = 0; // regtest/unittest
-    uint64_t defaultGasLimit;
+    uint64_t defaultGasLimit = DEFAULT_BLOCK_GAS_LIMIT_DGP;
 
-    if (gArgs.GetChainName() == CBaseChainParams::MAIN) forkHeight = 110000;
-    if (gArgs.GetChainName() == CBaseChainParams::TESTNET) forkHeight = 187000;
-
-    if (::ChainActive().Tip()->nHeight > forkHeight) {
-        defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
-    } else {
-        defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
+    if (gArgs.GetChainName() == CBaseChainParams::MAIN) {
+        if (::ChainActive().Tip()->nHeight > 110000 && ::ChainActive().Tip()->nHeight < 137001) {
+            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
+        }
+        if (::ChainActive().Tip()->nHeight < 110001) {
+            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
+        }
     }
+
+    if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
+        if (::ChainActive().Tip()->nHeight > 187000 && ::ChainActive().Tip()->nHeight < 200001) {
+            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
+        }
+        if (::ChainActive().Tip()->nHeight < 187001) {
+            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
+        }
+    }
+
     return getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
 }
 
