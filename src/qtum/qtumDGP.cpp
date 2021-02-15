@@ -141,6 +141,7 @@ uint64_t QtumDGP::getBudgetFee(unsigned int blockHeight){
 dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     clear();
     uint64_t defaultGasLimit = DEFAULT_BLOCK_GAS_LIMIT_DGP;
+    bool startGovMaturity = false;
 
     if (gArgs.GetChainName() == CBaseChainParams::MAIN) {
         if (::ChainActive().Tip()->nHeight > 110000 && ::ChainActive().Tip()->nHeight < 137001) {
@@ -148,6 +149,11 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         }
         if (::ChainActive().Tip()->nHeight < 110001) {
             defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
+        }
+
+        // 48hr maturity fix enforcement
+        if (::ChainActive().Tip()->nHeight > 170000) {
+           startGovMaturity = true;
         }
     }
 
@@ -158,9 +164,25 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         if (::ChainActive().Tip()->nHeight < 187001) {
             defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
         }
+
+        // 48hr maturity fix enforcement
+        if (::ChainActive().Tip()->nHeight > 245000) {
+           startGovMaturity = true;
+        }
+
     }
 
-    return getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
+    dev::Address value = getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
+
+    if (startGovMaturity) {
+        std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+        if (::ChainActive().Tip()->nHeight < v[0] + 1920){
+            //Take the registration block and add 48hrs worth of blocks
+            LogPrintf("Governor immature - Address: %s | Registration Block: %i\n", HexStr(value.asBytes()), v[0] + 1920);
+            value = dev::Address(0x0);
+        }
+    }
+    return value;
 }
 
 bool QtumDGP::initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data, uint64_t defaultGasLimit){
