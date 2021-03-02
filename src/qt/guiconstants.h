@@ -43,7 +43,7 @@ static const int TOOLTIP_WRAP_THRESHOLD = 80;
 #define SPINNER_FRAMES 36
 
 #define QAPP_ORG_NAME "Metrix"
-#define QAPP_ORG_DOMAIN "metrix.org"
+#define QAPP_ORG_DOMAIN "Metrixcoin.com"
 #define QAPP_APP_NAME_DEFAULT "Metrix-Qt"
 #define QAPP_APP_NAME_TESTNET "Metrix-Qt-testnet"
 #define QAPP_APP_NAME_REGTEST "Metrix-Qt-regtest"
@@ -52,9 +52,9 @@ static const int TOOLTIP_WRAP_THRESHOLD = 80;
 static constexpr uint64_t GB_BYTES{1000000000};
 
 /* Mainnet metrix explorer uri */
-static const QString QTUM_INFO_MAINNET = "<a href='https://metrix.info/%1/%2'>%2</a>";
+static const QString QTUM_INFO_MAINNET = "<a href='https://explorer.metrixcoin.com/%1/%2'>%2</a>";
 
 /* Testnet metrix explorer uri */
-static const QString QTUM_INFO_TESTNET = "<a href='https://testnet.metrix.info/%1/%2'>%2</a>";
+static const QString QTUM_INFO_TESTNET = "<a href='https://testnet-explorer.metrixcoin.com/%1/%2'>%2</a>";
 
 #endif // BITCOIN_QT_GUICONSTANTS_H
