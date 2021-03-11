@@ -1992,11 +1992,15 @@ void CWalletTx::GetAmounts(std::list<COutputEntry>& listReceived,
 
         // In either case, we need to get the destination address
         CTxDestination address;
-
+        
         if (!ExtractDestination(txout.scriptPubKey, address) && !txout.scriptPubKey.IsUnspendable())
         {
-            pwallet->WalletLogPrintf("CWalletTx::GetAmounts: Unknown transaction type found, txid %s\n",
-                                    this->GetHash().ToString());
+            // metrix
+            // Only log if its not a coinstake, our stake transactions contain empty vout[0] and DGP vouts that are classed as unknown.
+            if(!this->IsCoinStake()) {
+                pwallet->WalletLogPrintf("CWalletTx::GetAmounts: Unknown transaction type found, txid %s\n",
+                                        this->GetHash().ToString());
+            }
             address = CNoDestination();
         }
 
