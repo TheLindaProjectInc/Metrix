@@ -36,13 +36,7 @@ Basic usage resources:
 
 •.      Trent Richards - CEO
 
-•	Justin Tether - Director of Support & Solutions
-
 •	Chris Bowe - Director of Web-wallet & Pool
-
-#### Developers
-
-•	David Grunge - Lead Developer 
 
 
 What is Metrix Core?
