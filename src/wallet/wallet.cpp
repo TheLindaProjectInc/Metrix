@@ -1998,8 +1998,10 @@ void CWalletTx::GetAmounts(std::list<COutputEntry>& listReceived,
             // metrix
             // Only log if its not a coinstake, our stake transactions contain empty vout[0] and DGP vouts that are classed as unknown.
             if(!this->IsCoinStake()) {
-                pwallet->WalletLogPrintf("CWalletTx::GetAmounts: Unknown transaction type found, txid %s\n",
-                                        this->GetHash().ToString());
+                if(!txout.scriptPubKey.HasOpCall() && !txout.scriptPubKey.HasOpSpend()) {
+                    pwallet->WalletLogPrintf("CWalletTx::GetAmounts: Unknown transaction type found, txid %s\n",
+                                            this->GetHash().ToString());
+                }
             }
             address = CNoDestination();
         }
