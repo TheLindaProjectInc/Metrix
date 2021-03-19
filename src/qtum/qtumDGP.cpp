@@ -142,6 +142,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     clear();
     uint64_t defaultGasLimit = DEFAULT_BLOCK_GAS_LIMIT_DGP;
     bool startGovMaturity = false;
+    bool winnerEligibileFix = false;
 
     if (gArgs.GetChainName() == CBaseChainParams::MAIN) {
         if (::ChainActive().Tip()->nHeight > 110000 && ::ChainActive().Tip()->nHeight < 137001) {
@@ -152,8 +153,13 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         }
 
         // 48hr maturity fix enforcement
-        if (::ChainActive().Tip()->nHeight > 170000) {
+        if (::ChainActive().Tip()->nHeight > 170000 && ::ChainActive().Tip()->nHeight < 199999) {
            startGovMaturity = true;
+        }
+
+        // Fix for choosing winner directly from list of eligible rather then getting contract to do it
+        if (::ChainActive().Tip()->nHeight > 200000) {
+           winnerEligibileFix = true;
         }
     }
 
@@ -166,22 +172,49 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         }
 
         // 48hr maturity fix enforcement
-        if (::ChainActive().Tip()->nHeight > 245000) {
+        if (::ChainActive().Tip()->nHeight > 245000 && ::ChainActive().Tip()->nHeight < 254999) {
            startGovMaturity = true;
         }
 
+        // Fix for choosing winner directly from list of eligible rather then getting contract to do it
+        if (::ChainActive().Tip()->nHeight > 255000) {
+           winnerEligibileFix = true;
+        }
+    }
+
+    if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
+        winnerEligibileFix = true;
     }
 
     dev::Address value = getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
 
     if (startGovMaturity) {
         std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-        if (::ChainActive().Tip()->nHeight < v[0] + 1920){
+        if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
             //Take the registration block and add 48hrs worth of blocks
             LogPrintf("Governor immature - Address: %s | Registration Block: %i\n", HexStr(value.asBytes()), v[0] + 1920);
             value = dev::Address(0x0);
         }
     }
+
+    if (winnerEligibileFix) {
+        // Get the list of currenrly active governors
+        std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, GovernanceDGP, ParseHex("883703c2"));
+        // Loop till we find a valid governor thats enrolled for > 1920 blocks and lastReward is > 1920
+        for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
+            dev::Address value = dev::Address(governorAddresses[i]);
+            uint64_t isValid = getUint64FromDGP(blockHeight, GovernanceDGP, ParseHex("c88958cc000000000000000000000000" + HexStr(value.asBytes()) + "0000000000000000000000000000000000000000000000000000000000000001" + "0000000000000000000000000000000000000000000000000000000000000000"));
+            if(isValid > 0) {
+                std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+                if (::ChainActive().Tip()->nHeight >= v[0] + 1920 && ::ChainActive().Tip()->nHeight >= v[3] + 1920){
+                    LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                    return value;
+                }
+            }
+        }
+        value = dev::Address(0x0);
+    }
+
     return value;
 }
 
@@ -299,6 +332,26 @@ void QtumDGP::parseDataOneAddress(dev::Address& value){
         std::vector<unsigned char> addr = std::vector<unsigned char>(dataTemplate.begin() + 12, dataTemplate.begin() + 32);
         value = dev::Address(dev::toHex(addr));
     }
+}
+
+void QtumDGP::parseDataVectorAddress(std::vector<dev::Address>& addressValues){
+    size_t size = dataTemplate.size() / 32;
+    for(size_t i = 0; i < size; i++){
+        std::vector<unsigned char> addr = std::vector<unsigned char>(dataTemplate.begin() + (i * 32) + 12, dataTemplate.begin() + ((i+1) * 32));
+        addressValues.push_back(dev::Address(dev::toHex(addr)));
+    }
+}
+
+std::vector<dev::Address> QtumDGP::getAddressVectorFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data){
+    std::vector<dev::Address> addressValues;
+    if(initStorages(contract, blockHeight, data)){
+        if(!dgpevm){
+            //parseStorageOneAddress(value);
+        } else {
+            parseDataVectorAddress(addressValues);
+        }
+    }
+    return addressValues;
 }
 
 dev::Address QtumDGP::getAddressFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data, uint64_t defaultGasLimit){

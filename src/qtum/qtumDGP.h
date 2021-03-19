@@ -99,12 +99,16 @@ private:
     
     void parseDataOneAddress(dev::Address& value);
 
+    void parseDataVectorAddress(std::vector<dev::Address>& addressValues);
+
     void parseStorageUint64Vector(std::vector<uint64_t>& uint64Values);
 
     void parseDataUint64Vector(std::vector<uint64_t>& uint64Values);
 
     std::vector<uint64_t> getUint64VectorFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data);
-    
+
+    std::vector<dev::Address> getAddressVectorFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data);
+
     dev::Address getAddressFromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data, uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
 
     dev::eth::EVMSchedule createEVMSchedule(const dev::eth::EVMSchedule& schedule, int blockHeight);
