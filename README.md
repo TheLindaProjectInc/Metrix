@@ -111,7 +111,7 @@ This is a quick start script for compiling Metrix on Ubuntu
 
     # Note autogen will prompt to install some more dependencies if needed
     ./autogen.sh
-    ./configure 
+    ./configure --disable-bench
     make -j2
     
 ### Build on CentOS
