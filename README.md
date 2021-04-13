@@ -120,7 +120,7 @@ Low resource systems need swap space to compile this also
 
     # Note autogen will prompt to install some more dependencies if needed
     ./autogen.sh
-    ./configure 
+    ./configure --disable-bench
     make -j2
     
 ### Build on CentOS
@@ -148,7 +148,7 @@ Here is a brief description for compiling Metrix on CentOS, for more details ple
     git clone --recursive https://github.com/TheLindaProjectInc/metrix.git
     cd metrix
     ./autogen.sh
-    ./configure
+    ./configure --disable-bench
     make -j4
 
 ### Build on Mac OS
@@ -186,7 +186,7 @@ NOTE: Building with Qt4 is still supported, however, could result in a broken UI
     You can disable the GUI build by passing `--without-gui` to configure.
 
         ./autogen.sh
-        ./configure
+        ./configure --disable-bench
         make
 
 3.  It is recommended to build and run the unit tests:
