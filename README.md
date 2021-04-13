@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.com/TheLindaProjectInc/metrix.svg?branch=master)](https://travis-ci.com/TheLindaProjectInc/metrix)
 <p align="center">
     <img src="logo.png">
 </p>
@@ -28,13 +27,14 @@ These are some resources that might be helpful in understanding Metrix.
 
 Basic usage resources:
 
-* [User guide Wiki](https://wiki.metrixcoin,com)
-* [Block explorer](https://metrixcoin.com/explorer)
+* [User guide Wiki](https://wiki.metrixcoin.com)
+* [Block explorer](https://explorer.metrixcoin.com)
+* [Testnet Block explorer](https://testnet-explorer.metrixcoin.com)
 
 ## Core Team
 #### Administrators
 
-•.      Trent Richards - CEO
+•.  Trent Richards - CEO
 
 •	Chris Bowe - Director of Web-wallet & Pool
 
@@ -47,13 +47,14 @@ Metrix Core is our primary mainnet wallet. It implements a full node and is capa
 Metrix Core currently implements the following:
 
 * Sending/Receiving MRX coins
-* Sending/Receiving MRX20 tokens on the Metrix network
+* Sending/Receiving MRC20 tokens on the Metrix network
+* Sending/Receiving MRC721 tokens on the Metrix network
 * Staking and creating blocks for the Metrix network
 * Creating and interacting with smart contracts
 * Running a full node for distributing the blockchain to other users
 * "Prune" mode, which minimizes disk usage
 * Regtest mode, which enables developers to very quickly build their own private Metrix network for Dapp testing
-* Testnet mode, using the public Metrix Testnet, with faucet available
+* Testnet mode, using the public Metrix Testnet
 * Compatibility with the Bitcoin Core set of RPC commands and APIs
 * Full SegWit capability with p2sh-segwit (legacy) and bech32 (native) addresses
 
@@ -78,7 +79,7 @@ Make sure to check out these resources as well for more information and to keep 
 
 ### Metrix Smart Contract Limitations
 
-*	EVM smart contracts cannot receive coins from or send coins to any address type other than pay-to-pubkeyhash (starts with Q) addresses. This is due to a limitation in the EVM
+*	EVM smart contracts cannot receive coins from or send coins to any address type other than pay-to-pubkeyhash (starts with M) addresses. This is due to a limitation in the EVM
 *	Contracts are not allowed to create contracts with an initial endowment of coins. The contract must first be created, and then be sent coins in a separate transaction. Humans are also not allowed to create contracts with an initial endowment of coins.
 *	Although all of the infrastructure is present, Metrix Core does not currently parse Solidity event data. You must parse this yourself using either searchlogs or -record-log-opcodes features.
 *	It is not possible to send a contract coins without also executing the contract. This is also the case of Ethereum. This was promised in earlier discussions and technically does work, but due to lack of time for testing this feature was disabled. We hope to reenable this feature with release of the x86 virtual machine in 2020.
@@ -96,6 +97,14 @@ Metrix uses a tool called Gitian to make reproducible builds that can be verifie
 
 This is a quick start script for compiling Metrix on Ubuntu
 
+Low resource systems need swap space to compile this also
+
+    ## Create Swapfile
+    fallocate -l 3G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    sudo echo -e "/swapfile none swap sw 0 0 \n" >> /etc/fstab
 
     sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git cmake libboost-all-dev libgmp3-dev
     sudo apt-get install software-properties-common
@@ -111,7 +120,7 @@ This is a quick start script for compiling Metrix on Ubuntu
 
     # Note autogen will prompt to install some more dependencies if needed
     ./autogen.sh
-    ./configure --disable-bench
+    ./configure 
     make -j2
     
 ### Build on CentOS
