@@ -51,7 +51,6 @@ void WalletInit::AddWalletOptions() const
     gArgs.AddArg("-paytxfee=<amt>", strprintf("Fee (in %s/kB) to add to transactions you send (default: %s)",
                                                             CURRENCY_UNIT, FormatMoney(CFeeRate{DEFAULT_PAY_TX_FEE}.GetFeePerK())), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
     gArgs.AddArg("-rescan", "Rescan the block chain for missing wallet transactions on startup", ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
-    gArgs.AddArg("-salvagewallet", "Attempt to recover private keys from a corrupt wallet on startup", ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
     gArgs.AddArg("-spendzeroconfchange", strprintf("Spend unconfirmed change when sending transactions (default: %u)", DEFAULT_SPEND_ZEROCONF_CHANGE), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
     gArgs.AddArg("-txconfirmtarget=<n>", strprintf("If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)", DEFAULT_TX_CONFIRM_TARGET), ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
     gArgs.AddArg("-upgradewallet", "Upgrade wallet to latest format on startup", ArgsManager::ALLOW_ANY, OptionsCategory::WALLET);
@@ -89,16 +88,6 @@ bool WalletInit::ParameterInteraction() const
 
     if (gArgs.GetBoolArg("-blocksonly", DEFAULT_BLOCKSONLY) && gArgs.SoftSetBoolArg("-walletbroadcast", false)) {
         LogPrintf("%s: parameter interaction: -blocksonly=1 -> setting -walletbroadcast=0\n", __func__);
-    }
-
-    if (gArgs.GetBoolArg("-salvagewallet", false)) {
-        if (is_multiwallet) {
-            return InitError(strprintf("%s is only allowed with a single wallet file", "-salvagewallet"));
-        }
-        // Rewrite just private keys: rescan to find transactions
-        if (gArgs.SoftSetBoolArg("-rescan", true)) {
-            LogPrintf("%s: parameter interaction: -salvagewallet=1 -> setting -rescan=1\n", __func__);
-        }
     }
 
     bool zapwallettxes = gArgs.GetBoolArg("-zapwallettxes", false);

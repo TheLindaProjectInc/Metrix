@@ -145,7 +145,7 @@ void UnloadWallet(std::shared_ptr<CWallet>&& wallet)
 
 std::shared_ptr<CWallet> LoadWallet(interfaces::Chain& chain, const WalletLocation& location, std::string& error, std::string& warning)
 {
-    if (!CWallet::Verify(chain, location, false, error, warning)) {
+    if (!CWallet::Verify(chain, location, error, warning)) {
         error = "Wallet file verification failed: " + error;
         return nullptr;
     }
@@ -184,7 +184,7 @@ WalletCreationStatus CreateWallet(interfaces::Chain& chain, const SecureString& 
 
     // Wallet::Verify will check if we're trying to create a wallet with a duplicate name.
     std::string wallet_error;
-    if (!CWallet::Verify(chain, location, false, wallet_error, warning)) {
+    if (!CWallet::Verify(chain, location, wallet_error, warning)) {
         error = "Wallet file verification failed: " + wallet_error;
         return WalletCreationStatus::CREATION_FAILED;
     }
@@ -4694,7 +4694,7 @@ void CWallet::MarkPreSplitKeys()
     }
 }
 
-bool CWallet::Verify(interfaces::Chain& chain, const WalletLocation& location, bool salvage_wallet, std::string& error_string, std::string& warning_string)
+bool CWallet::Verify(interfaces::Chain& chain, const WalletLocation& location, std::string& error_string, std::string& warning_string)
 {
     // Do some checking on wallet path. It should be either a:
     //
@@ -4734,21 +4734,7 @@ bool CWallet::Verify(interfaces::Chain& chain, const WalletLocation& location, b
         return false;
     }
 
-    if (salvage_wallet) {
-        // Recover readable keypairs:
-        CWallet dummyWallet(&chain, WalletLocation(), WalletDatabase::CreateDummy());
-        std::string backup_filename;
-        // Even if we don't use this lock in this function, we want to preserve
-        // lock order in LoadToWallet if query of chain state is needed to know
-        // tx status. If lock can't be taken, tx confirmation status may be not
-        // reliable.
-        auto locked_chain = dummyWallet.LockChain();
-        if (!WalletBatch::Recover(wallet_path, (void *)&dummyWallet, WalletBatch::RecoverKeysOnlyFilter, backup_filename)) {
-            return false;
-        }
-    }
-
-    return WalletBatch::VerifyDatabaseFile(wallet_path, warning_string, error_string);
+    return WalletBatch::VerifyDatabaseFile(wallet_path, error_string);
 }
 
 std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(interfaces::Chain& chain, const WalletLocation& location, uint64_t wallet_creation_flags)

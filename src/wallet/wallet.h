@@ -1401,7 +1401,7 @@ public:
     bool MarkReplaced(const uint256& originalHash, const uint256& newHash);
 
     //! Verify wallet naming and perform salvage on the wallet if required
-    static bool Verify(interfaces::Chain& chain, const WalletLocation& location, bool salvage_wallet, std::string& error_string, std::string& warning_string);
+    static bool Verify(interfaces::Chain& chain, const WalletLocation& location, std::string& error_string, std::string& warning_string);
 
     /* Initializes the wallet, returns a new CWallet instance or a null pointer in case of an error */
     static std::shared_ptr<CWallet> CreateWalletFromFile(interfaces::Chain& chain, const WalletLocation& location, uint64_t wallet_creation_flags = 0);
