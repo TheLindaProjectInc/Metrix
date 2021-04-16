@@ -186,7 +186,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         winnerEligibileFix = true;
     }
 
-    dev::Address value = dev::Address(getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit));
+    dev::Address value = getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
 
     if (startGovMaturity) {
         if (value != dev::Address(0x0)) {
