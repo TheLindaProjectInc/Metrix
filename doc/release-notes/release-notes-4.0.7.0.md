@@ -1,6 +1,6 @@
-# Metrix 4.0.6.0
+# Metrix 4.0.6.1
 
-## Mandatory Update
+## Bugfix update
 
 Please report bugs using the issue tracker at github: https://github.com/thelindaproject/metrix/issues
 
@@ -9,6 +9,7 @@ Shut down Metrix, wait until it has completely shut down (which might take a few
 for older versions), then just copy over the appropriate metrixd file.
 
 # Core
+- Fix for crash on validation when winner selection returns no governor.
 - Update checkpoint blocks
 
 # Wallet

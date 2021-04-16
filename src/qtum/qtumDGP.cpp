@@ -186,14 +186,16 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         winnerEligibileFix = true;
     }
 
-    dev::Address value = getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
+    dev::Address value = dev::Address(getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit));
 
     if (startGovMaturity) {
-        std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-        if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
-            //Take the registration block and add 48hrs worth of blocks
-            LogPrintf("Governor immature - Address: %s | Registration Block: %i\n", HexStr(value.asBytes()), v[0] + 1920);
-            value = dev::Address(0x0);
+        if (value != dev::Address(0x0)) {
+            std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+            if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
+                //Take the registration block and add 48hrs worth of blocks
+                LogPrintf("Governor immature - Address: %s | Registration Block: %u\n", HexStr(value.asBytes()), v[0] + 1920);
+                value = dev::Address(0x0);
+            }
         }
     }
 
@@ -212,6 +214,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                 }
             }
         }
+        // If we have looped through and found no one eligible then pay no one
         value = dev::Address(0x0);
     }
 
