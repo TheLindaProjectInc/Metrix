@@ -9,6 +9,7 @@ Shut down Metrix, wait until it has completely shut down (which might take a few
 for older versions), then just copy over the appropriate metrixd file.
 
 # Core
+- Improve efficiency for governor winner selection by reducing calls to the contract where possible.
 - Fix for crash on validation when winner selection returns no governor.
 - Update checkpoint blocks
 
