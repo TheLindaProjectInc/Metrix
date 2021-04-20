@@ -200,19 +200,52 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     }
 
     if (winnerEligibileFix) {
-        // Get the list of currenrly active governors
-        std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, GovernanceDGP, ParseHex("883703c2"));
-        // Loop till we find a valid governor thats enrolled for > 1920 blocks and lastReward is > 1920
-        for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
-            dev::Address value = dev::Address(governorAddresses[i]);
-            uint64_t isValid = getUint64FromDGP(blockHeight, GovernanceDGP, ParseHex("c88958cc000000000000000000000000" + HexStr(value.asBytes()) + "0000000000000000000000000000000000000000000000000000000000000001" + "0000000000000000000000000000000000000000000000000000000000000000"));
-            if(isValid > 0) {
+        int64_t dgpCollateral = getGovernanceCollateral(blockHeight);
+        int64_t height = ::ChainActive().Tip()->nHeight;
+        // Must be 48 hrs old to get first rewards
+        uint64_t minRewardMaturity = 1920;
+        // How often rewarded
+        uint64_t rewardBlockInterval = 1920;
+        // must have received ping in the last 30 days(28800 blocks)
+        uint64_t pingInterval = 28800;
+        // Valid governors are at least 15 blocks old.
+        uint64_t minMaturity = 15;
+
+        if (value != dev::Address(0x0)) {
+                // check if contract winner selection is valid and meets the criteria
                 std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-                if (::ChainActive().Tip()->nHeight >= v[0] + 1920 && ::ChainActive().Tip()->nHeight >= v[3] + 1920){
+                uint64_t govBlockHeight = v[0];
+                uint64_t govlastPing = v[1];
+                uint64_t govCollateral = v[2];
+                uint64_t govLastReward = v[3];
+                if (height >= govBlockHeight + minRewardMaturity && 
+                    height >= govLastReward + rewardBlockInterval && 
+                    dgpCollateral == govCollateral && 
+                    height >= govBlockHeight + minMaturity && 
+                    height <= govlastPing + pingInterval) {
                     LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
                     return value;
+                } else {
+                    // if winner selection doesn't pass criteria checks then manually try and find an eligible one.
+                    // Get the list of currently active governors
+                    std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, GovernanceDGP, ParseHex("883703c2"));
+                    for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
+                        dev::Address value = dev::Address(governorAddresses[i]);
+                        std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+                        uint64_t govBlockHeight = v[0];
+                        uint64_t govlastPing = v[1];
+                        uint64_t govCollateral = v[2];
+                        uint64_t govLastReward = v[3];
+                        if (height >= govBlockHeight + minRewardMaturity && 
+                            height >= govLastReward + rewardBlockInterval && 
+                            dgpCollateral == govCollateral && 
+                            height >= govBlockHeight + minMaturity && 
+                            height <= govlastPing + pingInterval) {
+                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                return value;
+                            }
+                    }
                 }
-            }
         }
         // If we have looped through and found no one eligible then pay no one
         value = dev::Address(0x0);
