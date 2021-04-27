@@ -1,4 +1,4 @@
-# Metrix 4.0.6.1
+# Metrix 4.0.6.2
 
 ## Bugfix update
 
