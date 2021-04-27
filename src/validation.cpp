@@ -53,6 +53,7 @@
 #include <serialize.h>
 #include <pubkey.h>
 #include <key.h>
+#include <key_io.h>
 #include <wallet/wallet.h>
 #include <util/convert.h>
 
@@ -2615,8 +2616,29 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     CTxOut govVout;
     if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
     {
-        dev::Address winner = qtumDGP.getGovernanceWinner(nHeight);
-        LogPrintf("Gov Winner Validation : %s\n", 
+        dev::Address winner;
+        if (::ChainstateActive().IsInitialBlockDownload()) {
+            uint64_t nTx;
+            for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
+                    if (block.vtx[i]->vout[0].nValue == govVout.nValue && block.vtx[i]->vout[0].scriptPubKey.IsBurnt()) {
+                            //If we hit this its a burnt gov reward
+                            winner = dev::Address(0x0);
+                            break;
+                    }
+                    if (block.vtx[i]->vout[1].nValue == govVout.nValue) {
+                            nTx = i;
+                            CTxDestination winnerAddress;
+                            ExtractDestination(block.vtx[nTx]->vout[1].scriptPubKey, winnerAddress);
+                            const PKHash *keyID = boost::get<PKHash>(&winnerAddress);
+                            winner = dev::Address(keyID->GetReverseHex());
+                            break;
+                    }
+
+            }
+        } else {
+            winner = qtumDGP.getGovernanceWinner(nHeight);
+        }
+        LogPrintf("Gov Winner Validation : %s\n",
             HexStr(winner.asBytes()));
         qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, GovernanceDGP, "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
     }
