@@ -81,10 +81,10 @@ public:
         consensus.BIP16Exception = uint256();
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0; 
-        consensus.BIP66Height = 0; 
-        consensus.CSVHeight = 1; 
-        consensus.SegwitHeight = 0; 
+        consensus.BIP65Height = 0;
+        consensus.BIP66Height = 0;
+        consensus.CSVHeight = 1;
+        consensus.SegwitHeight = 0;
         consensus.MinBIP9WarningHeight = 2016; // segwit activation height + miner confirmation window
         consensus.QIP5Height = 0;
         consensus.QIP6Height = 0;
@@ -158,13 +158,17 @@ public:
                 { 100000, uint256S("277983da1f28d72092f1af55521381e9d20ce6c5687715a04ebbfeb295570109")},
                 { 173427, uint256S("d44848414844ded450917c081176c934604dd3c7c69d920be8a055762691fe17")},
                 { 199500, uint256S("0efec94703a3e37f4a053611d2745eb5429092c391e54153a4771f0d695ab833")},
+                { 235885, uint256S("8000d7ba64df0848b1b4f3d89737e5573307363a3feac83d664524adb5ce632b")},
+                { 264695, uint256S("4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
+                { 265123, uint256S("0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
+                { 305037, uint256S("84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
             }
         };
 
         chainTxData = ChainTxData{
-            // Data as of block 000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1 (height 5000)
-            1600765139, // * UNIX timestamp of last known number of transactions
-            5001, // * total number of transactions between genesis and that timestamp
+            // Data as of block 84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3 (height 305037)
+            1628155760, // * UNIX timestamp of last known number of transactions
+            958799,     // * total number of transactions between genesis and that timestamp
             //   (the tx=... number in the SetBestChain debug.log lines)
             0.03358921219453481 // * estimated number of transactions per second after that timestamp
         };
@@ -333,7 +337,7 @@ public:
         genesis = CreateGenesisBlock(1587113529, 1, 0x207fffff, 1, 50 * COIN, CBaseChainParams::REGTEST);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x7d3cee5e4d85664505bc079810796a18f56f5aa4941b617d144150a25c24fe51"));
-        assert(genesis.hashMerkleRoot == uint256S("0x5f121ddfab7e4c75f9cf10d106356e9be38e9567c778390153d7ca8eae03607d")); 
+        assert(genesis.hashMerkleRoot == uint256S("0x5f121ddfab7e4c75f9cf10d106356e9be38e9567c778390153d7ca8eae03607d"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
