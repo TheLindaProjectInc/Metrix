@@ -147,7 +147,7 @@ double GetPoSKernelPS()
 
     if (nStakesTime)
         result = dStakeKernelsTriedAvg / nStakesTime;
-    
+
     result *= STAKE_TIMESTAMP_MASK + 1;
 
     return result;
@@ -213,7 +213,7 @@ UniValue blockheaderToJSON(const CBlockIndex* tip, const CBlockIndex* blockindex
         result.pushKV("previousblockhash", blockindex->pprev->GetBlockHash().GetHex());
     if (pnext)
         result.pushKV("nextblockhash", pnext->GetBlockHash().GetHex());
-	
+
     result.pushKV("flags", strprintf("%s", blockindex->IsProofOfStake()? "proof-of-stake" : "proof-of-work"));
     result.pushKV("proofhash", blockindex->hashProof.GetHex());
     result.pushKV("modifier", blockindex->nStakeModifier.GetHex());
@@ -240,7 +240,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* tip, const CBlockIn
     result.pushKV("merkleroot", block.hashMerkleRoot.GetHex());
     result.pushKV("hashStateRoot", block.hashStateRoot.GetHex()); // qtum
     result.pushKV("hashUTXORoot", block.hashUTXORoot.GetHex()); // qtum
-    
+
     if(blockindex->IsProofOfStake()){
         result.pushKV("prevoutStakeHash", blockindex->prevoutStake.hash.GetHex()); // qtum
         result.pushKV("prevoutStakeVoutN", (int64_t)blockindex->prevoutStake.n); // qtum
@@ -277,7 +277,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* tip, const CBlockIn
     result.pushKV("modifier", blockindex->nStakeModifier.GetHex());
 
     if (block.IsProofOfStake())
-        result.pushKV("signature", HexStr(block.vchBlockSig.begin(), block.vchBlockSig.end()));	
+        result.pushKV("signature", HexStr(block.vchBlockSig.begin(), block.vchBlockSig.end()));
 
     return result;
 }
@@ -945,7 +945,7 @@ static UniValue getaccountinfo(const JSONRPCRequest& request)
     dev::Address addrAccount(strAddr);
     if(!globalState->addressInUse(addrAccount))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
-    
+
     UniValue result(UniValue::VOBJ);
 
     result.pushKV("address", strAddr);
@@ -960,7 +960,7 @@ static UniValue getaccountinfo(const JSONRPCRequest& request)
         e.pushKV(dev::toHex(dev::h256(j.second.first)), dev::toHex(dev::h256(j.second.second)));
         storageUV.pushKV(j.first.hex(), e);
     }
-        
+
     result.pushKV("storage", storageUV);
 
     result.pushKV("code", HexStr(code.begin(), code.end()));
@@ -1044,7 +1044,7 @@ static UniValue getstorage(const JSONRPCRequest& request)
 
     std::string strAddr = request.params[0].get_str();
     if(strAddr.size() != 40 || !CheckHex(strAddr))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address"); 
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
 
     TemporaryState ts(globalState);
     if (request.params.size() > 1)
@@ -1057,7 +1057,7 @@ static UniValue getstorage(const JSONRPCRequest& request)
 
             if(blockNum != -1)
                 ts.SetRoot(uintToh256(::ChainActive()[blockNum]->hashStateRoot), uintToh256(::ChainActive()[blockNum]->hashUTXORoot));
-                
+
         } else {
             throw JSONRPCError(RPC_INVALID_PARAMS, "Incorrect block number");
         }
@@ -1066,7 +1066,7 @@ static UniValue getstorage(const JSONRPCRequest& request)
     dev::Address addrAccount(strAddr);
     if(!globalState->addressInUse(addrAccount))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
-    
+
     UniValue result(UniValue::VOBJ);
 
     bool onlyIndex = request.params.size() > 2;
@@ -1088,7 +1088,7 @@ static UniValue getstorage(const JSONRPCRequest& request)
         UniValue e(UniValue::VOBJ);
 
         storage = {{elem->first, {elem->second.first, elem->second.second}}};
-    } 
+    }
     for (const auto& j: storage)
     {
         UniValue e(UniValue::VOBJ);
@@ -1343,7 +1343,7 @@ UniValue callcontract(const JSONRPCRequest& request)
                 .ToString());
 
     LOCK(cs_main);
-    
+
     std::string strAddr = request.params[0].get_str();
     std::string data = request.params[1].get_str();
 
@@ -1352,7 +1352,7 @@ UniValue callcontract(const JSONRPCRequest& request)
 
     if(strAddr.size() != 40 || !CheckHex(strAddr))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
-    
+
     dev::Address senderAddress;
     if(request.params.size() >= 3){
         CTxDestination qtumSenderAddress = DecodeDestination(request.params[2].get_str());
@@ -1398,7 +1398,7 @@ UniValue callcontract(const JSONRPCRequest& request)
     result.pushKV("address", strAddr);
     result.pushKV("executionResult", executionResultToJSON(execResults[0].execRes));
     result.pushKV("transactionReceipt", transactionReceiptToJSON(execResults[0].txRec));
- 
+
     return result;
 }
 
@@ -1863,11 +1863,11 @@ UniValue searchlogs(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Events indexing disabled");
 
     int curheight = 0;
-    
+
     LOCK(cs_main);
 
     SearchLogsParams params(request.params);
-    
+
     std::vector<std::vector<uint256>> hashesToBlock;
 
     curheight = pblocktree->ReadHeightIndex(params.fromBlock, params.toBlock, params.minconf, hashesToBlock, params.addresses);
@@ -1974,7 +1974,7 @@ UniValue gettransactionreceipt(const JSONRPCRequest& request)
             + HelpExampleRpc("gettransactionreceipt", "3b04bc73afbbcf02cfef2ca1127b60fb0baf5f8946a42df67f1659671a2ec53c")
                 },
             }.Check(request);
- 
+
     if(!fLogEvents)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Events indexing disabled");
 
@@ -1984,7 +1984,7 @@ UniValue gettransactionreceipt(const JSONRPCRequest& request)
     if(hashTemp.size() != 64){
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect hash");
     }
-    
+
     uint256 hash(uint256S(hashTemp));
 
     std::vector<TransactionReceiptInfo> transactionReceiptInfo = pstorageresult->getResult(uintToh256(hash));
@@ -2533,6 +2533,7 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     BuriedForkDescPushBack(softforks, "csv", consensusParams.CSVHeight);
     BuriedForkDescPushBack(softforks, "segwit", consensusParams.SegwitHeight);
     BIP9SoftForkDescPushBack(softforks, "testdummy", consensusParams, Consensus::DEPLOYMENT_TESTDUMMY);
+    BIP9SoftForkDescPushBack(softforks, "mip1", consensusParams, Consensus::DEPLOYMENT_CHAIN_PATH);
     obj.pushKV("softforks",             softforks);
 
     obj.pushKV("warnings", GetWarnings("statusbar"));

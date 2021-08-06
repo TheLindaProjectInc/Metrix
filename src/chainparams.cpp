@@ -90,6 +90,7 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
+        consensus.MIP1Height = 305588; // height for chain path correction
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -104,6 +105,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1661729830; // August 28, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000132b89ad2784c57e06"); // qtum
@@ -154,14 +158,15 @@ public:
         checkpointData = {
             {
                 { 0, uint256S("0x000057c278d417dfca66d2bcde29d4875b06ea7f5935086bf4f1f968c91c3377")},
-                { 5000, uint256S("000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1")},
-                { 100000, uint256S("277983da1f28d72092f1af55521381e9d20ce6c5687715a04ebbfeb295570109")},
-                { 173427, uint256S("d44848414844ded450917c081176c934604dd3c7c69d920be8a055762691fe17")},
-                { 199500, uint256S("0efec94703a3e37f4a053611d2745eb5429092c391e54153a4771f0d695ab833")},
-                { 235885, uint256S("8000d7ba64df0848b1b4f3d89737e5573307363a3feac83d664524adb5ce632b")},
-                { 264695, uint256S("4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
-                { 265123, uint256S("0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
-                { 305037, uint256S("84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
+                { 5000, uint256S("0x000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1")},
+                { 100000, uint256S("0x277983da1f28d72092f1af55521381e9d20ce6c5687715a04ebbfeb295570109")},
+                { 173427, uint256S("0xd44848414844ded450917c081176c934604dd3c7c69d920be8a055762691fe17")},
+                { 199500, uint256S("0x0efec94703a3e37f4a053611d2745eb5429092c391e54153a4771f0d695ab833")},
+                { 235885, uint256S("0x8000d7ba64df0848b1b4f3d89737e5573307363a3feac83d664524adb5ce632b")},
+                { 264694, uint256S("0xa11eae2326f4d3162b4f3e264b38a1cdc0e0cc5c77b6319ba6f2b59bf511f6cd")},
+                { 264695, uint256S("0x4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
+                { 265123, uint256S("0x0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
+                { 305037, uint256S("0x84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
             }
         };
 
@@ -217,6 +222,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1660001830; // August 8, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
@@ -316,6 +324,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
