@@ -12,7 +12,7 @@ const struct VBDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_B
         /*.gbt_force =*/ true,
     },
     {
-        /*.name =*/ "chainPathCorrection",
+        /*.name =*/ "mip1",
         /*.gbt_force =*/ false,
     },
 };
