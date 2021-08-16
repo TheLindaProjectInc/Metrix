@@ -81,15 +81,16 @@ public:
         consensus.BIP16Exception = uint256();
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0; 
-        consensus.BIP66Height = 0; 
-        consensus.CSVHeight = 1; 
-        consensus.SegwitHeight = 0; 
+        consensus.BIP65Height = 0;
+        consensus.BIP66Height = 0;
+        consensus.CSVHeight = 1;
+        consensus.SegwitHeight = 0;
         consensus.MinBIP9WarningHeight = 2016; // segwit activation height + miner confirmation window
         consensus.QIP5Height = 0;
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
+        consensus.MIP1Height = 264694; // height of chain path correction due to mismatched AAL tx in next block
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -104,6 +105,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1630156245; // August 28, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000132b89ad2784c57e06"); // qtum
@@ -154,17 +158,22 @@ public:
         checkpointData = {
             {
                 { 0, uint256S("0x000057c278d417dfca66d2bcde29d4875b06ea7f5935086bf4f1f968c91c3377")},
-                { 5000, uint256S("000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1")},
-                { 100000, uint256S("277983da1f28d72092f1af55521381e9d20ce6c5687715a04ebbfeb295570109")},
-                { 173427, uint256S("d44848414844ded450917c081176c934604dd3c7c69d920be8a055762691fe17")},
-                { 199500, uint256S("0efec94703a3e37f4a053611d2745eb5429092c391e54153a4771f0d695ab833")},
+                { 5000, uint256S("0x000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1")},
+                { 100000, uint256S("0x277983da1f28d72092f1af55521381e9d20ce6c5687715a04ebbfeb295570109")},
+                { 173427, uint256S("0xd44848414844ded450917c081176c934604dd3c7c69d920be8a055762691fe17")},
+                { 199500, uint256S("0x0efec94703a3e37f4a053611d2745eb5429092c391e54153a4771f0d695ab833")},
+                { 235885, uint256S("0x8000d7ba64df0848b1b4f3d89737e5573307363a3feac83d664524adb5ce632b")},
+                { 264694, uint256S("0xa11eae2326f4d3162b4f3e264b38a1cdc0e0cc5c77b6319ba6f2b59bf511f6cd")},
+                { 264695, uint256S("0x4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
+                { 265123, uint256S("0x0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
+                { 305037, uint256S("0x84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
             }
         };
 
         chainTxData = ChainTxData{
-            // Data as of block 000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1 (height 5000)
-            1600765139, // * UNIX timestamp of last known number of transactions
-            5001, // * total number of transactions between genesis and that timestamp
+            // Data as of block 84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3 (height 305037)
+            1628155760, // * UNIX timestamp of last known number of transactions
+            958799,     // * total number of transactions between genesis and that timestamp
             //   (the tx=... number in the SetBestChain debug.log lines)
             0.03358921219453481 // * estimated number of transactions per second after that timestamp
         };
@@ -199,6 +208,7 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
+        consensus.MIP1Height = 264694; // this has no effect on testnet..
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -213,6 +223,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1628428245; // August 8, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
@@ -298,6 +311,7 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
+        consensus.MIP1Height = 0;
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -312,6 +326,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
@@ -333,7 +350,7 @@ public:
         genesis = CreateGenesisBlock(1587113529, 1, 0x207fffff, 1, 50 * COIN, CBaseChainParams::REGTEST);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x7d3cee5e4d85664505bc079810796a18f56f5aa4941b617d144150a25c24fe51"));
-        assert(genesis.hashMerkleRoot == uint256S("0x5f121ddfab7e4c75f9cf10d106356e9be38e9567c778390153d7ca8eae03607d")); 
+        assert(genesis.hashMerkleRoot == uint256S("0x5f121ddfab7e4c75f9cf10d106356e9be38e9567c778390153d7ca8eae03607d"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.

@@ -1453,17 +1453,17 @@ bool ReadRawBlockFromDisk(std::vector<uint8_t>& block, const CBlockIndex* pindex
 // ppcoin: total coin age spent in transaction, in the unit of coin-days.
 // Only those coins meeting minimum age requirement counts. As those
 // transactions not in main chain are not currently indexed so we
-// might not find out about their coin age. Older transactions are 
+// might not find out about their coin age. Older transactions are
 // guaranteed to be in main chain by sync-checkpoint. This rule is
 // introduced to help nodes establish a consistent view of the coin
 // age (trust score) of competing branches.
-bool GetCoinAge(int nHeight, const Consensus::Params& consensusParams, uint64_t& nCoinAge, const CTransactionRef& tx) 
+bool GetCoinAge(int nHeight, const Consensus::Params& consensusParams, uint64_t& nCoinAge, const CTransactionRef& tx)
 {
     if (tx->IsCoinBase())
         return false;
 
     CCoinsViewCache& coins_cache = ::ChainstateActive().CoinsTip();
-    
+
     arith_uint256 bnCentSecond = 0;  // coin age in the unit of cent-seconds
     nCoinAge = 0;
 
@@ -1477,7 +1477,7 @@ bool GetCoinAge(int nHeight, const Consensus::Params& consensusParams, uint64_t&
         if (nValueIn > 30000000 * COIN) {
             nMaxCoinMaturity = 2 * COINBASE_MATURITY;
         } else if (nValueIn > 1000000 * COIN) {
-           nMaxCoinMaturity = (30 - (nValueIn / COIN / 1000000)) * COINBASE_MATURITY; 
+           nMaxCoinMaturity = (30 - (nValueIn / COIN / 1000000)) * COINBASE_MATURITY;
         }
         nCoinMaturity = std::min(nCoinMaturity, nMaxCoinMaturity);
 
@@ -2525,12 +2525,12 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
     dev::Address senderAddress = sender == dev::Address() ? dev::Address("ffffffffffffffffffffffffffffffffffffffff") : sender;
     tx.vout.push_back(CTxOut(0, CScript() << OP_DUP << OP_HASH160 << senderAddress.asBytes() << OP_EQUALVERIFY << OP_CHECKSIG));
     block.vtx.push_back(MakeTransactionRef(CTransaction(tx)));
- 
+
     QtumTransaction callTransaction(0, 1, dev::u256(gasLimit), addrContract, opcode, dev::u256(0));
     callTransaction.forceSender(senderAddress);
     callTransaction.setVersion(VersionVM::GetEVMDefault());
 
-    
+
     ByteCodeExec exec(block, std::vector<QtumTransaction>(1, callTransaction), blockGasLimit, pblockindex);
     exec.performByteCode(dev::eth::Permanence::Reverted);
     return exec.getResult();
@@ -2578,7 +2578,7 @@ bool HasNonDGPContracts(const CBlock& block)
             return true;
         for (const auto& out : block.vtx[1]->vout)
             if (
-                (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) && 
+                (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
                 !out.scriptPubKey.IsDGPContractCall(GovernanceDGP.asBytes(), ParseHex("1c0318cd")) &&
                 !out.scriptPubKey.IsDGPContractCall(GovernanceDGP.asBytes(), ParseHex("6faaa74c")) &&
                 !out.scriptPubKey.IsDGPContractCall(BudgetDGP.asBytes(), ParseHex("104ad86f"))
@@ -2617,7 +2617,8 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
     {
         dev::Address winner;
-        if (::ChainstateActive().IsInitialBlockDownload()) {
+        const Consensus::Params& consensusParams = Params().GetConsensus();
+        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.MIP1Height + 7 || nHeight < consensusParams.MIP1Height)) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     if (block.vtx[i]->vout[0].nValue == govVout.nValue && block.vtx[i]->vout[0].scriptPubKey.IsBurnt()) {
@@ -2637,6 +2638,9 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
             }
         } else {
             winner = qtumDGP.getGovernanceWinner(nHeight);
+        }
+        if (nHeight >= consensusParams.MIP1Height && nHeight <= consensusParams.MIP1Height + 7) {
+            LogPrintf("[MIP1] Legacy Winner Validation Lookup at Height : %s\n", nHeight);
         }
         LogPrintf("Gov Winner Validation : %s\n",
             HexStr(winner.asBytes()));
@@ -2733,7 +2737,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         blockReward += nFees;
         CAmount totalReward = blockReward;
         uint32_t n;
-        
+
         // Check governor payment
         CTxOut govVout;
         if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
@@ -2783,7 +2787,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         std::vector<CScript> mposScriptList;
         if(!GetMPoSOutputScripts(mposScriptList, nPrevHeight, consensusParams))
             return error("CheckReward(): cannot create the list of MPoS output scripts");
-      
+
         for(size_t i = 0; i < mposScriptList.size(); i++){
             it=std::find(vTempVouts.begin(), vTempVouts.end(), CTxOut(splitReward,mposScriptList[i]));
             if(it==vTempVouts.end()){
@@ -2900,7 +2904,7 @@ void writeVMlog(const std::vector<ResultExecute>& res, const CTransaction& tx, c
             ss << "]}";
         }
     }
-    
+
     std::ofstream file(qtumDir.string(), std::ios::in | std::ios::out);
     file.seekp(-2, std::ios::end);
     file << ss.str();
@@ -3491,7 +3495,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         {
             if (tx.IsCoinStake())
                 nActualStakeReward = tx.GetValueOut()-view.GetValueIn(tx);
-                    
+
             std::vector<CScriptCheck> vChecks;
             bool fCacheResults = fJustCheck; /* Don't cache results if we're actually connecting blocks (still consult the cache, though) */
             //note that coinbase and coinstake can not contain any contract opcodes, this is checked in CheckBlock
@@ -3906,7 +3910,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
             if (!pblocktree->WriteHeightIndex(e.second.first, e.second.second))
                 return AbortNode(state, "Failed to write height index");
         }
-    }    
+    }
     if(block.IsProofOfStake()){
         // Read the public key from the second output
         std::vector<unsigned char> vchPubKey;
@@ -5137,12 +5141,12 @@ bool SignBlock(std::shared_ptr<CBlock> pblock, CWallet& wallet, const CAmount& n
             // coinstake hash is known
             dev::h256 oldHashStateRoot(globalState->rootHash());
             dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
-            
+
             globalState->setRoot(dev::h256(uintToh256(pblock->hashStateRoot)));
             globalState->setRootUTXO(dev::h256(uintToh256(pblock->hashUTXORoot)));
-            
+
             MineDGPContracts(pblock);
-            
+
             pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
             pblock->hashUTXORoot = uint256(h256Touint(dev::h256(globalState->rootHashUTXO())));
             globalState->setRoot(oldHashStateRoot);
@@ -5552,7 +5556,7 @@ bool CChainState::UpdateHashProof(const CBlock& block, CValidationState& state, 
     //reject proof of work at height consensusParams.nLastPOWBlock
     if (block.IsProofOfWork() && nHeight > consensusParams.nLastPOWBlock)
         return state.Invalid(ValidationInvalidReason::BLOCK_INVALID_HEADER, error("UpdateHashProof() : reject proof-of-work at height %d", nHeight), REJECT_INVALID, "reject-pow");
-    
+
     // Check coinstake timestamp
     if (block.IsProofOfStake() && !CheckCoinStakeTimestamp(block.GetBlockTime()))
         return state.Invalid(ValidationInvalidReason::BLOCK_INVALID_HEADER, error("UpdateHashProof() : coinstake timestamp violation nTimeBlock=%d", block.GetBlockTime()), REJECT_INVALID, "timestamp-invalid");
@@ -5571,13 +5575,13 @@ bool CChainState::UpdateHashProof(const CBlock& block, CValidationState& state, 
             return error("UpdateHashProof() : check proof-of-stake failed for block %s", hash.ToString());
         }
     }
-    
+
     // PoW is checked in CheckBlock()
     if (block.IsProofOfWork())
     {
         hashProof = block.GetHash();
     }
-    
+
     // Record proof hash value
     pindex->hashProof = hashProof;
     return true;
@@ -6016,9 +6020,9 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
 
     dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
-    
+
     if (!::ChainstateActive().ConnectBlock(block, state, &indexDummy, viewNew, chainparams, true)){
-        
+
         globalState->setRoot(oldHashStateRoot); // qtum
         globalState->setRootUTXO(oldHashUTXORoot); // qtum
         pstorageresult->clearCacheResult();
