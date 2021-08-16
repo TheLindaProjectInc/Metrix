@@ -1,17 +1,7 @@
 This document describes breaking changes between Metrix releases for both RPC APIs and for blockchain consensus.
-
-# Sparknet (Testnet v1)
-
-Initial release
-
-# TBD (Testnet v2)
-
 ## Consensus Parameters/Rules
-
+* 4.0.7.0 - Upgrade to protocol verion to 70018, soft fork when MIP1 active will disconnect node versions prior to this.
 ## EVM Behavior
-
-* Made block.coinbase use block.vtx[1].vout[1] for the coinbase address of PoS blocks
-* Added check to coinbase to ensure that it is 0 if not a standard pubkeyhash address
 
 ## RPC APIs
 

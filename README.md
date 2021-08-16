@@ -67,6 +67,12 @@ Metrix Core uses a full node model, and thus requires downloading the entire blo
 
 Download: https://github.com/TheLindaProjectInc/Altitude/releases
 
+### Paper Wallet
+https://paper.metrixcoin.com
+
+### Web Wallet
+https://webwallet.metrixcoin.com
+
 ### Community Resources
 
 Make sure to check out these resources as well for more information and to keep up to date with all the latest news about Metrix. At least 1 developer is always around, so if you're developing on Metrix and need help, we'd love to welcome you to our community.
