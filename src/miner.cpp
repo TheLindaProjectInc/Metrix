@@ -933,7 +933,7 @@ void ThreadStakeMiner(CWallet *pwallet, CConnman* connman)
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
     // Make this thread recognisable as the mining thread
-    std::string threadName = "qtumstake";
+    std::string threadName = "metrixstake";
     if(pwallet && pwallet->GetName() != "")
     {
         threadName = threadName + "-" + pwallet->GetName();
