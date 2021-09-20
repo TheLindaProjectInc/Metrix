@@ -2783,13 +2783,13 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         }
         CAmount splitReward = (blockReward - gasRefunds) / rewardRecipients;
 
-        // Generate the list of script recipients including all of their parameters
-        std::vector<CScript> mposScriptList;
-        if(!GetMPoSOutputScripts(mposScriptList, nPrevHeight, consensusParams))
-            return error("CheckReward(): cannot create the list of MPoS output scripts");
+        // Generate the list of mpos outputs including all of their parameters
+        std::vector<CTxOut> mposOutputList;
+        if(!GetMPoSOutputs(mposOutputList, splitReward, nPrevHeight, consensusParams))
+            return error("CheckReward(): cannot create the list of MPoS outputs");
 
-        for(size_t i = 0; i < mposScriptList.size(); i++){
-            it=std::find(vTempVouts.begin(), vTempVouts.end(), CTxOut(splitReward,mposScriptList[i]));
+        for(size_t i = 0; i < mposOutputList.size(); i++){
+            it=std::find(vTempVouts.begin(), vTempVouts.end(), mposOutputList[i]);
             if(it==vTempVouts.end()){
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): An MPoS participant was not properly paid"), REJECT_INVALID, "bad-cs-mpos-missing");
             }else{
@@ -5127,7 +5127,10 @@ bool SignBlock(std::shared_ptr<CBlock> pblock, CWallet& wallet, const CAmount& n
     //IsProtocolV2 mean POS 2 or higher, so the modified line is:
     auto locked_chain = wallet.chain().lock();
     LOCK(wallet.cs_wallet);
-    if (wallet.CreateCoinStake(*locked_chain, wallet, pblock->nBits, nTotalFees, nTimeBlock, txCoinStake, key, setCoins))
+    LegacyScriptPubKeyMan* spk_man = wallet.GetLegacyScriptPubKeyMan();
+    if(!spk_man)
+        return false;
+    if (wallet.CreateCoinStake(*locked_chain, *spk_man, pblock->nBits, nTotalFees, nTimeBlock, txCoinStake, key, setCoins))
     {
         if (nTimeBlock >= ::ChainActive().Tip()->GetMedianTimePast()+1)
         {

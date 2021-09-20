@@ -33,6 +33,15 @@
 
 #include <univalue.h>
 
+static LegacyScriptPubKeyMan& GetLegacyScriptPubKeyMan(CWallet& wallet)
+{
+    LegacyScriptPubKeyMan* spk_man = wallet.GetLegacyScriptPubKeyMan();
+    if (!spk_man) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
+    }
+    return *spk_man;
+}
+
 static UniValue validateaddress(const JSONRPCRequest& request)
 {
             RPCHelpMan{"validateaddress",
@@ -770,6 +779,10 @@ static UniValue createmultisig(const JSONRPCRequest& request)
 #ifdef ENABLE_WALLET
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     CWallet* const pwallet = wallet.get();
+
+    LegacyScriptPubKeyMan& spk_man = EnsureLegacyScriptPubKeyMan(*pwallet);
+    auto locked_chain = pwallet->chain().lock();
+    LOCK2(pwallet->cs_wallet, spk_man.cs_KeyStore);
 #endif
 
     int required = request.params[0].get_int();
@@ -782,7 +795,7 @@ static UniValue createmultisig(const JSONRPCRequest& request)
             pubkeys.push_back(HexToPubKey(keys[i].get_str()));
 #ifdef ENABLE_WALLET
         } else if (IsValidDestination(DecodeDestination(keys[i].get_str()))){
-            pubkeys.push_back(AddrToPubKey(pwallet, keys[i].get_str()));
+            pubkeys.push_back(AddrToPubKey(spk_man, keys[i].get_str()));
 #endif
         } else {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("Invalid public key: %s\n.", keys[i].get_str()));

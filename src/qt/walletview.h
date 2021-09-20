@@ -78,7 +78,7 @@ private:
 
     TransactionView *transactionView;
 
-    QProgressDialog *progressDialog;
+    QProgressDialog* progressDialog{nullptr};
     const PlatformStyle *platformStyle;
 
     BitcoinGUI *gui;

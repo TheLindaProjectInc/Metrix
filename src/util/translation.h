@@ -7,6 +7,7 @@
 
 #include <tinyformat.h>
 
+#include <functional>
 #include <utility>
 
 /**

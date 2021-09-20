@@ -30,6 +30,7 @@
 #include <net_permissions.h>
 #include <net_processing.h>
 #include <netbase.h>
+#include <node/context.h>
 #include <policy/feerate.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
@@ -89,10 +90,6 @@ static const bool DEFAULT_STOPAFTERBLOCKIMPORT = false;
 
 // Dump addresses to banlist.dat every 15 minutes (900s)
 static constexpr int DUMP_BANS_INTERVAL = 60 * 15;
-
-std::unique_ptr<CConnman> g_connman;
-std::unique_ptr<PeerLogicValidation> peerLogic;
-std::unique_ptr<BanMan> g_banman;
 
 #ifdef WIN32
 // Win32 LevelDB doesn't use filedescriptors, and the ones used for
@@ -160,7 +157,7 @@ static std::unique_ptr<ECCVerifyHandle> globalVerifyHandle;
 static boost::thread_group threadGroup;
 static CScheduler scheduler;
 
-void Interrupt()
+void Interrupt(NodeContext& node)
 {
     InterruptHTTPServer();
     InterruptHTTPRPC();
@@ -168,15 +165,15 @@ void Interrupt()
     InterruptREST();
     InterruptTorControl();
     InterruptMapPort();
-    if (g_connman)
-        g_connman->Interrupt();
+    if (node.connman)
+        node.connman->Interrupt();
     if (g_txindex) {
         g_txindex->Interrupt();
     }
     ForEachBlockFilterIndex([](BlockFilterIndex& index) { index.Interrupt(); });
 }
 
-void Shutdown(InitInterfaces& interfaces)
+void Shutdown(NodeContext& node)
 {
     LogPrintf("%s: In progress...\n", __func__);
     static CCriticalSection cs_Shutdown;
@@ -195,17 +192,15 @@ void Shutdown(InitInterfaces& interfaces)
     StopREST();
     StopRPC();
     StopHTTPServer();
-    for (const auto& client : interfaces.chain_clients) {
+    for (const auto& client : node.chain_clients) {
         client->flush();
     }
     StopMapPort();
 
     // Because these depend on each-other, we make sure that neither can be
     // using the other before destroying them.
-    if (peerLogic) UnregisterValidationInterface(peerLogic.get());
-    if (g_connman) g_connman->Stop();
-    if (g_txindex) g_txindex->Stop();
-    ForEachBlockFilterIndex([](BlockFilterIndex& index) { index.Stop(); });
+    if (node.peer_logic) UnregisterValidationInterface(node.peer_logic.get());
+    if (node.connman) node.connman->Stop();
 
     StopTorControl();
 
@@ -216,11 +211,9 @@ void Shutdown(InitInterfaces& interfaces)
 
     // After the threads that potentially access these pointers have been stopped,
     // destruct and reset all to nullptr.
-    peerLogic.reset();
-    g_connman.reset();
-    g_banman.reset();
-    g_txindex.reset();
-    DestroyAllBlockFilterIndexes();
+    node.peer_logic.reset();
+    node.connman.reset();
+    node.banman.reset();
 
     if (::mempool.IsLoaded() && gArgs.GetArg("-persistmempool", DEFAULT_PERSIST_MEMPOOL)) {
         DumpMempool(::mempool);
@@ -253,6 +246,15 @@ void Shutdown(InitInterfaces& interfaces)
     // CValidationInterface callbacks, flush them...
     GetMainSignals().FlushBackgroundCallbacks();
 
+    // Stop and delete all indexes only after flushing background callbacks.
+    if (g_txindex) {
+        g_txindex->Stop();
+        g_txindex.reset();
+    }
+    ForEachBlockFilterIndex([](BlockFilterIndex& index) { index.Stop(); });
+    DestroyAllBlockFilterIndexes();
+
+
     // Any future callbacks will be dropped. This should absolutely be safe - if
     // missing a callback results in an unrecoverable situation, unclean shutdown
     // would too. The only reason to do the above flushes is to let the wallet catch
@@ -270,7 +272,7 @@ void Shutdown(InitInterfaces& interfaces)
         globalState.reset();
         globalSealEngine.reset();
     }
-    for (const auto& client : interfaces.chain_clients) {
+    for (const auto& client : node.chain_clients) {
         client->stop();
     }
 
@@ -289,7 +291,7 @@ void Shutdown(InitInterfaces& interfaces)
     } catch (const fs::filesystem_error& e) {
         LogPrintf("%s: Unable to remove PID file: %s\n", __func__, fsbridge::get_filesystem_error_message(e));
     }
-    interfaces.chain_clients.clear();
+    node.chain_clients.clear();
     UnregisterAllValidationInterfaces();
     GetMainSignals().UnregisterBackgroundSignalScheduler();
     GetMainSignals().UnregisterWithMempoolSignals(mempool);
@@ -1316,7 +1318,7 @@ bool AppInitLockDataDirectory()
     return true;
 }
 
-bool AppInitMain(InitInterfaces& interfaces)
+bool AppInitMain(NodeContext& node)
 {
     const CChainParams& chainparams = Params();
     // ********************************************************* Step 4a: application initialization
@@ -1394,16 +1396,16 @@ bool AppInitMain(InitInterfaces& interfaces)
     // according to -wallet and -disablewallet options. This only constructs
     // the interfaces, it doesn't load wallet data. Wallets actually get loaded
     // when load() and start() interface methods are called below.
-    g_wallet_init_interface.Construct(interfaces);
+    g_wallet_init_interface.Construct(node);
 
     /* Register RPC commands regardless of -server setting so they will be
      * available in the GUI RPC console even if external calls are disabled.
      */
     RegisterAllCoreRPCCommands(tableRPC);
-    for (const auto& client : interfaces.chain_clients) {
+    for (const auto& client : node.chain_clients) {
         client->registerRpcs();
     }
-    g_rpc_interfaces = &interfaces;
+    g_rpc_node = &node;
 #if ENABLE_ZMQ
     RegisterZMQRPCCommands(tableRPC);
 #endif
@@ -1421,7 +1423,7 @@ bool AppInitMain(InitInterfaces& interfaces)
     }
 
     // ********************************************************* Step 5: verify wallet database integrity
-    for (const auto& client : interfaces.chain_clients) {
+    for (const auto& client : node.chain_clients) {
         if (!client->verify()) {
             return false;
         }
@@ -1433,16 +1435,16 @@ bool AppInitMain(InitInterfaces& interfaces)
     // is not yet setup and may end up being set up twice if we
     // need to reindex later.
 
-    assert(!g_banman);
-    g_banman = MakeUnique<BanMan>(GetDataDir() / "banlist.dat", &uiInterface, gArgs.GetArg("-bantime", DEFAULT_MISBEHAVING_BANTIME));
-    assert(!g_connman);
-    g_connman = std::unique_ptr<CConnman>(new CConnman(GetRand(std::numeric_limits<uint64_t>::max()), GetRand(std::numeric_limits<uint64_t>::max())));
+    assert(!node.banman);
+    node.banman = MakeUnique<BanMan>(GetDataDir() / "banlist.dat", &uiInterface, gArgs.GetArg("-bantime", DEFAULT_MISBEHAVING_BANTIME));
+    assert(!node.connman);
+    node.connman = std::unique_ptr<CConnman>(new CConnman(GetRand(std::numeric_limits<uint64_t>::max()), GetRand(std::numeric_limits<uint64_t>::max())));
 
-    peerLogic.reset(new PeerLogicValidation(g_connman.get(), g_banman.get(), scheduler, gArgs.GetBoolArg("-enablebip61", DEFAULT_ENABLE_BIP61)));
-    RegisterValidationInterface(peerLogic.get());
+    node.peer_logic.reset(new PeerLogicValidation(node.connman.get(), node.banman.get(), scheduler, gArgs.GetBoolArg("-enablebip61", DEFAULT_ENABLE_BIP61)));
+    RegisterValidationInterface(node.peer_logic.get());
 
 #ifdef ENABLE_WALLET
-    CWallet::defaultConnman = g_connman.get();
+    CWallet::defaultConnman = node.connman.get();
 #endif
 
     // sanitize comments per BIP-0014, format user agent and check total size
@@ -1869,7 +1871,7 @@ bool AppInitMain(InitInterfaces& interfaces)
     }
 
     // ********************************************************* Step 9: load wallet
-    for (const auto& client : interfaces.chain_clients) {
+    for (const auto& client : node.chain_clients) {
         if (!client->load()) {
             return false;
         }
@@ -1976,8 +1978,8 @@ bool AppInitMain(InitInterfaces& interfaces)
     connOptions.nMaxFeeler = 1;
     connOptions.nBestHeight = chain_active_height;
     connOptions.uiInterface = &uiInterface;
-    connOptions.m_banman = g_banman.get();
-    connOptions.m_msgproc = peerLogic.get();
+    connOptions.m_banman = node.banman.get();
+    connOptions.m_msgproc = node.peer_logic.get();
     connOptions.nSendBufferMaxSize = 1000*gArgs.GetArg("-maxsendbuffer", DEFAULT_MAXSENDBUFFER);
     connOptions.nReceiveFloodSize = 1000*gArgs.GetArg("-maxreceivebuffer", DEFAULT_MAXRECEIVEBUFFER);
     connOptions.m_added_nodes = gArgs.GetArgs("-addnode");
@@ -2017,7 +2019,7 @@ bool AppInitMain(InitInterfaces& interfaces)
             connOptions.m_specified_outgoing = connect;
         }
     }
-    if (!g_connman->Start(scheduler, connOptions)) {
+    if (!node.connman->Start(scheduler, connOptions)) {
         return false;
     }
 
@@ -2026,12 +2028,13 @@ bool AppInitMain(InitInterfaces& interfaces)
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading").translated);
 
-    for (const auto& client : interfaces.chain_clients) {
+    for (const auto& client : node.chain_clients) {
         client->start(scheduler);
     }
 
-    scheduler.scheduleEvery([]{
-        g_banman->DumpBanlist();
+    BanMan* banman = node.banman.get();
+    scheduler.scheduleEvery([banman]{
+        banman->DumpBanlist();
     }, DUMP_BANS_INTERVAL * 1000);
 
     return true;

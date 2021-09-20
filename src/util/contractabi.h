@@ -3,17 +3,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <QRegularExpression>
-#include <QStringList>
-
-#define paternUint "^[0-9]{1,77}$"
-#define paternInt "^\\-{0,1}[0-9]{1,76}$"
-#define paternAddress "^[a-fA-F0-9]{40,40}$"
-#define paternBool "^true$|^false$"
-#define paternHex "^[a-fA-F0-9]{1,}$"
-#define paternBytes paternHex
-#define paternBytes32 "^[a-fA-F0-9]{%1,%1}$"
-
 
 /**
  * @brief The ParameterType class Decode the api parameter type,
@@ -137,7 +126,6 @@ public:
     bool abiIn(const std::vector<std::string> &value, std::string &data, std::map<int, std::string>& mapDynamic) const;
     bool abiOut(const std::string &data, size_t& pos, std::vector<std::string> &value) const;
     const ParameterType &decodeType() const;
-    static bool getRegularExpession(const ParameterType &paramType, QRegularExpression &regEx);
 
     std::string name; // The name of the parameter;
     std::string type; // The canonical type of the parameter.
@@ -171,11 +159,12 @@ public:
 
     bool abiOut(const std::string& data, std::vector<std::vector<std::string>>& values, std::vector<ParameterABI::ErrorType>& errors) const;
 
+    bool abiOut(const std::vector<std::string>& topics, const std::string& data, std::vector<std::vector<std::string>>& values, std::vector<ParameterABI::ErrorType>& errors) const;
+
+
     std::string selector() const;
 
     static std::string defaultSelector();
-
-    QString errorMessage(std::vector<ParameterABI::ErrorType>& errors, bool in) const;
 
     std::string name; // The name of the function;
     std::string type; // Function types: "function", "constructor", "fallback" or "event"

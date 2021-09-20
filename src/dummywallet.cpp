@@ -12,6 +12,8 @@ enum class WalletCreationStatus;
 
 namespace interfaces {
 class Chain;
+class Handler;
+class Wallet;
 }
 
 class DummyWalletInit : public WalletInitInterface {
@@ -20,7 +22,7 @@ public:
     bool HasWalletSupport() const override {return false;}
     void AddWalletOptions() const override;
     bool ParameterInteraction() const override {return true;}
-    void Construct(InitInterfaces& interfaces) const override {LogPrintf("No wallet support compiled in!\n");}
+    void Construct(NodeContext& node) const override {LogPrintf("No wallet support compiled in!\n");}
 };
 
 void DummyWalletInit::AddWalletOptions() const
@@ -81,9 +83,12 @@ WalletCreationStatus CreateWallet(interfaces::Chain& chain, const SecureString& 
     throw std::logic_error("Wallet function called in non-wallet build.");
 }
 
+using LoadWalletFn = std::function<void(std::unique_ptr<interfaces::Wallet> wallet)>;
+std::unique_ptr<interfaces::Handler> HandleLoadWallet(LoadWalletFn load_wallet)
+{
+    throw std::logic_error("Wallet function called in non-wallet build.");
+}
 namespace interfaces {
-
-class Wallet;
 
 std::unique_ptr<Wallet> MakeWallet(const std::shared_ptr<CWallet>& wallet)
 {
