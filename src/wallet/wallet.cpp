@@ -3789,12 +3789,14 @@ void CWallet::DisableTransaction(interfaces::Chain::Lock& locked_chain, const CT
     {
         LOCK(cs_wallet);
         RemoveFromSpends(hash);
-        std::set<CWalletTx*> setCoins;
         for(const CTxIn& txin : tx.vin)
         {
-            CWalletTx &coin = mapWallet.at(txin.prevout.hash);
-            coin.BindWallet(this);
-            NotifyTransactionChanged(this, coin.GetHash(), CT_UPDATED);
+            auto it = mapWallet.find(txin.prevout.hash);
+            if (it != mapWallet.end()) {
+                CWalletTx &coin = it->second;
+                coin.BindWallet(this);
+                NotifyTransactionChanged(this, coin.GetHash(), CT_UPDATED);
+            }
         }
         CWalletTx& wtx = mapWallet.at(hash);
         wtx.BindWallet(this);
@@ -4946,8 +4948,9 @@ void CWallet::CleanCoinStake()
         {
             // Wallets need to refund inputs when disconnecting coinstake
             const CTransaction& tx = *(wtx->tx);
-            if (tx.IsCoinStake() && IsFromMe(tx))
+            if (tx.IsCoinStake() && IsFromMe(tx) && !wtx->isAbandoned())
             {
+                WalletLogPrintf("%s: Revert coinstake tx %s\n", __func__, wtx->GetHash().ToString());
                 DisableTransaction(tx);
             }
         }
