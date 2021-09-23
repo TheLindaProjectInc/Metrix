@@ -4425,6 +4425,9 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(interfaces::Chain& chain,
         walletInstance->WalletLogPrintf("mapAddressBook.size() = %u\n",  walletInstance->mapAddressBook.size());
     }
 
+    // Clean not reverted coinstake transactions
+    walletInstance->CleanCoinStake();
+
     return walletInstance;
 }
 
@@ -4928,4 +4931,22 @@ const SigningProvider* CWallet::GetSigningProvider() const
 LegacyScriptPubKeyMan* CWallet::GetLegacyScriptPubKeyMan() const
 {
     return m_spk_man.get();
+}
+
+void CWallet::CleanCoinStake()
+{
+    // Search the coinstake transactions and abandon transactions that are not confirmed in the blocks
+    for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+    {
+        const CWalletTx* wtx = &(*it).second;
+        if (wtx && wtx->m_confirm.hashBlock.IsNull() && wtx->m_confirm.nIndex <= 0)
+        {
+            // Wallets need to refund inputs when disconnecting coinstake
+            const CTransaction& tx = *(wtx->tx);
+            if (tx.IsCoinStake() && IsFromMe(tx))
+            {
+                DisableTransaction(tx);
+            }
+        }
+    }
 }

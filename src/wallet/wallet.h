@@ -1236,6 +1236,9 @@ public:
     /* Stop staking MRX */
     void StopStake();
 
+    /* Clean coinstake transactions */
+    void CleanCoinStake();
+
     static CConnman* defaultConnman;
 };
 
