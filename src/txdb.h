@@ -172,6 +172,7 @@ public:
     bool ReadStakeIndex(unsigned int high, unsigned int low, std::vector<uint160> addresses);
     bool EraseStakeIndex(unsigned int height);
 
+    bool EraseBlockIndex(const std::vector<uint256>&vect);
 #ifdef ENABLE_BITCORE_RPC
     // Block explorer database functions
     bool WriteAddressIndex(const std::vector<std::pair<CAddressIndexKey, CAmount> > &vect);
