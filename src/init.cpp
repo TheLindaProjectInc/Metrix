@@ -186,6 +186,14 @@ void Shutdown(NodeContext& node)
     /// Be sure that anything that writes files or flushes caches only does this if the respective
     /// module was initialized.
     util::ThreadRename("metrix-shutoff");
+
+#ifdef ENABLE_WALLET
+    // Force stop the stakers before any other components
+    for (const std::shared_ptr<CWallet>& pwallet : GetWallets()) {
+        pwallet->StopStake();
+    }
+#endif
+
     mempool.AddTransactionsUpdated(1);
 
     StopHTTPRPC();

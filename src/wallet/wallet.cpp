@@ -4914,8 +4914,6 @@ void CWallet::StopStake()
     m_enabled_staking = false;
     if(stakeThread)
     {
-        auto locked_chain = chain().lock();
-        LOCK(cs_wallet);
         StakeQtums(false, 0);
     }
     stakeThread = 0;
