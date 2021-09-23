@@ -4949,7 +4949,8 @@ void CWallet::CleanCoinStake()
             if (tx.IsCoinStake() && IsFromMe(tx) && !wtx->isAbandoned())
             {
                 WalletLogPrintf("%s: Revert coinstake tx %s\n", __func__, wtx->GetHash().ToString());
-                DisableTransaction(tx);
+                auto locked_chain = chain().lock();
+                DisableTransaction(*locked_chain ,tx);
             }
         }
     }
