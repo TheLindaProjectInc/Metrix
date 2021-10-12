@@ -2139,7 +2139,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 pfrom->fDisconnect = true;
                 return false;
             }
-            break;
         }
 
         if (!vRecv.empty())
