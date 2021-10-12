@@ -105,9 +105,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1630156245; // August 28, 2021
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000132b89ad2784c57e06"); // qtum
@@ -167,6 +164,7 @@ public:
                 { 264695, uint256S("0x4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
                 { 265123, uint256S("0x0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
                 { 305037, uint256S("0x84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
+                { 350000, uint256S("0xd89b4a626819d49c1a938a3d6adbfac2abe1f380e5d2a6ae23ae7d922403a587")},
             }
         };
 
@@ -223,9 +221,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1628428245; // August 8, 2021
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
@@ -269,8 +264,10 @@ public:
 
         checkpointData = {
             {
-                {0, uint256S("00007965374994a1a9e0c813c0d935c3ca224dd1cc582d09f11afe134877adf6")},
-                {79475, uint256S("72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9")},
+                {0, uint256S("0x00007965374994a1a9e0c813c0d935c3ca224dd1cc582d09f11afe134877adf6")},
+                {79475, uint256S("0x72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9")},
+                {200000, uint256S("0xcc9a430bee8496b7975cc2e6c70d4f65fdba812f4c4ea0ba7005ccf2426d35a2")},
+                {400000, uint256S("0xb06b177e948c1f32f6fa0f892c30b931b61334abbe21e4e5bbde5ded74f28fed")},
             }
         };
 
@@ -326,9 +323,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");

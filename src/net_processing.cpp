@@ -2129,31 +2129,17 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
 
         if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP1Height){
-            const CBlockIndex* pindex = ::ChainActive().Tip();
-            const Consensus::Params consensusParams = Params().GetConsensus();
-            Consensus::DeploymentPos pos = Consensus::DeploymentPos(Consensus::DEPLOYMENT_CHAIN_PATH);
-            ThresholdState state = VersionBitsState(pindex, consensusParams, pos, versionbitscache);
-            switch (state) {
-                case ThresholdState::DEFINED:
-                case ThresholdState::FAILED:
-                case ThresholdState::LOCKED_IN:
-                case ThresholdState::STARTED:
-                    break;
-                case ThresholdState::ACTIVE:
-                {
-                    if (nVersion < MIN_PEER_PROTO_VERSION_AFTER_MIP1) {
-                        // disconnect from peers older than this proto version
-                        LogPrint(BCLog::NET, "peer=%d using obsolete version after MIP1 fork %i; disconnecting\n", pfrom->GetId(), nVersion);
-                        if (enable_bip61) {
-                            connman->PushMessage(pfrom, CNetMsgMaker(INIT_PROTO_VERSION).Make(NetMsgType::REJECT, strCommand, REJECT_OBSOLETE,
-                                strprintf("Version must be %d or greater after MIP1 fork", MIN_PEER_PROTO_VERSION_AFTER_MIP1)));
-                        }
-                        pfrom->fDisconnect = true;
-                        return false;
-                    }
-                    break;
+            if (nVersion < MIN_PEER_PROTO_VERSION_AFTER_MIP1) {
+                // disconnect from peers older than this proto version
+                LogPrint(BCLog::NET, "peer=%d using obsolete version after MIP1 fork %i; disconnecting\n", pfrom->GetId(), nVersion);
+                if (enable_bip61) {
+                    connman->PushMessage(pfrom, CNetMsgMaker(INIT_PROTO_VERSION).Make(NetMsgType::REJECT, strCommand, REJECT_OBSOLETE,
+                        strprintf("Version must be %d or greater after MIP1 fork", MIN_PEER_PROTO_VERSION_AFTER_MIP1)));
                 }
+                pfrom->fDisconnect = true;
+                return false;
             }
+            break;
         }
 
         if (!vRecv.empty())
