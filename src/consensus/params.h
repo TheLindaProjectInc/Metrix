@@ -73,7 +73,11 @@ struct Params {
     int QIP7Height;
     /** Block height at which QIP9 becomes active */
     int QIP9Height;
-    /** Block height at which MIP1 becomes needed */
+    /** Block height at which MIP1 becomes needed-
+     *  At this block the chain forked due to mismatched AAL tx in next block.
+     *  Override check extends 7 blocks beyond minimum height for correction. */
+    int minMIP1Height;
+    /** Block height at which MIP1 becomes active */
     int MIP1Height;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,

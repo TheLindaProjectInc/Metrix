@@ -2618,7 +2618,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
-        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.MIP1Height + 7 || nHeight < consensusParams.MIP1Height)) {
+        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     if (block.vtx[i]->vout[0].nValue == govVout.nValue && block.vtx[i]->vout[0].scriptPubKey.IsBurnt()) {
@@ -2639,7 +2639,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
         } else {
             winner = qtumDGP.getGovernanceWinner(nHeight);
         }
-        if (nHeight >= consensusParams.MIP1Height && nHeight <= consensusParams.MIP1Height + 7) {
+        if (nHeight >= consensusParams.minMIP1Height && nHeight <= consensusParams.minMIP1Height + 7) {
             LogPrintf("[MIP1] Legacy Winner Validation Lookup at Height : %s\n", nHeight);
         }
         LogPrintf("Gov Winner Validation : %s\n",
