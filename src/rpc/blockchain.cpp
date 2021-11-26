@@ -1395,10 +1395,6 @@ UniValue callcontract(const JSONRPCRequest& request)
         blockNum = latestblock.height;
     }
 
-    dev::Address addrAccount(strAddr);
-    if (!globalState->addressInUse(addrAccount))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
-
     std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), blockNum, senderAddress, gasLimit);
 
     if(fRecordLogOpcodes){
