@@ -1010,7 +1010,7 @@ void ThreadStakeMiner(CWallet *pwallet, CConnman* connman)
 
                     if (::ChainActive().Tip()->GetBlockHash() != pblock->hashPrevBlock) {
                         //another block was received while building ours, scrap progress
-                        LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid");
+                        LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid\n");
                         break;
                     }
                     // Create a block that's properly populated with transactions
@@ -1021,7 +1021,7 @@ void ThreadStakeMiner(CWallet *pwallet, CConnman* connman)
                         return;
                     if (::ChainActive().Tip()->GetBlockHash() != pblock->hashPrevBlock) {
                         //another block was received while building ours, scrap progress
-                        LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid");
+                        LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid\n");
                         break;
                     }
                     // Sign the full block and use the timestamp from earlier for a valid stake
@@ -1033,13 +1033,13 @@ void ThreadStakeMiner(CWallet *pwallet, CConnman* connman)
                         while(!validBlock) {
                             if (::ChainActive().Tip()->GetBlockHash() != pblockfilled->hashPrevBlock) {
                                 //another block was received while building ours, scrap progress
-                                LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid");
+                                LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid\n");
                                 break;
                             }
                             //check timestamps
                             if (pblockfilled->GetBlockTime() <= pindexPrev->GetBlockTime() ||
                                 FutureDrift(pblockfilled->GetBlockTime()) < pindexPrev->GetBlockTime()) {
-                                LogPrintf("ThreadStakeMiner(): Valid PoS block took too long to create and has expired");
+                                LogPrintf("ThreadStakeMiner(): Valid PoS block took too long to create and has expired\n");
                                 break; //timestamp too late, so ignore
                             }
                             if (pblockfilled->GetBlockTime() > FutureDrift(GetAdjustedTime())) {
