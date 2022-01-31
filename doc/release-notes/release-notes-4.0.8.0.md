@@ -16,3 +16,4 @@ for older versions), then just copy over the appropriate metrixd file.
 - Fix incorrect subsidy reduction time
 - Port bugfix updates from [Qtum 0.19.1](https://github.com/qtumproject/qtum/releases/tag/mainnet-ignition-v0.19.1)
 - Upgrade Metrix core to [BTC Core 0.19.1](https://bitcoin.org/en/release/v0.19.1#change-log)
+- Bugfix for internal chain contract interactions sometimes failing due to low gas.
