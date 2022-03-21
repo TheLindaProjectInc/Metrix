@@ -90,7 +90,8 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
-        consensus.MIP1Height = 264694; // height of chain path correction due to mismatched AAL tx in next block
+        consensus.minMIP1Height = 264694; // height of chain path correction due to mismatched AAL tx in next block
+        consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -105,7 +106,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28; // REMOVE Jan 1st 2022!
         consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1630156245; // August 28, 2021
         consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
@@ -167,6 +168,7 @@ public:
                 { 264695, uint256S("0x4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
                 { 265123, uint256S("0x0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
                 { 305037, uint256S("0x84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
+                { 350000, uint256S("0xd89b4a626819d49c1a938a3d6adbfac2abe1f380e5d2a6ae23ae7d922403a587")},
             }
         };
 
@@ -208,7 +210,8 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
-        consensus.MIP1Height = 264694; // this has no effect on testnet..
+        consensus.minMIP1Height = 264694; // this has no effect on testnet..
+        consensus.MIP1Height = 389088; // b5a3e290a9f5419b2658d9e0d0b7659d505b8322c320b0a041caf56bfb7bbefc
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -223,7 +226,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].bit = 28; // REMOVE Jan 1st 2022!
         consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nStartTime = 1628428245; // August 8, 2021
         consensus.vDeployments[Consensus::DEPLOYMENT_CHAIN_PATH].nTimeout = 1641080231; // January 1, 2022
 
@@ -269,8 +272,10 @@ public:
 
         checkpointData = {
             {
-                {0, uint256S("00007965374994a1a9e0c813c0d935c3ca224dd1cc582d09f11afe134877adf6")},
-                {79475, uint256S("72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9")},
+                {0, uint256S("0x00007965374994a1a9e0c813c0d935c3ca224dd1cc582d09f11afe134877adf6")},
+                {79475, uint256S("0x72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9")},
+                {200000, uint256S("0xcc9a430bee8496b7975cc2e6c70d4f65fdba812f4c4ea0ba7005ccf2426d35a2")},
+                {400000, uint256S("0xb06b177e948c1f32f6fa0f892c30b931b61334abbe21e4e5bbde5ded74f28fed")},
             }
         };
 
@@ -311,6 +316,7 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
+        consensus.minMIP1Height = 0;
         consensus.MIP1Height = 0;
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");

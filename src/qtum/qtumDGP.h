@@ -21,7 +21,7 @@ static const uint64_t DEFAULT_MIN_GAS_PRICE_DGP = 5000;
 static const uint64_t MIN_BLOCK_GAS_LIMIT_DGP = 1000000;
 static const uint64_t MAX_BLOCK_GAS_LIMIT_DGP = 1000000000;
 static const uint64_t DEFAULT_BLOCK_GAS_LIMIT_DGP = 40000000;
-static const uint64_t DEFAULT_GAS_LIMIT_DGP_OP_SEND = 250000;
+static const uint64_t DEFAULT_GAS_LIMIT_DGP_OP_SEND = 500000;
 static const uint64_t DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND = 500000;
 
 static const uint64_t MIN_MIN_RELAY_TX_FEE_DGP = 100000;

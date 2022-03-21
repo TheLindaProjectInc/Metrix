@@ -1497,15 +1497,15 @@ uint64_t GetSubsidyRate(int nHeight)
 {
     uint64_t nBlocksPerYear = 350640; // 365.25*24*60*60/90
     uint64_t nCoinYearReward = 10; // 10%
-    if (nHeight > 2 * 12 * nBlocksPerYear) // 2 years
+    if (nHeight > 2 * nBlocksPerYear) // 2 years
     {
         nCoinYearReward /= 2; // 5%
     }
-    if (nHeight > 6 * 12 * nBlocksPerYear) // 6 years
+    if (nHeight > 6 * nBlocksPerYear) // 6 years
     {
         nCoinYearReward /= 2; // 2%
     }
-    if (nHeight > 12 * 12 * nBlocksPerYear) // 12 years
+    if (nHeight > 12 * nBlocksPerYear) // 12 years
     {
         nCoinYearReward /= 1; // 1%
     }
@@ -2525,8 +2525,17 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
     dev::Address senderAddress = sender == dev::Address() ? dev::Address("ffffffffffffffffffffffffffffffffffffffff") : sender;
     tx.vout.push_back(CTxOut(0, CScript() << OP_DUP << OP_HASH160 << senderAddress.asBytes() << OP_EQUALVERIFY << OP_CHECKSIG));
     block.vtx.push_back(MakeTransactionRef(CTransaction(tx)));
-
-    QtumTransaction callTransaction(0, 1, dev::u256(gasLimit), addrContract, opcode, dev::u256(0));
+    dev::u256 nonce = globalState->getNonce(senderAddress);
+ 
+    QtumTransaction callTransaction;
+    if(addrContract == dev::Address())
+    {
+        callTransaction = QtumTransaction(0, 1, dev::u256(gasLimit), opcode, nonce);
+    }
+    else
+    {
+        callTransaction = QtumTransaction(0, 1, dev::u256(gasLimit), addrContract, opcode, nonce);
+    }
     callTransaction.forceSender(senderAddress);
     callTransaction.setVersion(VersionVM::GetEVMDefault());
 
@@ -2618,7 +2627,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
-        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.MIP1Height + 7 || nHeight < consensusParams.MIP1Height)) {
+        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     if (block.vtx[i]->vout[0].nValue == govVout.nValue && block.vtx[i]->vout[0].scriptPubKey.IsBurnt()) {
@@ -2639,7 +2648,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
         } else {
             winner = qtumDGP.getGovernanceWinner(nHeight);
         }
-        if (nHeight >= consensusParams.MIP1Height && nHeight <= consensusParams.MIP1Height + 7) {
+        if (nHeight >= consensusParams.minMIP1Height && nHeight <= consensusParams.minMIP1Height + 7) {
             LogPrintf("[MIP1] Legacy Winner Validation Lookup at Height : %s\n", nHeight);
         }
         LogPrintf("Gov Winner Validation : %s\n",
@@ -2783,13 +2792,13 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         }
         CAmount splitReward = (blockReward - gasRefunds) / rewardRecipients;
 
-        // Generate the list of script recipients including all of their parameters
-        std::vector<CScript> mposScriptList;
-        if(!GetMPoSOutputScripts(mposScriptList, nPrevHeight, consensusParams))
-            return error("CheckReward(): cannot create the list of MPoS output scripts");
+        // Generate the list of mpos outputs including all of their parameters
+        std::vector<CTxOut> mposOutputList;
+        if(!GetMPoSOutputs(mposOutputList, splitReward, nPrevHeight, consensusParams))
+            return error("CheckReward(): cannot create the list of MPoS outputs");
 
-        for(size_t i = 0; i < mposScriptList.size(); i++){
-            it=std::find(vTempVouts.begin(), vTempVouts.end(), CTxOut(splitReward,mposScriptList[i]));
+        for(size_t i = 0; i < mposOutputList.size(); i++){
+            it=std::find(vTempVouts.begin(), vTempVouts.end(), mposOutputList[i]);
             if(it==vTempVouts.end()){
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): An MPoS participant was not properly paid"), REJECT_INVALID, "bad-cs-mpos-missing");
             }else{
@@ -5127,7 +5136,10 @@ bool SignBlock(std::shared_ptr<CBlock> pblock, CWallet& wallet, const CAmount& n
     //IsProtocolV2 mean POS 2 or higher, so the modified line is:
     auto locked_chain = wallet.chain().lock();
     LOCK(wallet.cs_wallet);
-    if (wallet.CreateCoinStake(*locked_chain, wallet, pblock->nBits, nTotalFees, nTimeBlock, txCoinStake, key, setCoins))
+    LegacyScriptPubKeyMan* spk_man = wallet.GetLegacyScriptPubKeyMan();
+    if(!spk_man)
+        return false;
+    if (wallet.CreateCoinStake(*locked_chain, *spk_man, pblock->nBits, nTotalFees, nTimeBlock, txCoinStake, key, setCoins))
     {
         if (nTimeBlock >= ::ChainActive().Tip()->GetMedianTimePast()+1)
         {

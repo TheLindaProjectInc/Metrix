@@ -22,7 +22,6 @@
 #include <txdb.h>
 #include <versionbits.h>
 
-#include <algorithm>
 #include <atomic>
 #include <exception>
 #include <map>
@@ -168,8 +167,8 @@ static const int MAX_UNCONNECTING_HEADERS = 10;
 /** Default for -stopatheight */
 static const int DEFAULT_STOPATHEIGHT = 0;
 
-static const uint64_t DEFAULT_GAS_LIMIT_OP_CREATE=2500000;
-static const uint64_t DEFAULT_GAS_LIMIT_OP_SEND=250000;
+static const uint64_t DEFAULT_GAS_LIMIT_OP_CREATE=20000000;
+static const uint64_t DEFAULT_GAS_LIMIT_OP_SEND=500000;
 static const CAmount DEFAULT_GAS_PRICE=5000;
 static const CAmount MAX_RPC_GAS_PRICE=2*DEFAULT_GAS_PRICE;
 

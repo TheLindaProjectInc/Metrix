@@ -1298,9 +1298,9 @@ UniValue callcontract(const JSONRPCRequest& request)
         throw std::runtime_error(
             RPCHelpMan{
                 "callcontract",
-                "\nCall contract methods offline.\n",
+                "\nCall contract methods offline, or test contract deployment offline.\n",
                 {
-                    {"address", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The contract address"},
+                    {"address", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The contract address, or empty address \"\""},
                     {"data", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The data hex string"},
                     {"senderAddress", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "The sender address string"},
                     {"gasLimit", RPCArg::Type::NUM, RPCArg::Optional::OMITTED_NAMED_ARG, "The gas limit for executing the contract."},
@@ -1338,7 +1338,10 @@ UniValue callcontract(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("callcontract", "eb23c0b3e6042821da281a2e2364feb22dd543e3 06fdde03")
-                     + HelpExampleRpc("callcontract", "eb23c0b3e6042821da281a2e2364feb22dd543e3 06fdde03")},
+                     + HelpExampleCli("callcontract", "\"\" 60606040525b33600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690836c010000000000000000000000009081020402179055506103786001600050819055505b600c80605b6000396000f360606040526008565b600256")
+                     + HelpExampleRpc("callcontract", "eb23c0b3e6042821da281a2e2364feb22dd543e3 06fdde03")
+                     + HelpExampleRpc("callcontract", "\"\" 60606040525b33600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690836c010000000000000000000000009081020402179055506103786001600050819055505b600c80605b6000396000f360606040526008565b600256")
+                },
             }
                 .ToString());
 
@@ -1350,8 +1353,16 @@ UniValue callcontract(const JSONRPCRequest& request)
     if(data.size() % 2 != 0 || !CheckHex(data))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not hex)");
 
-    if(strAddr.size() != 40 || !CheckHex(strAddr))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
+    dev::Address addrAccount;
+    if(strAddr.size() > 0)
+    {
+        if(strAddr.size() != 40 || !CheckHex(strAddr))
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
+
+        addrAccount = dev::Address(strAddr);
+        if(!globalState->addressInUse(addrAccount))
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
+    }
 
     dev::Address senderAddress;
     if(request.params.size() >= 3){
@@ -1383,10 +1394,6 @@ UniValue callcontract(const JSONRPCRequest& request)
     } else {
         blockNum = latestblock.height;
     }
-
-    dev::Address addrAccount(strAddr);
-    if (!globalState->addressInUse(addrAccount))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
 
     std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), blockNum, senderAddress, gasLimit);
 
@@ -2532,8 +2539,9 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     BuriedForkDescPushBack(softforks, "bip65", consensusParams.BIP65Height);
     BuriedForkDescPushBack(softforks, "csv", consensusParams.CSVHeight);
     BuriedForkDescPushBack(softforks, "segwit", consensusParams.SegwitHeight);
+    BuriedForkDescPushBack(softforks, "mip1-min", consensusParams.minMIP1Height);
+    BuriedForkDescPushBack(softforks, "mip1-ack", consensusParams.MIP1Height);
     BIP9SoftForkDescPushBack(softforks, "testdummy", consensusParams, Consensus::DEPLOYMENT_TESTDUMMY);
-    BIP9SoftForkDescPushBack(softforks, "mip1", consensusParams, Consensus::DEPLOYMENT_CHAIN_PATH);
     obj.pushKV("softforks",             softforks);
 
     obj.pushKV("warnings", GetWarnings("statusbar"));
@@ -3565,3 +3573,5 @@ void RegisterBlockchainRPCCommands(CRPCTable &t)
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
 }
+
+NodeContext* g_rpc_node = nullptr;

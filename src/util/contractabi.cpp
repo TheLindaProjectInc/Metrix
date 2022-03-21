@@ -1,4 +1,4 @@
-#include <qt/contractabi.h>
+#include <util/contractabi.h>
 #include <univalue.h>
 #include <libethcore/ABI.h>
 #include <math.h>
@@ -157,6 +157,53 @@ bool FunctionABI::abiOut(const std::string &data, std::vector<std::vector<std::s
     return ret;
 }
 
+bool FunctionABI::abiOut(const std::vector<std::string>& topics, const std::string& data, std::vector<std::vector<std::string>>& values, std::vector<ParameterABI::ErrorType>& errors) const
+{
+    size_t pos = 0;
+    bool ret = true;
+    if(type == "event")
+    {
+        // Get the event name
+        size_t ti = 0;
+        if(!anonymous)
+        {
+            if(topics.size() == 0) return false;
+            if(topics[ti++] != selector()) return false;
+        }
+
+        // Get the inputs
+        for(size_t i = 0; i < inputs.size(); i++)
+        {
+            std::vector<std::string> value;
+            if(inputs[i].indexed)
+            {
+                size_t pos = 0;
+                ret &= topics.size() > ti ? inputs[i].abiOut(topics[ti++], pos, value) : false;
+            }
+            else
+            {
+                ret &= inputs[i].abiOut(data, pos, value);
+            }
+
+            values.push_back(value);
+            errors.push_back(inputs[i].lastError());
+        }
+    }
+    else
+    {
+        // Get the outputs
+        for(size_t i = 0; i < outputs.size(); i++)
+        {
+            std::vector<std::string> value;
+            ret &= outputs[i].abiOut(data, pos, value);
+            values.push_back(value);
+            errors.push_back(outputs[i].lastError());
+        }
+    }
+
+    return ret;
+}
+
 std::string FunctionABI::selector() const
 {
     if(type == "default")
@@ -199,41 +246,6 @@ std::string FunctionABI::selector() const
 std::string FunctionABI::defaultSelector()
 {
     return "00";
-}
-
-QString FunctionABI::errorMessage(std::vector<ParameterABI::ErrorType> &errors, bool in) const
-{
-    if(in && errors.size() != inputs.size())
-        return "";
-    if(!in && errors.size() != outputs.size())
-        return "";
-    const std::vector<ParameterABI>& params = in ? inputs : outputs;
-
-    QStringList messages;
-    messages.append(QObject::tr("ABI parsing error:"));
-    for(size_t i = 0; i < errors.size(); i++)
-    {
-        ParameterABI::ErrorType err = errors[i];
-        if(err == ParameterABI::Ok) continue;
-        const ParameterABI& param = params[i];
-        QString _type = QString::fromStdString(param.type);
-        QString _name = QString::fromStdString(param.name);
-
-        switch (err) {
-        case ParameterABI::UnsupportedABI:
-            messages.append(QObject::tr("Unsupported type %1 %2.").arg(_type, _name));
-            break;
-        case ParameterABI::EncodingError:
-            messages.append(QObject::tr("Error encoding parameter %1 %2.").arg(_type, _name));
-            break;
-        case ParameterABI::DecodingError:
-            messages.append(QObject::tr("Error decoding parameter %1 %2.").arg(_type, _name));
-            break;
-        default:
-            break;
-        }
-    }
-    return messages.join('\n');
 }
 
 void FunctionABI::processDynamicParams(const std::map<int, std::string> &mapDynamic, std::string &data) const
@@ -292,6 +304,17 @@ bool ParameterABI::abiInBasic(ParameterType::Type abiType, std::string value, st
         return false;
     }
     return true;
+}
+
+std::string deserialiseString(dev::bytesConstRef& io_t, unsigned p)
+{
+    unsigned o = (uint16_t)dev::u256(dev::h256(io_t.cropped(0, 32))) - p;
+    unsigned s = (uint16_t)dev::u256(dev::h256(io_t.cropped(o, 32)));
+    std::string ret;
+    ret.resize(s);
+    io_t.cropped(o + 32, s).populate(dev::bytesRef((byte*)ret.data(), s));
+    io_t = io_t.cropped(32);
+    return ret;
 }
 
 bool ParameterABI::abiOutBasic(ParameterType::Type abiType, const std::string &data, size_t &pos, std::string &value) const
@@ -437,7 +460,7 @@ bool ParameterABI::abiOut(const std::string &data, size_t &pos, std::vector<std:
             {
                 dev::bytes rawData = dev::fromHex(data.substr(pos));
                 dev::bytesConstRef o(&rawData);
-                std::string outData = dev::eth::ABIDeserialiser<std::string>::deserialise(o);
+                std::string outData = deserialiseString(o, pos/2);
                 value.push_back(dev::toHex(outData));
             }
                 break;
@@ -445,7 +468,7 @@ bool ParameterABI::abiOut(const std::string &data, size_t &pos, std::vector<std:
             {
                 dev::bytes rawData = dev::fromHex(data.substr(pos));
                 dev::bytesConstRef o(&rawData);
-                value.push_back(dev::eth::ABIDeserialiser<std::string>::deserialise(o));
+                std::string outData = deserialiseString(o, pos/2);
             }
                 break;
             default:
@@ -523,57 +546,6 @@ bool ParameterABI::abiOut(const std::string &data, size_t &pos, std::vector<std:
     }
 
     return true;
-}
-
-bool ParameterABI::getRegularExpession(const ParameterType &paramType, QRegularExpression &regEx)
-{
-    bool ret = false;
-    switch (paramType.type()) {
-    case ParameterType::abi_bytes:
-    {
-        if(paramType.isDynamic())
-        {
-            regEx.setPattern(paternBytes);
-        }
-        else
-        {
-            // Expression to check the number of bytes encoded in hex (1-32)
-            regEx.setPattern(QString(paternBytes32).arg(paramType.totalBytes()*2));
-        }
-        ret = true;
-        break;
-    }
-    case ParameterType::abi_uint:
-    {
-        regEx.setPattern(paternUint);
-        ret = true;
-        break;
-    }
-    case ParameterType::abi_int:
-    {
-        regEx.setPattern(paternInt);
-        ret = true;
-        break;
-    }
-    case ParameterType::abi_address:
-    {
-        regEx.setPattern(paternAddress);
-        ret = true;
-        break;
-    }
-    case ParameterType::abi_bool:
-    {
-        regEx.setPattern(paternBool);
-        ret = true;
-        break;
-    }
-    default:
-    {
-        ret = false;
-        break;
-    }
-    }
-    return ret;
 }
 
 ParameterABI::ErrorType ParameterABI::lastError() const

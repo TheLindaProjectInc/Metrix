@@ -24,6 +24,7 @@ class uint256;
 enum class RBFTransactionState;
 struct CBlockLocator;
 struct FeeCalculation;
+struct NodeContext;
 
 namespace interfaces {
 
@@ -43,7 +44,7 @@ class Wallet;
 //!   asynchronously
 //!   (https://github.com/bitcoin/bitcoin/pull/10973#issuecomment-380101269).
 //!
-//! * The initMessages() and loadWallet() methods which the wallet uses to send
+//! * The initMessages() and showProgress() methods which the wallet uses to send
 //!   notifications to the GUI should go away when GUI and wallet can directly
 //!   communicate with each other without going through the node
 //!   (https://github.com/bitcoin/bitcoin/pull/15288#discussion_r253321096).
@@ -208,9 +209,6 @@ public:
     //! Send init error.
     virtual void initError(const std::string& message) = 0;
 
-    //! Send wallet load notification to the GUI.
-    virtual void loadWallet(std::unique_ptr<Wallet> wallet) = 0;
-
     //! Send progress indicator.
     virtual void showProgress(const std::string& title, int progress, bool resume_possible) = 0;
 
@@ -286,7 +284,7 @@ public:
 };
 
 //! Return implementation of Chain interface.
-std::unique_ptr<Chain> MakeChain();
+std::unique_ptr<Chain> MakeChain(NodeContext& node);
 
 //! Return implementation of ChainClient interface for a wallet client. This
 //! function will be undefined in builds where ENABLE_WALLET is false.
