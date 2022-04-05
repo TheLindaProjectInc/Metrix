@@ -2635,6 +2635,17 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
                             winner = dev::Address(0x0);
                             break;
                     }
+                    ////////////
+                    // This is a dirty fix for full sync issues due to a bug in the staker/gov reward function
+                    if (block.vtx[i]->vout[0].nValue == govVout.nValue && nHeight == 518402) {
+                            nTx = i;
+                            CTxDestination winnerAddress;
+                            ExtractDestination(block.vtx[nTx]->vout[0].scriptPubKey, winnerAddress);
+                            const PKHash *keyID = boost::get<PKHash>(&winnerAddress);
+                            winner = dev::Address(keyID->GetReverseHex());
+                            break;
+                    }
+                    ////////////
                     if (block.vtx[i]->vout[1].nValue == govVout.nValue) {
                             nTx = i;
                             CTxDestination winnerAddress;
@@ -3827,6 +3838,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
     checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
     checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
+
 
     //If this error happens, it probably means that something with AAL created transactions didn't match up to what is expected
     if((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
