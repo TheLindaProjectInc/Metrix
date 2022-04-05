@@ -11,6 +11,7 @@ for older versions), then just copy over the appropriate metrixd file.
 # Core
 
 - Bugfix - Fix random SegFault of wallet caused by inability to get the fee rates from contract
+- Bugfix - Fix sync stuck on block 518401 due to unexpected tx in AAL
 - Increment version 4.0.8.1
 - New protocol version 70020
 - Update checkpoints to guide nodes
