@@ -103,6 +103,7 @@ DGPFeeRates QtumDGP::getFeeRates(unsigned int blockHeight){
     dgpFeeRates.minRelayTxFee = DEFAULT_MIN_RELAY_TX_FEE_DGP;
     dgpFeeRates.incrementalRelayFee = DEFAULT_INCREMENTAL_RELAY_FEE_DGP;
     dgpFeeRates.dustRelayFee = DEFAULT_DUST_RELAY_TX_FEE_DGP;
+    /*
     std::vector<uint64_t> feeRates = getUint64VectorFromDGP(blockHeight, DGPContract, ParseHex("d6f6ac1d"));
     if (feeRates.size() == 3){
         if(feeRates[0] <= MAX_MIN_RELAY_TX_FEE_DGP && feeRates[0] >= MIN_MIN_RELAY_TX_FEE_DGP){
@@ -114,7 +115,7 @@ DGPFeeRates QtumDGP::getFeeRates(unsigned int blockHeight){
         if(feeRates[2] <= MAX_DUST_RELAY_TX_FEE_DGP && feeRates[2] >= MIN_DUST_RELAY_TX_FEE_DGP){
             dgpFeeRates.dustRelayFee = feeRates[2];
         }
-    } 
+    } */
     return dgpFeeRates;
 }
 
