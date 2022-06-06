@@ -13,6 +13,7 @@
 #include <consensus/merkle.h>
 #include <consensus/tx_verify.h>
 #include <consensus/validation.h>
+#include <key_io.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
 #include <pow.h>
@@ -598,6 +599,39 @@ void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
     }
 }
 
+bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction* coinstakeTx)
+{
+    // Get the senderaddress from the output tx script
+    CTxDestination addressBit;
+    PKHash senderAddress;
+    txnouttype txType;
+    if(!ExtractDestination(coinstakeTx->vout[1].scriptPubKey, addressBit, &txType)) {
+        return error("%s: Could not extract sender pubkey from output", __func__);
+    }
+
+    std::string currentAddress = EncodeDestination(addressBit);
+    
+    // Get convert the govWinner hex to a PK address
+    std::string hexAddress = HexStr(addrWinner.asBytes());
+    if (hexAddress.size() != 40)
+        return error("%s: Invalid pubkeyhash hex size (should be 40 hex characters)", __func__);
+    PKHash raw;
+    raw.SetReverseHex(hexAddress);
+    CTxDestination govWinner(raw);
+
+    std::string govWinnerStr = EncodeDestination(govWinner);
+
+    // If these match then the staker is choosing itsself as winning gov.
+    // In rare cases this causes bad consensus, and should just be avoided.
+    if (currentAddress == govWinnerStr) {
+        LogPrintf("IsRewardToSelf: Gov Winner : %s, Staker Address : %s, gov reward abandoned. The winner cannot be the staker.\n", govWinnerStr, currentAddress);
+        return true;
+    }
+
+    return false;
+}
+
+
 void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
 {
     uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_SEND;
@@ -610,6 +644,10 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
     CAmount nGasPrice = qtumDGP.getMinGasPrice(nHeight);
     uint64_t nCollateral = qtumDGP.getGovernanceCollateral(nHeight);
     uint64_t nGovernorSubsidy = GetGovernorSubsidy(nHeight, nCollateral);
+
+    if(hasGovernorToReward) {
+        IsRewardToSelf(addrWinner, coinstakeTx) ? hasGovernorToReward = false : 0;
+    }
     //LogPrintf("Gov Winner : %s | hasGovernorToReward : %t | Subsidy : %d\n", 
     //    HexStr(addrWinner.asBytes()),
     //    hasGovernorToReward,

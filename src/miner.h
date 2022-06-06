@@ -306,6 +306,8 @@ private:
     /** Add coinstake contract transactions to the coinstake transaction 
      * of the block. */
     void AddCoinstakeContracts(CMutableTransaction* coinstakeTx);
+
+    bool IsRewardToSelf(dev::Address addrWinner, CMutableTransaction* coinstakeTx);
 };
 
 #ifdef ENABLE_WALLET
