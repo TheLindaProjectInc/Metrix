@@ -606,7 +606,7 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     PKHash senderAddress;
     txnouttype txType;
     if(!ExtractDestination(coinstakeTx->vout[1].scriptPubKey, addressBit, &txType)) {
-        return LogPrintf("IsRewardToSelf: Could not extract sender pubkey from output.\n");
+        LogPrintf("IsRewardToSelf: Could not extract sender pubkey from output.\n");
         return false;
     }
 
