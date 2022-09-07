@@ -606,15 +606,18 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     PKHash senderAddress;
     txnouttype txType;
     if(!ExtractDestination(coinstakeTx->vout[1].scriptPubKey, addressBit, &txType)) {
-        return error("%s: Could not extract sender pubkey from output", __func__);
+        return LogPrintf("IsRewardToSelf: Could not extract sender pubkey from output.\n");
+        return false;
     }
 
     std::string currentAddress = EncodeDestination(addressBit);
     
     // Get convert the govWinner hex to a PK address
     std::string hexAddress = HexStr(addrWinner.asBytes());
-    if (hexAddress.size() != 40)
-        return error("%s: Invalid pubkeyhash hex size (should be 40 hex characters)", __func__);
+    if (hexAddress.size() != 40) {
+        LogPrintf("IsRewardToSelf: Invalid pubkeyhash hex size (should be 40 hex characters)\n");
+        return false;
+    }
     PKHash raw;
     raw.SetReverseHex(hexAddress);
     CTxDestination govWinner(raw);
