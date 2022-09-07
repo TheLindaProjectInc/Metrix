@@ -2658,7 +2658,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
             }
         } else {
             //Metrix Sync fix for badGov between block 681822 and 865000
-            if (nHeight >= 681822 && nHeight <= 865000) {
+            if (nHeight >= 681822 && nHeight < 865000) {
                 uint64_t nTx;
                 for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     ////////////
