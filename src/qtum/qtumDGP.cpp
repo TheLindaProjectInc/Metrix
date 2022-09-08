@@ -34,13 +34,14 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     DGPaddresses.GovernanceDGP = GovernanceDGP;
     DGPaddresses.BudgetDGP = BudgetDGP;
 
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
     // Don't trigger until at least MIP2
     if (blockHeight < consensusParams.MIP2Height) {
         return;
     }
     
     const CBlockIndex* pindex = ::ChainActive().Tip();
-    const Consensus::Params& consensusParams = Params().GetConsensus();
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
     // Get state of MIP3
     ThresholdState state = VersionBitsState(pindex, consensusParams, pos, versionbitscache);
