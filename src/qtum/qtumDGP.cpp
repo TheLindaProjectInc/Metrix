@@ -297,15 +297,15 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     return value;
 }
 
-dev::Address QtumDGP::getDGPContract() {
+dev::Address getDGPContract() {
     return metrixDGPaddr::DGPContract;
 }
 
-dev::Address QtumDGP::getGovernanceDGP() {
+dev::Address getGovernanceDGP() {
     return metrixDGPaddr::GovernanceDGP;
 }
 
-dev::Address QtumDGP::getBudgetDGP() {
+dev::Address getBudgetDGP() {
     return metrixDGPaddr::BudgetDGP;
 }
 

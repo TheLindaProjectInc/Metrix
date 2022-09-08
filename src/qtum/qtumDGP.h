@@ -57,6 +57,12 @@ struct DGPFeeRates
     uint64_t dustRelayFee;
 };
 
+static dev::Address getDGPContract();
+
+static dev::Address getGovernanceDGP();
+
+static dev::Address getBudgetDGP();
+
 class QtumDGP {
     
 public:
@@ -81,12 +87,6 @@ public:
     uint64_t getBudgetFee(unsigned int blockHeight);
 
     dev::Address getGovernanceWinner(unsigned int blockHeight);
-
-    dev::Address getDGPContract();
-
-    dev::Address getGovernanceDGP();
-
-    dev::Address getBudgetDGP();
 
 private:
 
