@@ -13,18 +13,6 @@ struct metrixDGPaddr
     dev::Address BudgetDGP;
 };
 
-static dev::Address getDGPContract() {
-    return metrixDGPaddr::DGPContract;
-}
-
-static dev::Address getGovernanceDGP() {
-    return metrixDGPaddr::GovernanceDGP;
-}
-
-static dev::Address getBudgetDGP() {
-    return metrixDGPaddr::BudgetDGP;
-}
-
 // DGP Version 2 [MIP3] Contract Addresses
 static const dev::Address DGPContract_v2 = dev::Address("0x0000000000000000000000000000000000000098");
 static const dev::Address GovernanceDGP_v2 = dev::Address("0000000000000000000000000000000000000099");
@@ -93,6 +81,12 @@ public:
     uint64_t getBudgetFee(unsigned int blockHeight);
 
     dev::Address getGovernanceWinner(unsigned int blockHeight);
+
+    dev::Address getDGPContract();
+
+    dev::Address getGovernanceDGP();
+
+    dev::Address getBudgetDGP();
 
 private:
 

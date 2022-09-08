@@ -164,6 +164,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
                          strprintf("%s: inputs missing/spent", __func__));
     }
 
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
+
     CAmount nValueIn = 0;
     for (unsigned int i = 0; i < tx.vin.size(); ++i) {
         const COutPoint &prevout = tx.vin[i].prevout;
@@ -175,7 +177,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
             // metrix
             // DGP calls to Governance and Budget contracts are allowed to spend immature coins as they will be 
             // spending from the coinstake reward
-            if (!coin.out.scriptPubKey.IsDGPContractCall(getGovernanceDGP().asBytes(), ParseHex("1c0318cd")) && !coin.out.scriptPubKey.IsDGPContractCall(getBudgetDGP().asBytes(), ParseHex("104ad86f"))) {
+            if (!coin.out.scriptPubKey.IsDGPContractCall(qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd")) && !coin.out.scriptPubKey.IsDGPContractCall(qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"))) {
                 return state.Invalid(ValidationInvalidReason::TX_PREMATURE_SPEND, false, REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                     strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
             }

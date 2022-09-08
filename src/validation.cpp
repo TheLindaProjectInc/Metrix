@@ -2585,12 +2585,13 @@ bool HasNonDGPContracts(const CBlock& block)
     {
         if (block.vtx[1]->HasOpSpend())
             return true;
+        QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
         for (const auto& out : block.vtx[1]->vout)
             if (
                 (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
-                !out.scriptPubKey.IsDGPContractCall(getGovernanceDGP().asBytes(), ParseHex("1c0318cd")) &&
-                !out.scriptPubKey.IsDGPContractCall(getGovernanceDGP().asBytes(), ParseHex("6faaa74c")) &&
-                !out.scriptPubKey.IsDGPContractCall(getBudgetDGP().asBytes(), ParseHex("104ad86f"))
+                !out.scriptPubKey.IsDGPContractCall(qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd")) &&
+                !out.scriptPubKey.IsDGPContractCall(qtumDGP.getGovernanceDGP().asBytes(), ParseHex("6faaa74c")) &&
+                !out.scriptPubKey.IsDGPContractCall(qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"))
             )
                 return true;
     }
@@ -2617,13 +2618,14 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     ExtractDestination(block.vtx[1]->vout[1].scriptPubKey, senderAddress);
     const PKHash *keyID = boost::get<PKHash>(&senderAddress);
     dev::Address addrSender = dev::Address(keyID->GetReverseHex());
+    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);   
 
     std::vector<QtumTransaction> qtumTransactions;
     uint32_t n;
 
     // add governor reward transaction
     CTxOut govVout;
-    if (GetDGPVout(block, getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
+    if (GetDGPVout(block, qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -2667,20 +2669,20 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
         }
         LogPrintf("Gov Winner Validation : %s\n",
             HexStr(winner.asBytes()));
-        qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, getGovernanceDGP(), "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
+        qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, qtumDGP.getGovernanceDGP(), "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
     }
 
     // add governor cleanup
-    if (GetDGPVout(block, getGovernanceDGP().asBytes(), ParseHex("6faaa74c"), govVout, n))
+    if (GetDGPVout(block, qtumDGP.getGovernanceDGP().asBytes(), ParseHex("6faaa74c"), govVout, n))
     {
-        qtumTransactions.push_back(CreateQtumTransaction(0, nGasPrice, nGasLimit, getGovernanceDGP(), "6faaa74c", addrSender, n, block.vtx[1]->GetHash()));
+        qtumTransactions.push_back(CreateQtumTransaction(0, nGasPrice, nGasLimit, qtumDGP.getGovernanceDGP(), "6faaa74c", addrSender, n, block.vtx[1]->GetHash()));
     }
 
     // add budget allowance and settlement
     CTxOut bgtVout;
-    if (GetDGPVout(block, getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
+    if (GetDGPVout(block, qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
     {
-       qtumTransactions.push_back(CreateQtumTransaction(bgtVout.nValue, nGasPrice, nGasLimit, getBudgetDGP(), "104ad86f", addrSender, n, block.vtx[1]->GetHash()));
+       qtumTransactions.push_back(CreateQtumTransaction(bgtVout.nValue, nGasPrice, nGasLimit, qtumDGP.getBudgetDGP(), "104ad86f", addrSender, n, block.vtx[1]->GetHash()));
     }
 
     return qtumTransactions;
@@ -2763,7 +2765,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 
         // Check governor payment
         CTxOut govVout;
-        if (GetDGPVout(block, getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
+        if (GetDGPVout(block, qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
         {
             if (govVout.nValue > governorReward)
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): governor reward pays too much (actual=%d vs limit=%d)",
@@ -2773,7 +2775,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 
         // Check budget payment
         CTxOut bgtVout;
-        if (GetDGPVout(block, getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
+        if (GetDGPVout(block, qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
         {
             if (bgtVout.nValue > budgetPayment)
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): budget pays too much (actual=%d vs limit=%d)",
