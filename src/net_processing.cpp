@@ -2154,16 +2154,22 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             }
         }
         
-        if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP3Height){
-            if (nVersion < MIN_PEER_PROTO_VERSION_AFTER_MIP3) {
-                // disconnect from peers older than this proto version
-                LogPrint(BCLog::NET, "peer=%d using obsolete version after MIP3 fork %i; disconnecting\n", pfrom->GetId(), nVersion);
-                if (enable_bip61) {
-                    connman->PushMessage(pfrom, CNetMsgMaker(INIT_PROTO_VERSION).Make(NetMsgType::REJECT, strCommand, REJECT_OBSOLETE,
-                        strprintf("Version must be %d or greater after MIP3 fork", MIN_PEER_PROTO_VERSION_AFTER_MIP3)));
+        if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP3Height) {
+            const CBlockIndex* pindex = ::ChainActive().Tip();
+            Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
+            // Get state of MIP3
+            ThresholdState state = VersionBitsState(pindex, chainparams.GetConsensus(), pos, versionbitscache);
+            // If MIP3 state is active, reject old nodes..
+            if (state == ThresholdState::ACTIVE && nVersion < MIN_PEER_PROTO_VERSION_AFTER_MIP3) {
+                    // disconnect from peers older than this proto version
+                    LogPrint(BCLog::NET, "peer=%d using obsolete version after MIP3 fork %i; disconnecting\n", pfrom->GetId(), nVersion);
+                    if (enable_bip61) {
+                        connman->PushMessage(pfrom, CNetMsgMaker(INIT_PROTO_VERSION).Make(NetMsgType::REJECT, strCommand, REJECT_OBSOLETE,
+                            strprintf("Version must be %d or greater after MIP3 fork", MIN_PEER_PROTO_VERSION_AFTER_MIP3)));
+                    }
+                    pfrom->fDisconnect = true;
+                    return false;
                 }
-                pfrom->fDisconnect = true;
-                return false;
             }
         }
 
