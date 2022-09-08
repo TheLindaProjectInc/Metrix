@@ -297,18 +297,6 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     return value;
 }
 
-dev::Address getDGPContract() {
-    return metrixDGPaddr::DGPContract;
-}
-
-dev::Address getGovernanceDGP() {
-    return metrixDGPaddr::GovernanceDGP;
-}
-
-dev::Address getBudgetDGP() {
-    return metrixDGPaddr::BudgetDGP;
-}
-
 bool QtumDGP::initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data, uint64_t defaultGasLimit){
     initStorageDGP(addr);
     // metrix DGP contract address does not change so no need to check for it every time
