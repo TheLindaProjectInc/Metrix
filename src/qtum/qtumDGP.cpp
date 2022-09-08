@@ -212,6 +212,8 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         // Valid governors are at least 15 blocks old.
         uint64_t minMaturity = 15;
 
+        const std::string badGov = "a66268b3c8a9501e492f81abdd81655ee41e35d2";
+
         if (value != dev::Address(0x0)) {
                 // check if contract winner selection is valid and meets the criteria
                 std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
@@ -224,8 +226,16 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                     dgpCollateral == govCollateral && 
                     height >= govBlockHeight + minMaturity && 
                     height <= govlastPing + pingInterval) {
-                    LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                    return value;
+                        // Metrix hacky fix to skip bad Governor in contract
+                        if (::ChainActive().Tip()->nHeight < 685000 ) {
+                            LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                            return value;
+                        } else {
+                            if (HexStr(value.asBytes()) != badGov) {
+                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                return value;
+                            }
+                        }
                 } else {
                     // if winner selection doesn't pass criteria checks then manually try and find an eligible one.
                     // Get the list of currently active governors
@@ -242,8 +252,16 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                             dgpCollateral == govCollateral && 
                             height >= govBlockHeight + minMaturity && 
                             height <= govlastPing + pingInterval) {
-                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                return value;
+                                // Metrix hacky fix to skip bad Governor in contract
+                                if (::ChainActive().Tip()->nHeight < 685000) {
+                                    LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                    return value;
+                                } else {
+                                    if (HexStr(value.asBytes()) != badGov) {
+                                        LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                        return value;
+                                    }
+                                }
                             }
                     }
                 }

@@ -2627,7 +2627,10 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
-        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
+
+        if (::ChainstateActive().IsInitialBlockDownload() && nHeight >= consensusParams.minMIP2Height && nHeight < consensusParams.MIP2Height) {
+            winner = qtumDGP.getGovernanceWinner(nHeight);
+        } else if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     if (block.vtx[i]->vout[0].nValue == govVout.nValue && block.vtx[i]->vout[0].scriptPubKey.IsBurnt()) {
@@ -2637,7 +2640,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
                     }
                     ////////////
                     // This is a dirty fix for full sync issues due to a bug in the staker/gov reward function
-                    if (block.vtx[i]->vout[0].nValue == govVout.nValue && nHeight == 518402) {
+                    if (block.vtx[i]->vout[0].nValue == govVout.nValue) {
                             nTx = i;
                             CTxDestination winnerAddress;
                             ExtractDestination(block.vtx[nTx]->vout[0].scriptPubKey, winnerAddress);
