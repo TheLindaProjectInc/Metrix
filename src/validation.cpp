@@ -2515,7 +2515,7 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
 
     if (blockGasLimit == 0)
     {
-        QtumDGP qtumDGP(globalState.get(), pblockindex->nHeight + 1, fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState->get(), pblockindex->nHeight + 1, fGettingValuesDGP);
         blockGasLimit = qtumDGP.getBlockGasLimit(pblockindex->nHeight + 1);
     }
 
@@ -2585,7 +2585,7 @@ bool HasNonDGPContracts(const CBlock& block)
     {
         if (block.vtx[1]->HasOpSpend())
             return true;
-        QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState->get(), ::ChainActive().Height(), fGettingValuesDGP);
         for (const auto& out : block.vtx[1]->vout)
             if (
                 (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
@@ -2599,7 +2599,7 @@ bool HasNonDGPContracts(const CBlock& block)
 }
 QtumTransaction CreateQtumTransaction(CAmount amount, CAmount nGasPrice, uint64_t nGasLimit, dev::Address addrContract, std::string data, dev::Address addrSender, uint32_t nVout, uint256 txHash)
 {
-    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Tip()->nHeight,  fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState->get(), ::ChainActive().Tip()->nHeight,  fGettingValuesDGP);
     QtumTransaction callTransaction(dev::u256(amount), dev::u256(nGasPrice), dev::u256(nGasLimit), addrContract, ParseHex(data), dev::u256(0));
     callTransaction.forceSender(addrSender);
     callTransaction.setVersion(VersionVM::GetEVMDefault());
@@ -2618,7 +2618,6 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     ExtractDestination(block.vtx[1]->vout[1].scriptPubKey, senderAddress);
     const PKHash *keyID = boost::get<PKHash>(&senderAddress);
     dev::Address addrSender = dev::Address(keyID->GetReverseHex());
-    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);   
 
     std::vector<QtumTransaction> qtumTransactions;
     uint32_t n;
