@@ -2660,34 +2660,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
 
             }
         } else {
-            //Metrix Sync fix for badGov between block 681822 and 685000
-            if (nHeight >= consensusParams.minMIP2Height && nHeight < consensusParams.MIP2Height) {
-                uint64_t nTx;
-                for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
-                    ////////////
-                    // This is a dirty fix for full sync issues due to a bug in the staker/gov reward function
-                    if (block.vtx[i]->vout[0].nValue == govVout.nValue) {
-                            nTx = i;
-                            CTxDestination winnerAddress;
-                            ExtractDestination(block.vtx[nTx]->vout[0].scriptPubKey, winnerAddress);
-                            const PKHash *keyID = boost::get<PKHash>(&winnerAddress);
-                            winner = dev::Address(keyID->GetReverseHex());
-                            break;
-                    }
-                    ////////////
-                    if (block.vtx[i]->vout[1].nValue == govVout.nValue) {
-                            nTx = i;
-                            CTxDestination winnerAddress;
-                            ExtractDestination(block.vtx[nTx]->vout[1].scriptPubKey, winnerAddress);
-                            const PKHash *keyID = boost::get<PKHash>(&winnerAddress);
-                            winner = dev::Address(keyID->GetReverseHex());
-                            break;
-                    }
-                }
-            } else {
-                winner = qtumDGP.getGovernanceWinner(nHeight);
-            }
-
+            winner = qtumDGP.getGovernanceWinner(nHeight);
         }
         if (nHeight >= consensusParams.minMIP1Height && nHeight <= consensusParams.minMIP1Height + 7) {
             LogPrintf("[MIP1] Legacy Winner Validation Lookup at Height : %s\n", nHeight);
