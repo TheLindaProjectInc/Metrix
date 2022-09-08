@@ -15,4 +15,8 @@ const struct VBDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_B
         /*.name =*/ "mip1",
         /*.gbt_force =*/ false,
     },
+    {
+        /*.name =*/ "mip2",
+        /*.gbt_force =*/ false,
+    },
 };
