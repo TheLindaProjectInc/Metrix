@@ -175,7 +175,9 @@ public:
                 { 305037, uint256S("0x84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
                 { 350000, uint256S("0xd89b4a626819d49c1a938a3d6adbfac2abe1f380e5d2a6ae23ae7d922403a587")},
                 { 450000, uint256S("0xe7760f9c7b7d20c3acee3e8185626d832da3d14a7b25a2509208ca70f60d43dd")},
-                { 520000, uint256S("0xfc3f607b5c97bc94e1fb50f3beb473eb06b65ffc21b2efa77cdcb1920482e211")}
+                { 520000, uint256S("0xfc3f607b5c97bc94e1fb50f3beb473eb06b65ffc21b2efa77cdcb1920482e211")},
+                { 681822, uint256S("0xf89b90fe4d34509ce5fa2d6a56f4ff80bdc7e0637a49b250ed9eb102a8516479")},
+                { 683449, uint256S("0x3c11441e82b4d380984ced480c71eec6f26967a3e6283b00ae232553b7fd9224")}
             }
         };
 
