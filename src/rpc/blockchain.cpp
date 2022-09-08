@@ -2543,6 +2543,7 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     BuriedForkDescPushBack(softforks, "mip1-ack", consensusParams.MIP1Height);
     BuriedForkDescPushBack(softforks, "mip2-min", consensusParams.minMIP2Height);
     BIP9SoftForkDescPushBack(softforks, "mip2-ack", consensusParams, Consensus::DEPLOYMENT_MIP2_FIX);
+    BIP9SoftForkDescPushBack(softforks, "mip3", consensusParams, Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE);
     BIP9SoftForkDescPushBack(softforks, "testdummy", consensusParams, Consensus::DEPLOYMENT_TESTDUMMY);
     obj.pushKV("softforks",             softforks);
 
