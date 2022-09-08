@@ -2141,13 +2141,13 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             }
         }
         
-        if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP2Height){
-            if (nVersion < MIN_PEER_PROTO_VERSION_AFTER_MIP2 + 15000) {
+        if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP2Height + 15000){
+            if (nVersion < MIN_PEER_PROTO_VERSION_AFTER_MIP2) {
                 // disconnect from peers older than this proto version
                 LogPrint(BCLog::NET, "peer=%d using obsolete version after MIP2 fork %i; disconnecting\n", pfrom->GetId(), nVersion);
                 if (enable_bip61) {
                     connman->PushMessage(pfrom, CNetMsgMaker(INIT_PROTO_VERSION).Make(NetMsgType::REJECT, strCommand, REJECT_OBSOLETE,
-                        strprintf("Version must be %d or greater after MIP2 fork", MIN_PEER_PROTO_VERSION_AFTER_MIP1)));
+                        strprintf("Version must be %d or greater after MIP2 fork", MIN_PEER_PROTO_VERSION_AFTER_MIP2)));
                 }
                 pfrom->fDisconnect = true;
                 return false;
