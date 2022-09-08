@@ -2627,7 +2627,12 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
-        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
+
+        const uint32_t eventErrorHeightStart = consensusParams.minMIP2Height;
+        const uint32_t eventErrorHeightEnded = 685000; // TODO: clean this up!
+        if (::ChainstateActive().IsInitialBlockDownload() && nHeight >= eventErrorHeightStart && nHeight < eventErrorHeightEnded) {
+            winner = qtumDGP.getGovernanceWinner(nHeight);
+        } else if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     if (block.vtx[i]->vout[0].nValue == govVout.nValue && block.vtx[i]->vout[0].scriptPubKey.IsBurnt()) {
