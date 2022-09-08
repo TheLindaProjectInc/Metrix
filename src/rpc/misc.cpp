@@ -107,7 +107,7 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
-    QtumDGP qtumDGP(globalState.get());
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height());
     DGPFeeRates dgpFeeRates = qtumDGP.getFeeRates(::ChainActive().Height());
 
     UniValue obj(UniValue::VOBJ);

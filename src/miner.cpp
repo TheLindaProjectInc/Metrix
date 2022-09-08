@@ -53,7 +53,7 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
 
 unsigned int DefaultBlockMinTxFee()
 {
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
     DGPFeeRates dgpFeeRates = qtumDGP.getFeeRates(::ChainActive().Height());
     return (unsigned int)dgpFeeRates.minRelayTxFee; 
 }
@@ -227,7 +227,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     }
 
     //////////////////////////////////////////////////////// qtum
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
     globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(nHeight));
     uint32_t blockSizeDGP = qtumDGP.getBlockSize(nHeight);
     minGasPrice = qtumDGP.getMinGasPrice(nHeight);
@@ -641,7 +641,7 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
     bool hasGovernorToReward = false;
 
     // add governor reward transaction
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
     dev::Address addrWinner = qtumDGP.getGovernanceWinner(nHeight);
     hasGovernorToReward = addrWinner != dev::Address(0x0);
     CAmount nGasPrice = qtumDGP.getMinGasPrice(nHeight);
@@ -658,7 +658,7 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
     if (hasGovernorToReward)
     {
         coinstakeTx->vout.resize(5);
-        CScript scriptPubKeyGovReward = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("1c0318cd000000000000000000000000" + HexStr(addrWinner.asBytes())) << GovernanceDGP.asBytes() << OP_CALL;
+        CScript scriptPubKeyGovReward = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("1c0318cd000000000000000000000000" + HexStr(addrWinner.asBytes())) << getGovernanceDGP().asBytes() << OP_CALL;
         coinstakeTx->vout[2].nValue = nGovernorSubsidy;
         coinstakeTx->vout[2].scriptPubKey = scriptPubKeyGovReward;
     }
@@ -667,12 +667,12 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
         coinstakeTx->vout.resize(4);
     }
     // add governor cleanup
-    CScript scriptPubKeyGovCleanup = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("6faaa74c") << GovernanceDGP.asBytes() << OP_CALL;
+    CScript scriptPubKeyGovCleanup = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("6faaa74c") << getGovernanceDGP().asBytes() << OP_CALL;
     coinstakeTx->vout[hasGovernorToReward ? 3 : 2].nValue = 0;
     coinstakeTx->vout[hasGovernorToReward ? 3 : 2].scriptPubKey = scriptPubKeyGovCleanup;
 
     // add budget allowance and settlement
-    CScript scriptPubKeyBudget = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("104ad86f") << BudgetDGP.asBytes() << OP_CALL;
+    CScript scriptPubKeyBudget = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("104ad86f") << getBudgetDGP().asBytes() << OP_CALL;
     coinstakeTx->vout[hasGovernorToReward ? 4 : 3].nValue = GetBudgetSubsidy(0, nGovernorSubsidy, nHeight); // 10% of the coinstake reward is added once the coinstake coins are selected
     coinstakeTx->vout[hasGovernorToReward ? 4 : 3].scriptPubKey = scriptPubKeyBudget;
 }

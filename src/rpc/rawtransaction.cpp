@@ -49,7 +49,7 @@
 // Metrix: This replaces DEFAULT_MAX_RAW_TX_FEE_RATE to get the fee rates from the DGP
 static CFeeRate DefaultMaxRawTxFeeRate()
 {
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
     DGPFeeRates dgpFeeRates = qtumDGP.getFeeRates(::ChainActive().Height());
     return CFeeRate(10000 * dgpFeeRates.minRelayTxFee);
 }

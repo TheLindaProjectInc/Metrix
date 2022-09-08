@@ -30,7 +30,7 @@ static const int MIN_PEER_PROTO_VERSION_AFTER_MIP1 = 70018;
 static const int MIN_PEER_PROTO_VERSION_AFTER_MIP2 = 70022;
 
 //! disconnect from peers older than this proto version after MIP3
-static const int MIN_PEER_PROTO_VERSION_AFTER_MIP3 = 70022;
+static const int MIN_PEER_PROTO_VERSION_AFTER_MIP3 = 70023;
 
 //! nTime field added to CAddress, starting with this version;
 //! if possible, avoid requesting addresses nodes older than this

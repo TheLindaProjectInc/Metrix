@@ -114,6 +114,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].bit = 28; // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nStartTime = 1662484496; // Semptember 06, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496; // Semptember 06, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000cf555f01ea2fddaa84b9"); // Metrix (535527)
@@ -243,6 +246,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].bit = 28; // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nStartTime = 1662484496; // Semptember 06, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496; // Semptember 06, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
@@ -354,6 +360,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].bit = 28; // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nStartTime = 1662484496; // Semptember 06, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496; // Semptember 06, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");

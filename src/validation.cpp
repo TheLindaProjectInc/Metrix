@@ -749,7 +749,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
             return state.Invalid(ValidationInvalidReason::TX_INVALID_SENDER_SCRIPT, false, REJECT_INVALID, "bad-txns-invalid-sender-script");
         }
 
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), ::ChainActive().Tip()->nHeight + 1, fGettingValuesDGP);
         uint64_t minGasPrice = qtumDGP.getMinGasPrice(::ChainActive().Tip()->nHeight + 1);
         uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(::ChainActive().Tip()->nHeight + 1);
         size_t count = 0;
@@ -2515,7 +2515,7 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
 
     if (blockGasLimit == 0)
     {
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), pblockindex->nHeight + 1, fGettingValuesDGP);
         blockGasLimit = qtumDGP.getBlockGasLimit(pblockindex->nHeight + 1);
     }
 
@@ -2588,9 +2588,9 @@ bool HasNonDGPContracts(const CBlock& block)
         for (const auto& out : block.vtx[1]->vout)
             if (
                 (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
-                !out.scriptPubKey.IsDGPContractCall(GovernanceDGP.asBytes(), ParseHex("1c0318cd")) &&
-                !out.scriptPubKey.IsDGPContractCall(GovernanceDGP.asBytes(), ParseHex("6faaa74c")) &&
-                !out.scriptPubKey.IsDGPContractCall(BudgetDGP.asBytes(), ParseHex("104ad86f"))
+                !out.scriptPubKey.IsDGPContractCall(getGovernanceDGP().asBytes(), ParseHex("1c0318cd")) &&
+                !out.scriptPubKey.IsDGPContractCall(getGovernanceDGP().asBytes(), ParseHex("6faaa74c")) &&
+                !out.scriptPubKey.IsDGPContractCall(getBudgetDGP().asBytes(), ParseHex("104ad86f"))
             )
                 return true;
     }
@@ -2598,7 +2598,7 @@ bool HasNonDGPContracts(const CBlock& block)
 }
 QtumTransaction CreateQtumTransaction(CAmount amount, CAmount nGasPrice, uint64_t nGasLimit, dev::Address addrContract, std::string data, dev::Address addrSender, uint32_t nVout, uint256 txHash)
 {
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Tip()->nHeight,  fGettingValuesDGP);
     QtumTransaction callTransaction(dev::u256(amount), dev::u256(nGasPrice), dev::u256(nGasLimit), addrContract, ParseHex(data), dev::u256(0));
     callTransaction.forceSender(addrSender);
     callTransaction.setVersion(VersionVM::GetEVMDefault());
@@ -2623,7 +2623,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
 
     // add governor reward transaction
     CTxOut govVout;
-    if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
+    if (GetDGPVout(block, getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -2667,20 +2667,20 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
         }
         LogPrintf("Gov Winner Validation : %s\n",
             HexStr(winner.asBytes()));
-        qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, GovernanceDGP, "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
+        qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, getGovernanceDGP(), "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
     }
 
     // add governor cleanup
-    if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("6faaa74c"), govVout, n))
+    if (GetDGPVout(block, getGovernanceDGP().asBytes(), ParseHex("6faaa74c"), govVout, n))
     {
-        qtumTransactions.push_back(CreateQtumTransaction(0, nGasPrice, nGasLimit, GovernanceDGP, "6faaa74c", addrSender, n, block.vtx[1]->GetHash()));
+        qtumTransactions.push_back(CreateQtumTransaction(0, nGasPrice, nGasLimit, getGovernanceDGP(), "6faaa74c", addrSender, n, block.vtx[1]->GetHash()));
     }
 
     // add budget allowance and settlement
     CTxOut bgtVout;
-    if (GetDGPVout(block, BudgetDGP.asBytes(), ParseHex("104ad86f"), bgtVout, n))
+    if (GetDGPVout(block, getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
     {
-       qtumTransactions.push_back(CreateQtumTransaction(bgtVout.nValue, nGasPrice, nGasLimit, BudgetDGP, "104ad86f", addrSender, n, block.vtx[1]->GetHash()));
+       qtumTransactions.push_back(CreateQtumTransaction(bgtVout.nValue, nGasPrice, nGasLimit, getBudgetDGP(), "104ad86f", addrSender, n, block.vtx[1]->GetHash()));
     }
 
     return qtumTransactions;
@@ -2701,8 +2701,8 @@ int GetDGPValueTransferInsertLocation(CBlock& block)
 
 void MineDGPContracts(std::shared_ptr<CBlock> pblock)
 {
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
     int nHeight = ::ChainActive().Tip()->nHeight + 1;
+    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
     uint64_t hardBlockGasLimit = qtumDGP.getBlockGasLimit(nHeight);
 
     std::vector<QtumTransaction> qtumTransactions = GetDGPTransactions(*pblock, qtumDGP, nHeight);
@@ -2753,7 +2753,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         ///////////////////////////////////////////////// metrix
         // Get rewards
         CAmount blockReward = GetBlockSubsidy(nHeight, consensusParams, block.vtx[offset]);
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
         uint64_t nCollateral = qtumDGP.getGovernanceCollateral(nHeight);
         CAmount governorReward = GetGovernorSubsidy(nHeight, nCollateral);
         CAmount budgetPayment = GetBudgetSubsidy(blockReward, governorReward, nHeight);
@@ -2763,7 +2763,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 
         // Check governor payment
         CTxOut govVout;
-        if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
+        if (GetDGPVout(block, getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
         {
             if (govVout.nValue > governorReward)
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): governor reward pays too much (actual=%d vs limit=%d)",
@@ -2773,7 +2773,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 
         // Check budget payment
         CTxOut bgtVout;
-        if (GetDGPVout(block, BudgetDGP.asBytes(), ParseHex("104ad86f"), bgtVout, n))
+        if (GetDGPVout(block, getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
         {
             if (bgtVout.nValue > budgetPayment)
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): budget pays too much (actual=%d vs limit=%d)",
@@ -3199,7 +3199,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     int64_t nTimeStart = GetTimeMicros();
 
     ///////////////////////////////////////////////// // qtum
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), pindex->nHeight+1, fGettingValuesDGP);
     globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1) ));
     uint32_t sizeBlockDGP = qtumDGP.getBlockSize(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1));
     uint64_t minGasPrice = qtumDGP.getMinGasPrice(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1));
@@ -4152,7 +4152,7 @@ void UpdateFeesFromDGP(unsigned int nHeight)
 {
     if (nHeight > 0)
     {
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
         DGPFeeRates feeRates = qtumDGP.getFeeRates(nHeight);
         if (!gArgs.IsArgSet("-incrementalrelayfee"))
         {
@@ -6458,7 +6458,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
 ////////////////////////////////////////////////////////////////////////// // qtum
     dev::h256 oldHashStateRoot(globalState->rootHash());
     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
 //////////////////////////////////////////////////////////////////////////
 
     LogPrintf("[0%%]..."); /* Continued */

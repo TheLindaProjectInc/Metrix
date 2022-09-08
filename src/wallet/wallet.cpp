@@ -3335,7 +3335,7 @@ bool CWallet::CreateCoinStake(interfaces::Chain::Lock& locked_chain, const Filla
 
     uint32_t n;
     CTxOut bgtVout;
-    if (GetDGPVout(txNew.vout, BudgetDGP.asBytes(), ParseHex("104ad86f"), bgtVout, n))
+    if (GetDGPVout(txNew.vout, getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
     {
         txNew.vout[n].nValue += nBudgetSubsidyFromCoinstake;
     }

@@ -6,6 +6,18 @@
 #include <validation.h>
 #include <util/strencodings.h>
 
+struct metrixDGPaddr
+{
+    dev::Address DGPContract;
+    dev::Address GovernanceDGP;
+    dev::Address BudgetDGP;
+};
+
+// DGP Version 2 [MIP3] Contract Addresses
+static const dev::Address DGPContract_v2 = dev::Address("0x0000000000000000000000000000000000000098");
+static const dev::Address GovernanceDGP_v2 = dev::Address("0000000000000000000000000000000000000099");
+static const dev::Address BudgetDGP_v2 = dev::Address("0000000000000000000000000000000000000100");
+// DGP Version 1 [original] Contract Addresses
 static const dev::Address DGPContract = dev::Address("0x0000000000000000000000000000000000000088");
 static const dev::Address GovernanceDGP = dev::Address("0000000000000000000000000000000000000089");
 static const dev::Address BudgetDGP = dev::Address("0000000000000000000000000000000000000090");
@@ -49,7 +61,10 @@ class QtumDGP {
     
 public:
 
-    QtumDGP(QtumState* _state, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) { initDataSchedule(); }
+    QtumDGP(QtumState* _state, unsigned int blockHeight, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) {
+        initContractHook(blockHeight);
+        initDataSchedule(); 
+    }
 
     dev::eth::EVMSchedule getGasSchedule(int blockHeight);
 
@@ -67,6 +82,12 @@ public:
 
     dev::Address getGovernanceWinner(unsigned int blockHeight);
 
+    dev::Address getDGPContract();
+
+    dev::Address getGovernanceDGP();
+
+    dev::Address getBudgetDGP();
+
 private:
 
     bool initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data = std::vector<unsigned char>(), uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
@@ -76,6 +97,8 @@ private:
     void initStorageTemplate(const dev::Address& addr);
 
     void initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data, uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
+
+    void initContractHook(unsigned int blockHeight);
 
     void initDataSchedule();
 

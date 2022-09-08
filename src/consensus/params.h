@@ -18,6 +18,7 @@ enum DeploymentPos
     DEPLOYMENT_TESTDUMMY,
     DEPLOYMENT_CHAIN_PATH,
     DEPLOYMENT_MIP2_FIX,
+    DEPLOYMENT_MIP3_DGP_UPGRADE,
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
