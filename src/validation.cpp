@@ -2628,9 +2628,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
 
-        const uint32_t eventErrorHeightStart = consensusParams.minMIP2Height;
-        const uint32_t eventErrorHeightEnded = 685000; // TODO: clean this up!
-        if (::ChainstateActive().IsInitialBlockDownload() && nHeight >= eventErrorHeightStart && nHeight < eventErrorHeightEnded) {
+        if (::ChainstateActive().IsInitialBlockDownload() && nHeight >= consensusParams.minMIP2Height && nHeight < consensusParams.MIP2Height) {
             winner = qtumDGP.getGovernanceWinner(nHeight);
         } else if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
             uint64_t nTx;
@@ -2663,7 +2661,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
             }
         } else {
             //Metrix Sync fix for badGov between block 681822 and 685000
-            if (nHeight >= 681822 && nHeight < 685000) {
+            if (nHeight >= consensusParams.minMIP2Height && nHeight < consensusParams.MIP2Height) {
                 uint64_t nTx;
                 for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     ////////////
