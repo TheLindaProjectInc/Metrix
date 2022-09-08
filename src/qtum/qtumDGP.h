@@ -156,5 +156,6 @@ private:
 
     std::vector<uint32_t> dataSchedule;
 
+    metrixDGPaddr DGPaddresses;
 };
 #endif

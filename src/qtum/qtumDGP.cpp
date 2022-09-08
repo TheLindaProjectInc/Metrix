@@ -30,9 +30,9 @@ void QtumDGP::initDataSchedule(){
 }
 
 void QtumDGP::initContractHook(unsigned int blockHeight) {
-    metrixDGPaddr::DGPContract = DGPContract;
-    metrixDGPaddr::GovernanceDGP = GovernanceDGP;
-    metrixDGPaddr::BudgetDGP = BudgetDGP;
+    DGPaddresses.DGPContract = DGPContract;
+    DGPaddresses.GovernanceDGP = GovernanceDGP;
+    DGPaddresses.BudgetDGP = BudgetDGP;
 
     // Don't trigger until at least MIP2
     if (blockHeight < consensusParams.MIP2Height) {
@@ -47,9 +47,9 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
 
     // If MIP3 state is active, use new contracts
     if (state == ThresholdState::ACTIVE) {
-        metrixDGPaddr::DGPContract = DGPContract_v2;
-        metrixDGPaddr::GovernanceDGP = GovernanceDGP_v2;
-        metrixDGPaddr::BudgetDGP = BudgetDGP_v2;
+        DGPaddresses.DGPContract = DGPContract_v2;
+        DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
+        DGPaddresses.BudgetDGP = BudgetDGP_v2;
     }
 }
 
@@ -298,15 +298,15 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
 }
 
 dev::Address QtumDGP::getDGPContract() {
-    return metrixDGPaddr::DGPContract;
+    return DGPaddresses.DGPContract;
 }
 
 dev::Address QtumDGP::getGovernanceDGP() {
-    return metrixDGPaddr::GovernanceDGP;
+    return DGPaddresses.GovernanceDGP;
 }
 
 dev::Address QtumDGP::getBudgetDGP() {
-    return metrixDGPaddr::BudgetDGP;
+    return DGPaddresses.BudgetDGP;
 }
 
 bool QtumDGP::initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data, uint64_t defaultGasLimit){
