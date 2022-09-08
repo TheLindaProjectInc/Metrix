@@ -10,6 +10,6 @@ for older versions), then just copy over the appropriate metrixd file.
 
 # Core
 
-- Hardfork - In response to an issue caused by a bad Governor address that cannot be unenrolled from the contract. Fork occurs at 865000, there is also sync fixes to ensure sync from genesis after the bad gov got introduced at block 681822.
+- Hardfork - In response to an issue caused by a bad Governor address that cannot be unenrolled from the contract. Fork occurs at 685000, there is also sync fixes to ensure sync from genesis after the bad gov got introduced at block 681822.
 - Increment version 4.0.9.0
 - New protocol version 70022
