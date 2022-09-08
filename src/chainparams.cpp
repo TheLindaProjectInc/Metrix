@@ -93,7 +93,7 @@ public:
         consensus.minMIP1Height = 264694; // height of chain path correction due to mismatched AAL tx in next block
         consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
         consensus.minMIP2Height = 681821; // height of chain path correction due to goverance contract bug
-        consensus.MIP2Height = 700001; // Activation block: ???
+        consensus.MIP2Height = 685000; // Activation block: 685000
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -220,7 +220,7 @@ public:
         consensus.minMIP1Height = 264694; // this has no effect on testnet..
         consensus.MIP1Height = 389088; // b5a3e290a9f5419b2658d9e0d0b7659d505b8322c320b0a041caf56bfb7bbefc
         consensus.minMIP2Height = 681822; // height of chain path correction due to goverance contract bug
-        consensus.MIP2Height = 685000; // Activation block: 685000
+        consensus.MIP2Height = 685000; // Activation block: this doesnt effect testnet?
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
