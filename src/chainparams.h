@@ -92,6 +92,8 @@ public:
     void UpdateBtcEcrecoverBlockHeight(int nHeight);
     void UpdateConstantinopleBlockHeight(int nHeight);
     void UpdateDifficultyChangeBlockHeight(int nHeight);
+    void UpdateMIP3GoveranceBlockHeight(int nHeight);
+
 protected:
     CChainParams() {}
 
@@ -152,5 +154,10 @@ void UpdateConstantinopleBlockHeight(int nHeight);
  * Allows modifying the difficulty change block height regtest parameter.
  */
 void UpdateDifficultyChangeBlockHeight(int nHeight);
+
+/**
+ * Allows modifying the MIP3 target block height regtest parameter.
+ */
+void UpdateMIP3GoveranceBlockHeight(int nHeight);
 
 #endif // BITCOIN_CHAINPARAMS_H

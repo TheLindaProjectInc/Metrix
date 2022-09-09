@@ -94,7 +94,7 @@ public:
         consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
         consensus.minMIP2Height = 681821; // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000; // Activation block: 685000
-        consensus.MIP3Height = 700000; // Activation block: ...
+        consensus.MIP3Height = 700000; // Block height to enable the new DGP contracts and allow usage
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -533,6 +533,7 @@ std::string CChainParams::EVMGenesisInfo(dev::eth::Network network) const
     std::string genesisInfo = dev::eth::genesisInfo(network);
     ReplaceInt(consensus.QIP7Height, "QIP7_STARTING_BLOCK", genesisInfo);
     ReplaceInt(consensus.QIP6Height, "QIP6_STARTING_BLOCK", genesisInfo);
+    ReplaceInt(consensus.MIP3Height, "MIP3_STARTING_BLOCK", genesisInfo);
     return genesisInfo;
 }
 
@@ -541,6 +542,7 @@ std::string CChainParams::EVMGenesisInfo(dev::eth::Network network, int nHeight)
     std::string genesisInfo = dev::eth::genesisInfo(network);
     ReplaceInt(nHeight, "QIP7_STARTING_BLOCK", genesisInfo);
     ReplaceInt(nHeight, "QIP6_STARTING_BLOCK", genesisInfo);
+    ReplaceInt(nHeight, "MIP3_STARTING_BLOCK", genesisInfo);
     return genesisInfo;
 }
 
@@ -590,4 +592,14 @@ void CChainParams::UpdateDifficultyChangeBlockHeight(int nHeight)
 void UpdateDifficultyChangeBlockHeight(int nHeight)
 {
     const_cast<CChainParams*>(globalChainParams.get())->UpdateDifficultyChangeBlockHeight(nHeight);
+}
+
+void CChainParams::UpdateMIP3GoveranceBlockHeight(int nHeight)
+{
+    consensus.MIP3Height = nHeight;
+}
+
+void UpdateMIP3GoveranceBlockHeight(int nHeight)
+{
+    const_cast<CChainParams*>(globalChainParams.get())->UpdateMIP3GoveranceBlockHeight(nHeight);
 }
