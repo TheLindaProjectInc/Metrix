@@ -6,21 +6,15 @@
 #include <validation.h>
 #include <util/strencodings.h>
 
-struct metrixDGPaddr
-{
-    dev::Address DGPContract;
-    dev::Address GovernanceDGP;
-    dev::Address BudgetDGP;
-};
-
 // DGP Version 2 [MIP3] Contract Addresses
-static const dev::Address DGPContract_v2 = dev::Address("0x0000000000000000000000000000000000000098");
-static const dev::Address GovernanceDGP_v2 = dev::Address("0000000000000000000000000000000000000099");
-static const dev::Address BudgetDGP_v2 = dev::Address("0000000000000000000000000000000000000100");
+// TODO: deploy mainnet; remove regtest
+static const dev::Address DGPContract_v2 = dev::Address("0x0b4cb38a6dcffb4ae7d619c8713d9d581cd6989c");
+static const dev::Address GovernanceDGP_v2 = dev::Address("0x65738d1791b6f805b1317bf096dde17a327d289e");
+static const dev::Address BudgetDGP_v2 = dev::Address("0x2bb80605a76bdb4b97a34eabd1b23eb2fbd9cc9d");
 // DGP Version 1 [original] Contract Addresses
 static const dev::Address DGPContract = dev::Address("0x0000000000000000000000000000000000000088");
-static const dev::Address GovernanceDGP = dev::Address("0000000000000000000000000000000000000089");
-static const dev::Address BudgetDGP = dev::Address("0000000000000000000000000000000000000090");
+static const dev::Address GovernanceDGP = dev::Address("0x0000000000000000000000000000000000000089");
+static const dev::Address BudgetDGP = dev::Address("0x0000000000000000000000000000000000000090");
 
 static const uint32_t MIN_BLOCK_SIZE_DGP = 500000;
 static const uint32_t MAX_BLOCK_SIZE_DGP = 32000000;
@@ -49,6 +43,13 @@ static const uint64_t DEFAULT_DUST_RELAY_TX_FEE_DGP = 3000000000;
 static const uint64_t DEFAULT_GOVERNANCE_COLLATERAL = 750000000000000;
 
 static const uint64_t DEFAULT_BUDGET_FEE = 60000000000000;
+
+struct metrixDGPaddr
+{
+    dev::Address DGPContract;
+    dev::Address GovernanceDGP;
+    dev::Address BudgetDGP;
+};
 
 struct DGPFeeRates
 {
