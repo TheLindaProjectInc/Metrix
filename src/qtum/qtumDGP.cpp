@@ -239,7 +239,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         uint64_t minMaturity = 15;
 
         // Metrix fix to skip bad Governor in contract
-        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && < consensusParams.MIP3Height) {
+        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && height < consensusParams.MIP3Height) {
             return dev::Address(0x0);
         }
 
@@ -264,7 +264,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                     for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
                         dev::Address value = dev::Address(governorAddresses[i]);
                         // Metrix fix to skip bad Governor in contract
-                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.minMIP2Height && < consensusParams.MIP3Height) {
+                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.minMIP2Height && height < consensusParams.MIP3Height) {
                             continue;
                         }
                         std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
@@ -290,11 +290,11 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     return value;
 }
 
-bool QtumDGP::isBannedGov(std::string addr) {
+bool QtumDGP::isBannedGov(std::string addressStr) {
     // Metrix hacky fix to skip bad Governor in contract
     // TODO: remove after MIP3 !
     const std::string badGov = "a66268b3c8a9501e492f81abdd81655ee41e35d2";
-    if (HexStr(value.asBytes()) == badGov) {
+    if (addressStr == badGov) {
         return true;
     }
     return false;
