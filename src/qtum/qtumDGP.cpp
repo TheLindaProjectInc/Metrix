@@ -226,6 +226,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     }
 
     if (winnerEligibileFix) {
+        const Consensus::Params& consensusParams = Params().GetConsensus();
         int64_t dgpCollateral = getGovernanceCollateral(blockHeight);
         int64_t height = ::ChainActive().Tip()->nHeight;
         // Must be 48 hrs old to get first rewards
@@ -237,7 +238,10 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         // Valid governors are at least 15 blocks old.
         uint64_t minMaturity = 15;
 
-        const std::string badGov = "a66268b3c8a9501e492f81abdd81655ee41e35d2";
+        // Metrix fix to skip bad Governor in contract
+        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && < consensusParams.MIP3Height) {
+            return dev::Address(0x0);
+        }
 
         if (value != dev::Address(0x0)) {
                 // check if contract winner selection is valid and meets the criteria
@@ -251,22 +255,18 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                     dgpCollateral == govCollateral && 
                     height >= govBlockHeight + minMaturity && 
                     height <= govlastPing + pingInterval) {
-                        // Metrix hacky fix to skip bad Governor in contract
-                        if (::ChainActive().Tip()->nHeight < 685000 ) {
-                            LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                            return value;
-                        } else {
-                            if (HexStr(value.asBytes()) != badGov) {
-                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                return value;
-                            }
-                        }
+                        LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                        return value;
                 } else {
                     // if winner selection doesn't pass criteria checks then manually try and find an eligible one.
                     // Get the list of currently active governors
                     std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("883703c2"));
                     for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
                         dev::Address value = dev::Address(governorAddresses[i]);
+                        // Metrix fix to skip bad Governor in contract
+                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.minMIP2Height && < consensusParams.MIP3Height) {
+                            continue;
+                        }
                         std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
                         uint64_t govBlockHeight = v[0];
                         uint64_t govlastPing = v[1];
@@ -277,16 +277,8 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                             dgpCollateral == govCollateral && 
                             height >= govBlockHeight + minMaturity && 
                             height <= govlastPing + pingInterval) {
-                                // Metrix hacky fix to skip bad Governor in contract
-                                if (::ChainActive().Tip()->nHeight < 685000) {
-                                    LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                    return value;
-                                } else {
-                                    if (HexStr(value.asBytes()) != badGov) {
-                                        LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                        return value;
-                                    }
-                                }
+                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                return value;
                             }
                     }
                 }
@@ -296,6 +288,16 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     }
 
     return value;
+}
+
+bool QtumDGP::isBannedGov(std::string addr) {
+    // Metrix hacky fix to skip bad Governor in contract
+    // TODO: remove after MIP3 !
+    const std::string badGov = "a66268b3c8a9501e492f81abdd81655ee41e35d2";
+    if (HexStr(value.asBytes()) == badGov) {
+        return true;
+    }
+    return false;
 }
 
 dev::Address QtumDGP::getDGPContract() {

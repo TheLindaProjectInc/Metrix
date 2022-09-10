@@ -137,8 +137,9 @@ private:
 
     dev::eth::EVMSchedule createEVMSchedule(const dev::eth::EVMSchedule& schedule, int blockHeight);
 
-    void clear();    
+    bool isBannedGov(std::string addr);
 
+    void clear();
 
 
     bool dgpevm;
