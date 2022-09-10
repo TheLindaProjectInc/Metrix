@@ -185,7 +185,6 @@ public:
                 { 685001, uint256S("0xff9ea87783076d9f17526b6fb6e78fbf29dacf74a255fd618e1b281d99687639")},
                 { 685011, uint256S("0xbd948c547a6c03f2494fed4360b16c42db7df49710edaa82085924fe5587d120")}
             }
-            }
         };
 
         chainTxData = ChainTxData{
