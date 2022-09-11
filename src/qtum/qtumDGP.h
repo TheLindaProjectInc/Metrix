@@ -8,9 +8,9 @@
 
 // DGP Version 2 [MIP3] Contract Addresses
 // TODO: deploy mainnet; remove regtest
-static const dev::Address DGPContract_v2 = dev::Address("0x0b4cb38a6dcffb4ae7d619c8713d9d581cd6989c");
-static const dev::Address GovernanceDGP_v2 = dev::Address("0x65738d1791b6f805b1317bf096dde17a327d289e");
-static const dev::Address BudgetDGP_v2 = dev::Address("0x2bb80605a76bdb4b97a34eabd1b23eb2fbd9cc9d");
+static const dev::Address DGPContract_v2 = dev::Address("0xab386fbe2f1641a85d97923f57ad8bb275b6b1a8");
+static const dev::Address GovernanceDGP_v2 = dev::Address("0x6aaf77059a63f67514e32c9ecaaec23b7fbb1653");
+static const dev::Address BudgetDGP_v2 = dev::Address("0x79c212dcc93693bfcd6058f965f90e17998129b6");
 // DGP Version 1 [original] Contract Addresses
 static const dev::Address DGPContract = dev::Address("0x0000000000000000000000000000000000000088");
 static const dev::Address GovernanceDGP = dev::Address("0x0000000000000000000000000000000000000089");
