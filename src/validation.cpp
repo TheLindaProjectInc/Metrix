@@ -2586,7 +2586,7 @@ bool HasNonDGPContracts(const CBlock& block)
         if (block.vtx[1]->HasOpSpend())
             return true;
 
-        const CBlockIndex* pindex = CBlockIndex(block);
+        CBlockIndex* pindex = new CBlockIndex(block);
         QtumDGP qtumDGP(globalState.get(), pindex.nHeight, fGettingValuesDGP);
         for (const auto& out : block.vtx[1]->vout)
             if (
