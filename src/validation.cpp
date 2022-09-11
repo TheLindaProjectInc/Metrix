@@ -2587,7 +2587,8 @@ bool HasNonDGPContracts(const CBlock& block)
             return true;
 
         CBlockIndex* pindex = new CBlockIndex(block);
-        QtumDGP qtumDGP(globalState.get(), pindex->nHeight-1, fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), pindex->nHeight, fGettingValuesDGP);
+        LogPrintf("HasNonDGPContracts(): getGovernanceDGP() = %s at height %u\n", HexStr(qtumDGP.getGovernanceDGP().asBytes(), pindex->nHeight))
         for (const auto& out : block.vtx[1]->vout)
             if (
                 (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
