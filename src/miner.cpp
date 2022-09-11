@@ -641,7 +641,7 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
     bool hasGovernorToReward = false;
 
     // add governor reward transaction
-    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), nHeight - 1, fGettingValuesDGP);
     dev::Address addrWinner = qtumDGP.getGovernanceWinner(nHeight);
     hasGovernorToReward = addrWinner != dev::Address(0x0);
     CAmount nGasPrice = qtumDGP.getMinGasPrice(nHeight);
