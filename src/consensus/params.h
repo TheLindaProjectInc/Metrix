@@ -87,6 +87,8 @@ struct Params {
     int minMIP2Height;
     /** Block height at which MIP2 becomes active */
     int MIP2Height;
+    /** Block height at which MIP3 becomes available */
+    int MIP3StartHeight;
     /** Block height at which MIP3 becomes active */
     int MIP3Height;
     /**

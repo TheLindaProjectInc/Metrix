@@ -94,6 +94,7 @@ public:
         consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
         consensus.minMIP2Height = 681821; // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000; // Activation block: f307d959abb16a49ded03486c2074128de3602cfd46a9b5369060d1d95e8c6e5
+        consensus.MIP3StartHeight = 700000;
         consensus.MIP3Height = 700000; // Block height to enable the new DGP contracts and allow usage
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -229,6 +230,7 @@ public:
         consensus.MIP1Height = 389088; // b5a3e290a9f5419b2658d9e0d0b7659d505b8322c320b0a041caf56bfb7bbefc
         consensus.minMIP2Height = 681822; // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000; // Activation block: this doesnt effect testnet?
+        consensus.MIP3StartHeight = 700000;
         consensus.MIP3Height = 700000; // Activation block: testnet
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -344,6 +346,7 @@ public:
         consensus.MIP1Height = 0;
         consensus.minMIP2Height = 0;
         consensus.MIP2Height = 0;
+        consensus.MIP3StartHeight = 1500;
         consensus.MIP3Height = 5000;
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -366,7 +369,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nStartTime = 1662484496; // Semptember 06, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662807660; // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 16628166280766009820; // Semptember 10, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.

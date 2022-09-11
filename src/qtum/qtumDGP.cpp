@@ -40,7 +40,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     if (blockHeight < consensusParams.MIP2Height) {
         return;
     }
-    if (blockHeight < 100) {
+    if (blockHeight < consensusParams.MIP3StartHeight) {
         return;
     }
     
