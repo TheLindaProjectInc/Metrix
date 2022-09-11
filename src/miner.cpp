@@ -667,7 +667,7 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
         coinstakeTx->vout.resize(4);
     }
 
-    LogPrintf("New Block: Got Gov DGP Contract as %s\n", HexStr(qtumDGP.getGovernanceDGP().asBytes()))
+    LogPrintf("New Block: Got Gov DGP Contract as %s\n", HexStr(qtumDGP.getGovernanceDGP().asBytes()));
     // add governor cleanup
     CScript scriptPubKeyGovCleanup = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("6faaa74c") << qtumDGP.getGovernanceDGP().asBytes() << OP_CALL;
     coinstakeTx->vout[hasGovernorToReward ? 3 : 2].nValue = 0;
