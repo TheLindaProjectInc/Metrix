@@ -2591,12 +2591,12 @@ bool HasNonDGPContracts(const CBlock& block)
         for (const auto& out : block.vtx[1]->vout)
             if ((out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender())) {
                 if (
-                !out.scriptPubKey.IsDGPContractCall(DGPContract.asBytes(), ParseHex("1c0318cd")) &&
+                (!out.scriptPubKey.IsDGPContractCall(DGPContract.asBytes(), ParseHex("1c0318cd")) &&
                 !out.scriptPubKey.IsDGPContractCall(DGPContract.asBytes(), ParseHex("6faaa74c")) &&
-                !out.scriptPubKey.IsDGPContractCall(BudgetDGP.asBytes(), ParseHex("104ad86f")) &&
-                !out.scriptPubKey.IsDGPContractCall(DGPContract_v2.asBytes(), ParseHex("1c0318cd")) &&
+                !out.scriptPubKey.IsDGPContractCall(BudgetDGP.asBytes(), ParseHex("104ad86f"))) ||
+                (!out.scriptPubKey.IsDGPContractCall(DGPContract_v2.asBytes(), ParseHex("1c0318cd")) &&
                 !out.scriptPubKey.IsDGPContractCall(DGPContract_v2.asBytes(), ParseHex("6faaa74c")) &&
-                !out.scriptPubKey.IsDGPContractCall(BudgetDGP_v2.asBytes(), ParseHex("104ad86f"))
+                !out.scriptPubKey.IsDGPContractCall(BudgetDGP_v2.asBytes(), ParseHex("104ad86f")))
                 ) {
                     return true;
                 }
