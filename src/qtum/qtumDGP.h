@@ -44,7 +44,7 @@ static const uint64_t DEFAULT_GOVERNANCE_COLLATERAL = 750000000000000;
 
 static const uint64_t DEFAULT_BUDGET_FEE = 60000000000000;
 
-struct metrixDGPaddr
+static struct metrixDGPaddr
 {
     dev::Address DGPContract;
     dev::Address GovernanceDGP;
