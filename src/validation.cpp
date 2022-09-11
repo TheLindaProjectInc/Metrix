@@ -2585,7 +2585,9 @@ bool HasNonDGPContracts(const CBlock& block)
     {
         if (block.vtx[1]->HasOpSpend())
             return true;
-        QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
+
+        const CBlockIndex* pindex = CBlockIndex(block);
+        QtumDGP qtumDGP(globalState.get(), pindex.nHeight, fGettingValuesDGP);
         for (const auto& out : block.vtx[1]->vout)
             if (
                 (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
