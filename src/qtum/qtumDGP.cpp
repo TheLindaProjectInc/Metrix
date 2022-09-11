@@ -55,7 +55,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
         DGPaddresses.DGPContract = DGPContract_v2;
         DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
         DGPaddresses.BudgetDGP = BudgetDGP_v2;
-        LogPrintf("Using new DGP at %u", blockHeight);
+        LogPrintf("Using new DGP at %u\n", blockHeight);
     }
 }
 
