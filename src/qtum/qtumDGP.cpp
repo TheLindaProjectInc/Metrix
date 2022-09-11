@@ -40,6 +40,9 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     if (blockHeight < consensusParams.MIP2Height) {
         return;
     }
+    if (blockHeight < 100) {
+        return;
+    }
     
     const CBlockIndex* pindex = ::ChainActive().Tip()->GetAncestor(blockHeight);
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
