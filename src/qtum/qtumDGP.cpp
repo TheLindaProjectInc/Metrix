@@ -41,7 +41,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
         return;
     }
     
-    const CBlockIndex* pindex = ::ChainActive().Tip();
+    const CBlockIndex* pindex = ::ChainActive().Tip()->GetAncestor(blockHeight);
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
     // Get state of MIP3
     ThresholdState state = VersionBitsState(pindex, consensusParams, pos, versionbitscache);
