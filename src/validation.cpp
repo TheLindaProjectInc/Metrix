@@ -2591,10 +2591,10 @@ bool HasNonDGPContracts(const CBlock& block)
         int nHeight;
         CBlockIndex* pindex = LookupBlockIndex(block.GetHash());
         if (pindex == nullptr) {
-            nHeight = ::ChainActive().Height();
+            nHeight = ::ChainActive().Height() + 1;
             LogPrintf("HasNonDGPContracts(): nHeight = %u\n", nHeight);
         } else {
-            nHeight = pindex->nHeight <= 0 ? ::ChainActive().Height() : pindex->nHeight;
+            nHeight = pindex->nHeight <= 0 ? ::ChainActive().Height() + 1 : pindex->nHeight;
             LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u\n", nHeight);
         }
 
