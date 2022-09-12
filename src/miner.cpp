@@ -640,8 +640,9 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
     uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_SEND;
     bool hasGovernorToReward = false;
 
+    LogPrintf("miner.AddCoinstakeContracts(): %u;", nHeight);
     // add governor reward transaction
-    QtumDGP qtumDGP(globalState.get(), nHeight - 1, fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
     dev::Address addrWinner = qtumDGP.getGovernanceWinner(nHeight);
     hasGovernorToReward = addrWinner != dev::Address(0x0);
     CAmount nGasPrice = qtumDGP.getMinGasPrice(nHeight);
@@ -667,7 +668,7 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
         coinstakeTx->vout.resize(4);
     }
 
-    LogPrintf("New Block: Got Gov DGP Contract as %s\n", HexStr(qtumDGP.getGovernanceDGP().asBytes()));
+    LogPrintf("miner.AddCoinstakeContracts(): New Block Got Gov DGP Contract as %s\n", HexStr(qtumDGP.getGovernanceDGP().asBytes()));
     // add governor cleanup
     CScript scriptPubKeyGovCleanup = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex("6faaa74c") << qtumDGP.getGovernanceDGP().asBytes() << OP_CALL;
     coinstakeTx->vout[hasGovernorToReward ? 3 : 2].nValue = 0;

@@ -2586,8 +2586,10 @@ bool HasNonDGPContracts(const CBlock& block)
         if (block.vtx[1]->HasOpSpend())
             return true;
 
+
+        LogPrintf("HasNonDGPContracts(): Block  %u\n", block.GetHash());
         CBlockIndex* pindex = LookupBlockIndex(block.GetHash());
-        LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u \n", pindex->nHeight);
+        LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u\n", pindex->nHeight);
 
         int nHeight = pindex->nHeight <= 0 ? ::ChainActive().Height() : pindex->nHeight;
         QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
