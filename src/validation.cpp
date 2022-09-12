@@ -2586,20 +2586,20 @@ bool HasNonDGPContracts(const CBlock& block)
         if (block.vtx[1]->HasOpSpend())
             return true;
 
-        LogPrintf("HasNonDGPContracts(): Block  %s\n", block.GetHash().ToString());
+        //LogPrintf("HasNonDGPContracts(): Block  %s\n", block.GetHash().ToString());
 
         int nHeight;
         CBlockIndex* pindex = LookupBlockIndex(block.GetHash());
         if (pindex == nullptr) {
             nHeight = ::ChainActive().Height() + 1;
-            LogPrintf("HasNonDGPContracts(): nHeight = %u\n", nHeight);
+            //LogPrintf("HasNonDGPContracts(): nHeight = %u\n", nHeight);
         } else {
             nHeight = pindex->nHeight <= 0 ? ::ChainActive().Height() + 1 : pindex->nHeight;
-            LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u\n", nHeight);
+            //LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u\n", nHeight);
         }
 
         QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
-        LogPrintf("HasNonDGPContracts(): getGovernanceDGP() = %s at height %u\n", qtumDGP.getGovernanceDGP(), nHeight);
+        //LogPrintf("HasNonDGPContracts(): getGovernanceDGP() = %s at height %u\n", qtumDGP.getGovernanceDGP(), nHeight);
         for (const auto& out : block.vtx[1]->vout)
             if (
                 (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
