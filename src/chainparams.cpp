@@ -94,7 +94,7 @@ public:
         consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
         consensus.minMIP2Height = 681821; // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000; // Activation block: f307d959abb16a49ded03486c2074128de3602cfd46a9b5369060d1d95e8c6e5
-        consensus.MIP3StartHeight = 700000;
+        consensus.MIP3StartHeight = 700000; // TODO: determine min height this should start check..
         consensus.MIP3Height = 700000; // Block height to enable the new DGP contracts and allow usage
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");

@@ -40,6 +40,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     if (blockHeight < consensusParams.MIP2Height) {
         return;
     }
+    // Don't trigger until at least MIP3 Start
     if (blockHeight < consensusParams.MIP3StartHeight) {
         return;
     }
@@ -53,13 +54,13 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     ThresholdState state = VersionBitsState(pindex, consensusParams, pos, versionbitscache);
     int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
 
-    LogPrintf("Checking DGP: %u ...\n", blockHeight);
+    //LogPrintf("Checking DGP: %u ...\n", blockHeight);
     // If MIP3 state is active, use new contracts
     if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
         DGPaddresses.DGPContract = DGPContract_v2;
         DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
         DGPaddresses.BudgetDGP = BudgetDGP_v2;
-        LogPrintf("Using new DGP %s at %u\n", DGPaddresses.DGPContract, blockHeight);
+        LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
     }
 }
 
