@@ -2628,8 +2628,26 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
 
-        if (::ChainstateActive().IsInitialBlockDownload() && nHeight >= consensusParams.minMIP2Height && nHeight < consensusParams.MIP2Height) {
+        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight == 682101 || nHeight == 682246 || nHeight == 682502 || nHeight == 682563 || 
+            nHeight == 682592 || nHeight == 682691 || nHeight == 682695 || nHeight == 682720 || nHeight == 682728 || nHeight == 682740 || 
+            nHeight == 682812 || nHeight == 682839 || nHeight == 682840 || nHeight == 682861 || nHeight == 682913 || nHeight == 682942 || 
+            nHeight == 683093 || nHeight == 683137 || nHeight == 683246 || nHeight == 683271 || nHeight == 683342 || nHeight == 683376 || 
+            nHeight == 683394 || nHeight == 683403 || nHeight == 683416 || nHeight == 683542 || nHeight == 683590 || nHeight == 683607 || 
+            nHeight == 683619 || nHeight == 683658 || nHeight == 683674 || nHeight == 683682 || nHeight == 683700 || nHeight == 683746 || 
+            nHeight == 683772 || nHeight == 683808 || nHeight == 683812 || nHeight == 683813 || nHeight == 683823 || nHeight == 683825 ||
+            nHeight == 683828 || nHeight == 683840 || nHeight == 683855 || nHeight == 683857 || nHeight == 683875 || nHeight == 683884 ||
+            nHeight == 683900 || nHeight == 683901 || nHeight == 683909 || nHeight == 683945 || nHeight == 683961 || nHeight == 683963 ||
+            nHeight == 684010 || nHeight == 684031 || nHeight == 684036 || nHeight == 684037 || nHeight == 684043 || nHeight == 684063 ||
+            nHeight == 684064 || nHeight == 684067 || nHeight == 684069 || nHeight == 684105 || nHeight == 684106 || nHeight == 684124 ||
+            nHeight == 684138 || nHeight == 684140 || nHeight == 684154 || nHeight == 684159 || nHeight == 684170 || nHeight == 684184 ||
+            nHeight == 684230 || nHeight == 684232 || nHeight == 684235 || nHeight == 684239 || nHeight == 684255 || nHeight == 684286 || 
+            nHeight == 684332 || nHeight == 684350 || nHeight == 684366 || nHeight == 684391 || nHeight == 684398 || nHeight == 684402 || 
+            nHeight == 684450 || nHeight == 684457 || nHeight == 684468 || nHeight == 684493 || nHeight == 684501 || nHeight == 684506 ||
+            nHeight == 684515 || nHeight == 684519 || nHeight == 684527 || nHeight == 684528 || nHeight == 684534 || nHeight == 684556 ||
+            nHeight == 684628 || nHeight == 684648 || nHeight == 684737 || nHeight == 684776)) {
+
             winner = qtumDGP.getGovernanceWinner(nHeight);
+
         } else if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
