@@ -2587,10 +2587,17 @@ bool HasNonDGPContracts(const CBlock& block)
             return true;
 
         LogPrintf("HasNonDGPContracts(): Block  %s\n", block.GetHash().ToString());
-        CBlockIndex* pindex = LookupBlockIndex(block.GetHash());
-        LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u\n", pindex->nHeight);
 
-        int nHeight = pindex->nHeight <= 0 ? ::ChainActive().Height() : pindex->nHeight;
+        int nHeight;
+        CBlockIndex* pindex = LookupBlockIndex(block.GetHash());
+        if (pindex == nullptr) {
+            nHeight = ::ChainActive().Height();
+            LogPrintf("HasNonDGPContracts(): nHeight = %u\n", pindex->nHeight);
+        } else {
+            nHeight = pindex->nHeight <= 0 ? ::ChainActive().Height() : pindex->nHeight;
+            LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u\n", pindex->nHeight);
+        }
+
         QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
         LogPrintf("HasNonDGPContracts(): getGovernanceDGP() = %s at height %u\n", qtumDGP.getGovernanceDGP(), nHeight);
         for (const auto& out : block.vtx[1]->vout)
