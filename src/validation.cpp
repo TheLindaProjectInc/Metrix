@@ -749,7 +749,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
             return state.Invalid(ValidationInvalidReason::TX_INVALID_SENDER_SCRIPT, false, REJECT_INVALID, "bad-txns-invalid-sender-script");
         }
 
-        QtumDGP qtumDGP(globalState.get(), ::ChainActive().Tip()->nHeight + 1, fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), ::ChainActive().Tip()->nHeight, fGettingValuesDGP);
         uint64_t minGasPrice = qtumDGP.getMinGasPrice(::ChainActive().Tip()->nHeight + 1);
         uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(::ChainActive().Tip()->nHeight + 1);
         size_t count = 0;
@@ -2515,7 +2515,7 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
 
     if (blockGasLimit == 0)
     {
-        QtumDGP qtumDGP(globalState.get(), pblockindex->nHeight + 1, fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), pblockindex->nHeight, fGettingValuesDGP);
         blockGasLimit = qtumDGP.getBlockGasLimit(pblockindex->nHeight + 1);
     }
 
@@ -3215,7 +3215,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     int64_t nTimeStart = GetTimeMicros();
 
     ///////////////////////////////////////////////// // qtum
-    QtumDGP qtumDGP(globalState.get(), pindex->nHeight+1, fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), pindex->nHeight, fGettingValuesDGP);
     globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1) ));
     uint32_t sizeBlockDGP = qtumDGP.getBlockSize(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1));
     uint64_t minGasPrice = qtumDGP.getMinGasPrice(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1));
