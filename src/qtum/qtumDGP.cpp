@@ -44,7 +44,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
         return;
     }
     
-    const CBlockIndex* pindex = ::ChainActive().Tip()->GetAncestor(blockHeight);
+    const CBlockIndex* pindex = ::ChainActive().Tip()->GetAncestor(blockHeight - 1);
     if (pindex == nullptr) {
         LogPrintf("Checking DGP: pindex null at %u ...\n", blockHeight);
     }
