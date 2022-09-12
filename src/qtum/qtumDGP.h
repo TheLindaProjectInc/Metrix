@@ -12,9 +12,9 @@ static const dev::Address DGPContract_v2 = dev::Address("0x08bf6aebb2e489f712eac
 static const dev::Address GovernanceDGP_v2 = dev::Address("0xa3b208ebaccce5a3014be1a86f3713400e0dcf9c");
 static const dev::Address BudgetDGP_v2 = dev::Address("0x96b11c093f677a96bd5bd95b567d6eed9e3f0c66");
 // DGP Version 1 [original] Contract Addresses
-static const dev::Address DGPContract = dev::Address("0x0000000000000000000000000000000000000088");
-static const dev::Address GovernanceDGP = dev::Address("0x0000000000000000000000000000000000000089");
-static const dev::Address BudgetDGP = dev::Address("0x0000000000000000000000000000000000000090");
+static const dev::Address DGPContract_v1 = dev::Address("0x0000000000000000000000000000000000000088");
+static const dev::Address GovernanceDGP_v1 = dev::Address("0x0000000000000000000000000000000000000089");
+static const dev::Address BudgetDGP_v1 = dev::Address("0x0000000000000000000000000000000000000090");
 
 static const uint32_t MIN_BLOCK_SIZE_DGP = 500000;
 static const uint32_t MAX_BLOCK_SIZE_DGP = 32000000;

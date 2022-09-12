@@ -30,9 +30,9 @@ void QtumDGP::initDataSchedule(){
 }
 
 void QtumDGP::initContractHook(unsigned int blockHeight) {
-    DGPaddresses.DGPContract = DGPContract;
-    DGPaddresses.GovernanceDGP = GovernanceDGP;
-    DGPaddresses.BudgetDGP = BudgetDGP;
+    DGPaddresses.DGPContract = DGPContract_v1;
+    DGPaddresses.GovernanceDGP = GovernanceDGP_v1;
+    DGPaddresses.BudgetDGP = BudgetDGP_v1;
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
