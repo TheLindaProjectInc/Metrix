@@ -640,9 +640,9 @@ void BlockAssembler::AddCoinstakeContracts(CMutableTransaction* coinstakeTx)
     uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_SEND;
     bool hasGovernorToReward = false;
 
-    LogPrintf("miner.AddCoinstakeContracts(): %u;", nHeight);
+    LogPrintf("miner.AddCoinstakeContracts(): %u\n", nHeight);
     // add governor reward transaction
-    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), nHeight - 1, fGettingValuesDGP);
     dev::Address addrWinner = qtumDGP.getGovernanceWinner(nHeight);
     hasGovernorToReward = addrWinner != dev::Address(0x0);
     CAmount nGasPrice = qtumDGP.getMinGasPrice(nHeight);
