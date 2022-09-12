@@ -47,7 +47,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     
     const CBlockIndex* pindex = ::ChainActive().Tip()->GetAncestor(blockHeight - 1);
     if (pindex == nullptr) {
-        LogPrintf("Checking DGP: pindex null at %u ...\n", blockHeight);
+        LogPrintf("[WARNING] Checking DGP: pindex null at %u ...\n", blockHeight);
     }
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
     // Get state of MIP3
@@ -60,7 +60,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
         DGPaddresses.DGPContract = DGPContract_v2;
         DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
         DGPaddresses.BudgetDGP = BudgetDGP_v2;
-        LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
+        //LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
     }
 }
 
