@@ -34,6 +34,10 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     DGPaddresses.GovernanceDGP = GovernanceDGP_v1;
     DGPaddresses.BudgetDGP = BudgetDGP_v1;
 
+    if (blockHeight <= 0) {
+        return;
+    }
+
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
     // Don't trigger until at least MIP2
@@ -44,7 +48,7 @@ void QtumDGP::initContractHook(unsigned int blockHeight) {
     if (blockHeight < consensusParams.MIP3StartHeight) {
         return;
     }
-    
+
     const CBlockIndex* pindex = ::ChainActive().Tip()->GetAncestor(blockHeight - 1);
     if (pindex == nullptr) {
         LogPrintf("[WARNING] Checking DGP: pindex null at %u ...\n", blockHeight);
