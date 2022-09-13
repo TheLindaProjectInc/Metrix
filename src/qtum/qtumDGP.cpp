@@ -274,7 +274,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                     for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
                         dev::Address value = dev::Address(governorAddresses[i]);
                         // Metrix fix to skip bad Governor in contract
-                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.minMIP2Height && height < consensusParams.MIP3Height) {
+                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && height < consensusParams.MIP3Height) {
                             continue;
                         }
                         std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
