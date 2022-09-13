@@ -62,7 +62,7 @@ class QtumDGP {
     
 public:
 
-    QtumDGP(QtumState* _state, unsigned int blockHeight, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) {
+    QtumDGP(QtumState* _state, int blockHeight, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) {
         initContractHook(blockHeight);
         initDataSchedule(); 
     }

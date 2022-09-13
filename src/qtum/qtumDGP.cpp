@@ -29,7 +29,7 @@ void QtumDGP::initDataSchedule(){
     dataSchedule = scheduleDataForBlockNumber(0);
 }
 
-void QtumDGP::initContractHook(unsigned int blockHeight) {
+void QtumDGP::initContractHook(int blockHeight) {
     DGPaddresses.DGPContract = DGPContract_v1;
     DGPaddresses.GovernanceDGP = GovernanceDGP_v1;
     DGPaddresses.BudgetDGP = BudgetDGP_v1;
