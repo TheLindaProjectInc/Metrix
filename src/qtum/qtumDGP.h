@@ -99,7 +99,7 @@ private:
 
     void initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data, uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
 
-    void initContractHook(unsigned int blockHeight);
+    void initContractHook(int blockHeight);
 
     void initDataSchedule();
 
