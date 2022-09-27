@@ -1507,7 +1507,7 @@ uint64_t GetSubsidyRate(int nHeight)
     }
     if (nHeight > 12 * nBlocksPerYear) // 12 years
     {
-        nCoinYearReward /= 1; // 1%
+        nCoinYearReward /= 2; // 1%
     }
     return nCoinYearReward;
 }
