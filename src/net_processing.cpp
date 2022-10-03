@@ -2154,7 +2154,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             }
         }
         
-        if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP3Height) {
+        if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP3StartHeight) {
             const CBlockIndex* pindex = ::ChainActive().Tip();
             Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
             // Get state of MIP3

@@ -94,8 +94,8 @@ public:
         consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
         consensus.minMIP2Height = 681821; // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000; // Activation block: f307d959abb16a49ded03486c2074128de3602cfd46a9b5369060d1d95e8c6e5
-        consensus.MIP3StartHeight = 720000; // TODO: determine min height this should start check..
-        consensus.MIP3Height = 780000; // Block height to enable the new DGP contracts and allow usage
+        consensus.MIP3StartHeight = 702000; // Start checking for MIP3 after last halving (701280)
+        consensus.MIP3Height = -1; // Activation Height of new DGP.  Set after MIP3 is active!
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -233,7 +233,7 @@ public:
         consensus.minMIP2Height = 681822; // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000; // Activation block: this doesnt effect testnet?
         consensus.MIP3StartHeight = 700000;
-        consensus.MIP3Height = 700000; // Activation block: testnet
+        consensus.MIP3Height = -1; // Not used
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -348,8 +348,8 @@ public:
         consensus.MIP1Height = 0;
         consensus.minMIP2Height = 0;
         consensus.MIP2Height = 0;
-        consensus.MIP3StartHeight = 1500;
-        consensus.MIP3Height = 5000;
+        consensus.MIP3StartHeight = 3000;
+        consensus.MIP3Height = -1; // Not used
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9

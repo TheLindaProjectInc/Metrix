@@ -33,6 +33,7 @@ void QtumDGP::initContractHook(int blockHeight) {
     DGPaddresses.DGPContract = DGPContract_v1;
     DGPaddresses.GovernanceDGP = GovernanceDGP_v1;
     DGPaddresses.BudgetDGP = BudgetDGP_v1;
+    contractVersion = 1;
 
     if (blockHeight <= 0) {
         return;
@@ -48,19 +49,25 @@ void QtumDGP::initContractHook(int blockHeight) {
     if (blockHeight < consensusParams.MIP3StartHeight) {
         return;
     }
-
-    const CBlockIndex* pindex = ::ChainActive().Tip()->GetAncestor(blockHeight - 1);
+    CBlockIndex* pblockindex = ::ChainActive()[blockHeight - 1];
     if (pindex == nullptr) {
-        LogPrintf("[WARNING] Checking DGP: pindex null at %u ...\n", blockHeight);
+        LogPrintf("[WARNING] Check DGP L1 : pblockindex null at %u ...\n", blockHeight);
+        pblockindex = ::BlockIndex()[::ChainActive().Tip()->GetBlockHash()];
+        if (pblockindex == nullptr) {
+            LogPrintf("[WARNING] Checking DGP L2 : pblockindex null at %u ...\n", blockHeight);
+        } else {
+            LogPrintf("[INFO] Checking DGP L2 : pblockindex located at %u ... Expected %u\n", pblockindex.nHeight, blockHeight);
+        }
     }
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
     // Get state of MIP3
-    ThresholdState state = VersionBitsState(pindex, consensusParams, pos, versionbitscache);
+    ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
     int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
 
     //LogPrintf("Checking DGP: %u ...\n", blockHeight);
     // If MIP3 state is active, use new contracts
     if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
+        contractVersion = 2;
         DGPaddresses.DGPContract = DGPContract_v2;
         DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
         DGPaddresses.BudgetDGP = BudgetDGP_v2;
@@ -253,8 +260,10 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         uint64_t minMaturity = 15;
 
         // Metrix fix to skip bad Governor in contract
-        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && height < consensusParams.MIP3Height) {
-            return dev::Address(0x0);
+        if (height >= consensusParams.MIP2Height && contractVersion == 1) {
+            if (isBannedGov(HexStr(value.asBytes()))) {
+                return dev::Address(0x0);
+            }
         }
 
         if (value != dev::Address(0x0)) {
@@ -278,14 +287,14 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                     for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
                         dev::Address value = dev::Address(governorAddresses[i]);
                         // Metrix fix to skip bad Governor in contract
-                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && height < consensusParams.MIP3Height) {
+                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && contractVersion == 1) {
                             continue;
                         }
                         std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-                        uint64_t govBlockHeight = v[0];
-                        uint64_t govlastPing = v[1];
+                        uint64_t govBlockHei = v[1];
                         uint64_t govCollateral = v[2];
-                        uint64_t govLastReward = v[3];
+                        uint64_t govLastReward = v[3];ght = v[0];
+                        uint64_t govlastPing
                         if (height >= govBlockHeight + minRewardMaturity && 
                             height >= govLastReward + rewardBlockInterval && 
                             dgpCollateral == govCollateral && 

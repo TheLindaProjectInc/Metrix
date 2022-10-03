@@ -89,6 +89,8 @@ public:
 
     dev::Address getBudgetDGP();
 
+    uint32_t getContractVersion();
+
 private:
 
     bool initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data = std::vector<unsigned char>(), uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
@@ -143,6 +145,8 @@ private:
 
 
     bool dgpevm;
+
+    uint32_t contractVersion;
 
     const QtumState* state;
 
