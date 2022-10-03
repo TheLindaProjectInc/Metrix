@@ -291,10 +291,10 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                             continue;
                         }
                         std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-                        uint64_t govBlockHei = v[1];
+                        uint64_t govBlockHeight = v[0];
+                        uint64_t govlastPing = v[1];
                         uint64_t govCollateral = v[2];
-                        uint64_t govLastReward = v[3];ght = v[0];
-                        uint64_t govlastPing
+                        uint64_t govLastReward = v[3];
                         if (height >= govBlockHeight + minRewardMaturity && 
                             height >= govLastReward + rewardBlockInterval && 
                             dgpCollateral == govCollateral && 
