@@ -50,13 +50,13 @@ void QtumDGP::initContractHook(int blockHeight) {
         return;
     }
     CBlockIndex* pblockindex = ::ChainActive()[blockHeight - 1];
-    if (pindex == nullptr) {
+    if (pblockindex == nullptr) {
         LogPrintf("[WARNING] Check DGP L1 : pblockindex null at %u ...\n", blockHeight);
         pblockindex = ::BlockIndex()[::ChainActive().Tip()->GetBlockHash()];
         if (pblockindex == nullptr) {
             LogPrintf("[WARNING] Checking DGP L2 : pblockindex null at %u ...\n", blockHeight);
         } else {
-            LogPrintf("[INFO] Checking DGP L2 : pblockindex located at %u ... Expected %u\n", pblockindex.nHeight, blockHeight);
+            LogPrintf("[INFO] Checking DGP L2 : pblockindex located at %u ... Expected %u\n", pblockindex->nHeight, blockHeight);
         }
     }
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
@@ -248,8 +248,8 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
 
     if (winnerEligibileFix) {
         const Consensus::Params& consensusParams = Params().GetConsensus();
-        int64_t dgpCollateral = getGovernanceCollateral(blockHeight);
-        int64_t height = ::ChainActive().Tip()->nHeight;
+        uint64_t dgpCollateral = getGovernanceCollateral(blockHeight);
+        uint64_t height = ::ChainActive().Tip()->nHeight;
         // Must be 48 hrs old to get first rewards
         uint64_t minRewardMaturity = 1920;
         // How often rewarded
