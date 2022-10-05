@@ -49,7 +49,13 @@ void QtumDGP::initContractHook(int blockHeight) {
     if (blockHeight < consensusParams.MIP3StartHeight) {
         return;
     }
-    CBlockIndex* pblockindex = ::ChainActive()[blockHeight - 1];
+    CBlockIndex* pblockindex;
+    if (blockHeight == 268435455) {
+        LogPrintf("[WARNING] Check DGP L1 : blockheight overflow 268435455");
+        pblockindex = ::ChainActive().Tip();
+    } else {
+        pblockindex = ::ChainActive()[blockHeight - 1];
+    }
     if (pblockindex == nullptr) {
         LogPrintf("[WARNING] Check DGP L1 : pblockindex null at %u ...\n", blockHeight);
         pblockindex = ::BlockIndex()[::ChainActive().Tip()->GetBlockHash()];
