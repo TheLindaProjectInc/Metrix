@@ -41,23 +41,20 @@ void QtumDGP::initContractHook(int blockHeight) {
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
-    // Don't trigger until at least MIP2
-    if (blockHeight < consensusParams.MIP2Height) {
-        return;
-    }
     // Don't trigger until at least MIP3 Start
     if (blockHeight < consensusParams.MIP3StartHeight) {
         return;
     }
+
     CBlockIndex* pblockindex;
     if (blockHeight == 268435455) {
-        LogPrintf("[WARNING] Check DGP L1 : blockheight overflow 268435455");
+        //LogPrintf("[WARNING] Check DGP L1 : blockheight overflow 268435455\n");
         pblockindex = ::ChainActive().Tip();
     } else {
         pblockindex = ::ChainActive()[blockHeight - 1];
     }
     if (pblockindex == nullptr) {
-        LogPrintf("[WARNING] Check DGP L1 : pblockindex null at %u ...\n", blockHeight);
+        //LogPrintf("[WARNING] Check DGP L1 : pblockindex null at %u ...\n", blockHeight);
         pblockindex = ::BlockIndex()[::ChainActive().Tip()->GetBlockHash()];
         if (pblockindex == nullptr) {
             LogPrintf("[WARNING] Checking DGP L2 : pblockindex null at %u ...\n", blockHeight);
@@ -65,6 +62,7 @@ void QtumDGP::initContractHook(int blockHeight) {
             LogPrintf("[INFO] Checking DGP L2 : pblockindex located at %u ... Expected %u\n", pblockindex->nHeight, blockHeight);
         }
     }
+
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
     // Get state of MIP3
     ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
