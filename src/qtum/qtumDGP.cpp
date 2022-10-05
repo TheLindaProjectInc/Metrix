@@ -72,9 +72,19 @@ void QtumDGP::initContractHook(int blockHeight) {
     // If MIP3 state is active, use new contracts
     if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
         contractVersion = 2;
-        DGPaddresses.DGPContract = DGPContract_v2;
-        DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
-        DGPaddresses.BudgetDGP = BudgetDGP_v2;
+        if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
+            DGPaddresses.DGPContract = rDGPContract_v2;
+            DGPaddresses.GovernanceDGP = rGovernanceDGP_v2;
+            DGPaddresses.BudgetDGP = rBudgetDGP_v2;
+        } else if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
+            DGPaddresses.DGPContract = tDGPContract_v2;
+            DGPaddresses.GovernanceDGP = tGovernanceDGP_v2;
+            DGPaddresses.BudgetDGP = tBudgetDGP_v2;
+        } else {
+            DGPaddresses.DGPContract = DGPContract_v2;
+            DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
+            DGPaddresses.BudgetDGP = BudgetDGP_v2;
+        }
         //LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
     }
 }
