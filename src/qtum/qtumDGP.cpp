@@ -46,23 +46,22 @@ void QtumDGP::initContractHook(int blockHeight) {
         return;
     }
 
+    // pBlockIndex lookup and check for reqeusted Block Height
     CBlockIndex* pblockindex;
     if (blockHeight == 268435455) {
-        //LogPrintf("[WARNING] Check DGP L1 : blockheight overflow 268435455\n");
         pblockindex = ::ChainActive().Tip();
     } else if (blockHeight > ::ChainActive().Tip()->nHeight && pindexBestHeader != nullptr) {
         pblockindex = pindexBestHeader->GetAncestor(blockHeight - 1);
-        LogPrintf("[INFO] Checking DGP L1 : pblockindex located Header at %u ... Requested %u\n", pblockindex->nHeight, blockHeight);
     } else {
         pblockindex = ::ChainActive()[blockHeight - 1];
     }
+    // pBlockIndex Fallback check, throws warning if this occurs
     if (pblockindex == nullptr) {
-        //LogPrintf("[WARNING] Check DGP L1 : pblockindex null at %u ...\n", blockHeight);
-        pblockindex = ::BlockIndex()[::ChainActive().Tip()->GetBlockHash()];
+        pblockindex = ::ChainActive().Tip();
         if (pblockindex == nullptr) {
             LogPrintf("[WARNING] Checking DGP L2 : pblockindex null at %u ...\n", blockHeight);
         } else {
-            LogPrintf("[INFO] Checking DGP L2 : pblockindex located at %u ... Expected %u\n", pblockindex->nHeight, blockHeight);
+            LogPrintf("[WARNING] Checking DGP L2 : pblockindex located at %u ... Expected %u\n", pblockindex->nHeight, blockHeight);
         }
     }
 
