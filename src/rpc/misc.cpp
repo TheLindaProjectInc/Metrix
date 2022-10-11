@@ -91,7 +91,7 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
             RPCHelpMan{"getdgpinfo",
                 "\nReturns an object containing DGP state info.\n",
                 {
-                    {"blockheight", RPCArg::Type::NUM, /* default */ "-1", "Blockheight to lookup at"},
+                    {"blockheight", RPCArg::Type::NUM, /* default */ "-1", "Blockheight to lookup at. Defaults to (-1) current tip."},
                 },
                 RPCResult{
             "{\n"
@@ -115,13 +115,19 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
                 RPCExamples{
                     HelpExampleCli("getdgpinfo", "")
             + HelpExampleRpc("getdgpinfo", "")
+            + HelpExampleCli("getdgpinfo", "1000")
+            + HelpExampleRpc("getdgpinfo", "1000")
                 },
             }.Check(request);
 
 
     LOCK(cs_main);
 
-    const int argHeight = request.params[0].isNull() ? -1 : request.params[0].get_int();
+    int argHeight = -1;
+    if (!request.params[0].isNull()) {
+        RPCTypeCheckArgument(request.params[0], UniValue::VNUM);
+        argHeight = request.params[0].get_int();
+    }
     const uint32_t height = argHeight >= 0 ? argHeight : ::ChainActive().Height();
 
     QtumDGP qtumDGP(globalState.get(), height);
