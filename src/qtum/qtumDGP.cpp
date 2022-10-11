@@ -351,6 +351,10 @@ dev::Address QtumDGP::getBudgetDGP() {
     return DGPaddresses.BudgetDGP;
 }
 
+uint32_t getContractVersion() {
+    return contractVersion;
+}
+
 bool QtumDGP::initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data, uint64_t defaultGasLimit){
     initStorageDGP(addr);
     // metrix DGP contract address does not change so no need to check for it every time
