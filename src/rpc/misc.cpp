@@ -124,9 +124,7 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
 
     int argHeight = -1;
     if (!request.params[0].isNull()) {
-        LogPrintf("Requested Height %u ...\n", request.params[0].get_str());
-        //RPCTypeCheckArgument(request.params[0], UniValue::VNUM);
-        argHeight = request.params[0].get_int();
+        argHeight = std::stoi(request.params[0].get_str(), nullptr);
     }
     const uint32_t height = argHeight >= 0 ? argHeight : ::ChainActive().Height();
 
