@@ -120,6 +120,14 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
     obj.pushKV("governancecollateral", (uint64_t)qtumDGP.getGovernanceCollateral(::ChainActive().Height()));
     obj.pushKV("budgetfee", (uint64_t)qtumDGP.getBudgetFee(::ChainActive().Height()));
 
+    UniValue dgp(UniValue::VOBJ);
+    dgp.pushKV("version", (int)qtumDGP.getContractVersion());
+    dgp.pushKV("dgp", qtumDGP.getDGPContract());
+    dgp.pushKV("governance", qtumDGP.getGovernanceDGP());
+    dgp.pushKV("budget", qtumDGP.getBudgetDGP());
+
+    obj.pushKV("contracts", dgp);
+
     return obj;
 }
 
