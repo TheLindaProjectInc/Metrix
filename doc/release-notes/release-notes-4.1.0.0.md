@@ -23,3 +23,8 @@ for older versions), then just copy over the appropriate metrixd file.
 - Use newly deployed, updated DGP Contracts across the network after fork.
 - Increment version 4.1.0.0
 - New protocol version 70023
+- Improve sync speed during blocks which require legacy validation lookup
+- Corrected subsidy for > 12 year reduction
+- Add DGP contracts to `getdgpinfo` command
+- Add Optional usage of blockheight in `getdgpinfo` command
+- Corrected references to Metrix RPC port
