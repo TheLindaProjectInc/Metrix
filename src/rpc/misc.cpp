@@ -122,9 +122,9 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
 
     UniValue dgp(UniValue::VOBJ);
     dgp.pushKV("version", (int)qtumDGP.getContractVersion());
-    dgp.pushKV("dgp", qtumDGP.getDGPContract());
-    dgp.pushKV("governance", qtumDGP.getGovernanceDGP());
-    dgp.pushKV("budget", qtumDGP.getBudgetDGP());
+    dgp.pushKV("dgp", qtumDGP.getDGPContract().hex());
+    dgp.pushKV("governance", qtumDGP.getGovernanceDGP().hex());
+    dgp.pushKV("budget", qtumDGP.getBudgetDGP().hex());
 
     obj.pushKV("contracts", dgp);
 
