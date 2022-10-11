@@ -351,7 +351,7 @@ dev::Address QtumDGP::getBudgetDGP() {
     return DGPaddresses.BudgetDGP;
 }
 
-uint32_t getContractVersion() {
+uint32_t QtumDGP::getContractVersion() {
     return contractVersion;
 }
 
