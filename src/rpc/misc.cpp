@@ -120,12 +120,12 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
                 },
             }.Check(request);
 
-
     LOCK(cs_main);
 
     int argHeight = -1;
     if (!request.params[0].isNull()) {
-        RPCTypeCheckArgument(request.params[0], UniValue::VNUM);
+        LogPrintf("Requested Height %u ...\n", request.params[0].get_str());
+        //RPCTypeCheckArgument(request.params[0], UniValue::VNUM);
         argHeight = request.params[0].get_int();
     }
     const uint32_t height = argHeight >= 0 ? argHeight : ::ChainActive().Height();
