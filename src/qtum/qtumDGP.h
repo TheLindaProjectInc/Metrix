@@ -7,10 +7,9 @@
 #include <util/strencodings.h>
 
 // DGP Version 2 [MIP3] Contract Addresses - MAINNET
-// TODO: deploy mainnet..
-static const dev::Address DGPContract_v2 = dev::Address("0x0000000000000000000000000000000000000088");
-static const dev::Address GovernanceDGP_v2 = dev::Address("0x0000000000000000000000000000000000000089");
-static const dev::Address BudgetDGP_v2 = dev::Address("0x0000000000000000000000000000000000000090");
+static const dev::Address DGPContract_v2 = dev::Address("0x185f8adf02ffdd1bea42737cc53aa33396f4817b");
+static const dev::Address GovernanceDGP_v2 = dev::Address("0x42d98057e271b08a20c0959665e9499a3c00e371");
+static const dev::Address BudgetDGP_v2 = dev::Address("0x9e7981005ceb53e3f6a3fd4ff21b95563f4f2af3");
 // DGP Version 2 [MIP3] Contract Addresses - TESTNET
 static const dev::Address tDGPContract_v2 = dev::Address("0x710efbb1026237f0cbf32ca9c5f040f86b66ae0c");
 static const dev::Address tGovernanceDGP_v2 = dev::Address("0x4e3d35f867c895c612d38dc28a30e815c6ccd717");
