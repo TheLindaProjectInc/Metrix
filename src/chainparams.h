@@ -92,6 +92,7 @@ public:
     void UpdateBtcEcrecoverBlockHeight(int nHeight);
     void UpdateConstantinopleBlockHeight(int nHeight);
     void UpdateDifficultyChangeBlockHeight(int nHeight);
+
 protected:
     CChainParams() {}
 

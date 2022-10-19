@@ -170,12 +170,14 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         const Coin& coin = inputs.AccessCoin(prevout);
         assert(!coin.IsSpent());
 
+        QtumDGP qtumDGP(globalState.get(), coin.nHeight, fGettingValuesDGP);
+
         // If prev is coinbase, check that it's matured
         if ((coin.IsCoinBase() || coin.IsCoinStake()) && nSpendHeight - coin.nHeight < COINBASE_MATURITY) {
             // metrix
             // DGP calls to Governance and Budget contracts are allowed to spend immature coins as they will be 
             // spending from the coinstake reward
-            if (!coin.out.scriptPubKey.IsDGPContractCall(GovernanceDGP.asBytes(), ParseHex("1c0318cd")) && !coin.out.scriptPubKey.IsDGPContractCall(BudgetDGP.asBytes(), ParseHex("104ad86f"))) {
+            if (!coin.out.scriptPubKey.IsDGPContractCall(qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd")) && !coin.out.scriptPubKey.IsDGPContractCall(qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"))) {
                 return state.Invalid(ValidationInvalidReason::TX_PREMATURE_SPEND, false, REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                     strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
             }

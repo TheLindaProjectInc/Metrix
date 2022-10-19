@@ -90,35 +90,64 @@ UniValue getdgpinfo(const JSONRPCRequest& request)
 {
             RPCHelpMan{"getdgpinfo",
                 "\nReturns an object containing DGP state info.\n",
-                {},
+                {
+                    {"blockheight", RPCArg::Type::NUM, /* default */ "-1", "Blockheight to lookup at. Defaults to (-1) current tip."},
+                },
                 RPCResult{
             "{\n"
-            "  \"maxblocksize\" : xxxxx,       (numeric) Current maximum block size\n"
-            "  \"mingasprice\" : xxxxx,        (numeric) Current minimum gas price\n"
-            "  \"blockgaslimit\" : xxxxx,      (numeric) Current block gas limit\n"
+            "  \"maxblocksize\" : xxxxx,         (numeric) Current maximum block size\n"
+            "  \"mingasprice\" : xxxxx,          (numeric) Current minimum gas price\n"
+            "  \"blockgaslimit\" : xxxxx,        (numeric) Current block gas limit\n"
+            "  \"minrelaytxfee\" : xxxxx,        (numeric) Current min relay fee\n"
+            "  \"incrementalrelayfee\" : xxxxx,  (numeric) Current Incremental relay fee\n"
+            "  \"dustrelayfee\" : xxxxx,         (numeric) Current Dust relay fee\n"
+            "  \"governancecollateral\" : xxxxx, (numeric) Current Governance collateral\n"
+            "  \"budgetfee\" : xxxxx,            (numeric) Current Budget fee\n"
+            "  \"contracts\" : {},               (object) Current DGP Contracts\n"
+            "  {\n"
+            "    \"version\" :     (number) The current contract version\n"
+            "    \"dgp\" :         (hex) The DGP contract in use\n"
+            "    \"governance\" :  (hex) The Governance contract in use\n"
+            "    \"budget\" :      (hex) The Budget contract in use\n"
+            "  }\n"
             "}\n"
                 },
                 RPCExamples{
                     HelpExampleCli("getdgpinfo", "")
             + HelpExampleRpc("getdgpinfo", "")
+            + HelpExampleCli("getdgpinfo", "1000")
+            + HelpExampleRpc("getdgpinfo", "1000")
                 },
             }.Check(request);
 
-
     LOCK(cs_main);
 
-    QtumDGP qtumDGP(globalState.get());
-    DGPFeeRates dgpFeeRates = qtumDGP.getFeeRates(::ChainActive().Height());
+    int argHeight = -1;
+    if (!request.params[0].isNull()) {
+        argHeight = std::stoi(request.params[0].get_str(), nullptr);
+    }
+    const uint32_t height = argHeight >= 0 ? argHeight : ::ChainActive().Height();
+
+    QtumDGP qtumDGP(globalState.get(), height);
+    DGPFeeRates dgpFeeRates = qtumDGP.getFeeRates(height);
 
     UniValue obj(UniValue::VOBJ);
-    obj.pushKV("maxblocksize", (uint64_t)qtumDGP.getBlockSize(::ChainActive().Height()));
-    obj.pushKV("mingasprice", (uint64_t)qtumDGP.getMinGasPrice(::ChainActive().Height()));
-    obj.pushKV("blockgaslimit", (uint64_t)qtumDGP.getBlockGasLimit(::ChainActive().Height()));
+    obj.pushKV("maxblocksize", (uint64_t)qtumDGP.getBlockSize(height));
+    obj.pushKV("mingasprice", (uint64_t)qtumDGP.getMinGasPrice(height));
+    obj.pushKV("blockgaslimit", (uint64_t)qtumDGP.getBlockGasLimit(height));
     obj.pushKV("minrelaytxfee", (uint64_t)dgpFeeRates.minRelayTxFee);
     obj.pushKV("incrementalrelayfee", (uint64_t)dgpFeeRates.incrementalRelayFee);
     obj.pushKV("dustrelayfee", (uint64_t)dgpFeeRates.dustRelayFee);
-    obj.pushKV("governancecollateral", (uint64_t)qtumDGP.getGovernanceCollateral(::ChainActive().Height()));
-    obj.pushKV("budgetfee", (uint64_t)qtumDGP.getBudgetFee(::ChainActive().Height()));
+    obj.pushKV("governancecollateral", (uint64_t)qtumDGP.getGovernanceCollateral(height));
+    obj.pushKV("budgetfee", (uint64_t)qtumDGP.getBudgetFee(height));
+
+    UniValue dgp(UniValue::VOBJ);
+    dgp.pushKV("version", (int)qtumDGP.getContractVersion());
+    dgp.pushKV("dgp", qtumDGP.getDGPContract().hex());
+    dgp.pushKV("governance", qtumDGP.getGovernanceDGP().hex());
+    dgp.pushKV("budget", qtumDGP.getBudgetDGP().hex());
+
+    obj.pushKV("contracts", dgp);
 
     return obj;
 }
@@ -1267,7 +1296,7 @@ static const CRPCCommand commands[] = {
     { "hidden",             "echojson",               &echo,                   {"arg0","arg1","arg2","arg3","arg4","arg5","arg6","arg7","arg8","arg9"}},
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////// // qtum
-    { "control",            "getdgpinfo",             &getdgpinfo,             {} },
+    { "control",            "getdgpinfo",             &getdgpinfo,             {"blockheight"} },
 #ifdef ENABLE_BITCORE_RPC
     { "util",               "getaddresstxids",        &getaddresstxids,        {"addresses"} },
     { "util",               "getaddressdeltas",       &getaddressdeltas,       {"addresses"} },

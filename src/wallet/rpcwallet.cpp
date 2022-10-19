@@ -605,7 +605,7 @@ static UniValue createcontract(const JSONRPCRequest& request){
     auto locked_chain = pwallet->chain().lock();
     LOCK(pwallet->cs_wallet);
     LOCK(spk_man.cs_KeyStore);
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
     uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(::ChainActive().Height());
     uint64_t minGasPrice = CAmount(qtumDGP.getMinGasPrice(::ChainActive().Height()));
     CAmount nGasPrice = (minGasPrice>DEFAULT_GAS_PRICE)?minGasPrice:DEFAULT_GAS_PRICE;
@@ -844,7 +844,7 @@ UniValue SendToContract(interfaces::Chain::Lock& locked_chain, CWallet* const pw
 {
     LegacyScriptPubKeyMan& spk_man = EnsureLegacyScriptPubKeyMan(*pwallet);
     LOCK(spk_man.cs_KeyStore);
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
     uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(::ChainActive().Height());
     uint64_t minGasPrice = CAmount(qtumDGP.getMinGasPrice(::ChainActive().Height()));
     CAmount nGasPrice = (minGasPrice>DEFAULT_GAS_PRICE)?minGasPrice:DEFAULT_GAS_PRICE;
@@ -1064,7 +1064,7 @@ static UniValue sendtocontract(const JSONRPCRequest& request){
 
     auto locked_chain = pwallet->chain().lock();
     LOCK(pwallet->cs_wallet);
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
     uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(::ChainActive().Height());
     uint64_t minGasPrice = CAmount(qtumDGP.getMinGasPrice(::ChainActive().Height()));
     CAmount nGasPrice = (minGasPrice>DEFAULT_GAS_PRICE)?minGasPrice:DEFAULT_GAS_PRICE;

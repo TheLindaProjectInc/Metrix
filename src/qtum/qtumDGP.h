@@ -6,9 +6,23 @@
 #include <validation.h>
 #include <util/strencodings.h>
 
-static const dev::Address DGPContract = dev::Address("0x0000000000000000000000000000000000000088");
-static const dev::Address GovernanceDGP = dev::Address("0000000000000000000000000000000000000089");
-static const dev::Address BudgetDGP = dev::Address("0000000000000000000000000000000000000090");
+// DGP Version 2 [MIP3] Contract Addresses - MAINNET
+static const dev::Address DGPContract_v2 = dev::Address("0x185f8adf02ffdd1bea42737cc53aa33396f4817b");
+static const dev::Address GovernanceDGP_v2 = dev::Address("0x42d98057e271b08a20c0959665e9499a3c00e371");
+static const dev::Address BudgetDGP_v2 = dev::Address("0x9e7981005ceb53e3f6a3fd4ff21b95563f4f2af3");
+// DGP Version 2 [MIP3] Contract Addresses - TESTNET
+static const dev::Address tDGPContract_v2 = dev::Address("0x710efbb1026237f0cbf32ca9c5f040f86b66ae0c");
+static const dev::Address tGovernanceDGP_v2 = dev::Address("0x4e3d35f867c895c612d38dc28a30e815c6ccd717");
+static const dev::Address tBudgetDGP_v2 = dev::Address("0xb196971bc9ed1a193fa69310986d3de5d14c59c4");
+// DGP Version 2 [MIP3] Contract Addresses - REGTEST
+static const dev::Address rDGPContract_v2 = dev::Address("0x037ffe1173cca78c4e5c8a3d1eb1001b615f75be");
+static const dev::Address rGovernanceDGP_v2 = dev::Address("0xe30458ac7711a738e21622efefbc93aa2d31cc7a");
+static const dev::Address rBudgetDGP_v2 = dev::Address("0x0ba5b180277783a5889fa6ee0aa24fbf59afe3d7");
+
+// DGP Version 1 [original] Contract Addresses
+static const dev::Address DGPContract_v1 = dev::Address("0x0000000000000000000000000000000000000088");
+static const dev::Address GovernanceDGP_v1 = dev::Address("0x0000000000000000000000000000000000000089");
+static const dev::Address BudgetDGP_v1 = dev::Address("0x0000000000000000000000000000000000000090");
 
 static const uint32_t MIN_BLOCK_SIZE_DGP = 500000;
 static const uint32_t MAX_BLOCK_SIZE_DGP = 32000000;
@@ -38,6 +52,13 @@ static const uint64_t DEFAULT_GOVERNANCE_COLLATERAL = 750000000000000;
 
 static const uint64_t DEFAULT_BUDGET_FEE = 60000000000000;
 
+struct metrixDGPaddr
+{
+    dev::Address DGPContract;
+    dev::Address GovernanceDGP;
+    dev::Address BudgetDGP;
+};
+
 struct DGPFeeRates
 {
     uint64_t minRelayTxFee;
@@ -49,7 +70,10 @@ class QtumDGP {
     
 public:
 
-    QtumDGP(QtumState* _state, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) { initDataSchedule(); }
+    QtumDGP(QtumState* _state, int blockHeight, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) {
+        initContractHook(blockHeight);
+        initDataSchedule(); 
+    }
 
     dev::eth::EVMSchedule getGasSchedule(int blockHeight);
 
@@ -67,6 +91,14 @@ public:
 
     dev::Address getGovernanceWinner(unsigned int blockHeight);
 
+    dev::Address getDGPContract();
+
+    dev::Address getGovernanceDGP();
+
+    dev::Address getBudgetDGP();
+
+    uint32_t getContractVersion();
+
 private:
 
     bool initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data = std::vector<unsigned char>(), uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
@@ -76,6 +108,8 @@ private:
     void initStorageTemplate(const dev::Address& addr);
 
     void initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data, uint64_t defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND);
+
+    void initContractHook(int blockHeight);
 
     void initDataSchedule();
 
@@ -113,11 +147,14 @@ private:
 
     dev::eth::EVMSchedule createEVMSchedule(const dev::eth::EVMSchedule& schedule, int blockHeight);
 
-    void clear();    
+    bool isBannedGov(std::string addr);
 
+    void clear();
 
 
     bool dgpevm;
+
+    uint32_t contractVersion;
 
     const QtumState* state;
 
@@ -133,5 +170,6 @@ private:
 
     std::vector<uint32_t> dataSchedule;
 
+    metrixDGPaddr DGPaddresses;
 };
 #endif

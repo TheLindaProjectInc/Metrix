@@ -749,7 +749,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
             return state.Invalid(ValidationInvalidReason::TX_INVALID_SENDER_SCRIPT, false, REJECT_INVALID, "bad-txns-invalid-sender-script");
         }
 
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), ::ChainActive().Tip()->nHeight, fGettingValuesDGP);
         uint64_t minGasPrice = qtumDGP.getMinGasPrice(::ChainActive().Tip()->nHeight + 1);
         uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(::ChainActive().Tip()->nHeight + 1);
         size_t count = 0;
@@ -1507,7 +1507,7 @@ uint64_t GetSubsidyRate(int nHeight)
     }
     if (nHeight > 12 * nBlocksPerYear) // 12 years
     {
-        nCoinYearReward /= 1; // 1%
+        nCoinYearReward /= 2; // 1%
     }
     return nCoinYearReward;
 }
@@ -2515,7 +2515,7 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
 
     if (blockGasLimit == 0)
     {
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), pblockindex->nHeight, fGettingValuesDGP);
         blockGasLimit = qtumDGP.getBlockGasLimit(pblockindex->nHeight + 1);
     }
 
@@ -2585,20 +2585,36 @@ bool HasNonDGPContracts(const CBlock& block)
     {
         if (block.vtx[1]->HasOpSpend())
             return true;
+
+        //LogPrintf("HasNonDGPContracts(): Block  %s\n", block.GetHash().ToString());
+
+        int nHeight;
+        CBlockIndex* pindex = LookupBlockIndex(block.GetHash());
+        if (pindex == nullptr) {
+            nHeight = ::ChainActive().Height() + 1;
+            //LogPrintf("HasNonDGPContracts(): nHeight = %u\n", nHeight);
+        } else {
+            nHeight = pindex->nHeight <= 0 ? ::ChainActive().Height() + 1 : pindex->nHeight;
+            //LogPrintf("HasNonDGPContracts(): pindex.nHeight = %u\n", nHeight);
+        }
+
+        QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
+        //LogPrintf("HasNonDGPContracts(): getGovernanceDGP() = %s at height %u\n", qtumDGP.getGovernanceDGP(), nHeight);
         for (const auto& out : block.vtx[1]->vout)
             if (
                 (out.scriptPubKey.HasOpCreate() || out.scriptPubKey.HasOpCall() || out.scriptPubKey.HasOpSender()) &&
-                !out.scriptPubKey.IsDGPContractCall(GovernanceDGP.asBytes(), ParseHex("1c0318cd")) &&
-                !out.scriptPubKey.IsDGPContractCall(GovernanceDGP.asBytes(), ParseHex("6faaa74c")) &&
-                !out.scriptPubKey.IsDGPContractCall(BudgetDGP.asBytes(), ParseHex("104ad86f"))
-            )
+                !out.scriptPubKey.IsDGPContractCall(qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd")) &&
+                !out.scriptPubKey.IsDGPContractCall(qtumDGP.getGovernanceDGP().asBytes(), ParseHex("6faaa74c")) &&
+                !out.scriptPubKey.IsDGPContractCall(qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"))
+            ) {
                 return true;
+            }
     }
     return false;
 }
 QtumTransaction CreateQtumTransaction(CAmount amount, CAmount nGasPrice, uint64_t nGasLimit, dev::Address addrContract, std::string data, dev::Address addrSender, uint32_t nVout, uint256 txHash)
 {
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), ::ChainActive().Tip()->nHeight,  fGettingValuesDGP);
     QtumTransaction callTransaction(dev::u256(amount), dev::u256(nGasPrice), dev::u256(nGasLimit), addrContract, ParseHex(data), dev::u256(0));
     callTransaction.forceSender(addrSender);
     callTransaction.setVersion(VersionVM::GetEVMDefault());
@@ -2623,13 +2639,31 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
 
     // add governor reward transaction
     CTxOut govVout;
-    if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
+    if (GetDGPVout(block, qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
 
-        if (::ChainstateActive().IsInitialBlockDownload() && nHeight >= consensusParams.minMIP2Height && nHeight < consensusParams.MIP2Height) {
+        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight == 682101 || nHeight == 682246 || nHeight == 682502 || nHeight == 682563 || 
+            nHeight == 682592 || nHeight == 682691 || nHeight == 682695 || nHeight == 682720 || nHeight == 682728 || nHeight == 682740 || 
+            nHeight == 682812 || nHeight == 682839 || nHeight == 682840 || nHeight == 682861 || nHeight == 682913 || nHeight == 682942 || 
+            nHeight == 683093 || nHeight == 683137 || nHeight == 683246 || nHeight == 683271 || nHeight == 683342 || nHeight == 683376 || 
+            nHeight == 683394 || nHeight == 683403 || nHeight == 683416 || nHeight == 683542 || nHeight == 683590 || nHeight == 683607 || 
+            nHeight == 683619 || nHeight == 683658 || nHeight == 683674 || nHeight == 683682 || nHeight == 683700 || nHeight == 683746 || 
+            nHeight == 683772 || nHeight == 683808 || nHeight == 683812 || nHeight == 683813 || nHeight == 683823 || nHeight == 683825 ||
+            nHeight == 683828 || nHeight == 683840 || nHeight == 683855 || nHeight == 683857 || nHeight == 683875 || nHeight == 683884 ||
+            nHeight == 683900 || nHeight == 683901 || nHeight == 683909 || nHeight == 683945 || nHeight == 683961 || nHeight == 683963 ||
+            nHeight == 684010 || nHeight == 684031 || nHeight == 684036 || nHeight == 684037 || nHeight == 684043 || nHeight == 684063 ||
+            nHeight == 684064 || nHeight == 684067 || nHeight == 684069 || nHeight == 684105 || nHeight == 684106 || nHeight == 684124 ||
+            nHeight == 684138 || nHeight == 684140 || nHeight == 684154 || nHeight == 684159 || nHeight == 684170 || nHeight == 684184 ||
+            nHeight == 684230 || nHeight == 684232 || nHeight == 684235 || nHeight == 684239 || nHeight == 684255 || nHeight == 684286 || 
+            nHeight == 684332 || nHeight == 684350 || nHeight == 684366 || nHeight == 684391 || nHeight == 684398 || nHeight == 684402 || 
+            nHeight == 684450 || nHeight == 684457 || nHeight == 684468 || nHeight == 684493 || nHeight == 684501 || nHeight == 684506 ||
+            nHeight == 684515 || nHeight == 684519 || nHeight == 684527 || nHeight == 684528 || nHeight == 684534 || nHeight == 684556 ||
+            nHeight == 684628 || nHeight == 684648 || nHeight == 684737 || nHeight == 684776)) {
+
             winner = qtumDGP.getGovernanceWinner(nHeight);
+
         } else if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
@@ -2667,20 +2701,20 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
         }
         LogPrintf("Gov Winner Validation : %s\n",
             HexStr(winner.asBytes()));
-        qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, GovernanceDGP, "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
+        qtumTransactions.push_back(CreateQtumTransaction(govVout.nValue, nGasPrice, nGasLimit, qtumDGP.getGovernanceDGP(), "1c0318cd000000000000000000000000" + HexStr(winner.asBytes()), addrSender, n, block.vtx[1]->GetHash()));
     }
 
     // add governor cleanup
-    if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("6faaa74c"), govVout, n))
+    if (GetDGPVout(block, qtumDGP.getGovernanceDGP().asBytes(), ParseHex("6faaa74c"), govVout, n))
     {
-        qtumTransactions.push_back(CreateQtumTransaction(0, nGasPrice, nGasLimit, GovernanceDGP, "6faaa74c", addrSender, n, block.vtx[1]->GetHash()));
+        qtumTransactions.push_back(CreateQtumTransaction(0, nGasPrice, nGasLimit, qtumDGP.getGovernanceDGP(), "6faaa74c", addrSender, n, block.vtx[1]->GetHash()));
     }
 
     // add budget allowance and settlement
     CTxOut bgtVout;
-    if (GetDGPVout(block, BudgetDGP.asBytes(), ParseHex("104ad86f"), bgtVout, n))
+    if (GetDGPVout(block, qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
     {
-       qtumTransactions.push_back(CreateQtumTransaction(bgtVout.nValue, nGasPrice, nGasLimit, BudgetDGP, "104ad86f", addrSender, n, block.vtx[1]->GetHash()));
+       qtumTransactions.push_back(CreateQtumTransaction(bgtVout.nValue, nGasPrice, nGasLimit, qtumDGP.getBudgetDGP(), "104ad86f", addrSender, n, block.vtx[1]->GetHash()));
     }
 
     return qtumTransactions;
@@ -2701,8 +2735,8 @@ int GetDGPValueTransferInsertLocation(CBlock& block)
 
 void MineDGPContracts(std::shared_ptr<CBlock> pblock)
 {
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
     int nHeight = ::ChainActive().Tip()->nHeight + 1;
+    QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
     uint64_t hardBlockGasLimit = qtumDGP.getBlockGasLimit(nHeight);
 
     std::vector<QtumTransaction> qtumTransactions = GetDGPTransactions(*pblock, qtumDGP, nHeight);
@@ -2753,7 +2787,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         ///////////////////////////////////////////////// metrix
         // Get rewards
         CAmount blockReward = GetBlockSubsidy(nHeight, consensusParams, block.vtx[offset]);
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
         uint64_t nCollateral = qtumDGP.getGovernanceCollateral(nHeight);
         CAmount governorReward = GetGovernorSubsidy(nHeight, nCollateral);
         CAmount budgetPayment = GetBudgetSubsidy(blockReward, governorReward, nHeight);
@@ -2763,7 +2797,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 
         // Check governor payment
         CTxOut govVout;
-        if (GetDGPVout(block, GovernanceDGP.asBytes(), ParseHex("1c0318cd"), govVout, n))
+        if (GetDGPVout(block, qtumDGP.getGovernanceDGP().asBytes(), ParseHex("1c0318cd"), govVout, n))
         {
             if (govVout.nValue > governorReward)
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): governor reward pays too much (actual=%d vs limit=%d)",
@@ -2773,7 +2807,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 
         // Check budget payment
         CTxOut bgtVout;
-        if (GetDGPVout(block, BudgetDGP.asBytes(), ParseHex("104ad86f"), bgtVout, n))
+        if (GetDGPVout(block, qtumDGP.getBudgetDGP().asBytes(), ParseHex("104ad86f"), bgtVout, n))
         {
             if (bgtVout.nValue > budgetPayment)
                 return state.Invalid(ValidationInvalidReason::CONSENSUS, error("CheckReward(): budget pays too much (actual=%d vs limit=%d)",
@@ -3199,7 +3233,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     int64_t nTimeStart = GetTimeMicros();
 
     ///////////////////////////////////////////////// // qtum
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), pindex->nHeight, fGettingValuesDGP);
     globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1) ));
     uint32_t sizeBlockDGP = qtumDGP.getBlockSize(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1));
     uint64_t minGasPrice = qtumDGP.getMinGasPrice(pindex->nHeight + (pindex->nHeight+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1));
@@ -4152,7 +4186,7 @@ void UpdateFeesFromDGP(unsigned int nHeight)
 {
     if (nHeight > 0)
     {
-        QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+        QtumDGP qtumDGP(globalState.get(), nHeight, fGettingValuesDGP);
         DGPFeeRates feeRates = qtumDGP.getFeeRates(nHeight);
         if (!gArgs.IsArgSet("-incrementalrelayfee"))
         {
@@ -6458,7 +6492,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
 ////////////////////////////////////////////////////////////////////////// // qtum
     dev::h256 oldHashStateRoot(globalState->rootHash());
     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
-    QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+    QtumDGP qtumDGP(globalState.get(), nCheckDepth, fGettingValuesDGP);
 //////////////////////////////////////////////////////////////////////////
 
     LogPrintf("[0%%]..."); /* Continued */

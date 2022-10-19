@@ -29,6 +29,68 @@ void QtumDGP::initDataSchedule(){
     dataSchedule = scheduleDataForBlockNumber(0);
 }
 
+void QtumDGP::initContractHook(int blockHeight) {
+    DGPaddresses.DGPContract = DGPContract_v1;
+    DGPaddresses.GovernanceDGP = GovernanceDGP_v1;
+    DGPaddresses.BudgetDGP = BudgetDGP_v1;
+    contractVersion = 1;
+
+    if (blockHeight <= 0) {
+        return;
+    }
+
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
+    // Don't trigger until at least MIP3 Start
+    if (blockHeight < consensusParams.MIP3StartHeight) {
+        return;
+    }
+
+    // pBlockIndex lookup and check for reqeusted Block Height
+    CBlockIndex* pblockindex;
+    if (blockHeight == 268435455) {
+        pblockindex = ::ChainActive().Tip();
+    } else if (blockHeight > ::ChainActive().Tip()->nHeight && pindexBestHeader != nullptr) {
+        pblockindex = pindexBestHeader->GetAncestor(blockHeight - 1);
+    } else {
+        pblockindex = ::ChainActive()[blockHeight - 1];
+    }
+    // pBlockIndex Fallback check, throws warning if this occurs
+    if (pblockindex == nullptr) {
+        pblockindex = ::ChainActive().Tip();
+        if (pblockindex == nullptr) {
+            LogPrintf("[WARNING] Checking DGP L2 : pblockindex null at %u ...\n", blockHeight);
+        } else {
+            LogPrintf("[WARNING] Checking DGP L2 : pblockindex located at %u ... Expected %u\n", pblockindex->nHeight, blockHeight);
+        }
+    }
+
+    Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
+    // Get state of MIP3
+    ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
+    int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
+
+    //LogPrintf("Checking DGP: %u ...\n", blockHeight);
+    // If MIP3 state is active, use new contracts
+    if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
+        contractVersion = 2;
+        if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
+            DGPaddresses.DGPContract = rDGPContract_v2;
+            DGPaddresses.GovernanceDGP = rGovernanceDGP_v2;
+            DGPaddresses.BudgetDGP = rBudgetDGP_v2;
+        } else if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
+            DGPaddresses.DGPContract = tDGPContract_v2;
+            DGPaddresses.GovernanceDGP = tGovernanceDGP_v2;
+            DGPaddresses.BudgetDGP = tBudgetDGP_v2;
+        } else {
+            DGPaddresses.DGPContract = DGPContract_v2;
+            DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
+            DGPaddresses.BudgetDGP = BudgetDGP_v2;
+        }
+        //LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
+    }
+}
+
 bool QtumDGP::checkLimitSchedule(const std::vector<uint32_t>& defaultData, const std::vector<uint32_t>& checkData, int blockHeight){
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
@@ -49,7 +111,7 @@ dev::eth::EVMSchedule QtumDGP::getGasSchedule(int blockHeight){
     clear();
     dataSchedule = scheduleDataForBlockNumber(blockHeight);
     dev::eth::EVMSchedule schedule = globalSealEngine->chainParams().scheduleForBlockNumber(blockHeight);
-    if(initStorages(DGPContract, blockHeight, ParseHex("26fadbe2"))){
+    if(initStorages(getDGPContract(), blockHeight, ParseHex("26fadbe2"))){
         schedule = createEVMSchedule(schedule, blockHeight);
     }
     return schedule;
@@ -70,7 +132,7 @@ uint64_t QtumDGP::getUint64FromDGP(unsigned int blockHeight, const dev::Address&
 uint32_t QtumDGP::getBlockSize(unsigned int blockHeight){
     clear();
     uint32_t result = DEFAULT_BLOCK_SIZE_DGP;
-    uint32_t blockSize = getUint64FromDGP(blockHeight, DGPContract, ParseHex("92ac3c62"));
+    uint32_t blockSize = getUint64FromDGP(blockHeight, getDGPContract(), ParseHex("92ac3c62"));
     if(blockSize <= MAX_BLOCK_SIZE_DGP && blockSize >= MIN_BLOCK_SIZE_DGP){
         result = blockSize;
     }
@@ -80,7 +142,7 @@ uint32_t QtumDGP::getBlockSize(unsigned int blockHeight){
 uint64_t QtumDGP::getMinGasPrice(unsigned int blockHeight){
     clear();
     uint64_t result = DEFAULT_MIN_GAS_PRICE_DGP;
-    uint64_t minGasPrice = getUint64FromDGP(blockHeight, DGPContract, ParseHex("3fb58819"));
+    uint64_t minGasPrice = getUint64FromDGP(blockHeight, getDGPContract(), ParseHex("3fb58819"));
     if(minGasPrice <= MAX_MIN_GAS_PRICE_DGP && minGasPrice >= MIN_MIN_GAS_PRICE_DGP){
         result = minGasPrice;
     }
@@ -90,7 +152,7 @@ uint64_t QtumDGP::getMinGasPrice(unsigned int blockHeight){
 uint64_t QtumDGP::getBlockGasLimit(unsigned int blockHeight){
     clear();
     uint64_t result = DEFAULT_BLOCK_GAS_LIMIT_DGP;
-    uint64_t blockGasLimit = getUint64FromDGP(blockHeight, DGPContract, ParseHex("2cc8377d"));
+    uint64_t blockGasLimit = getUint64FromDGP(blockHeight, getDGPContract(), ParseHex("2cc8377d"));
     if(blockGasLimit <= MAX_BLOCK_GAS_LIMIT_DGP && blockGasLimit >= MIN_BLOCK_GAS_LIMIT_DGP){
         result = blockGasLimit;
     }
@@ -104,7 +166,7 @@ DGPFeeRates QtumDGP::getFeeRates(unsigned int blockHeight){
     dgpFeeRates.incrementalRelayFee = DEFAULT_INCREMENTAL_RELAY_FEE_DGP;
     dgpFeeRates.dustRelayFee = DEFAULT_DUST_RELAY_TX_FEE_DGP;
     /*
-    std::vector<uint64_t> feeRates = getUint64VectorFromDGP(blockHeight, DGPContract, ParseHex("d6f6ac1d"));
+    std::vector<uint64_t> feeRates = getUint64VectorFromDGP(blockHeight, getDGPContract(), ParseHex("d6f6ac1d"));
     if (feeRates.size() == 3){
         if(feeRates[0] <= MAX_MIN_RELAY_TX_FEE_DGP && feeRates[0] >= MIN_MIN_RELAY_TX_FEE_DGP){
             dgpFeeRates.minRelayTxFee = feeRates[0];
@@ -122,7 +184,7 @@ DGPFeeRates QtumDGP::getFeeRates(unsigned int blockHeight){
 uint64_t QtumDGP::getGovernanceCollateral(unsigned int blockHeight){
     clear();
     uint64_t result = DEFAULT_GOVERNANCE_COLLATERAL;
-    uint64_t collateral = getUint64FromDGP(blockHeight, DGPContract, ParseHex("3efafcd9"));
+    uint64_t collateral = getUint64FromDGP(blockHeight, getDGPContract(), ParseHex("3efafcd9"));
     if(collateral > 0){
         result = collateral;
     }
@@ -132,7 +194,7 @@ uint64_t QtumDGP::getGovernanceCollateral(unsigned int blockHeight){
 uint64_t QtumDGP::getBudgetFee(unsigned int blockHeight){
     clear();
     uint64_t result = DEFAULT_BUDGET_FEE;
-    uint64_t budgetFee = getUint64FromDGP(blockHeight, DGPContract, ParseHex("0db3970d"));
+    uint64_t budgetFee = getUint64FromDGP(blockHeight, getDGPContract(), ParseHex("0db3970d"));
     if(budgetFee > 0){
         result = budgetFee;
     }
@@ -187,11 +249,11 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         winnerEligibileFix = true;
     }
 
-    dev::Address value = getAddressFromDGP(blockHeight, GovernanceDGP, ParseHex("aabe2fe3"), defaultGasLimit);
+    dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
 
     if (startGovMaturity) {
         if (value != dev::Address(0x0)) {
-            std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+            std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
             if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
                 //Take the registration block and add 48hrs worth of blocks
                 LogPrintf("Governor immature - Address: %s | Registration Block: %u\n", HexStr(value.asBytes()), v[0] + 1920);
@@ -201,8 +263,9 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     }
 
     if (winnerEligibileFix) {
-        int64_t dgpCollateral = getGovernanceCollateral(blockHeight);
-        int64_t height = ::ChainActive().Tip()->nHeight;
+        const Consensus::Params& consensusParams = Params().GetConsensus();
+        uint64_t dgpCollateral = getGovernanceCollateral(blockHeight);
+        uint64_t height = ::ChainActive().Tip()->nHeight;
         // Must be 48 hrs old to get first rewards
         uint64_t minRewardMaturity = 1920;
         // How often rewarded
@@ -212,11 +275,16 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
         // Valid governors are at least 15 blocks old.
         uint64_t minMaturity = 15;
 
-        const std::string badGov = "a66268b3c8a9501e492f81abdd81655ee41e35d2";
+        // Metrix fix to skip bad Governor in contract
+        if (height >= consensusParams.MIP2Height && contractVersion == 1) {
+            if (isBannedGov(HexStr(value.asBytes()))) {
+                return dev::Address(0x0);
+            }
+        }
 
         if (value != dev::Address(0x0)) {
                 // check if contract winner selection is valid and meets the criteria
-                std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+                std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
                 uint64_t govBlockHeight = v[0];
                 uint64_t govlastPing = v[1];
                 uint64_t govCollateral = v[2];
@@ -226,23 +294,19 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                     dgpCollateral == govCollateral && 
                     height >= govBlockHeight + minMaturity && 
                     height <= govlastPing + pingInterval) {
-                        // Metrix hacky fix to skip bad Governor in contract
-                        if (::ChainActive().Tip()->nHeight < 685000 ) {
-                            LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                            return value;
-                        } else {
-                            if (HexStr(value.asBytes()) != badGov) {
-                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                return value;
-                            }
-                        }
+                        LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                        return value;
                 } else {
                     // if winner selection doesn't pass criteria checks then manually try and find an eligible one.
                     // Get the list of currently active governors
-                    std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, GovernanceDGP, ParseHex("883703c2"));
+                    std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("883703c2"));
                     for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
                         dev::Address value = dev::Address(governorAddresses[i]);
-                        std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, GovernanceDGP, ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+                        // Metrix fix to skip bad Governor in contract
+                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && contractVersion == 1) {
+                            continue;
+                        }
+                        std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
                         uint64_t govBlockHeight = v[0];
                         uint64_t govlastPing = v[1];
                         uint64_t govCollateral = v[2];
@@ -252,16 +316,8 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                             dgpCollateral == govCollateral && 
                             height >= govBlockHeight + minMaturity && 
                             height <= govlastPing + pingInterval) {
-                                // Metrix hacky fix to skip bad Governor in contract
-                                if (::ChainActive().Tip()->nHeight < 685000) {
-                                    LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                    return value;
-                                } else {
-                                    if (HexStr(value.asBytes()) != badGov) {
-                                        LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                        return value;
-                                    }
-                                }
+                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                return value;
                             }
                     }
                 }
@@ -271,6 +327,32 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     }
 
     return value;
+}
+
+bool QtumDGP::isBannedGov(std::string addressStr) {
+    // Metrix hacky fix to skip bad Governor in contract
+    // TODO: remove after MIP3 !
+    const std::string badGov = "a66268b3c8a9501e492f81abdd81655ee41e35d2";
+    if (addressStr == badGov) {
+        return true;
+    }
+    return false;
+}
+
+dev::Address QtumDGP::getDGPContract() {
+    return DGPaddresses.DGPContract;
+}
+
+dev::Address QtumDGP::getGovernanceDGP() {
+    return DGPaddresses.GovernanceDGP;
+}
+
+dev::Address QtumDGP::getBudgetDGP() {
+    return DGPaddresses.BudgetDGP;
+}
+
+uint32_t QtumDGP::getContractVersion() {
+    return contractVersion;
 }
 
 bool QtumDGP::initStorages(const dev::Address& addr, unsigned int blockHeight, std::vector<unsigned char> data, uint64_t defaultGasLimit){

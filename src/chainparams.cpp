@@ -93,7 +93,9 @@ public:
         consensus.minMIP1Height = 264694; // height of chain path correction due to mismatched AAL tx in next block
         consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
         consensus.minMIP2Height = 681821; // height of chain path correction due to goverance contract bug
-        consensus.MIP2Height = 685000; // Activation block: 685000
+        consensus.MIP2Height = 685000; // Activation block: f307d959abb16a49ded03486c2074128de3602cfd46a9b5369060d1d95e8c6e5
+        consensus.MIP3StartHeight = 702000; // Start checking for MIP3 after last halving (701280)
+        consensus.MIP3Height = -1; // Activation Height of new DGP.  Set after MIP3 is active!
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -114,6 +116,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].bit = 28; // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nStartTime = 1662484496; // Semptember 06, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888; // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000cf555f01ea2fddaa84b9"); // Metrix (535527)
@@ -177,14 +182,18 @@ public:
                 { 450000, uint256S("0xe7760f9c7b7d20c3acee3e8185626d832da3d14a7b25a2509208ca70f60d43dd")},
                 { 520000, uint256S("0xfc3f607b5c97bc94e1fb50f3beb473eb06b65ffc21b2efa77cdcb1920482e211")},
                 { 681822, uint256S("0xf89b90fe4d34509ce5fa2d6a56f4ff80bdc7e0637a49b250ed9eb102a8516479")},
-                { 683449, uint256S("0x3c11441e82b4d380984ced480c71eec6f26967a3e6283b00ae232553b7fd9224")}
+                { 683449, uint256S("0x3c11441e82b4d380984ced480c71eec6f26967a3e6283b00ae232553b7fd9224")},
+                { 685001, uint256S("0xff9ea87783076d9f17526b6fb6e78fbf29dacf74a255fd618e1b281d99687639")},
+                { 685011, uint256S("0xbd948c547a6c03f2494fed4360b16c42db7df49710edaa82085924fe5587d120")},
+                { 701281, uint256S("0x0385e7028c76cfff95b8d2b4cebfa49ac90cc5a986ba90ce1cfa65786744ee4f")},
+                { 706252, uint256S("0x20a682b85de3f3d66edb5850b16803a4a3991cf24fdb6bf97d12367f7876d3b5")}
             }
         };
 
         chainTxData = ChainTxData{
-            // Data as of block 84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3 (height 305037)
-            1628155760, // * UNIX timestamp of last known number of transactions
-            958799,     // * total number of transactions between genesis and that timestamp
+            // Data as of block bd948c547a6c03f2494fed4360b16c42db7df49710edaa82085924fe5587d120 (height 685011)
+            1662779152, // * UNIX timestamp of last known number of transactions
+            2205992,     // * total number of transactions between genesis and that timestamp
             //   (the tx=... number in the SetBestChain debug.log lines)
             0.03358921219453481 // * estimated number of transactions per second after that timestamp
         };
@@ -223,6 +232,8 @@ public:
         consensus.MIP1Height = 389088; // b5a3e290a9f5419b2658d9e0d0b7659d505b8322c320b0a041caf56bfb7bbefc
         consensus.minMIP2Height = 681822; // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000; // Activation block: this doesnt effect testnet?
+        consensus.MIP3StartHeight = 700000;
+        consensus.MIP3Height = -1; // Not used
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -243,6 +254,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].bit = 28; // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nStartTime = 1662484496; // Semptember 06, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888; // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
@@ -334,6 +348,8 @@ public:
         consensus.MIP1Height = 0;
         consensus.minMIP2Height = 0;
         consensus.MIP2Height = 0;
+        consensus.MIP3StartHeight = 3000;
+        consensus.MIP3Height = -1; // Not used
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -354,6 +370,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].bit = 28; // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nStartTime = 1662484496; // Semptember 06, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP2_FIX].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496; // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");

@@ -116,7 +116,7 @@ CMutableTransaction ConstructTransaction(const UniValue& inputs_in, const UniVal
 
             // Get dgp gas limit and gas price
             LOCK(cs_main);
-            QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
+            QtumDGP qtumDGP(globalState.get(), ::ChainActive().Height(), fGettingValuesDGP);
             uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(::ChainActive().Height());
             uint64_t minGasPrice = CAmount(qtumDGP.getMinGasPrice(::ChainActive().Height()));
             CAmount nGasPrice = (minGasPrice>DEFAULT_GAS_PRICE)?minGasPrice:DEFAULT_GAS_PRICE;
