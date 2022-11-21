@@ -2643,8 +2643,8 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
     {
         dev::Address winner;
         const Consensus::Params& consensusParams = Params().GetConsensus();
-
-        if (::ChainstateActive().IsInitialBlockDownload() && (nHeight == 682101 || nHeight == 682246 || nHeight == 682502 || nHeight == 682563 || 
+        
+        if (gArgs.GetChainName() == CBaseChainParams::MAIN && ::ChainstateActive().IsInitialBlockDownload() && (nHeight == 682101 || nHeight == 682246 || nHeight == 682502 || nHeight == 682563 || 
             nHeight == 682592 || nHeight == 682691 || nHeight == 682695 || nHeight == 682720 || nHeight == 682728 || nHeight == 682740 || 
             nHeight == 682812 || nHeight == 682839 || nHeight == 682840 || nHeight == 682861 || nHeight == 682913 || nHeight == 682942 || 
             nHeight == 683093 || nHeight == 683137 || nHeight == 683246 || nHeight == 683271 || nHeight == 683342 || nHeight == 683376 || 
@@ -2664,7 +2664,7 @@ std::vector<QtumTransaction> GetDGPTransactions(const CBlock& block, QtumDGP qtu
 
             winner = qtumDGP.getGovernanceWinner(nHeight);
 
-        } else if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height)) {
+        } else if (::ChainstateActive().IsInitialBlockDownload() && (nHeight > consensusParams.minMIP1Height + 7 || nHeight < consensusParams.minMIP1Height) && ((int)qtumDGP.getContractVersion() == 1 )) {
             uint64_t nTx;
             for(std::vector<uint64_t>::size_type i = 2; i != block.vtx.size(); i++) {
                     if (block.vtx[i]->vout[0].nValue == govVout.nValue && block.vtx[i]->vout[0].scriptPubKey.IsBurnt()) {
