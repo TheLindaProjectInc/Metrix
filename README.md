@@ -4,6 +4,11 @@
 
 # Metrix Coin
 
+![license](https://img.shields.io/github/license/TheLindaProjectInc/Metrix?color=%23520e58)
+![release](https://img.shields.io/github/v/release/TheLindaProjectInc/Metrix?color=%23520e58&display_name=tag)
+![cpp-linter](https://github.com/TheLindaProjectInc/Metrix/actions/workflows/cpp-linter.yml/badge.svg)
+![build](https://img.shields.io/github/actions/workflow/status/TheLindaProjectInc/Metrix/cpp-make.yml?branch=master)
+
 What is Metrix?
 -------------
 
