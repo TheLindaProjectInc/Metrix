@@ -6,19 +6,17 @@
 #ifndef BITCOIN_CONSENSUS_PARAMS_H
 #define BITCOIN_CONSENSUS_PARAMS_H
 
-#include <uint256.h>
 #include <limits>
 #include <map>
 #include <string>
+#include <uint256.h>
 
 namespace Consensus {
 
-enum DeploymentPos
-{
+enum DeploymentPos {
     DEPLOYMENT_TESTDUMMY,
-    DEPLOYMENT_CHAIN_PATH,
-    DEPLOYMENT_MIP2_FIX,
     DEPLOYMENT_MIP3_DGP_UPGRADE,
+    DEPLOYMENT_MIP4_POS_SPAN,
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
@@ -91,6 +89,10 @@ struct Params {
     int MIP3StartHeight;
     /** Block height at which MIP3 becomes active */
     int MIP3Height;
+    /** Block height at which MIP3 becomes available */
+    int MIP4StartHeight;
+    /** Block height at which MIP3 becomes active */
+    int MIP4Height;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -109,9 +111,15 @@ struct Params {
     int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
     int64_t nPowTargetTimespanV2;
+    int64_t nPowTargetTimespanV3;
     int64_t DifficultyAdjustmentInterval(int height) const
     {
-        int64_t targetSpacing = height < QIP9Height ? nPowTargetTimespan : nPowTargetTimespanV2;
+        int64_t targetSpacing = nPowTargetTimespan;
+        if (height >= MIP4Height) {
+            targetSpacing = nPowTargetTimespanV3;
+        } else if (height >= QIP9Height) {
+            targetSpacing = nPowTargetTimespanV2;
+        }
         return targetSpacing / nPowTargetSpacing;
     }
     uint256 nMinimumChainWork;
