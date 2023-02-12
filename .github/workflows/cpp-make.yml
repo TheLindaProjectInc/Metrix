@@ -1,0 +1,18 @@
+name: C/C++ CI Build
+
+on:
+  push:
+    branches: [ "master", "develop" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: configure
+        run: ./autogen.sh
+        run: ./configure --disable-tests --disable-bench
+      - name: make
+        run: make
