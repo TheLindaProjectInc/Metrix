@@ -33,4 +33,4 @@ jobs:
         run: ./configure --disable-tests --disable-bench
       # build project
       - name: Run build make
-        run: make
+        run: make -j 2

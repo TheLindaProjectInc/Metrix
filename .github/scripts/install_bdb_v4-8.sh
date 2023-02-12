@@ -115,7 +115,7 @@ msgc ">> Configuring Build for ${fileDesc} ..." $magenta
 sleep 1
 
 msgc "> Building ${fileDesc} ..." $magenta
-make
+make -j 2
 sleep 1
 
 # Install
