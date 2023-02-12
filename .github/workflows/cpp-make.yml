@@ -4,15 +4,28 @@ on:
   push:
     branches: [ "master", "develop" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "develop" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: configure
+      # install deps
+      - name: Install deps
+        run: sudo apt-get install bsdmainutils python3 libgmp3-dev libssl-dev libevent-dev libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+      # install berkley db..
+      - name: Run build berkley v4.8 script
+        run: sudo chmod 755 ./.github/scripts/install_bdb_v4-8.sh && ./.github/scripts/install_bdb_v4-8.sh
+        shell: bash
+      # setup project
+      - name: Set linkages
+        run: export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
+      - name: Run autogen
         run: ./autogen.sh
+      # configure project
+      - name: Run configure
         run: ./configure --disable-tests --disable-bench
-      - name: make
+      # build project
+      - name: Run build make
         run: make
