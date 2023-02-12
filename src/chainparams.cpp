@@ -6,12 +6,12 @@
 #include <chainparams.h>
 
 #include <chainparamsseeds.h>
-#include <consensus/merkle.h>
 #include <consensus/consensus.h>
+#include <consensus/merkle.h>
 #include <tinyformat.h>
-#include <util/system.h>
-#include <util/strencodings.h>
 #include <util/convert.h>
+#include <util/strencodings.h>
+#include <util/system.h>
 #include <versionbitsinfo.h>
 
 #include <assert.h>
@@ -20,9 +20,9 @@
 #include <boost/algorithm/string/split.hpp>
 
 ///////////////////////////////////////////// // qtum
-#include <libdevcore/SHA3.h>
-#include <libdevcore/RLP.h>
 #include "arith_uint256.h"
+#include <libdevcore/RLP.h>
+#include <libdevcore/SHA3.h>
 /////////////////////////////////////////////
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, const std::string network)
@@ -36,9 +36,9 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     txNew.vout[0].scriptPubKey = genesisOutputScript;
 
     CBlock genesis;
-    genesis.nTime    = nTime;
-    genesis.nBits    = nBits;
-    genesis.nNonce   = nNonce;
+    genesis.nTime = nTime;
+    genesis.nBits = nBits;
+    genesis.nNonce = nNonce;
     genesis.nVersion = nVersion;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
     genesis.hashPrevBlock.SetNull();
@@ -73,9 +73,11 @@ static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits
 /**
  * Main network
  */
-class CMainParams : public CChainParams {
+class CMainParams : public CChainParams
+{
 public:
-    CMainParams() {
+    CMainParams()
+    {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 0; // metrix unused
         consensus.BIP16Exception = uint256();
@@ -90,35 +92,35 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
-        consensus.minMIP1Height = 264694; // height of chain path correction due to mismatched AAL tx in next block
-        consensus.MIP1Height = 332640; // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
-        consensus.minMIP2Height = 681821; // height of chain path correction due to goverance contract bug
-        consensus.MIP2Height = 685000; // Activation block: f307d959abb16a49ded03486c2074128de3602cfd46a9b5369060d1d95e8c6e5
+        consensus.minMIP1Height = 264694;   // height of chain path correction due to mismatched AAL tx in next block
+        consensus.MIP1Height = 332640;      // Activation block: b20afef871e4d7968b57054d9878d5189258cbd90d278245e718eeebf71fbd96
+        consensus.minMIP2Height = 681821;   // height of chain path correction due to goverance contract bug
+        consensus.MIP2Height = 685000;      // Activation block: f307d959abb16a49ded03486c2074128de3602cfd46a9b5369060d1d95e8c6e5
         consensus.MIP3StartHeight = 702000; // Start checking for MIP3 - after last halving (701280)
-        consensus.MIP3Height = 766080; // Activation block: 04ff78f5f3cae51ef9f5c817a2c5c113d3668c7a07cbb9df1e22201ff43ac9e6
+        consensus.MIP3Height = 766080;      // Activation block: 04ff78f5f3cae51ef9f5c817a2c5c113d3668c7a07cbb9df1e22201ff43ac9e6
         consensus.MIP4StartHeight = 920100; // Start checking for MIP4
-        consensus.MIP4Height = -1; // Activation block:
+        consensus.MIP4Height = -1;          // Activation block:
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
-        consensus.nPowTargetTimespan = 16 * 60; // 16 minutes
-        consensus.nPowTargetTimespanV2 = 4000; // 66 minutes
-        consensus.nPowTargetTimespanV3 = 1800; // 30 minutes
+        consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
+        consensus.nPowTargetTimespanV2 = 4000;                                                                 // 66 minutes
+        consensus.nPowTargetTimespanV3 = 1800;                                                                 // 30 minutes
         consensus.nPowTargetSpacing = 90;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = true;
         consensus.fPoSNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 6384; // BIP9 activate at 95% of 6720
-        consensus.nMinerConfirmationWindow = 6720; // BIP9 confirmation window size
+        consensus.nMinerConfirmationWindow = 6720;       // BIP9 confirmation window size
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888; // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;                                 // January 1, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;                                   // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                          // Semptember 10, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].bit = 28; // REMOVE after Jan 1st 2026!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1682914801; // May 1, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].bit = 28;                                            // REMOVE after Jan 1st 2026!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1682914801;                             // May 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000cf555f01ea2fddaa84b9"); // Metrix (535527)
@@ -152,9 +154,9 @@ public:
         // release ASAP to avoid it where possible.
         vSeeds.emplace_back("mainnet.metrixcoin.com");
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,50);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,85);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,153);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 50);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 85);
+        base58Prefixes[SECRET_KEY] = std::vector<unsigned char>(1, 153);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
 
@@ -168,40 +170,39 @@ public:
 
         checkpointData = {
             {
-                { 0, uint256S("0x000057c278d417dfca66d2bcde29d4875b06ea7f5935086bf4f1f968c91c3377")},
-                { 5000, uint256S("0x000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1")},
-                { 100000, uint256S("0x277983da1f28d72092f1af55521381e9d20ce6c5687715a04ebbfeb295570109")},
-                { 173427, uint256S("0xd44848414844ded450917c081176c934604dd3c7c69d920be8a055762691fe17")},
-                { 199500, uint256S("0x0efec94703a3e37f4a053611d2745eb5429092c391e54153a4771f0d695ab833")},
-                { 235885, uint256S("0x8000d7ba64df0848b1b4f3d89737e5573307363a3feac83d664524adb5ce632b")},
-                { 264694, uint256S("0xa11eae2326f4d3162b4f3e264b38a1cdc0e0cc5c77b6319ba6f2b59bf511f6cd")},
-                { 264695, uint256S("0x4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
-                { 265123, uint256S("0x0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
-                { 305037, uint256S("0x84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
-                { 350000, uint256S("0xd89b4a626819d49c1a938a3d6adbfac2abe1f380e5d2a6ae23ae7d922403a587")},
-                { 450000, uint256S("0xe7760f9c7b7d20c3acee3e8185626d832da3d14a7b25a2509208ca70f60d43dd")},
-                { 520000, uint256S("0xfc3f607b5c97bc94e1fb50f3beb473eb06b65ffc21b2efa77cdcb1920482e211")},
-                { 681822, uint256S("0xf89b90fe4d34509ce5fa2d6a56f4ff80bdc7e0637a49b250ed9eb102a8516479")},
-                { 683449, uint256S("0x3c11441e82b4d380984ced480c71eec6f26967a3e6283b00ae232553b7fd9224")},
-                { 685001, uint256S("0xff9ea87783076d9f17526b6fb6e78fbf29dacf74a255fd618e1b281d99687639")},
-                { 685011, uint256S("0xbd948c547a6c03f2494fed4360b16c42db7df49710edaa82085924fe5587d120")},
-                { 701281, uint256S("0x0385e7028c76cfff95b8d2b4cebfa49ac90cc5a986ba90ce1cfa65786744ee4f")},
-                { 706252, uint256S("0x20a682b85de3f3d66edb5850b16803a4a3991cf24fdb6bf97d12367f7876d3b5")},
-                { 831858, uint256S("0x2d3819e8744490f900e8b2e49b752b56c5f4685de4418209fdb3f88b22d6f270")},
-            }
-        };
+                {0, uint256S("0x000057c278d417dfca66d2bcde29d4875b06ea7f5935086bf4f1f968c91c3377")},
+                {5000, uint256S("0x000042b868836aac2796bea960bbea18db6cdab2fc465e98fc01d042c52698e1")},
+                {100000, uint256S("0x277983da1f28d72092f1af55521381e9d20ce6c5687715a04ebbfeb295570109")},
+                {173427, uint256S("0xd44848414844ded450917c081176c934604dd3c7c69d920be8a055762691fe17")},
+                {199500, uint256S("0x0efec94703a3e37f4a053611d2745eb5429092c391e54153a4771f0d695ab833")},
+                {235885, uint256S("0x8000d7ba64df0848b1b4f3d89737e5573307363a3feac83d664524adb5ce632b")},
+                {264694, uint256S("0xa11eae2326f4d3162b4f3e264b38a1cdc0e0cc5c77b6319ba6f2b59bf511f6cd")},
+                {264695, uint256S("0x4ebc8cc894f27303995a1b948f8b3c52b6493cd6663c70204a909474cb20ced6")},
+                {265123, uint256S("0x0ba351d906584177f27c681592b97f896a80c04b955f1e74e03f9611c5aa97f5")},
+                {305037, uint256S("0x84f857128fe6a4d762323a33799e5d3609db4445be9f0481606f384593028cf3")},
+                {350000, uint256S("0xd89b4a626819d49c1a938a3d6adbfac2abe1f380e5d2a6ae23ae7d922403a587")},
+                {450000, uint256S("0xe7760f9c7b7d20c3acee3e8185626d832da3d14a7b25a2509208ca70f60d43dd")},
+                {520000, uint256S("0xfc3f607b5c97bc94e1fb50f3beb473eb06b65ffc21b2efa77cdcb1920482e211")},
+                {681822, uint256S("0xf89b90fe4d34509ce5fa2d6a56f4ff80bdc7e0637a49b250ed9eb102a8516479")},
+                {683449, uint256S("0x3c11441e82b4d380984ced480c71eec6f26967a3e6283b00ae232553b7fd9224")},
+                {685001, uint256S("0xff9ea87783076d9f17526b6fb6e78fbf29dacf74a255fd618e1b281d99687639")},
+                {685011, uint256S("0xbd948c547a6c03f2494fed4360b16c42db7df49710edaa82085924fe5587d120")},
+                {701281, uint256S("0x0385e7028c76cfff95b8d2b4cebfa49ac90cc5a986ba90ce1cfa65786744ee4f")},
+                {706252, uint256S("0x20a682b85de3f3d66edb5850b16803a4a3991cf24fdb6bf97d12367f7876d3b5")},
+                {831858, uint256S("0x2d3819e8744490f900e8b2e49b752b56c5f4685de4418209fdb3f88b22d6f270")},
+            }};
 
         chainTxData = ChainTxData{
             // Data as of block 2d3819e8744490f900e8b2e49b752b56c5f4685de4418209fdb3f88b22d6f270 (height 831858)
             1676156112, // * UNIX timestamp of last known number of transactions
-            2668702,     // * total number of transactions between genesis and that timestamp
+            2668702,    // * total number of transactions between genesis and that timestamp
             //   (the tx=... number in the SetBestChain debug.log lines)
             0.10018604651162790 // * estimated number of transactions per second after that timestamp
         };
 
         consensus.nLastPOWBlock = 5000;
         consensus.nMPoSRewardRecipients = 10;
-        consensus.nFirstMPoSBlock = 0x7FFFFFFF; //metrix currently disabled
+        consensus.nFirstMPoSBlock = 0x7FFFFFFF; // metrix currently disabled
 
         consensus.nFixUTXOCacheHFHeight = 0;
         consensus.nEnableHeaderSignatureHeight = 0;
@@ -212,9 +213,11 @@ public:
 /**
  * Testnet (v1)
  */
-class CTestNetParams : public CChainParams {
+class CTestNetParams : public CChainParams
+{
 public:
-    CTestNetParams() {
+    CTestNetParams()
+    {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 0; // metrix unused
         consensus.BIP16Exception = uint256();
@@ -229,18 +232,18 @@ public:
         consensus.QIP6Height = 0;
         consensus.QIP7Height = 0;
         consensus.QIP9Height = 5000;
-        consensus.minMIP1Height = 264694; // this has no effect on testnet..
-        consensus.MIP1Height = 389088; // b5a3e290a9f5419b2658d9e0d0b7659d505b8322c320b0a041caf56bfb7bbefc
-        consensus.minMIP2Height = 681822; // height of chain path correction due to goverance contract bug
-        consensus.MIP2Height = 685000; // Activation block: this doesnt effect testnet?
+        consensus.minMIP1Height = 264694;   // this has no effect on testnet..
+        consensus.MIP1Height = 389088;      // b5a3e290a9f5419b2658d9e0d0b7659d505b8322c320b0a041caf56bfb7bbefc
+        consensus.minMIP2Height = 681822;   // height of chain path correction due to goverance contract bug
+        consensus.MIP2Height = 685000;      // Activation block: this doesnt effect testnet?
         consensus.MIP3StartHeight = 700000; // Start checking for MIP3
-        consensus.MIP3Height = -1; // Not used
+        consensus.MIP3Height = -1;          // Not used
         consensus.MIP4StartHeight = 800100; // Start checking for MIP4
-        consensus.MIP4Height = -1; // Not used
+        consensus.MIP4Height = -1;          // Not used
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
-        consensus.nPowTargetTimespan = 16 * 60; // 16 minutes
+        consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
         consensus.nPowTargetTimespanV2 = 4000;
         consensus.nPowTargetTimespanV3 = 1800; // 30 minutes
         consensus.nPowTargetSpacing = 90;
@@ -248,15 +251,15 @@ public:
         consensus.fPowNoRetargeting = true;
         consensus.fPoSNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.nMinerConfirmationWindow = 2016;       // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888; // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;                                 // January 1, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;                                   // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                          // Semptember 10, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1682914801; // May 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1682914801;                          // May 1, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
@@ -284,9 +287,9 @@ public:
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("testnet1.metrixcoin.com");
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,110);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,187);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 110);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 187);
+        base58Prefixes[SECRET_KEY] = std::vector<unsigned char>(1, 239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
@@ -305,19 +308,17 @@ public:
                 {79475, uint256S("0x72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9")},
                 {200000, uint256S("0xcc9a430bee8496b7975cc2e6c70d4f65fdba812f4c4ea0ba7005ccf2426d35a2")},
                 {400000, uint256S("0xb06b177e948c1f32f6fa0f892c30b931b61334abbe21e4e5bbde5ded74f28fed")},
-            }
-        };
+            }};
 
         chainTxData = ChainTxData{
             // Data as of block 72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9 (height 79475)
             1600679856,
             228567,
-            0.01624824080589608
-        };
+            0.01624824080589608};
 
         consensus.nLastPOWBlock = 5000;
         consensus.nMPoSRewardRecipients = 10;
-        consensus.nFirstMPoSBlock = 0x7FFFFFFF; //metrix currently disabled
+        consensus.nFirstMPoSBlock = 0x7FFFFFFF; // metrix currently disabled
 
         consensus.nFixUTXOCacheHFHeight = 0;
         consensus.nEnableHeaderSignatureHeight = 0;
@@ -328,17 +329,19 @@ public:
 /**
  * Regression test
  */
-class CRegTestParams : public CChainParams {
+class CRegTestParams : public CChainParams
+{
 public:
-    explicit CRegTestParams(const ArgsManager& args) {
+    explicit CRegTestParams(const ArgsManager& args)
+    {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 0; // metrix unused
         consensus.BIP16Exception = uint256();
         consensus.BIP34Height = 0; // BIP34 activated on regtest (Used in functional tests)
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0; // BIP65 activated on regtest (Used in functional tests)
-        consensus.BIP66Height = 0; // BIP66 activated on regtest (Used in functional tests)
-        consensus.CSVHeight = 1; // CSV activated on regtest (Used in rpc activation tests)
+        consensus.BIP65Height = 0;  // BIP65 activated on regtest (Used in functional tests)
+        consensus.BIP66Height = 0;  // BIP66 activated on regtest (Used in functional tests)
+        consensus.CSVHeight = 1;    // CSV activated on regtest (Used in rpc activation tests)
         consensus.SegwitHeight = 0; // SEGWIT is always activated on regtest unless overridden
         consensus.MinBIP9WarningHeight = 0;
         consensus.QIP5Height = 0;
@@ -356,7 +359,7 @@ public:
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
-        consensus.nPowTargetTimespan = 16 * 60; // 16 minutes (960 = 832 + 128; multiplier is 832)
+        consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes (960 = 832 + 128; multiplier is 832)
         consensus.nPowTargetTimespanV2 = 4000;
         consensus.nPowTargetTimespanV3 = 1800; // 30 minutes
         consensus.nPowTargetSpacing = 90;
@@ -364,15 +367,15 @@ public:
         consensus.fPowNoRetargeting = true;
         consensus.fPoSNoRetargeting = true;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
+        consensus.nMinerConfirmationWindow = 144;       // Faster than normal for regtest (144 instead of 2016)
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27; // REMOVE Jan 1st 2024!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496; // Semptember 10, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout        
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496;                          // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1675225201; // Feb 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1675225201;                          // Feb 1, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
@@ -405,26 +408,23 @@ public:
         m_is_test_chain = true;
 
         checkpointData = {
-            {
-            }
-        };
+            {}};
 
         chainTxData = ChainTxData{
             0,
             0,
-            0
-        };
+            0};
         consensus.nLastPOWBlock = 0x7fffffff;
         consensus.nMPoSRewardRecipients = 10;
-        consensus.nFirstMPoSBlock = 0x7FFFFFFF; //metrix currently disabled
+        consensus.nFirstMPoSBlock = 0x7FFFFFFF; // metrix currently disabled
 
         consensus.nFixUTXOCacheHFHeight = 0;
         consensus.nEnableHeaderSignatureHeight = 0;
         consensus.nCheckpointSpan = COINBASE_MATURITY;
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,112);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,187);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 112);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 187);
+        base58Prefixes[SECRET_KEY] = std::vector<unsigned char>(1, 239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
@@ -471,7 +471,7 @@ void CRegTestParams::UpdateActivationParametersFromArgs(const ArgsManager& args)
             throw std::runtime_error(strprintf("Invalid nTimeout (%s)", vDeploymentParams[2]));
         }
         bool found = false;
-        for (int j=0; j < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++j) {
+        for (int j = 0; j < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++j) {
             if (vDeploymentParams[0] == VersionBitsDeploymentInfo[j].name) {
                 UpdateVersionBitsParameters(Consensus::DeploymentPos(j), nStartTime, nTimeout);
                 found = true;
@@ -492,7 +492,7 @@ class CUnitTestParams : public CRegTestParams
 {
 public:
     explicit CUnitTestParams(const ArgsManager& args)
-    : CRegTestParams(args)
+        : CRegTestParams(args)
     {
         // Activate the the BIPs for regtest as in Bitcoin
         consensus.BIP16Exception = uint256();
@@ -505,14 +505,15 @@ public:
 
         consensus.nSubsidyHalvingInterval = 0;
         consensus.nRuleChangeActivationThreshold = 558; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 744; // Faster than normal for regtest (744 instead of 2016)
-        consensus.nCheckpointSpan = 1000; // Increase the check point span for the reorganization tests from 500 to 1000
+        consensus.nMinerConfirmationWindow = 744;       // Faster than normal for regtest (744 instead of 2016)
+        consensus.nCheckpointSpan = 1000;               // Increase the check point span for the reorganization tests from 500 to 1000
     }
 };
 
 static std::unique_ptr<const CChainParams> globalChainParams;
 
-const CChainParams &Params() {
+const CChainParams& Params()
+{
     assert(globalChainParams);
     return *globalChainParams;
 }
@@ -592,7 +593,7 @@ void CChainParams::UpdateDifficultyChangeBlockHeight(int nHeight)
     consensus.fPoSNoRetargeting = false;
     consensus.nLastPOWBlock = 5000;
     consensus.nMPoSRewardRecipients = 10;
-    consensus.nFirstMPoSBlock = 0x7FFFFFFF; //metrix currently disabled
+    consensus.nFirstMPoSBlock = 0x7FFFFFFF; // metrix currently disabled
 }
 
 void UpdateDifficultyChangeBlockHeight(int nHeight)
