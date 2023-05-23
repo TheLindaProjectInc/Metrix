@@ -256,7 +256,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
             std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
             if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
                 //Take the registration block and add 48hrs worth of blocks
-                LogPrintf("Governor immature - Address: %s | Registration Block: %u\n", HexStr(value.asBytes()), v[0] + 1920);
+                LogPrint(BCLog::DGP,"Governor immature - Address: %s | Registration Block: %u\n", HexStr(value.asBytes()), v[0] + 1920);
                 value = dev::Address(0x0);
             }
         }
@@ -294,11 +294,14 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                     dgpCollateral == govCollateral && 
                     height >= govBlockHeight + minMaturity && 
                     height <= govlastPing + pingInterval) {
-                        LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                        LogPrint(BCLog::DGP, "Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
                         return value;
                 } else {
+                    dev::Address oldValue = value;
+                    LogPrint(BCLog::DGP, "Governor invalid - Address: %s | Registration block: %i | Last Rewarded: %i | Last Ping: %i | Current height: %i\n", HexStr(oldValue.asBytes()), v[0], v[3], v[1], height);
                     // if winner selection doesn't pass criteria checks then manually try and find an eligible one.
                     // Get the list of currently active governors
+
                     std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("883703c2"));
                     for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
                         dev::Address value = dev::Address(governorAddresses[i]);
@@ -316,7 +319,8 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
                             dgpCollateral == govCollateral && 
                             height >= govBlockHeight + minMaturity && 
                             height <= govlastPing + pingInterval) {
-                                LogPrintf("Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                LogPrint(BCLog::DGP, "Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                LogPrint(BCLog::DGP, "Winner manual mismatch - Original Address: %s | New Address: %s | Current Height: %i\n", HexStr(oldValue.asBytes()), HexStr(value.asBytes()), height);
                                 return value;
                             }
                     }

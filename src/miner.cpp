@@ -618,7 +618,7 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     PKHash senderAddress;
     txnouttype txType;
     if(!ExtractDestination(coinstakeTx->vout[1].scriptPubKey, addressBit, &txType)) {
-        LogPrintf("IsRewardToSelf: Could not extract sender pubkey from output.\n");
+        LogPrint(BCLog::DGP, "IsRewardToSelf: Could not extract sender pubkey from output.\n");
         return false;
     }
 
@@ -627,7 +627,7 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     // Get convert the govWinner hex to a PK address
     std::string hexAddress = HexStr(addrWinner.asBytes());
     if (hexAddress.size() != 40) {
-        LogPrintf("IsRewardToSelf: Invalid pubkeyhash hex size (should be 40 hex characters)\n");
+        LogPrint(BCLog::DGP, "IsRewardToSelf: Invalid pubkeyhash hex size (should be 40 hex characters)\n");
         return false;
     }
     PKHash raw;
@@ -639,7 +639,7 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     // If these match then the staker is choosing itsself as winning gov.
     // In rare cases this causes bad consensus, and should just be avoided.
     if (currentAddress == govWinnerStr) {
-        LogPrintf("IsRewardToSelf: Gov Winner : %s, Staker Address : %s, gov reward abandoned. The winner cannot be the staker.\n", govWinnerStr, currentAddress);
+        LogPrint(BCLog::DGP, "IsRewardToSelf: Gov Winner : %s, Staker Address : %s, gov reward abandoned. The winner cannot be the staker.\n", govWinnerStr, currentAddress);
         return true;
     }
 
