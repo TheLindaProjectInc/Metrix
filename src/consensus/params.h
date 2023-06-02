@@ -16,7 +16,7 @@ namespace Consensus {
 enum DeploymentPos {
     DEPLOYMENT_TESTDUMMY,
     DEPLOYMENT_MIP3_DGP_UPGRADE,
-    DEPLOYMENT_MIP4_POS_SPAN,
+    DEPLOYMENT_MIP4_FORK_SPAN,
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
@@ -115,9 +115,7 @@ struct Params {
     int64_t DifficultyAdjustmentInterval(int height) const
     {
         int64_t targetSpacing = nPowTargetTimespan;
-        if (height >= MIP4Height) {
-            targetSpacing = nPowTargetTimespanV3;
-        } else if (height >= QIP9Height) {
+        if (height >= QIP9Height) {
             targetSpacing = nPowTargetTimespanV2;
         }
         return targetSpacing / nPowTargetSpacing;

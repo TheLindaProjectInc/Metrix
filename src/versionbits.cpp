@@ -170,8 +170,38 @@ private:
 protected:
     int64_t BeginTime(const Consensus::Params& params) const override { return params.vDeployments[id].nStartTime; }
     int64_t EndTime(const Consensus::Params& params) const override { return params.vDeployments[id].nTimeout; }
-    int Period(const Consensus::Params& params) const override { return params.nMinerConfirmationWindow; }
-    int Threshold(const Consensus::Params& params) const override { return params.nRuleChangeActivationThreshold; }
+
+    int Period(const Consensus::Params& params) const override
+    {
+        const CBlockIndex* pindex = ::ChainActive().Tip();
+        Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
+        // Get state of MIP4
+        ThresholdState state = VersionBitsState(pindex, chainparams.GetConsensus(), pos, versionbitscache);
+        // If MIP3 state is active, reject old nodes..
+        if (state == ThresholdState::ACTIVE) {
+            return params.nMinerConfirmationWindow;
+        } else {
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 144;
+            if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 2016;
+            return 2016;
+        }
+    }
+
+    int Threshold(const Consensus::Params& params) const override
+    {
+        const CBlockIndex* pindex = ::ChainActive().Tip();
+        Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
+        // Get state of MIP4
+        ThresholdState state = VersionBitsState(pindex, chainparams.GetConsensus(), pos, versionbitscache);
+        // If MIP3 state is active, reject old nodes..
+        if (state == ThresholdState::ACTIVE) {
+            return params.nRuleChangeActivationThreshold;
+        } else {
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 108;
+            if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 1512;
+            return 1916;
+        }
+    }
 
     bool Condition(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {

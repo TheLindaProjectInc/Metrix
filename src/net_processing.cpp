@@ -2174,7 +2174,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
         if(::ChainActive().Tip()->nHeight >= chainparams.GetConsensus().MIP4StartHeight) {
             const CBlockIndex* pindex = ::ChainActive().Tip();
-            Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_POS_SPAN;
+            Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
             // Get state of MIP3
             ThresholdState state = VersionBitsState(pindex, chainparams.GetConsensus(), pos, versionbitscache);
             // If MIP3 state is active, reject old nodes..
