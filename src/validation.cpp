@@ -2257,7 +2257,7 @@ public:
         const CBlockIndex* pindex = ::ChainActive().Tip();
         Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
         // Get state of MIP4
-        ThresholdState state = VersionBitsState(pindex, params.GetConsensus(), pos, versionbitscache);
+        ThresholdState state = VersionBitsState(pindex, params, pos, versionbitscache);
         // If MIP3 state is active, reject old nodes..
         if (state == ThresholdState::ACTIVE) {
             return params.nMinerConfirmationWindow;
@@ -2273,7 +2273,7 @@ public:
         const CBlockIndex* pindex = ::ChainActive().Tip();
         Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
         // Get state of MIP4
-        ThresholdState state = VersionBitsState(pindex, params.GetConsensus(), pos, versionbitscache);
+        ThresholdState state = VersionBitsState(pindex, params, pos, versionbitscache);
         // If MIP3 state is active, reject old nodes..
         if (state == ThresholdState::ACTIVE) {
             return params.nRuleChangeActivationThreshold;
