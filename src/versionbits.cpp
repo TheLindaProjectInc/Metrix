@@ -10,8 +10,8 @@
 
 ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex* pindexPrev, const Consensus::Params& params, ThresholdConditionCache& cache) const
 {
-    int nPeriod = Period(params);
-    int nThreshold = Threshold(params);
+    int nPeriod = Period(pindexPrev, params);
+    int nThreshold = Threshold(pindexPrev, params);
     int64_t nTimeStart = BeginTime(params);
     int64_t nTimeTimeout = EndTime(params);
 
@@ -174,9 +174,13 @@ protected:
     int64_t BeginTime(const Consensus::Params& params) const override { return params.vDeployments[id].nStartTime; }
     int64_t EndTime(const Consensus::Params& params) const override { return params.vDeployments[id].nTimeout; }
 
-    int Period(const Consensus::Params& params) const override
+    int Period(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {
-        const CBlockIndex* pindex = ::ChainActive().Tip();
+        if (pindex->nHeight < 900000) {
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 144;
+            if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 2016;
+            return 2016;
+        }
         Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
         // Get state of MIP4
         ThresholdState state = VersionBitsState(pindex, params, pos, versionbitscache);
@@ -190,9 +194,13 @@ protected:
         }
     }
 
-    int Threshold(const Consensus::Params& params) const override
+    int Threshold(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {
-        const CBlockIndex* pindex = ::ChainActive().Tip();
+        if (pindex->nHeight < 900000) {
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 108;
+            if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 1512;
+            return 1916;
+        }
         Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
         // Get state of MIP4
         ThresholdState state = VersionBitsState(pindex, params, pos, versionbitscache);

@@ -57,8 +57,8 @@ protected:
     virtual bool Condition(const CBlockIndex* pindex, const Consensus::Params& params) const =0;
     virtual int64_t BeginTime(const Consensus::Params& params) const =0;
     virtual int64_t EndTime(const Consensus::Params& params) const =0;
-    virtual int Period(const Consensus::Params& params) const =0;
-    virtual int Threshold(const Consensus::Params& params) const =0;
+    virtual int Period(const CBlockIndex* pindex, const Consensus::Params& params) const =0;
+    virtual int Threshold(const CBlockIndex* pindex, const Consensus::Params& params) const =0;
 
 public:
     /** Returns the numerical statistics of an in-progress BIP9 softfork in the current period */

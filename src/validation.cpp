@@ -2255,6 +2255,11 @@ public:
     int Period(const Consensus::Params& params) const override
     {
         const CBlockIndex* pindex = ::ChainActive().Tip();
+        if (pindex->nHeight < 900000) {
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 144;
+            if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 2016;
+            return 2016;
+        }
         Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
         // Get state of MIP4
         ThresholdState state = VersionBitsState(pindex, params, pos, versionbitscache);
@@ -2271,6 +2276,11 @@ public:
     int Threshold(const Consensus::Params& params) const override
     {
         const CBlockIndex* pindex = ::ChainActive().Tip();
+        if (pindex->nHeight < 900000) {
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 108;
+            if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 1512;
+            return 1916;
+        }
         Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP4_FORK_SPAN;
         // Get state of MIP4
         ThresholdState state = VersionBitsState(pindex, params, pos, versionbitscache);
