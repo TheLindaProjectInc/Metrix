@@ -2252,9 +2252,8 @@ public:
     int64_t BeginTime(const Consensus::Params& params) const override { return 0; }
     int64_t EndTime(const Consensus::Params& params) const override { return std::numeric_limits<int64_t>::max(); }
 
-    int Period(const Consensus::Params& params) const override
+    int Period(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {
-        const CBlockIndex* pindex = ::ChainActive().Tip();
         if (pindex->nHeight < 900000) {
             if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 144;
             if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 2016;
@@ -2273,9 +2272,8 @@ public:
         }
     }
 
-    int Threshold(const Consensus::Params& params) const override
+    int Threshold(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {
-        const CBlockIndex* pindex = ::ChainActive().Tip();
         if (pindex->nHeight < 900000) {
             if (gArgs.GetChainName() == CBaseChainParams::REGTEST) return 108;
             if (gArgs.GetChainName() == CBaseChainParams::TESTNET) return 1512;
