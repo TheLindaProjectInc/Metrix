@@ -101,8 +101,8 @@ BIP9Stats AbstractThresholdConditionChecker::GetStateStatisticsFor(const CBlockI
 {
     BIP9Stats stats = {};
 
-    stats.period = Period(params);
-    stats.threshold = Threshold(params);
+    stats.period = Period(pindex, params);
+    stats.threshold = Threshold(pindex, params);
 
     if (pindex == nullptr)
         return stats;
@@ -140,7 +140,7 @@ int AbstractThresholdConditionChecker::GetStateSinceHeightFor(const CBlockIndex*
         return 0;
     }
 
-    const int nPeriod = Period(params);
+    const int nPeriod = Period(pindexPrev, params);
 
     // A block's state is always the same as that of the first of its period, so it is computed based on a pindexPrev whose height equals a multiple of nPeriod - 1.
     // To ease understanding of the following height calculation, it helps to remember that
