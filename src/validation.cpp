@@ -4253,7 +4253,7 @@ void static UpdateTip(const CBlockIndex* pindexNew, const CChainParams& chainPar
         int nUpgraded = 0;
         const CBlockIndex* pindex = pindexNew;
         for (int bit = 0; bit < VERSIONBITS_NUM_BITS; bit++) {
-            for (int id = 0; id < MAX_VERSION_BITS_DEPLOYMENTS; id++) {
+            for (int id = 0; id < DeploymentPos::MAX_VERSION_BITS_DEPLOYMENTS; id++) {
                 WarningBitsConditionChecker checker(bit, id);
                 ThresholdState state = checker.GetStateFor(pindex, chainParams.GetConsensus(), warningcache[bit]);
                 if (state == ThresholdState::ACTIVE || state == ThresholdState::LOCKED_IN) {
