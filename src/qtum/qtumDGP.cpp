@@ -235,130 +235,148 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     bool startGovMaturity = false;
     bool winnerEligibileFix = false;
 
-    if (gArgs.GetChainName() == CBaseChainParams::MAIN) {
-        if (::ChainActive().Tip()->nHeight > 110000 && ::ChainActive().Tip()->nHeight < 137001) {
-            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
-        }
-        if (::ChainActive().Tip()->nHeight < 110001) {
-            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
-        }
+    const CBlockIndex* pindex = ::ChainActive().Tip();
+    const uint64_t nHeight = pindex->nHeight;
 
-        // 48hr maturity fix enforcement
-        if (::ChainActive().Tip()->nHeight > 170000 && ::ChainActive().Tip()->nHeight < 199999) {
-           startGovMaturity = true;
-        }
+    Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP6_REM_LEGACY_DGP;
+    // Get state of MIP6
+    ThresholdState state = VersionBitsState(pindex, chainparams.GetConsensus(), pos, versionbitscache);
 
-        // Fix for choosing winner directly from list of eligible rather then getting contract to do it
-        if (::ChainActive().Tip()->nHeight > 200000) {
-           winnerEligibileFix = true;
-        }
-    }
-
-    if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
-        if (::ChainActive().Tip()->nHeight > 187000 && ::ChainActive().Tip()->nHeight < 200001) {
-            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
-        }
-        if (::ChainActive().Tip()->nHeight < 187001) {
-            defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
-        }
-
-        // 48hr maturity fix enforcement
-        if (::ChainActive().Tip()->nHeight > 245000 && ::ChainActive().Tip()->nHeight < 254999) {
-           startGovMaturity = true;
-        }
-
-        // Fix for choosing winner directly from list of eligible rather then getting contract to do it
-        if (::ChainActive().Tip()->nHeight > 255000) {
-           winnerEligibileFix = true;
-        }
-    }
-
-    if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
-        winnerEligibileFix = true;
-    }
-
-    dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
-
-    if (startGovMaturity) {
-        if (value != dev::Address(0x0)) {
-            std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-            if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
-                //Take the registration block and add 48hrs worth of blocks
-                LogPrint(BCLog::DGP,"Governor immature - Address: %s | Registration Block: %u\n", HexStr(value.asBytes()), v[0] + 1920);
-                value = dev::Address(0x0);
+    // If MIP6 state is not active, use legacy..
+    if (nHeight < chainparams.GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
+        if (gArgs.GetChainName() == CBaseChainParams::MAIN) {
+            if (::ChainActive().Tip()->nHeight > 110000 && ::ChainActive().Tip()->nHeight < 137001) {
+                defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
             }
-        }
-    }
+            if (::ChainActive().Tip()->nHeight < 110001) {
+                defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
+            }
 
-    if (winnerEligibileFix) {
-        const Consensus::Params& consensusParams = Params().GetConsensus();
-        uint64_t dgpCollateral = getGovernanceCollateral(blockHeight);
-        uint64_t height = ::ChainActive().Tip()->nHeight;
-        // Must be 48 hrs old to get first rewards
-        uint64_t minRewardMaturity = 1920;
-        // How often rewarded
-        uint64_t rewardBlockInterval = 1920;
-        // must have received ping in the last 30 days(28800 blocks)
-        uint64_t pingInterval = 28800;
-        // Valid governors are at least 15 blocks old.
-        uint64_t minMaturity = 15;
+            // 48hr maturity fix enforcement
+            if (::ChainActive().Tip()->nHeight > 170000 && ::ChainActive().Tip()->nHeight < 199999) {
+            startGovMaturity = true;
+            }
 
-        // Metrix fix to skip bad Governor in contract
-        if (height >= consensusParams.MIP2Height && contractVersion == 1) {
-            if (isBannedGov(HexStr(value.asBytes()))) {
-                return dev::Address(0x0);
+            // Fix for choosing winner directly from list of eligible rather then getting contract to do it
+            if (::ChainActive().Tip()->nHeight > 200000) {
+            winnerEligibileFix = true;
             }
         }
 
-        if (value != dev::Address(0x0)) {
-                // check if contract winner selection is valid and meets the criteria
+        if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
+            if (::ChainActive().Tip()->nHeight > 187000 && ::ChainActive().Tip()->nHeight < 200001) {
+                defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
+            }
+            if (::ChainActive().Tip()->nHeight < 187001) {
+                defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_OP_SEND;
+            }
+
+            // 48hr maturity fix enforcement
+            if (::ChainActive().Tip()->nHeight > 245000 && ::ChainActive().Tip()->nHeight < 254999) {
+            startGovMaturity = true;
+            }
+
+            // Fix for choosing winner directly from list of eligible rather then getting contract to do it
+            if (::ChainActive().Tip()->nHeight > 255000) {
+            winnerEligibileFix = true;
+            }
+        }
+
+        if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
+            winnerEligibileFix = true;
+        }
+    }
+
+    // If MIP6 state is not active, process legacy method..
+    if (nHeight < chainparams.GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
+        if (gArgs.GetChainName() != CBaseChainParams::MAIN) {
+        if (startGovMaturity) {
+            dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
+            if (value != dev::Address(0x0)) {
                 std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-                uint64_t govBlockHeight = v[0];
-                uint64_t govlastPing = v[1];
-                uint64_t govCollateral = v[2];
-                uint64_t govLastReward = v[3];
-                if (height >= govBlockHeight + minRewardMaturity && 
-                    height >= govLastReward + rewardBlockInterval && 
-                    dgpCollateral == govCollateral && 
-                    height >= govBlockHeight + minMaturity && 
-                    height <= govlastPing + pingInterval) {
-                        LogPrint(BCLog::DGP, "Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                        return value;
-                } else {
-                    dev::Address oldValue = value;
-                    LogPrint(BCLog::DGP, "Governor invalid - Address: %s | Registration block: %i | Last Rewarded: %i | Last Ping: %i | Current height: %i\n", HexStr(oldValue.asBytes()), v[0], v[3], v[1], height);
-                    // if winner selection doesn't pass criteria checks then manually try and find an eligible one.
-                    // Get the list of currently active governors
-
-                    std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("883703c2"));
-                    for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
-                        dev::Address value = dev::Address(governorAddresses[i]);
-                        // Metrix fix to skip bad Governor in contract
-                        if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && contractVersion == 1) {
-                            continue;
-                        }
-                        std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
-                        uint64_t govBlockHeight = v[0];
-                        uint64_t govlastPing = v[1];
-                        uint64_t govCollateral = v[2];
-                        uint64_t govLastReward = v[3];
-                        if (height >= govBlockHeight + minRewardMaturity && 
-                            height >= govLastReward + rewardBlockInterval && 
-                            dgpCollateral == govCollateral && 
-                            height >= govBlockHeight + minMaturity && 
-                            height <= govlastPing + pingInterval) {
-                                LogPrint(BCLog::DGP, "Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
-                                LogPrint(BCLog::DGP, "Winner manual mismatch - Original Address: %s | New Address: %s | Current Height: %i\n", HexStr(oldValue.asBytes()), HexStr(value.asBytes()), height);
-                                return value;
-                            }
-                    }
+                if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
+                    //Take the registration block and add 48hrs worth of blocks
+                    LogPrint(BCLog::DGP,"Governor immature - Address: %s | Registration Block: %u\n", HexStr(value.asBytes()), v[0] + 1920);
+                    value = dev::Address(0x0);
                 }
+            }
         }
-        // If we have looped through and found no one eligible then pay no one
-        value = dev::Address(0x0);
-    }
 
-    return value;
+        if (winnerEligibileFix) {
+            const Consensus::Params& consensusParams = Params().GetConsensus();
+            uint64_t dgpCollateral = getGovernanceCollateral(blockHeight);
+            uint64_t height = ::ChainActive().Tip()->nHeight;
+            // Must be 48 hrs old to get first rewards
+            uint64_t minRewardMaturity = 1920;
+            // How often rewarded
+            uint64_t rewardBlockInterval = 1920;
+            // must have received ping in the last 30 days(28800 blocks)
+            uint64_t pingInterval = 28800;
+            // Valid governors are at least 15 blocks old.
+            uint64_t minMaturity = 15;
+
+            // Metrix fix to skip bad Governor in contract
+            if (height >= consensusParams.MIP2Height && contractVersion == 1) {
+                if (isBannedGov(HexStr(value.asBytes()))) {
+                    return dev::Address(0x0);
+                }
+            }
+
+            if (value != dev::Address(0x0)) {
+                    // check if contract winner selection is valid and meets the criteria
+                    std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+                    uint64_t govBlockHeight = v[0];
+                    uint64_t govlastPing = v[1];
+                    uint64_t govCollateral = v[2];
+                    uint64_t govLastReward = v[3];
+                    if (height >= govBlockHeight + minRewardMaturity && 
+                        height >= govLastReward + rewardBlockInterval && 
+                        dgpCollateral == govCollateral && 
+                        height >= govBlockHeight + minMaturity && 
+                        height <= govlastPing + pingInterval) {
+                            LogPrint(BCLog::DGP, "Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                            return value;
+                    } else {
+                        dev::Address oldValue = value;
+                        LogPrint(BCLog::DGP, "Governor invalid - Address: %s | Registration block: %i | Last Rewarded: %i | Last Ping: %i | Current height: %i\n", HexStr(oldValue.asBytes()), v[0], v[3], v[1], height);
+                        // if winner selection doesn't pass criteria checks then manually try and find an eligible one.
+                        // Get the list of currently active governors
+
+                        std::vector<dev::Address> governorAddresses = getAddressVectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("883703c2"));
+                        for(std::vector<uint64_t>::size_type i = 0; i != governorAddresses.size(); i++) {
+                            dev::Address value = dev::Address(governorAddresses[i]);
+                            // Metrix fix to skip bad Governor in contract
+                            if (isBannedGov(HexStr(value.asBytes())) && height >= consensusParams.MIP2Height && contractVersion == 1) {
+                                continue;
+                            }
+                            std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
+                            uint64_t govBlockHeight = v[0];
+                            uint64_t govlastPing = v[1];
+                            uint64_t govCollateral = v[2];
+                            uint64_t govLastReward = v[3];
+                            if (height >= govBlockHeight + minRewardMaturity && 
+                                height >= govLastReward + rewardBlockInterval && 
+                                dgpCollateral == govCollateral && 
+                                height >= govBlockHeight + minMaturity && 
+                                height <= govlastPing + pingInterval) {
+                                    LogPrint(BCLog::DGP, "Governor valid - Address: %s | Registration block: %i | Last Rewarded: %i\n", HexStr(value.asBytes()), v[0], v[3]);
+                                    LogPrint(BCLog::DGP, "Winner manual mismatch - Original Address: %s | New Address: %s | Current Height: %i\n", HexStr(oldValue.asBytes()), HexStr(value.asBytes()), height);
+                                    return value;
+                                }
+                        }
+                    }
+            }
+            // If we have looped through and found no one eligible then pay no one
+            value = dev::Address(0x0);
+        }
+
+        LogPrint(BCLog::DGP, "getGovernanceWinner: Use Legacy Gov Winner at Height: %s, Address : %s.\n", blockHeight, value);
+        return value;
+    } else {
+        // use new DGP winner lookup
+        const dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
+        return value;
+    }
 }
 
 bool QtumDGP::isBannedGov(std::string addressStr) {
