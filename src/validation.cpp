@@ -4253,17 +4253,17 @@ void static UpdateTip(const CBlockIndex* pindexNew, const CChainParams& chainPar
     {
         int nUpgraded = 0;
         const CBlockIndex* pindex = pindexNew;
-        for (int bit = 0; bit < VERSIONBITS_NUM_BITS; bit++) {
-            for (int id = 0; id < Consensus::DeploymentPos::MAX_VERSION_BITS_DEPLOYMENTS; id++) {
-                WarningBitsConditionChecker checker(bit, (Consensus::DeploymentPos) id);
-                ThresholdState state = checker.GetStateFor(pindex, chainParams.GetConsensus(), warningcache[bit]);
-                if (state == ThresholdState::ACTIVE || state == ThresholdState::LOCKED_IN) {
-                    const std::string strWarning = strprintf(_("Warning: unknown new rules activated (versionbit %i)").translated, bit);
-                    if (state == ThresholdState::ACTIVE) {
-                        DoWarning(strWarning);
-                    } else {
-                        AppendWarning(warningMessages, strWarning);
-                    }
+        //for (int bit = 0; bit < VERSIONBITS_NUM_BITS; bit++) {
+        for (int id = 0; id < Consensus::DeploymentPos::MAX_VERSION_BITS_DEPLOYMENTS; id++) {
+            int bit = chainParams.GetConsensus().vDeployments[id].bit;
+            WarningBitsConditionChecker checker(bit, (Consensus::DeploymentPos)id);
+            ThresholdState state = checker.GetStateFor(pindex, chainParams.GetConsensus(), warningcache[bit]);
+            if (state == ThresholdState::ACTIVE || state == ThresholdState::LOCKED_IN) {
+                const std::string strWarning = strprintf(_("Warning: unknown new rules activated (versionbit %i)").translated, bit);
+                if (state == ThresholdState::ACTIVE) {
+                    DoWarning(strWarning);
+                } else {
+                    AppendWarning(warningMessages, strWarning);
                 }
             }
         }

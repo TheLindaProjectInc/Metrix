@@ -176,11 +176,9 @@ protected:
 
     bool Condition(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {
-        if (pindex->nHeight < BeginHeight(params))
-        {
-            return false;
-        }
-        return (((pindex->nVersion & VERSIONBITS_TOP_MASK) == VERSIONBITS_TOP_BITS) && (pindex->nVersion & Mask(params)) != 0);
+        return (pindex->nHeight >= BeginHeight(params) &&
+                ((pindex->nVersion & VERSIONBITS_TOP_MASK) == VERSIONBITS_TOP_BITS) &&
+                (pindex->nVersion & Mask(params)) != 0);
     }
 
 public:
