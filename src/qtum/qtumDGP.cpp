@@ -235,7 +235,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     bool startGovMaturity = false;
     bool winnerEligibileFix = false;
 
-    const CChainParams& chainparams = globalChainParams;
+    const CChainParams& chainparams = Params();
     const CBlockIndex* pindex = ::ChainActive().Tip();
     const uint64_t nHeight = pindex->nHeight;
 
