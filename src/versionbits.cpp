@@ -18,6 +18,11 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
         return ThresholdState::ACTIVE;
     }
 
+    if (pindexPrev->nHeight + 1 < nStartHeight) {
+        // Don't compute if not beyond start height
+        return ThresholdState::DEFINED;
+    }
+
     // A block's state is always the same as that of the first of its period, so it is computed based on a pindexPrev whose height equals a multiple of nPeriod - 1.
     if (pindexPrev != nullptr) {
         pindexPrev = pindexPrev->GetAncestor(pindexPrev->nHeight - ((pindexPrev->nHeight + 1) % nPeriod));
