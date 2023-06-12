@@ -18,7 +18,7 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
         return ThresholdState::ACTIVE;
     }
 
-    if (pindexPrev->nHeight + 1 < nStartHeight) {
+    if (pindexPrev->nHeight < nStartHeight) {
         // Don't compute if not beyond start height
         return ThresholdState::DEFINED;
     }
@@ -64,7 +64,7 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
             case ThresholdState::DEFINED: {
                 if (pindexPrev->GetMedianTimePast() >= nTimeTimeout) {
                     stateNext = ThresholdState::FAILED;
-                } else if (pindexPrev->GetMedianTimePast() >= nTimeStart) {
+                } else if (pindexPrev->GetMedianTimePast() >= nTimeStart && pindexPrev->nHeight >= nStartHeight) {
                     stateNext = ThresholdState::STARTED;
                 }
                 break;
