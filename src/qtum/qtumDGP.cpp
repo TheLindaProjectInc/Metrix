@@ -88,16 +88,16 @@ void QtumDGP::initContractHook(int blockHeight) {
                 DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
                 DGPaddresses.BudgetDGP = BudgetDGP_v2;
             }
-            //LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
+            //LogPrintf("Using new DGP v%u %s at %u\n", contractVersion, DGPaddresses.GovernanceDGP, blockHeight);
         }
     }
     {
         Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP5_DGP_UPGRADE;
-        // Get state of MIP3
+        // Get state of MIP5
         ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
         int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
 
-        LogPrintf("Checking DGP: %u ...\n", blockHeight);
+        //LogPrintf("Checking DGP: %u ...\n", blockHeight);
         // If MIP5 state is active, use new contracts
         if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
             contractVersion = 3;
@@ -114,7 +114,7 @@ void QtumDGP::initContractHook(int blockHeight) {
                 DGPaddresses.GovernanceDGP = GovernanceDGP_v3;
                 DGPaddresses.BudgetDGP = BudgetDGP_v3;
             }
-            LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
+            //LogPrintf("Using new DGP v%u %s at %u\n", contractVersion, DGPaddresses.GovernanceDGP, blockHeight);
         }
     }
 }
