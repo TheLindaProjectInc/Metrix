@@ -48,7 +48,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     } else {
         genesis.hashStateRoot = uint256(h256Touint(dev::h256("6ea8bd3931247c33bb5adc02ae5dba0719c890c3e222c0250a681c8a384da051"))); // metrix
     }
-    genesis.hashUTXORoot = uint256(h256Touint(dev::sha3(dev::rlp("")))); // metrix
+    genesis.hashUTXORoot = uint256(h256Touint(dev::sha3(dev::rlp(""))));                                                            // metrix
     return genesis;
 }
 
@@ -103,23 +103,30 @@ public:
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
+
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
         consensus.nPowTargetTimespanV2 = 4000;                                                                 // 66 minutes
         consensus.nPowTargetSpacing = 90;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = true;
         consensus.fPoSNoRetargeting = false;
-        consensus.nRuleChangeActivationThreshold = 6384; // BIP9 activate at 95% of 6720
-        consensus.nMinerConfirmationWindow = 6720;       // BIP9 confirmation window size
+        consensus.nRuleChangeActivationThreshold = 6384;                                                                    // BIP9 activate at 95% of 6720
+        consensus.nMinerConfirmationWindow = 6720;                                                                          // BIP9 confirmation window size
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;                                 // January 1, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;                                   // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                          // Semptember 10, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].bit = 28;                                            // REMOVE after Jan 1st 2026!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1682914801;                             // May 1, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;                                    // January 1, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;                                      // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                            // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                             // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].bit = 28;                                              // REMOVE after Jan 1st 2026!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1682914801;                               // May 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;      // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].bit = 25;                                            // REMOVE after Jan 1st 2026?
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nStartTime = 1690858741;                             // Aug 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].bit = 21;                                         // REMOVE after Jan 1st 2026?
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nStartTime = 1695265141;                          // Sept 21, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000cf555f01ea2fddaa84b9"); // Metrix (535527)
@@ -242,6 +249,7 @@ public:
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
+
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
         consensus.nPowTargetTimespanV2 = 4000;
         consensus.nPowTargetSpacing = 90;
@@ -250,15 +258,22 @@ public:
         consensus.fPoSNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
         consensus.nMinerConfirmationWindow = 2016;       // nPowTargetTimespan / nPowTargetSpacing
+
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;                                 // January 1, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;                                   // December 31, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                          // Semptember 10, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;                                    // January 1, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;                                      // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                            // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                             // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1682914801;                          // May 1, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1682914801;                               // May 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;      // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].bit = 25;                                            // REMOVE after Jan 1st 2026?
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nStartTime = 1682914801;                             // Aug 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].bit = 21;                                         // REMOVE after Jan 1st 2026?
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nStartTime = 1682914801;                          // Sept 21, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
@@ -335,12 +350,12 @@ public:
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 0; // metrix unused
         consensus.BIP16Exception = uint256();
-        consensus.BIP34Height = 0; // BIP34 activated on regtest (Used in functional tests)
+        consensus.BIP34Height = 0;             // BIP34 activated on regtest (Used in functional tests)
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0;  // BIP65 activated on regtest (Used in functional tests)
-        consensus.BIP66Height = 0;  // BIP66 activated on regtest (Used in functional tests)
-        consensus.CSVHeight = 1;    // CSV activated on regtest (Used in rpc activation tests)
-        consensus.SegwitHeight = 0; // SEGWIT is always activated on regtest unless overridden
+        consensus.BIP65Height = 0;             // BIP65 activated on regtest (Used in functional tests)
+        consensus.BIP66Height = 0;             // BIP66 activated on regtest (Used in functional tests)
+        consensus.CSVHeight = 1;               // CSV activated on regtest (Used in rpc activation tests)
+        consensus.SegwitHeight = 0;            // SEGWIT is always activated on regtest unless overridden
         consensus.MinBIP9WarningHeight = 0;
         consensus.QIP5Height = 0;
         consensus.QIP6Height = 0;
@@ -357,6 +372,7 @@ public:
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
+
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes (960 = 832 + 128; multiplier is 832)
         consensus.nPowTargetTimespanV2 = 4000;
         consensus.nPowTargetSpacing = 90;
@@ -365,15 +381,22 @@ public:
         consensus.fPoSNoRetargeting = true;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144;       // Faster than normal for regtest (144 instead of 2016)
+
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496;                          // Semptember 10, 2022
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                            // REMOVE Jan 1st 2024!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496;                             // Semptember 10, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1675225201;                          // Feb 1, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1675225201;                               // Feb 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;      // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].bit = 25;                                            // REMOVE after Jan 1st 2026?
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nStartTime = 1675225201;                             // Aug 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].bit = 21;                                         // REMOVE after Jan 1st 2026?
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nStartTime = 1675225201;                          // Sept 21, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
@@ -495,10 +518,10 @@ public:
         consensus.BIP16Exception = uint256();
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
-        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.BIP65Height = 1351;      // BIP65 activated on regtest (Used in rpc activation tests)
+        consensus.BIP66Height = 1251;      // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.QIP6Height = 1000;
-        consensus.QIP7Height = 0; // QIP7 activated on regtest
+        consensus.QIP7Height = 0;          // QIP7 activated on regtest
 
         consensus.nSubsidyHalvingInterval = 0;
         consensus.nRuleChangeActivationThreshold = 558; // 75% for testchains

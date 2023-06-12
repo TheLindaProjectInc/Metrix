@@ -17,6 +17,8 @@ enum DeploymentPos {
     DEPLOYMENT_TESTDUMMY,
     DEPLOYMENT_MIP3_DGP_UPGRADE,
     DEPLOYMENT_MIP4_FORK_SPAN,
+    DEPLOYMENT_MIP5_DGP_UPGRADE,
+    DEPLOYMENT_MIP6_REM_LEGACY_DGP,
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
