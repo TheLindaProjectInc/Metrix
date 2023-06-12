@@ -2422,6 +2422,9 @@ static void BIP9SoftForkDescPushBack(UniValue& softforks, const std::string &nam
         bip9.pushKV("bit", consensusParams.vDeployments[id].bit);
     }
     bip9.pushKV("start_time", consensusParams.vDeployments[id].nStartTime);
+    if (consensusParams.vDeployments[id].nStartHeight > -1) {
+        bip9.pushKV("start_height", consensusParams.vDeployments[id].nStartHeight);
+    }
     bip9.pushKV("timeout", consensusParams.vDeployments[id].nTimeout);
     int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, id);
     bip9.pushKV("since", since_height);
