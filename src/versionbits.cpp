@@ -11,6 +11,7 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
     int nThreshold = Threshold(params);
     int64_t nTimeStart = BeginTime(params);
     int64_t nTimeTimeout = EndTime(params);
+    int64_t nStartHeight = BeginHeight(params);
 
     // Check if this deployment is always active.
     if (nTimeStart == Consensus::BIP9Deployment::ALWAYS_ACTIVE) {
@@ -32,6 +33,11 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
         }
         if (pindexPrev->GetMedianTimePast() < nTimeStart) {
             // Optimization: don't recompute down further, as we know every earlier block will be before the start time
+            cache[pindexPrev] = ThresholdState::DEFINED;
+            break;
+        }
+        if (pindexPrev->nHeight < nStartHeight) {
+            // Don't compute if not beyond start height
             cache[pindexPrev] = ThresholdState::DEFINED;
             break;
         }
