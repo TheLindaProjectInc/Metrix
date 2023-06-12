@@ -18,8 +18,8 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
         return ThresholdState::ACTIVE;
     }
 
+    // Check if this deployment is active at activation height.
     if (pindexPrev != nullptr && pindexPrev->nHeight < nStartHeight) {
-        // Don't compute if not beyond start height
         return ThresholdState::DEFINED;
     }
 
