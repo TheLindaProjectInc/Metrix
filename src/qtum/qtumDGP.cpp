@@ -289,7 +289,6 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
 
     // If MIP6 state is not active, process legacy method..
     if (nHeight < chainparams.GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
-        if (gArgs.GetChainName() != CBaseChainParams::MAIN) {
         if (startGovMaturity) {
             dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
             if (value != dev::Address(0x0)) {
