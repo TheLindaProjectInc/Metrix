@@ -7,17 +7,17 @@
 #include <util/strencodings.h>
 
 // DGP Version 3 [MIP5] Contract Addresses - MAINNET
-static const dev::Address DGPContract_v3 = dev::Address("");
-static const dev::Address GovernanceDGP_v3 = dev::Address("");
-static const dev::Address BudgetDGP_v3 = dev::Address("");
+static const dev::Address DGPContract_v3 = dev::Address("0x0000000000000000000000000000000000000000");
+static const dev::Address GovernanceDGP_v3 = dev::Address("0x0000000000000000000000000000000000000000");
+static const dev::Address BudgetDGP_v3 = dev::Address("0x0000000000000000000000000000000000000000");
 // DGP Version 3 [MIP5] Contract Addresses - TESTNET
-static const dev::Address tDGPContract_v3 = dev::Address("");
-static const dev::Address tGovernanceDGP_v3 = dev::Address("");
-static const dev::Address tBudgetDGP_v3 = dev::Address("");
+static const dev::Address tDGPContract_v3 = dev::Address("0x0000000000000000000000000000000000000000");
+static const dev::Address tGovernanceDGP_v3 = dev::Address("0x0000000000000000000000000000000000000000");
+static const dev::Address tBudgetDGP_v3 = dev::Address("0x0000000000000000000000000000000000000000");
 // DGP Version 3 [MIP5] Contract Addresses - REGTEST
-static const dev::Address rDGPContract_v3 = dev::Address("");
-static const dev::Address rGovernanceDGP_v3 = dev::Address("");
-static const dev::Address rBudgetDGP_v3 = dev::Address("");
+static const dev::Address rDGPContract_v3 = dev::Address("0x0000000000000000000000000000000000000088");
+static const dev::Address rGovernanceDGP_v3 = dev::Address("0x0000000000000000000000000000000000000089");
+static const dev::Address rBudgetDGP_v3 = dev::Address("0x0000000000000000000000000000000000000090");
 
 // DGP Version 2 [MIP3] Contract Addresses - MAINNET
 static const dev::Address DGPContract_v2 = dev::Address("0xa523bfd08ca0365ca0f93de522c8d53590447a52");
@@ -28,9 +28,9 @@ static const dev::Address tDGPContract_v2 = dev::Address("0x710efbb1026237f0cbf3
 static const dev::Address tGovernanceDGP_v2 = dev::Address("0x4e3d35f867c895c612d38dc28a30e815c6ccd717");
 static const dev::Address tBudgetDGP_v2 = dev::Address("0xb196971bc9ed1a193fa69310986d3de5d14c59c4");
 // DGP Version 2 [MIP3] Contract Addresses - REGTEST
-static const dev::Address rDGPContract_v2 = dev::Address("0x037ffe1173cca78c4e5c8a3d1eb1001b615f75be");
-static const dev::Address rGovernanceDGP_v2 = dev::Address("0xe30458ac7711a738e21622efefbc93aa2d31cc7a");
-static const dev::Address rBudgetDGP_v2 = dev::Address("0x0ba5b180277783a5889fa6ee0aa24fbf59afe3d7");
+static const dev::Address rDGPContract_v2 = dev::Address("0x0000000000000000000000000000000000000088");
+static const dev::Address rGovernanceDGP_v2 = dev::Address("0x0000000000000000000000000000000000000089");
+static const dev::Address rBudgetDGP_v2 = dev::Address("0x0000000000000000000000000000000000000090");
 
 // DGP Version 1 [original] Contract Addresses
 static const dev::Address DGPContract_v1 = dev::Address("0x0000000000000000000000000000000000000088");
