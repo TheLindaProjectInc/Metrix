@@ -235,15 +235,16 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     bool startGovMaturity = false;
     bool winnerEligibileFix = false;
 
+    const CChainParams& chainparams = globalChainParams;
     const CBlockIndex* pindex = ::ChainActive().Tip();
     const uint64_t nHeight = pindex->nHeight;
 
     Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP6_REM_LEGACY_DGP;
     // Get state of MIP6
-    ThresholdState state = VersionBitsState(pindex, globalSealEngine->chainParams().GetConsensus(), pos, versionbitscache);
+    ThresholdState state = VersionBitsState(pindex, chainparams.GetConsensus(), pos, versionbitscache);
 
     // If MIP6 state is not active, use legacy..
-    if (nHeight < globalSealEngine->chainParams().GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
+    if (nHeight < chainparams.GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
         if (gArgs.GetChainName() == CBaseChainParams::MAIN) {
             if (::ChainActive().Tip()->nHeight > 110000 && ::ChainActive().Tip()->nHeight < 137001) {
                 defaultGasLimit = DEFAULT_GAS_LIMIT_DGP_WINNER_OP_SEND;
@@ -288,7 +289,7 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
     }
 
     // If MIP6 state is not active, process legacy method..
-    if (nHeight < globalSealEngine->chainParams().GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
+    if (nHeight < chainparams.GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
         dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
         if (startGovMaturity) {
             if (value != dev::Address(0x0)) {
