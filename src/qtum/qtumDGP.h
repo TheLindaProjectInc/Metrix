@@ -6,6 +6,19 @@
 #include <validation.h>
 #include <util/strencodings.h>
 
+// DGP Version 3 [MIP5] Contract Addresses - MAINNET
+static const dev::Address DGPContract_v3 = dev::Address("");
+static const dev::Address GovernanceDGP_v3 = dev::Address("");
+static const dev::Address BudgetDGP_v3 = dev::Address("");
+// DGP Version 3 [MIP5] Contract Addresses - TESTNET
+static const dev::Address tDGPContract_v3 = dev::Address("");
+static const dev::Address tGovernanceDGP_v3 = dev::Address("");
+static const dev::Address tBudgetDGP_v3 = dev::Address("");
+// DGP Version 3 [MIP5] Contract Addresses - REGTEST
+static const dev::Address rDGPContract_v3 = dev::Address("");
+static const dev::Address rGovernanceDGP_v3 = dev::Address("");
+static const dev::Address rBudgetDGP_v3 = dev::Address("");
+
 // DGP Version 2 [MIP3] Contract Addresses - MAINNET
 static const dev::Address DGPContract_v2 = dev::Address("0xa523bfd08ca0365ca0f93de522c8d53590447a52");
 static const dev::Address GovernanceDGP_v2 = dev::Address("0x13a5933a1b786e8016178656145e36eccd0221f6");

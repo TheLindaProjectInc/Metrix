@@ -65,29 +65,57 @@ void QtumDGP::initContractHook(int blockHeight) {
         }
     }
 
-    Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
-    // Get state of MIP3
-    ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
-    int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
+    {
+        Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
+        // Get state of MIP3
+        ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
+        int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
 
-    //LogPrintf("Checking DGP: %u ...\n", blockHeight);
-    // If MIP3 state is active, use new contracts
-    if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
-        contractVersion = 2;
-        if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
-            DGPaddresses.DGPContract = rDGPContract_v2;
-            DGPaddresses.GovernanceDGP = rGovernanceDGP_v2;
-            DGPaddresses.BudgetDGP = rBudgetDGP_v2;
-        } else if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
-            DGPaddresses.DGPContract = tDGPContract_v2;
-            DGPaddresses.GovernanceDGP = tGovernanceDGP_v2;
-            DGPaddresses.BudgetDGP = tBudgetDGP_v2;
-        } else {
-            DGPaddresses.DGPContract = DGPContract_v2;
-            DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
-            DGPaddresses.BudgetDGP = BudgetDGP_v2;
+        //LogPrintf("Checking DGP: %u ...\n", blockHeight);
+        // If MIP3 state is active, use new contracts
+        if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
+            contractVersion = 2;
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
+                DGPaddresses.DGPContract = rDGPContract_v2;
+                DGPaddresses.GovernanceDGP = rGovernanceDGP_v2;
+                DGPaddresses.BudgetDGP = rBudgetDGP_v2;
+            } else if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
+                DGPaddresses.DGPContract = tDGPContract_v2;
+                DGPaddresses.GovernanceDGP = tGovernanceDGP_v2;
+                DGPaddresses.BudgetDGP = tBudgetDGP_v2;
+            } else {
+                DGPaddresses.DGPContract = DGPContract_v2;
+                DGPaddresses.GovernanceDGP = GovernanceDGP_v2;
+                DGPaddresses.BudgetDGP = BudgetDGP_v2;
+            }
+            //LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
         }
-        //LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
+    }
+    {
+        Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP5_DGP_UPGRADE;
+        // Get state of MIP3
+        ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
+        int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
+
+        LogPrintf("Checking DGP: %u ...\n", blockHeight);
+        // If MIP5 state is active, use new contracts
+        if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
+            contractVersion = 3;
+            if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
+                DGPaddresses.DGPContract = rDGPContract_v3;
+                DGPaddresses.GovernanceDGP = rGovernanceDGP_v3;
+                DGPaddresses.BudgetDGP = rBudgetDGP_v3;
+            } else if (gArgs.GetChainName() == CBaseChainParams::TESTNET) {
+                DGPaddresses.DGPContract = tDGPContract_v3;
+                DGPaddresses.GovernanceDGP = tGovernanceDGP_v3;
+                DGPaddresses.BudgetDGP = tBudgetDGP_v3;
+            } else {
+                DGPaddresses.DGPContract = DGPContract_v3;
+                DGPaddresses.GovernanceDGP = GovernanceDGP_v3;
+                DGPaddresses.BudgetDGP = BudgetDGP_v3;
+            }
+            LogPrintf("Using new DGP %s at %u\n", DGPaddresses.GovernanceDGP, blockHeight);
+        }
     }
 }
 
