@@ -12,6 +12,7 @@
 #include <checkqueue.h>
 #include <consensus/consensus.h>
 #include <consensus/merkle.h>
+#include <consensus/params.h>
 #include <consensus/tx_check.h>
 #include <consensus/tx_verify.h>
 #include <consensus/validation.h>
@@ -19,7 +20,6 @@
 #include <flatfile.h>
 #include <hash.h>
 #include <index/txindex.h>
-#include <params.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
 #include <policy/settings.h>
