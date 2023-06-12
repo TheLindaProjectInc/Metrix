@@ -105,7 +105,6 @@ public:
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
         consensus.nPowTargetTimespanV2 = 4000;                                                                 // 66 minutes
-        consensus.nPowTargetTimespanV3 = 1800;                                                                 // 30 minutes
         consensus.nPowTargetSpacing = 90;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = true;
@@ -118,9 +117,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                          // Semptember 10, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].bit = 28;                                            // REMOVE after Jan 1st 2026!
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1682914801;                             // May 1, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].bit = 28;                                            // REMOVE after Jan 1st 2026!
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1682914801;                             // May 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000cf555f01ea2fddaa84b9"); // Metrix (535527)
@@ -245,7 +244,6 @@ public:
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
         consensus.nPowTargetTimespanV2 = 4000;
-        consensus.nPowTargetTimespanV3 = 1800; // 30 minutes
         consensus.nPowTargetSpacing = 90;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = true;
@@ -258,9 +256,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662777888;                          // Semptember 10, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1682914801;                          // May 1, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1682914801;                          // May 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
@@ -361,7 +359,6 @@ public:
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes (960 = 832 + 128; multiplier is 832)
         consensus.nPowTargetTimespanV2 = 4000;
-        consensus.nPowTargetTimespanV3 = 1800; // 30 minutes
         consensus.nPowTargetSpacing = 90;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
@@ -374,9 +371,9 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].bit = 27;                                         // REMOVE Jan 1st 2024!
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nStartTime = 1662484496;                          // Semptember 10, 2022
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nStartTime = 1675225201;                          // Feb 1, 2023
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_POS_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nStartTime = 1675225201;                          // Feb 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
