@@ -289,8 +289,8 @@ dev::Address QtumDGP::getGovernanceWinner(unsigned int blockHeight){
 
     // If MIP6 state is not active, process legacy method..
     if (nHeight < chainparams.GetConsensus().MIP6StartHeight || state != ThresholdState::ACTIVE) {
+        dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
         if (startGovMaturity) {
-            dev::Address value = getAddressFromDGP(blockHeight, getGovernanceDGP(), ParseHex("aabe2fe3"), defaultGasLimit);
             if (value != dev::Address(0x0)) {
                 std::vector<uint64_t> v = getUint64VectorFromDGP(blockHeight, getGovernanceDGP(), ParseHex("e3eece26000000000000000000000000" + HexStr(value.asBytes())));
                 if (::ChainActive().Tip()->nHeight < v[0] + 1920) {
