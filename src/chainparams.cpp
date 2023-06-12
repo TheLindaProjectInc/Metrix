@@ -100,6 +100,10 @@ public:
         consensus.MIP3Height = 766080;      // Activation block: 04ff78f5f3cae51ef9f5c817a2c5c113d3668c7a07cbb9df1e22201ff43ac9e6
         consensus.MIP4StartHeight = 920100; // Start checking for MIP4
         consensus.MIP4Height = -1;          // Activation block:
+        consensus.MIP5StartHeight = 990100; // Start checking for MIP5
+        consensus.MIP5Height = -1;          // Activation block:
+        consensus.MIP6StartHeight = 1020100; // Start checking for MIP6
+        consensus.MIP6Height = -1;          // Activation block:
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -246,6 +250,10 @@ public:
         consensus.MIP3Height = -1;          // Not used
         consensus.MIP4StartHeight = 800100; // Start checking for MIP4
         consensus.MIP4Height = -1;          // Not used
+        consensus.MIP5StartHeight = 920100; // Start checking for MIP5
+        consensus.MIP5Height = -1;          // Activation block:
+        consensus.MIP6StartHeight = 1020100; // Start checking for MIP6
+        consensus.MIP6Height = -1;          // Activation block:
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -369,6 +377,10 @@ public:
         consensus.MIP3Height = -1;
         consensus.MIP4StartHeight = 4000;
         consensus.MIP4Height = -1;
+        consensus.MIP5StartHeight = 5000; // Start checking for MIP5
+        consensus.MIP5Height = -1;        // Activation block:
+        consensus.MIP6StartHeight = 6000; // Start checking for MIP6
+        consensus.MIP6Height = -1;        // Activation block:
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9

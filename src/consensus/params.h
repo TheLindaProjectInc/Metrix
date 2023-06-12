@@ -91,10 +91,18 @@ struct Params {
     int MIP3StartHeight;
     /** Block height at which MIP3 becomes active */
     int MIP3Height;
-    /** Block height at which MIP3 becomes available */
+    /** Block height at which MIP4 becomes available */
     int MIP4StartHeight;
-    /** Block height at which MIP3 becomes active */
+    /** Block height at which MIP4 becomes active */
     int MIP4Height;
+    /** Block height at which MIP5 becomes available */
+    int MIP5StartHeight;
+    /** Block height at which MIP5 becomes active */
+    int MIP5Height;
+    /** Block height at which MIP6 becomes available */
+    int MIP6StartHeight;
+    /** Block height at which MIP6 becomes active */
+    int MIP6Height;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
