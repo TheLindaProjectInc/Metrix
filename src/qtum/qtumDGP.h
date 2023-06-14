@@ -15,9 +15,9 @@ static const dev::Address tDGPContract_v3 = dev::Address("0x00000000000000000000
 static const dev::Address tGovernanceDGP_v3 = dev::Address("0x0000000000000000000000000000000000000000");
 static const dev::Address tBudgetDGP_v3 = dev::Address("0x0000000000000000000000000000000000000000");
 // DGP Version 3 [MIP5] Contract Addresses - REGTEST
-static const dev::Address rDGPContract_v3 = dev::Address("0x0000000000000000000000000000000000000088");
-static const dev::Address rGovernanceDGP_v3 = dev::Address("0x0000000000000000000000000000000000000089");
-static const dev::Address rBudgetDGP_v3 = dev::Address("0x0000000000000000000000000000000000000090");
+static const dev::Address rDGPContract_v3 = dev::Address("0x924bb7d6517027e3bd3fe5d93260961ee718038c");
+static const dev::Address rGovernanceDGP_v3 = dev::Address("0xb67386c7cb374871add6095f43634d538bfdc34d");
+static const dev::Address rBudgetDGP_v3 = dev::Address("0x4ab8cd9f3d7b1740cf728df765159662abef7320");
 
 // DGP Version 2 [MIP3] Contract Addresses - MAINNET
 static const dev::Address DGPContract_v2 = dev::Address("0xa523bfd08ca0365ca0f93de522c8d53590447a52");
