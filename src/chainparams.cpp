@@ -258,7 +258,7 @@ public:
         consensus.MIP4Height = -1;           // Not used
         consensus.MIP5StartHeight = 920100;  // Start checking for MIP5
         consensus.MIP5Height = -1;           // Activation block:
-        consensus.MIP6StartHeight = 1020100; // Start checking for MIP6
+        consensus.MIP6StartHeight = 970700;  // Start checking for MIP6
         consensus.MIP6Height = -1;           // Activation block:
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
