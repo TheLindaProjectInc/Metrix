@@ -138,10 +138,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000cf555f01ea2fddaa84b9"); // Metrix (535527)
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000150eb4505eac09858445f"); // Metrix (950000)
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0xbe1e9fc938b7b5011ec15bf8d014ac86d5a9a869ac1cf94d301cb622cdb1573f"); // 535527
+        consensus.defaultAssumeValid = uint256S("0xd290afcbb4d7ab014ba9bd12f20f6a6fc7119e57badbf5a30914c1bc3c0ee342"); // 950000
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -205,6 +205,7 @@ public:
                 {701281, uint256S("0x0385e7028c76cfff95b8d2b4cebfa49ac90cc5a986ba90ce1cfa65786744ee4f")},
                 {706252, uint256S("0x20a682b85de3f3d66edb5850b16803a4a3991cf24fdb6bf97d12367f7876d3b5")},
                 {831858, uint256S("0x2d3819e8744490f900e8b2e49b752b56c5f4685de4418209fdb3f88b22d6f270")},
+                {950000, uint256S("0xd290afcbb4d7ab014ba9bd12f20f6a6fc7119e57badbf5a30914c1bc3c0ee342")},
             }};
 
         chainTxData = ChainTxData{
@@ -294,10 +295,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000000000000014b014b"); // metrix
+        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000001d7ca9fb8adfb66714f70"); // metrix 970000
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x00");
+        consensus.defaultAssumeValid = uint256S("0xfdd0c420bb7d0f7de4e31c206722f128e133acf0d2b483f7869af17a5b955675"); // metrix 970000
 
         pchMessageStart[0] = 0xcf;
         pchMessageStart[1] = 0xf3;
@@ -339,6 +340,8 @@ public:
                 {79475, uint256S("0x72ddc370485496c1d2f96d52d00490dbb586060e770dfa21d139e5af7126dfd9")},
                 {200000, uint256S("0xcc9a430bee8496b7975cc2e6c70d4f65fdba812f4c4ea0ba7005ccf2426d35a2")},
                 {400000, uint256S("0xb06b177e948c1f32f6fa0f892c30b931b61334abbe21e4e5bbde5ded74f28fed")},
+                {700000, uint256S("0x6b425fbb117ec454758cc03aaa90f1d73deef90b7bb62b529a99e4f17d371f2c")},
+                {970000, uint256S("0xfdd0c420bb7d0f7de4e31c206722f128e133acf0d2b483f7869af17a5b955675")},
             }};
 
         chainTxData = ChainTxData{
