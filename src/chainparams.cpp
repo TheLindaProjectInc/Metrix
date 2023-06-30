@@ -253,7 +253,7 @@ public:
         consensus.minMIP2Height = 681822;    // height of chain path correction due to goverance contract bug
         consensus.MIP2Height = 685000;       // Activation block: this doesnt effect testnet?
         consensus.MIP3StartHeight = 700000;  // Start checking for MIP3
-        consensus.MIP3Height = -1;           // Not used
+        consensus.MIP3Height = 725760;       // Activation height for MIP3
         consensus.MIP4StartHeight = 800100;  // Start checking for MIP4
         consensus.MIP4Height = -1;           // Not used
         consensus.MIP5StartHeight = 920100;  // Start checking for MIP5
