@@ -66,15 +66,11 @@ void QtumDGP::initContractHook(int blockHeight) {
     }
 
     {
-        //Consensus::DeploymentPos pos = Consensus::DeploymentPos::DEPLOYMENT_MIP3_DGP_UPGRADE;
-        // Get state of MIP3
-        //ThresholdState state = VersionBitsState(pblockindex, consensusParams, pos, versionbitscache);
-        //int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, pos);
+        // Get lockin of MIP3
         int64_t since_height = consensusParams.MIP3Height;
 
         //LogPrintf("Checking DGP: %u ...\n", blockHeight);
         // If MIP3 state is active, use new contracts
-        //if (state == ThresholdState::ACTIVE && blockHeight >= since_height) {
         if (blockHeight >= since_height) {
             contractVersion = 2;
             if (gArgs.GetChainName() == CBaseChainParams::REGTEST) {
