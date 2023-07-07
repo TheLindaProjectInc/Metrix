@@ -11,10 +11,16 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
     int nThreshold = Threshold(params);
     int64_t nTimeStart = BeginTime(params);
     int64_t nTimeTimeout = EndTime(params);
+    int64_t nStartHeight = BeginHeight(params);
 
     // Check if this deployment is always active.
     if (nTimeStart == Consensus::BIP9Deployment::ALWAYS_ACTIVE) {
         return ThresholdState::ACTIVE;
+    }
+
+    // Check if this deployment is active at activation height.
+    if (pindexPrev != nullptr && pindexPrev->nHeight < nStartHeight) {
+        return ThresholdState::DEFINED;
     }
 
     // A block's state is always the same as that of the first of its period, so it is computed based on a pindexPrev whose height equals a multiple of nPeriod - 1.
@@ -32,6 +38,11 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
         }
         if (pindexPrev->GetMedianTimePast() < nTimeStart) {
             // Optimization: don't recompute down further, as we know every earlier block will be before the start time
+            cache[pindexPrev] = ThresholdState::DEFINED;
+            break;
+        }
+        if (pindexPrev->nHeight < nStartHeight) {
+            // Don't compute if not beyond start height
             cache[pindexPrev] = ThresholdState::DEFINED;
             break;
         }
@@ -53,7 +64,7 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
             case ThresholdState::DEFINED: {
                 if (pindexPrev->GetMedianTimePast() >= nTimeTimeout) {
                     stateNext = ThresholdState::FAILED;
-                } else if (pindexPrev->GetMedianTimePast() >= nTimeStart) {
+                } else if (pindexPrev->GetMedianTimePast() >= nTimeStart && pindexPrev->nHeight >= nStartHeight) {
                     stateNext = ThresholdState::STARTED;
                 }
                 break;
@@ -170,12 +181,15 @@ private:
 protected:
     int64_t BeginTime(const Consensus::Params& params) const override { return params.vDeployments[id].nStartTime; }
     int64_t EndTime(const Consensus::Params& params) const override { return params.vDeployments[id].nTimeout; }
+    int64_t BeginHeight(const Consensus::Params& params) const override { return params.vDeployments[id].nStartHeight; }
     int Period(const Consensus::Params& params) const override { return params.nMinerConfirmationWindow; }
     int Threshold(const Consensus::Params& params) const override { return params.nRuleChangeActivationThreshold; }
 
     bool Condition(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {
-        return (((pindex->nVersion & VERSIONBITS_TOP_MASK) == VERSIONBITS_TOP_BITS) && (pindex->nVersion & Mask(params)) != 0);
+        return (pindex->nHeight >= BeginHeight(params) &&
+                ((pindex->nVersion & VERSIONBITS_TOP_MASK) == VERSIONBITS_TOP_BITS) &&
+                (pindex->nVersion & Mask(params)) != 0);
     }
 
 public:

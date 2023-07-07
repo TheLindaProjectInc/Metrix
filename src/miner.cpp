@@ -451,6 +451,7 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     }
     if (gArgs.GetBoolArg("-disablecontractstaking", false))
     {
+        // Contract staking is disabled for the staker
         return false;
     }
     
@@ -467,6 +468,7 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     if(!convert.extractionQtumTransactions(resultConverter)){
         //this check already happens when accepting txs into mempool
         //therefore, this can only be triggered by using raw transactions on the staker itself
+        LogPrintf("AttemptToAddContractToBlock(): Fail to extract contacts from tx %s\n", iter->GetTx().GetHash().ToString());
         return false;
     }
     std::vector<QtumTransaction> qtumTransactions = resultConverter.first;
@@ -475,15 +477,20 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
         txGas += qtumTransaction.gas();
         if(txGas > txGasLimit) {
             // Limit the tx gas limit by the soft limit if such a limit has been specified.
+            LogPrintf("AttemptToAddContractToBlock(): The gas needed is bigger than -staker-max-tx-gas-limit for the contract tx %s\n", iter->GetTx().GetHash().ToString());
             return false;
         }
 
         if(bceResult.usedGas + qtumTransaction.gas() > softBlockGasLimit){
-            //if this transaction's gasLimit could cause block gas limit to be exceeded, then don't add it
+            // If this transaction's gasLimit could cause block gas limit to be exceeded, then don't add it
+            // Log if the contract is the only contract tx
+            if(bceResult.usedGas == 0)
+                LogPrintf("AttemptToAddContractToBlock(): The gas needed is bigger than -staker-soft-block-gas-limit for the contract tx %s\n", iter->GetTx().GetHash().ToString());
             return false;
         }
         if(qtumTransaction.gasPrice() < minGasPrice){
             //if this transaction's gasPrice is less than the current DGP minGasPrice don't add it
+            LogPrintf("AttemptToAddContractToBlock(): The gas price is less than -staker-min-tx-gas-price for the contract tx %s\n", iter->GetTx().GetHash().ToString());
             return false;
         }
     }
@@ -493,6 +500,7 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
         //error, don't add contract
         globalState->setRoot(oldHashStateRoot);
         globalState->setRootUTXO(oldHashUTXORoot);
+        LogPrintf("AttemptToAddContractToBlock(): Perform byte code fails for the contract tx %s\n", iter->GetTx().GetHash().ToString());
         return false;
     }
 
@@ -500,13 +508,17 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     if(!exec.processingResults(testExecResult)){
         globalState->setRoot(oldHashStateRoot);
         globalState->setRootUTXO(oldHashUTXORoot);
+        LogPrintf("AttemptToAddContractToBlock(): Processing results fails for the contract tx %s\n", iter->GetTx().GetHash().ToString());
         return false;
     }
 
     if(bceResult.usedGas + testExecResult.usedGas > softBlockGasLimit){
-        //if this transaction could cause block gas limit to be exceeded, then don't add it
+        // If this transaction could cause block gas limit to be exceeded, then don't add it
         globalState->setRoot(oldHashStateRoot);
         globalState->setRootUTXO(oldHashUTXORoot);
+        // Log if the contract is the only contract tx
+        if(bceResult.usedGas == 0)
+            LogPrintf("AttemptToAddContractToBlock(): The gas used is bigger than -staker-soft-block-gas-limit for the contract tx %s\n", iter->GetTx().GetHash().ToString());
         return false;
     }
 
@@ -606,7 +618,7 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     PKHash senderAddress;
     txnouttype txType;
     if(!ExtractDestination(coinstakeTx->vout[1].scriptPubKey, addressBit, &txType)) {
-        LogPrintf("IsRewardToSelf: Could not extract sender pubkey from output.\n");
+        LogPrint(BCLog::DGP, "IsRewardToSelf: Could not extract sender pubkey from output.\n");
         return false;
     }
 
@@ -615,7 +627,7 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     // Get convert the govWinner hex to a PK address
     std::string hexAddress = HexStr(addrWinner.asBytes());
     if (hexAddress.size() != 40) {
-        LogPrintf("IsRewardToSelf: Invalid pubkeyhash hex size (should be 40 hex characters)\n");
+        LogPrint(BCLog::DGP, "IsRewardToSelf: Invalid pubkeyhash hex size (should be 40 hex characters)\n");
         return false;
     }
     PKHash raw;
@@ -627,7 +639,7 @@ bool BlockAssembler::IsRewardToSelf(dev::Address addrWinner, CMutableTransaction
     // If these match then the staker is choosing itsself as winning gov.
     // In rare cases this causes bad consensus, and should just be avoided.
     if (currentAddress == govWinnerStr) {
-        LogPrintf("IsRewardToSelf: Gov Winner : %s, Staker Address : %s, gov reward abandoned. The winner cannot be the staker.\n", govWinnerStr, currentAddress);
+        LogPrint(BCLog::DGP, "IsRewardToSelf: Gov Winner : %s, Staker Address : %s, gov reward abandoned. The winner cannot be the staker.\n", govWinnerStr, currentAddress);
         return true;
     }
 

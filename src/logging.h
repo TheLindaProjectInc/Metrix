@@ -58,6 +58,7 @@ namespace BCLog {
         LEVELDB     = (1 << 20),
         COINSTAKE   = (1 << 21),
         HTTPPOLL    = (1 << 22),
+        DGP         = (1 << 23),
         ALL         = ~(uint32_t)0,
     };
 

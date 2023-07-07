@@ -1,0 +1,36 @@
+name: C/C++ CI Build
+
+on:
+  push:
+    branches: [ "master"]
+  pull_request:
+    branches: [ "master", "develop" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      # sync repo modules
+      - name: Pull & update submodules recursively
+        run: git submodule update --init --recursive
+      # install deps
+      - name: Install deps
+        run: sudo apt-get install libgmp3-dev libssl-dev libevent-dev libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+        shell: bash
+      # install berkley db..
+      - name: Run build berkley v4.8 script
+        run: sudo chmod 755 ./.github/scripts/install_bdb_v4-8.sh && ./.github/scripts/install_bdb_v4-8.sh
+        shell: bash
+      # setup project
+      - name: Set linkages
+        run: export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
+        shell: bash
+      - name: Run autogen
+        run: ./autogen.sh
+      # configure project
+      - name: Run configure
+        run: ./configure --disable-tests --disable-bench
+      # build project
+      - name: Run build make
+        run: make -j 3
