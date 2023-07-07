@@ -130,11 +130,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP4_FORK_SPAN].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;      // No timeout
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].bit = 25;                                            // REMOVE after Jan 1st 2026?
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nStartHeight = consensus.MIP5StartHeight;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nStartTime = 1690858741;                             // Aug 1, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nStartTime = 1688694445;                             // July 6, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;    // No timeout
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].bit = 21;                                         // REMOVE after Jan 1st 2026?
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nStartHeight = consensus.MIP6StartHeight;
-        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nStartTime = 1695265141;                          // Sept 21, 2023
+        consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nStartTime = 1688694445;                          // July 6, 2023
         consensus.vDeployments[Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // No timeout
 
         // The best chain should have at least this much work.
