@@ -2422,6 +2422,9 @@ static void BIP9SoftForkDescPushBack(UniValue& softforks, const std::string &nam
         bip9.pushKV("bit", consensusParams.vDeployments[id].bit);
     }
     bip9.pushKV("start_time", consensusParams.vDeployments[id].nStartTime);
+    if (consensusParams.vDeployments[id].nStartHeight > -1) {
+        bip9.pushKV("start_height", consensusParams.vDeployments[id].nStartHeight);
+    }
     bip9.pushKV("timeout", consensusParams.vDeployments[id].nTimeout);
     int64_t since_height = VersionBitsTipStateSinceHeight(consensusParams, id);
     bip9.pushKV("since", since_height);
@@ -2541,7 +2544,10 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     BuriedForkDescPushBack(softforks, "segwit", consensusParams.SegwitHeight);
     BuriedForkDescPushBack(softforks, "mip1", consensusParams.MIP1Height);
     BuriedForkDescPushBack(softforks, "mip2", consensusParams.MIP2Height);
-    BIP9SoftForkDescPushBack(softforks, "mip3", consensusParams, Consensus::DEPLOYMENT_MIP3_DGP_UPGRADE);
+    BuriedForkDescPushBack(softforks, "mip3", consensusParams.MIP3Height);
+    BIP9SoftForkDescPushBack(softforks, "mip4", consensusParams, Consensus::DEPLOYMENT_MIP4_FORK_SPAN);
+    BIP9SoftForkDescPushBack(softforks, "mip5", consensusParams, Consensus::DEPLOYMENT_MIP5_DGP_UPGRADE);
+    BIP9SoftForkDescPushBack(softforks, "mip6", consensusParams, Consensus::DEPLOYMENT_MIP6_REM_LEGACY_DGP);
     BIP9SoftForkDescPushBack(softforks, "testdummy", consensusParams, Consensus::DEPLOYMENT_TESTDUMMY);
     obj.pushKV("softforks",             softforks);
 

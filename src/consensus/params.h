@@ -6,19 +6,19 @@
 #ifndef BITCOIN_CONSENSUS_PARAMS_H
 #define BITCOIN_CONSENSUS_PARAMS_H
 
-#include <uint256.h>
 #include <limits>
 #include <map>
 #include <string>
+#include <uint256.h>
 
 namespace Consensus {
 
-enum DeploymentPos
-{
+enum DeploymentPos {
     DEPLOYMENT_TESTDUMMY,
-    DEPLOYMENT_CHAIN_PATH,
-    DEPLOYMENT_MIP2_FIX,
     DEPLOYMENT_MIP3_DGP_UPGRADE,
+    DEPLOYMENT_MIP4_FORK_SPAN,
+    DEPLOYMENT_MIP5_DGP_UPGRADE,
+    DEPLOYMENT_MIP6_REM_LEGACY_DGP,
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
@@ -33,6 +33,8 @@ struct BIP9Deployment {
     int64_t nStartTime;
     /** Timeout/expiry MedianTime for the deployment attempt. */
     int64_t nTimeout;
+    /** Start block height for version bits miner confirmation.*/
+    int64_t nStartHeight;
 
     /** Constant for nTimeout very far in the future. */
     static constexpr int64_t NO_TIMEOUT = std::numeric_limits<int64_t>::max();
@@ -91,6 +93,18 @@ struct Params {
     int MIP3StartHeight;
     /** Block height at which MIP3 becomes active */
     int MIP3Height;
+    /** Block height at which MIP4 becomes available */
+    int MIP4StartHeight;
+    /** Block height at which MIP4 becomes active */
+    int MIP4Height;
+    /** Block height at which MIP5 becomes available */
+    int MIP5StartHeight;
+    /** Block height at which MIP5 becomes active */
+    int MIP5Height;
+    /** Block height at which MIP6 becomes available */
+    int MIP6StartHeight;
+    /** Block height at which MIP6 becomes active */
+    int MIP6Height;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -109,9 +123,13 @@ struct Params {
     int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
     int64_t nPowTargetTimespanV2;
+    int64_t nPowTargetTimespanV3;
     int64_t DifficultyAdjustmentInterval(int height) const
     {
-        int64_t targetSpacing = height < QIP9Height ? nPowTargetTimespan : nPowTargetTimespanV2;
+        int64_t targetSpacing = nPowTargetTimespan;
+        if (height >= QIP9Height) {
+            targetSpacing = nPowTargetTimespanV2;
+        }
         return targetSpacing / nPowTargetSpacing;
     }
     uint256 nMinimumChainWork;
