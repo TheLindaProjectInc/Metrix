@@ -98,11 +98,11 @@ public:
         consensus.MIP2Height = 685000;       // Activation block: f307d959abb16a49ded03486c2074128de3602cfd46a9b5369060d1d95e8c6e5
         consensus.MIP3StartHeight = 702000;  // Start checking for MIP3 - after last halving (701280)
         consensus.MIP3Height = 766080;       // Activation block: 04ff78f5f3cae51ef9f5c817a2c5c113d3668c7a07cbb9df1e22201ff43ac9e6
-        consensus.MIP4StartHeight = 920100;  // Start checking for MIP4
+        consensus.MIP4StartHeight = 976720;  // Start checking for MIP4
         consensus.MIP4Height = -1;           // Activation block:
-        consensus.MIP5StartHeight = 990100;  // Start checking for MIP5
+        consensus.MIP5StartHeight = 983440;  // Start checking for MIP5
         consensus.MIP5Height = -1;           // Activation block:
-        consensus.MIP6StartHeight = 1020100; // Start checking for MIP6
+        consensus.MIP6StartHeight = 996880;  // Start checking for MIP6
         consensus.MIP6Height = -1;           // Activation block:
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
