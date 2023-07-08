@@ -6,6 +6,7 @@ fileDesc="Berkley DB version 4.8.30"
 fileUrl="http://download.oracle.com/berkeley-db/"
 fileName="db-4.8.30"
 fileExt=".zip"
+fileHash="4f538b56681a871cc71658ed9a6120081b74b474eaa73ba2c958abea04cc98ce"
 filePath="${fileUrl}${fileName}${fileExt}"
 
 # Patch lock for runonce
@@ -16,7 +17,7 @@ scriptRan="script_built.ack.lock"
 # Archive unpacking package
 libZip="unzip"
 
-version="0.1"
+version="0.2"
 
 #############################
 #DO NOT EDIT BELOW THIS LINE#
@@ -54,7 +55,7 @@ function msgc {
 msgc "=======================================" $dark_gray
 msgc "> Installing ${fileDesc}" $green
 msgc ">> Using Script v${version}" $gold
-sleep 3
+sleep 1
 cd ~
 
 # Check if run already..
@@ -86,6 +87,22 @@ cd ${dirName}
 if [ ! -d ${fileName} ]; then
   msgc "> Fetching ${fileDesc} ..." $cyan
   wget ${filePath}
+
+  msgc "> Checking downloaded file hash..." $cyan
+  sum=$(echo "${fileHash}  ${fileName}${fileExt}" | sha256sum --check )
+  if [ $(echo "${sum}" | grep -c "OK") -eq 0 ]; then
+    msgc "=======================================================" $red
+    msgc ">>>>  Checksum match failed for '${fileName}${fileExt}'  <<<<" $dark_red
+    sum=$(sha256sum ${fileName}${fileExt})
+    msgc "Result:   ${sum}" $red
+    msgc "Expected: ${fileHash}" $gold
+    msgc "\nBUILD ABORTED..." $yellow
+    sleep 1
+    exit 1
+  else
+    msgc ">> Checksum Passed for '${fileName}${fileExt}'" $green
+  fi
+
   sleep 1
   msgc "> UnZipping ${fileDesc} ..." $cyan
   unzip ${fileName}${fileExt}
