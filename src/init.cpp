@@ -1346,6 +1346,7 @@ bool AppInitMain(NodeContext& node)
             // Do this first since it both loads a bunch of debug.log into memory,
             // and because this needs to happen before any other debug.log printing
             LogInstance().ShrinkDebugFile();
+            LogInstance().ShrinkVMLogFile();
         }
     }
     if (!LogInstance().StartLogging()) {

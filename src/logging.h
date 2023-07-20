@@ -123,6 +123,7 @@ namespace BCLog {
         void DisconnectTestLogger();
 
         void ShrinkDebugFile();
+        void ShrinkVMLogFile();
 
         uint32_t GetCategoryMask() const { return m_categories.load(); }
 
@@ -134,6 +135,7 @@ namespace BCLog {
         bool WillLogCategory(LogFlags category) const;
 
         bool DefaultShrinkDebugFile() const;
+        bool DefaultShrinkVMLogFile() const;
     };
 
 } // namespace BCLog
