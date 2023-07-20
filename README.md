@@ -32,7 +32,7 @@ These are some resources that might be helpful in understanding Metrix.
 
 Basic usage resources:
 
-* [User guide Wiki](https://wiki.metrixcoin.com)
+* [User guide Wiki](https://docs.metrixcoin.com)
 * [Block explorer](https://explorer.metrixcoin.com)
 * [Testnet Block explorer](https://testnet-explorer.metrixcoin.com)
 
