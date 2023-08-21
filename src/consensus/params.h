@@ -126,14 +126,6 @@ struct Params {
     int64_t nPowTargetTimespan;
     int64_t nPowTargetTimespanV2;
     int64_t nPowTargetTimespanV3;
-    int64_t DifficultyAdjustmentInterval(int height) const
-    {
-        int64_t targetSpacing = nPowTargetTimespan;
-        if (height >= QIP9Height) {
-            targetSpacing = nPowTargetTimespanV2;
-        }
-        return targetSpacing / nPowTargetSpacing;
-    }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
     int nLastPOWBlock;
@@ -145,9 +137,19 @@ struct Params {
     int nCheckpointSpan;
     uint32_t nStakeTimestampMask;
     uint32_t nStakeTimestampMaskV2;
+    int64_t nBlocktimeDownscaleFactor;
+    int64_t DifficultyAdjustmentInterval(int height) const
+    {
+        int64_t targetSpacing =  height < QIP9Height ? nPowTargetSpacing : nPowTargetTimespanV2;
+        return targetSpacing / nPowTargetSpacing;
+    }
     int64_t StakeTimestampMask(int height) const
     {
         return height < MIP7Height ? nStakeTimestampMask : nStakeTimestampMaskV2;
+    }
+    int64_t BlocktimeDownscaleFactor(int height) const
+    {
+        return height < MIP7Height ? 1 : nBlocktimeDownscaleFactor;
     }
 };
 } // namespace Consensus
