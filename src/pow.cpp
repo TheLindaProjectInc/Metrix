@@ -45,8 +45,10 @@ inline arith_uint256 GetLimit(int nHeight, const Consensus::Params& params, bool
     if(fProofOfStake) {
         if(nHeight < params.QIP9Height) {
             return UintToArith256(params.posLimit);
-        } else {
+        } else if(nHeight < params.MIP7Height)  {
             return UintToArith256(params.QIP9PosLimit);
+        } else {
+            return UintToArith256(params.RBTPosLimit);
         }
     } else {
         return UintToArith256(params.powLimit);
