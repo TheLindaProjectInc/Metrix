@@ -1490,7 +1490,7 @@ bool GetCoinAge(int nHeight, const Consensus::Params& consensusParams, uint64_t&
         if (nCoinMaturity < COINBASE_MATURITY)
             continue;  // only count coins meeting min age requirement
 
-        int64_t nCoinTime = nCoinMaturity * consensusParams.nPowTargetSpacing;
+        int64_t nCoinTime = nCoinMaturity * consensusParams.TargetSpacing(nHeight);
         bnCentSecond += arith_uint256(nValueIn) * nCoinTime / CENT;
     }
 
@@ -5343,7 +5343,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
         nHeight = (*mi).second->nHeight + 1;
     }
-    
+
     if (block.IsProofOfStake() &&  block.GetBlockTime() > FutureDrift(GetAdjustedTime(), nHeight, consensusParams))
         return error("CheckBlock() : block timestamp too far in the future");
 
@@ -5879,7 +5879,7 @@ bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& headers, CValidatio
     }
     if (NotifyHeaderTip()) {
         if (::ChainstateActive().IsInitialBlockDownload() && ppindex && *ppindex) {
-            LogPrintf("Synchronizing blockheaders, height: %d (~%.2f%%)\n", (*ppindex)->nHeight, 100.0/((*ppindex)->nHeight+(GetAdjustedTime() - (*ppindex)->GetBlockTime()) / Params().GetConsensus().nPowTargetSpacing) * (*ppindex)->nHeight);
+            LogPrintf("Synchronizing blockheaders, height: %d (~%.2f%%)\n", (*ppindex)->nHeight, 100.0/((*ppindex)->nHeight+(GetAdjustedTime() - (*ppindex)->GetBlockTime()) / Params().GetConsensus().TargetSpacing((*ppindex)->nHeight)) * (*ppindex)->nHeight);
         }
     }
     return true;
