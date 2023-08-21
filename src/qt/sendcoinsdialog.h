@@ -62,6 +62,7 @@ private:
     WalletModel *model;
     bool fNewRecipientAllowed;
     const PlatformStyle *platformStyle;
+    int64_t targetSpacing;
 
     // Process WalletModel::SendCoinsReturn and generate a pair consisting
     // of a message and message flags for use in Q_EMIT message().
@@ -69,6 +70,8 @@ private:
     void processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg = QString());
     // Update the passed in CCoinControl with state from the GUI
     void updateCoinControlState(CCoinControl& ctrl);
+    // Update the target selector item text
+    QString targetSelectorItemText(const int n);
 
 private Q_SLOTS:
     void on_sendButton_clicked();
