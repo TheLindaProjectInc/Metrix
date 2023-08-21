@@ -112,7 +112,7 @@ public:
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
         consensus.nPowTargetTimespanV2 = 4000;                                                                 // 66 minutes
         consensus.nPowTargetSpacing = 90;
-        consensus.nPowTargetSpacingv2 = 30;
+        consensus.nRBTPowTargetSpacing = 30;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = true;
         consensus.fPoSNoRetargeting = false;
@@ -226,7 +226,7 @@ public:
         consensus.nEnableHeaderSignatureHeight = 0;
         consensus.nCheckpointSpan = COINBASE_MATURITY;
         consensus.nStakeTimestampMask = 15;
-        consensus.nStakeTimestampMaskV2 = 7;
+        consensus.nRBTStakeTimestampMask = 7;
         consensus.nBlocktimeDownscaleFactor = 3;
     }
 };
@@ -273,7 +273,7 @@ public:
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes
         consensus.nPowTargetTimespanV2 = 4000;
         consensus.nPowTargetSpacing = 90;
-        consensus.nPowTargetSpacingv2 = 30;
+        consensus.nRBTPowTargetSpacing = 30;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = true;
         consensus.fPoSNoRetargeting = false;
@@ -365,7 +365,7 @@ public:
         consensus.nEnableHeaderSignatureHeight = 0;
         consensus.nCheckpointSpan = COINBASE_MATURITY;
         consensus.nStakeTimestampMask = 15;
-        consensus.nStakeTimestampMaskV2 = 7;
+        consensus.nRBTStakeTimestampMask = 7;
         consensus.nBlocktimeDownscaleFactor = 3;
     }
 };
@@ -412,7 +412,7 @@ public:
         consensus.nPowTargetTimespan = 16 * 60;                                                                // 16 minutes (960 = 832 + 128; multiplier is 832)
         consensus.nPowTargetTimespanV2 = 4000;
         consensus.nPowTargetSpacing = 90;
-        consensus.nPowTargetSpacingv2 = 30;
+        consensus.nRBTPowTargetSpacing = 30;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
         consensus.fPoSNoRetargeting = true;
@@ -484,7 +484,7 @@ public:
         consensus.nEnableHeaderSignatureHeight = 0;
         consensus.nCheckpointSpan = COINBASE_MATURITY;
         consensus.nStakeTimestampMask = 15;
-        consensus.nStakeTimestampMaskV2 = 7;
+        consensus.nRBTStakeTimestampMask = 7;
         consensus.nBlocktimeDownscaleFactor = 3;
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 112);
@@ -667,12 +667,12 @@ void UpdateDifficultyChangeBlockHeight(int nHeight)
     const_cast<CChainParams*>(globalChainParams.get())->UpdateDifficultyChangeBlockHeight(nHeight);
 }
 
-void CChainParams::UpdateBlockTimeHeight(int nHeight)
+void CChainParams::UpdateReduceBlocktimeHeight(int nHeight)
 {
     consensus.MIP7Height = nHeight;
 }
 
-void UpdateBlockTimeHeight(int nHeight)
+void UpdateReduceBlocktimeHeight(int nHeight)
 {
-    const_cast<CChainParams*>(globalChainParams.get())->UpdateBlockTimeHeight(nHeight);
+    const_cast<CChainParams*>(globalChainParams.get())->UpdateReduceBlocktimeHeight(nHeight);
 }

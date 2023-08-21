@@ -105,7 +105,7 @@ struct Params {
     int MIP6StartHeight;
     /** Block height at which MIP6 becomes active */
     int MIP6Height;
-        /** Block height at which Block Time becomes active */
+    /** Block height at which MIP7 becomes active */
     int MIP7Height;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
@@ -124,7 +124,7 @@ struct Params {
     bool fPowNoRetargeting;
     bool fPoSNoRetargeting;
     int64_t nPowTargetSpacing;
-    int64_t nPowTargetSpacingV2;
+    int64_t nRBTPowTargetSpacing;
     int64_t nPowTargetTimespan;
     int64_t nPowTargetTimespanV2;
     int64_t nPowTargetTimespanV3;
@@ -138,7 +138,7 @@ struct Params {
     /** Block sync-checkpoint span*/
     int nCheckpointSpan;
     uint32_t nStakeTimestampMask;
-    uint32_t nStakeTimestampMaskV2;
+    uint32_t nRBTStakeTimestampMask;
     int64_t nBlocktimeDownscaleFactor;
     int64_t DifficultyAdjustmentInterval(int height) const
     {
@@ -147,7 +147,7 @@ struct Params {
     }
     int64_t StakeTimestampMask(int height) const
     {
-        return height < MIP7Height ? nStakeTimestampMask : nStakeTimestampMaskV2;
+        return height < MIP7Height ? nStakeTimestampMask : nRBTStakeTimestampMask;
     }
     int64_t BlocktimeDownscaleFactor(int height) const
     {
@@ -156,7 +156,7 @@ struct Params {
 
     int64_t TargetSpacing(int height) const
     {
-        return height < MIP7Height ? nPowTargetSpacing : nPowTargetSpacingV2;
+        return height < MIP7Height ? nPowTargetSpacing : nRBTPowTargetSpacing;
     }
 };
 } // namespace Consensus

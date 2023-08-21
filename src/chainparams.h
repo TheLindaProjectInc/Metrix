@@ -92,7 +92,7 @@ public:
     void UpdateBtcEcrecoverBlockHeight(int nHeight);
     void UpdateConstantinopleBlockHeight(int nHeight);
     void UpdateDifficultyChangeBlockHeight(int nHeight);
-    void UpdateBlockTimeHeight(int nHeight);
+    void UpdateReduceBlocktimeHeight(int nHeight);
 
 protected:
     CChainParams() {}
@@ -158,6 +158,6 @@ void UpdateDifficultyChangeBlockHeight(int nHeight);
 /**
  * Allows modifying the block time height regtest parameter.
  */
-void UpdateBlockTimeHeight(int nHeight);
+void UpdateReduceBlocktimeHeight(int nHeight);
 
 #endif // BITCOIN_CHAINPARAMS_H
