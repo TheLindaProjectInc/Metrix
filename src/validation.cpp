@@ -220,7 +220,10 @@ static FILE* OpenUndoFile(const FlatFilePos &pos, bool fReadOnly = false);
 static FlatFileSeq BlockFileSeq();
 static FlatFileSeq UndoFileSeq();
 
-int64_t FutureDrift(uint32_t nTime) { return nTime + STAKE_TIMESTAMP_MASK; }
+int64_t FutureDrift(uint32_t nTime, int nHeight, const Consensus::Params& consensusParams)
+{
+    return nTime + consensusParams.StakeTimestampMask(nHeight);
+}
 
 bool CheckFinalTx(const CTransaction &tx, int flags)
 {
@@ -5187,13 +5190,15 @@ bool SignBlock(std::shared_ptr<CBlock> pblock, CWallet& wallet, const CAmount& n
     CKey key;
     CMutableTransaction txCoinStake(*pblock->vtx[1]);
     uint32_t nTimeBlock = nTime;
-    nTimeBlock &= ~STAKE_TIMESTAMP_MASK;
     //original line:
     //int64_t nSearchInterval = IsProtocolV2(nBestHeight+1) ? 1 : nSearchTime - nLastCoinStakeSearchTime;
     //IsProtocolV2 mean POS 2 or higher, so the modified line is:
     auto locked_chain = wallet.chain().lock();
     LOCK(wallet.cs_wallet);
     LegacyScriptPubKeyMan* spk_man = wallet.GetLegacyScriptPubKeyMan();
+    uint32_t nHeight = ::ChainActive().Height() + 1;
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    nTimeBlock &= ~consensusParams.StakeTimestampMask(nHeight);
     if(!spk_man)
         return false;
     if (wallet.CreateCoinStake(*locked_chain, *spk_man, pblock->nBits, nTotalFees, nTimeBlock, txCoinStake, key, setCoins))
@@ -5227,7 +5232,7 @@ bool SignBlock(std::shared_ptr<CBlock> pblock, CWallet& wallet, const CAmount& n
             pblock->prevoutStake = pblock->vtx[1]->vin[0].prevout;
 
             // Check timestamp against prev
-            if(pblock->GetBlockTime() <= ::ChainActive().Tip()->GetBlockTime() || FutureDrift(pblock->GetBlockTime()) < ::ChainActive().Tip()->GetBlockTime())
+            if(pblock->GetBlockTime() <= ::ChainActive().Tip()->GetBlockTime() || FutureDrift(pblock->GetBlockTime(), nHeight, consensusParams) < ::ChainActive().Tip()->GetBlockTime())
             {
                 return false;
             }
@@ -5235,7 +5240,7 @@ bool SignBlock(std::shared_ptr<CBlock> pblock, CWallet& wallet, const CAmount& n
             // append a signature to our block and ensure that is LowS
             return key.Sign(pblock->GetHashWithoutSign(), pblock->vchBlockSig) &&
                        EnsureLowS(pblock->vchBlockSig) &&
-                       CheckHeaderPoS(*pblock, Params().GetConsensus());
+                       CheckHeaderPoS(*pblock, consensusParams);
         }
     }
 
@@ -5327,7 +5332,12 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (!CheckBlockHeader(block, state, consensusParams, fCheckPOW, false))
         return false;
 
-    if (block.IsProofOfStake() &&  block.GetBlockTime() > FutureDrift(GetAdjustedTime()))
+    BlockMap::iterator mi = ::BlockIndex().find(block.hashPrevBlock);
+    if (mi == ::BlockIndex().end())
+        return false;
+
+    int nHeight = (*mi).second->nHeight + 1;
+    if (block.IsProofOfStake() &&  block.GetBlockTime() > FutureDrift(GetAdjustedTime(), nHeight, consensusParams))
         return error("CheckBlock() : block timestamp too far in the future");
 
     // Check the merkle root.
@@ -5525,7 +5535,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
         return state.Invalid(ValidationInvalidReason::BLOCK_INVALID_HEADER, false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
 
     // Check timestamp
-    if (block.IsProofOfStake() && block.GetBlockTime() > FutureDrift(nAdjustedTime))
+    if (block.IsProofOfStake() && block.GetBlockTime() > FutureDrift(nAdjustedTime, nHeight, consensusParams))
         return state.Invalid(ValidationInvalidReason::BLOCK_TIME_FUTURE, false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
 
     // Reject outdated version blocks when 95% (75% on testnet) of the network has upgraded:
@@ -5805,8 +5815,10 @@ bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& headers, CValidatio
     if (first_invalid != nullptr) first_invalid->SetNull();
 
     if(!::ChainstateActive().IsInitialBlockDownload() && headers.size() > 1) {
+        LOCK(cs_main);
         const CBlockHeader last_header = headers[headers.size()-1];
-        if (last_header.IsProofOfStake() && last_header.GetBlockTime() > FutureDrift(GetAdjustedTime())) {
+        unsigned int nHeight = ::ChainActive().Height() + 1;
+        if (last_header.IsProofOfStake() && last_header.GetBlockTime() > FutureDrift(GetAdjustedTime(), nHeight, chainparams.GetConsensus())) {
             return state.Invalid(ValidationInvalidReason::BLOCK_TIME_FUTURE, false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
         }
     }
@@ -5930,11 +5942,11 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
         return error("AcceptBlock() : rejected by synchronized checkpoint");
 
     // Check timestamp against prev
-    if (pindexPrev && block.IsProofOfStake() && (block.GetBlockTime() <= pindexPrev->GetBlockTime() || FutureDrift(block.GetBlockTime()) < pindexPrev->GetBlockTime()))
+    if (pindexPrev && block.IsProofOfStake() && (block.GetBlockTime() <= pindexPrev->GetBlockTime() || FutureDrift(block.GetBlockTime(), nHeight, chainparams.GetConsensus()) < pindexPrev->GetBlockTime()))
         return error("AcceptBlock() : block's timestamp is too early");
 
     // Check timestamp
-    if (block.IsProofOfStake() &&  block.GetBlockTime() > FutureDrift(GetAdjustedTime()))
+    if (block.IsProofOfStake() &&  block.GetBlockTime() > FutureDrift(GetAdjustedTime(), nHeight, chainparams.GetConsensus()))
         return error("AcceptBlock() : block timestamp too far in the future");
 
     // Enforce rule that the coinbase starts with serialized block height

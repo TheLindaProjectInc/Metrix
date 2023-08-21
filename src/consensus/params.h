@@ -143,6 +143,12 @@ struct Params {
     int nEnableHeaderSignatureHeight;
     /** Block sync-checkpoint span*/
     int nCheckpointSpan;
+    uint32_t nStakeTimestampMask;
+    uint32_t nStakeTimestampMaskV2;
+    int64_t StakeTimestampMask(int height) const
+    {
+        return height < MIP7Height ? nStakeTimestampMask : nStakeTimestampMaskV2;
+    }
 };
 } // namespace Consensus
 

@@ -115,9 +115,11 @@ double GetPoSKernelPS()
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
     bool dynamicStakeSpacing = true;
+    uint32_t stakeTimestampMask=consensusParams.StakeTimestampMask(0);
     if(pindex)
     {
         dynamicStakeSpacing = pindex->nHeight < consensusParams.QIP9Height;
+        stakeTimestampMask=consensusParams.StakeTimestampMask(pindex->nHeight);
     }
 
     while (pindex && nStakesHandled < nPoSInterval)
@@ -148,7 +150,7 @@ double GetPoSKernelPS()
     if (nStakesTime)
         result = dStakeKernelsTriedAvg / nStakesTime;
 
-    result *= STAKE_TIMESTAMP_MASK + 1;
+    result *= stakeTimestampMask + 1;
 
     return result;
 }
