@@ -226,7 +226,7 @@ public:
         consensus.nCheckpointSpan = COINBASE_MATURITY;
         consensus.nStakeTimestampMask = 15;
         consensus.nStakeTimestampMaskV2 = 7;
-        consensus.nBlocktimeDownscaleFactor = 8;
+        consensus.nBlocktimeDownscaleFactor = 3;
     }
 };
 
@@ -364,7 +364,7 @@ public:
         consensus.nCheckpointSpan = COINBASE_MATURITY;
         consensus.nStakeTimestampMask = 15;
         consensus.nStakeTimestampMaskV2 = 7;
-        consensus.nBlocktimeDownscaleFactor = 8;
+        consensus.nBlocktimeDownscaleFactor = 3;
     }
 };
 
@@ -482,7 +482,7 @@ public:
         consensus.nCheckpointSpan = COINBASE_MATURITY;
         consensus.nStakeTimestampMask = 15;
         consensus.nStakeTimestampMaskV2 = 7;
-        consensus.nBlocktimeDownscaleFactor = 8;
+        consensus.nBlocktimeDownscaleFactor = 3;
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 112);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 187);
