@@ -138,9 +138,13 @@ struct Params {
     int nEnableHeaderSignatureHeight;
     /** Block sync-checkpoint span*/
     int nCheckpointSpan;
+    int nRBTCheckpointSpan;
     uint32_t nStakeTimestampMask;
     uint32_t nRBTStakeTimestampMask;
     int64_t nBlocktimeDownscaleFactor;
+    int nCoinbaseMaturity;
+    int nRBTCoinbaseMaturity;
+
     int64_t DifficultyAdjustmentInterval(int height) const
     {
         int64_t targetTimespan = TargetTimespan(height);
@@ -170,6 +174,16 @@ struct Params {
     {
         return height < QIP9Height ? nPowTargetTimespan : 
             (height < MIP7Height ? nPowTargetTimespanV2 : nRBTPowTargetTimespan);
+    }
+
+    int CheckpointSpan(int height) const
+    {
+        return height < MIP7Height ? nCheckpointSpan : nRBTCheckpointSpan;
+    }
+
+    int CoinbaseMaturity(int height) const
+    {
+        return height < MIP7Height ? nCoinbaseMaturity : nRBTCoinbaseMaturity;
     }
 };
 } // namespace Consensus

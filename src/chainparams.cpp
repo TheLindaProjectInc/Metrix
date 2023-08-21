@@ -225,7 +225,10 @@ public:
 
         consensus.nFixUTXOCacheHFHeight = 0;
         consensus.nEnableHeaderSignatureHeight = 0;
-        consensus.nCheckpointSpan = COINBASE_MATURITY;
+        consensus.nCoinbaseMaturity = 960;
+        consensus.nRBTCoinbaseMaturity = 960;
+        consensus.nCheckpointSpan = consensus.nCoinbaseMaturity;
+        consensus.nRBTCheckpointSpan = consensus.nRBTCoinbaseMaturity;
         consensus.nStakeTimestampMask = 15;
         consensus.nRBTStakeTimestampMask = 7;
         consensus.nBlocktimeDownscaleFactor = 3;
@@ -365,7 +368,10 @@ public:
 
         consensus.nFixUTXOCacheHFHeight = 0;
         consensus.nEnableHeaderSignatureHeight = 0;
-        consensus.nCheckpointSpan = COINBASE_MATURITY;
+        consensus.nCoinbaseMaturity = 960;
+        consensus.nRBTCoinbaseMaturity = 960;
+        consensus.nCheckpointSpan = consensus.nCoinbaseMaturity;
+        consensus.nRBTCheckpointSpan = consensus.nRBTCoinbaseMaturity;
         consensus.nStakeTimestampMask = 15;
         consensus.nRBTStakeTimestampMask = 7;
         consensus.nBlocktimeDownscaleFactor = 3;
@@ -485,7 +491,10 @@ public:
 
         consensus.nFixUTXOCacheHFHeight = 0;
         consensus.nEnableHeaderSignatureHeight = 0;
-        consensus.nCheckpointSpan = COINBASE_MATURITY;
+        consensus.nCoinbaseMaturity = 960;
+        consensus.nRBTCoinbaseMaturity = 960;
+        consensus.nCheckpointSpan = 1920;
+        consensus.nRBTCheckpointSpan = 1920;
         consensus.nStakeTimestampMask = 15;
         consensus.nRBTStakeTimestampMask = 7;
         consensus.nBlocktimeDownscaleFactor = 3;
