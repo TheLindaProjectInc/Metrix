@@ -250,8 +250,8 @@ public:
         CFeeRate blockMinFeeRate;
     };
 
-    explicit BlockAssembler(const CChainParams& params);
-    BlockAssembler(const CChainParams& params, const Options& options);
+    explicit BlockAssembler(const CTxMemPool& mempool, const CChainParams& params);
+    explicit BlockAssembler(const CTxMemPool& mempool, const CChainParams& params, const Options& options);
 #ifdef ENABLE_WALLET
     explicit BlockAssembler(const CTxMemPool& mempool, const CChainParams& params, CWallet *pwallet);
 #endif
@@ -290,7 +290,7 @@ private:
     /** Add transactions based on feerate including unconfirmed ancestors
       * Increments nPackagesSelected / nDescendantsUpdated with corresponding
       * statistics from the package selection (for logging statistics). */
-    void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, uint64_t minGasPrice) EXCLUSIVE_LOCKS_REQUIRED(mempool.cs);
+    void addPackageTxs(int& nPackagesSelected, int& nDescendantsUpdated, uint64_t minGasPrice) EXCLUSIVE_LOCKS_REQUIRED(m_mempool.cs);
 
     /** Rebuild the coinbase/coinstake transaction to account for new gas refunds **/
     void RebuildRefundTransaction();
@@ -306,13 +306,13 @@ private:
     bool TestPackageTransactions(const CTxMemPool::setEntries& package);
     /** Return true if given transaction from mapTx has already been evaluated,
       * or if the transaction's cached data in mapTx is incorrect. */
-    bool SkipMapTxEntry(CTxMemPool::txiter it, indexed_modified_transaction_set &mapModifiedTx, CTxMemPool::setEntries &failedTx) EXCLUSIVE_LOCKS_REQUIRED(mempool.cs);
+    bool SkipMapTxEntry(CTxMemPool::txiter it, indexed_modified_transaction_set& mapModifiedTx, CTxMemPool::setEntries& failedTx) EXCLUSIVE_LOCKS_REQUIRED(m_mempool.cs);
     /** Sort the package in an order that is valid to appear in a block */
     void SortForBlock(const CTxMemPool::setEntries& package, std::vector<CTxMemPool::txiter>& sortedEntries);
     /** Add descendants of given transactions to mapModifiedTx with ancestor
       * state updated assuming given transactions are inBlock. Returns number
       * of updated descendants. */
-    int UpdatePackagesForAdded(const CTxMemPool::setEntries& alreadyAdded, indexed_modified_transaction_set &mapModifiedTx) EXCLUSIVE_LOCKS_REQUIRED(mempool.cs);
+    int UpdatePackagesForAdded(const CTxMemPool::setEntries& alreadyAdded, indexed_modified_transaction_set& mapModifiedTx) EXCLUSIVE_LOCKS_REQUIRED(m_mempool.cs);
     /** Add coinstake contract transactions to the coinstake transaction 
      * of the block. */
     void AddCoinstakeContracts(CMutableTransaction* coinstakeTx);
