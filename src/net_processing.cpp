@@ -222,7 +222,7 @@ public:
         maxSize(0),
         maxAvg(0)
     {
-        maxSize = gArgs.GetArg("-headerspamfiltermaxsize", DEFAULT_HEADER_SPAM_FILTER_MAX_SIZE);
+        maxSize = gArgs.GetArg("-headerspamfiltermaxsize", GefaultHeaderSpamFilterMaxSize());
         maxAvg = gArgs.GetArg("-headerspamfiltermaxavg", DEFAULT_HEADER_SPAM_FILTER_MAX_AVG);
     }
 
@@ -4671,6 +4671,11 @@ void CleanBlockIndex()
 
         MilliSleep(cleanTimeout);
     }
+}
+
+unsigned int GefaultHeaderSpamFilterMaxSize()
+{
+    return COINBASE_MATURITY;
 }
 
 class CNetProcessingCleanup
