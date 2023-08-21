@@ -105,6 +105,8 @@ struct Params {
     int MIP6StartHeight;
     /** Block height at which MIP6 becomes active */
     int MIP6Height;
+        /** Block height at which Block Time becomes active */
+    int MIP7Height;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.

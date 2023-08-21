@@ -104,6 +104,7 @@ public:
         consensus.MIP5Height = -1;           // Activation block:
         consensus.MIP6StartHeight = 996880;  // Start checking for MIP6
         consensus.MIP6Height = -1;           // Activation block:
+        consensus.MIP7Height = 0x7fffffff;
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -260,6 +261,7 @@ public:
         consensus.MIP5Height = -1;           // Activation block:
         consensus.MIP6StartHeight = 970700;  // Start checking for MIP6
         consensus.MIP6Height = -1;           // Activation block:
+        consensus.MIP7Height = 0x7fffffff;
         consensus.powLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("0000000000001fffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -394,6 +396,7 @@ public:
         consensus.MIP5Height = -1;        // Activation block:
         consensus.MIP6StartHeight = 4200; // Start checking for MIP6
         consensus.MIP6Height = -1;        // Activation block:
+        consensus.MIP7Height = 0x7fffffff;
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.posLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.QIP9PosLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // The new POS-limit activated after QIP9
@@ -649,4 +652,14 @@ void CChainParams::UpdateDifficultyChangeBlockHeight(int nHeight)
 void UpdateDifficultyChangeBlockHeight(int nHeight)
 {
     const_cast<CChainParams*>(globalChainParams.get())->UpdateDifficultyChangeBlockHeight(nHeight);
+}
+
+void CChainParams::UpdateBlockTimeHeight(int nHeight)
+{
+    consensus.MIP7Height = nHeight;
+}
+
+void UpdateBlockTimeHeight(int nHeight)
+{
+    const_cast<CChainParams*>(globalChainParams.get())->UpdateBlockTimeHeight(nHeight);
 }
