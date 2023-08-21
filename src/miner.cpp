@@ -999,9 +999,6 @@ void ThreadStakeMiner(CWallet *pwallet, CConnman* connman)
 
     bool fTryToSync = true;
     bool regtestMode = Params().MineBlocksOnDemand();
-    if(regtestMode){
-        nMinerSleep = 30000; //limit regtest to 30s, otherwise it'll create 2 blocks per second
-    }
 
     while (true)
     {
