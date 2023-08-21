@@ -5334,11 +5334,16 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (!CheckBlockHeader(block, state, consensusParams, fCheckPOW, false))
         return false;
 
-    BlockMap::iterator mi = ::BlockIndex().find(block.hashPrevBlock);
-    if (mi == ::BlockIndex().end())
-        return false;
+    int nHeight = 0;
+    if(!block.hashPrevBlock.IsNull())
+    {
+        BlockMap::iterator mi = ::BlockIndex().find(block.hashPrevBlock);
+        if (mi == ::BlockIndex().end())
+            return false;
 
-    int nHeight = (*mi).second->nHeight + 1;
+        nHeight = (*mi).second->nHeight + 1;
+    }
+    
     if (block.IsProofOfStake() &&  block.GetBlockTime() > FutureDrift(GetAdjustedTime(), nHeight, consensusParams))
         return error("CheckBlock() : block timestamp too far in the future");
 
