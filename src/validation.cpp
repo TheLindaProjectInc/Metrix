@@ -1520,6 +1520,7 @@ uint64_t GetSubsidyRate(int nHeight)
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams, const CTransactionRef& tx)
 {
+    int64_t blocktimeDownscaleFactor = consensusParams.BlocktimeDownscaleFactor(nHeight);
     CAmount nSubsidy = 0;
     if (tx != NULL && tx->IsCoinStake())
     {
@@ -1528,6 +1529,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams, c
         {
             uint64_t nSubsidyRate = GetSubsidyRate(nHeight) * CENT;
             nSubsidy = nCoinAge * nSubsidyRate * 33 / (365 * 33 + 8);
+            nSubsidy = nSubsidy / blocktimeDownscaleFactor;
             nSubsidy = nSubsidy * 90 / 100; // 10% goes to budget
         }
     }
