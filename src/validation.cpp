@@ -5644,7 +5644,7 @@ bool CChainState::UpdateHashProof(const CBlock& block, CValidationState& state, 
         return state.Invalid(ValidationInvalidReason::BLOCK_INVALID_HEADER, error("UpdateHashProof() : reject proof-of-work at height %d", nHeight), REJECT_INVALID, "reject-pow");
 
     // Check coinstake timestamp
-    if (block.IsProofOfStake() && !CheckCoinStakeTimestamp(block.GetBlockTime()))
+    if (block.IsProofOfStake() && !CheckCoinStakeTimestamp(block.GetBlockTime(), nHeight, consensusParams))
         return state.Invalid(ValidationInvalidReason::BLOCK_INVALID_HEADER, error("UpdateHashProof() : coinstake timestamp violation nTimeBlock=%d", block.GetBlockTime()), REJECT_INVALID, "timestamp-invalid");
 
     // Check proof-of-work or proof-of-stake
@@ -5798,7 +5798,7 @@ bool BlockManager::AcceptBlockHeader(const CBlockHeader& block, CValidationState
                 return state.Invalid(ValidationInvalidReason::BLOCK_INVALID_HEADER, false, REJECT_INVALID, "reject-pos", strprintf("reject proof-of-stake at height %d", nHeight));
 
             // Check coin stake timestamp
-            if(!CheckCoinStakeTimestamp(block.nTime))
+            if(!CheckCoinStakeTimestamp(block.nTime, nHeight, consensusParams))
                 return state.Invalid(ValidationInvalidReason::BLOCK_INVALID_HEADER, false, REJECT_INVALID, "timestamp-invalid", "proof of stake failed due to invalid timestamp");
         }
 
