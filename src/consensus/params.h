@@ -128,6 +128,7 @@ struct Params {
     int64_t nPowTargetTimespan;
     int64_t nPowTargetTimespanV2;
     int64_t nPowTargetTimespanV3;
+    int64_t nRBTPowTargetTimespan;
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
     int nLastPOWBlock;
@@ -142,7 +143,8 @@ struct Params {
     int64_t nBlocktimeDownscaleFactor;
     int64_t DifficultyAdjustmentInterval(int height) const
     {
-        int64_t targetSpacing =  height < QIP9Height ? nPowTargetSpacing : nPowTargetTimespanV2;
+        int64_t targetSpacing = height < QIP9Height ? nPowTargetTimespan : 
+            (height < MIP7Height ? nPowTargetTimespanV2 : nRBTPowTargetTimespan);
         return targetSpacing / nPowTargetSpacing;
     }
     int64_t StakeTimestampMask(int height) const
