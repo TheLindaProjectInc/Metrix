@@ -158,6 +158,11 @@ struct Params {
     {
         return height < MIP7Height ? nPowTargetSpacing : nRBTPowTargetSpacing;
     }
+
+        int64_t TimestampDownscaleFactor(int height) const
+    {
+        return height < MIP7Height ? 1 : (nStakeTimestampMask + 1) / (nRBTStakeTimestampMask + 1);
+    }
 };
 } // namespace Consensus
 
