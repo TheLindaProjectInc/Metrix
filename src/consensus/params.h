@@ -123,6 +123,7 @@ struct Params {
     bool fPowNoRetargeting;
     bool fPoSNoRetargeting;
     int64_t nPowTargetSpacing;
+    int64_t nPowTargetSpacingV2;
     int64_t nPowTargetTimespan;
     int64_t nPowTargetTimespanV2;
     int64_t nPowTargetTimespanV3;
@@ -150,6 +151,11 @@ struct Params {
     int64_t BlocktimeDownscaleFactor(int height) const
     {
         return height < MIP7Height ? 1 : nBlocktimeDownscaleFactor;
+    }
+
+    int64_t TargetSpacing(int height) const
+    {
+        return height < MIP7Height ? nPowTargetSpacing : nPowTargetSpacingV2;
     }
 };
 } // namespace Consensus
