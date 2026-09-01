@@ -3093,6 +3093,54 @@ static UniValue setstakesplitthreshold(const JSONRPCRequest& request)
     return result;
 }
 
+static UniValue setstakecombinethreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+            RPCHelpMan{"setstakecombinethreshold",
+            "\nSet the threshold below which additional inputs will be combined into a coinstake."
+            "\nLowering this on wallets with a very large number of small inputs (e.g. on testnet) can"
+            "\nreduce how many inputs get pulled into a single coinstake and help avoid it hanging."
+            "\nIf no parameter is provided the current setting is printed.\n",
+            {
+                {"threshold", RPCArg::Type::AMOUNT, RPCArg::Optional::OMITTED, "the new threshold, in " + CURRENCY_UNIT + "."},
+            },
+            RPCResult{
+                       "{\n"
+                       "  \"threshold\": xxxx,        (numeric) The new threshold in " + CURRENCY_UNIT + "\n"
+                       "  \"saved\": true|false       (boolean) 'true' if setting was saved to the wallet, 'false' otherwise\n"
+                       "}\n"
+                   },
+             RPCExamples{
+            "\nSet the threshold to 100\n"
+            + HelpExampleCli("setstakecombinethreshold", "100") +
+            "\nGet the current threshold\n"
+            + HelpExampleCli("setstakecombinethreshold", "")			},
+            }.Check(request);
+
+    UniValue result(UniValue::VOBJ);
+
+    if (request.params.size() > 0)
+    {
+        CAmount nStakeCombineThreshold = AmountFromValue(request.params[0]);
+        if (nStakeCombineThreshold < 0)
+            throw std::runtime_error("threshold cannot be negative.\n");
+
+        LOCK(pwallet->cs_wallet);
+        pwallet->nStakeCombineThreshold = nStakeCombineThreshold;
+        WalletBatch batch(pwallet->GetDBHandle());
+        result.pushKV("saved", batch.WriteStakeCombineThreshold(nStakeCombineThreshold));
+    }
+
+    result.pushKV("threshold", ValueFromAmount(pwallet->nStakeCombineThreshold));
+    return result;
+}
+
 static UniValue lockunspent(const JSONRPCRequest& request)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
@@ -3409,6 +3457,7 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
             "  \"encryption_status\": ttt,          (string) the encryption status of the wallet\n"
             "  \"paytxfee\": x.xxxx,                (numeric) the transaction fee configuration, set in " + CURRENCY_UNIT + "/kB\n"
             "  \"stakesplitthreshold\": x.xxxx,     (numeric) the threshold above which staking outputs will be split, set in " + CURRENCY_UNIT + "\n"
+            "  \"stakecombinethreshold\": x.xxxx,   (numeric) the threshold below which additional inputs will be combined into a coinstake, set in " + CURRENCY_UNIT + "\n"
             "  \"hdseedid\": \"<hash160>\"          (string, optional) the Hash160 of the HD seed (only present when HD is enabled)\n"
             "  \"private_keys_enabled\": true|false (boolean) false if privatekeys are disabled for this wallet (enforced watch-only wallet)\n"
             "  \"avoid_reuse\": true|false          (boolean) whether this wallet tracks clean/dirty coins in terms of reuse\n"
@@ -3476,6 +3525,7 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
     }
     obj.pushKV("paytxfee", ValueFromAmount(pwallet->m_pay_tx_fee.GetFeePerK()));
     obj.pushKV("stakesplitthreshold", ValueFromAmount(pwallet->nStakeSplitThreshold));
+    obj.pushKV("stakecombinethreshold", ValueFromAmount(pwallet->nStakeCombineThreshold));
     obj.pushKV("private_keys_enabled", !pwallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS));
     obj.pushKV("avoid_reuse", pwallet->IsWalletFlagSet(WALLET_FLAG_AVOID_REUSE));
     if (pwallet->IsScanning()) {
@@ -5413,6 +5463,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "sendtoaddress",                    &sendtoaddress,                 {"address","amount","comment","comment_to","subtractfeefromamount","replaceable","conf_target","estimate_mode","avoid_reuse","senderAddress","changeToSender"} },
     { "wallet",             "sethdseed",                        &sethdseed,                     {"newkeypool","seed"} },
     { "wallet",             "setlabel",                         &setlabel,                      {"address","label"} },
+    { "wallet",             "setstakecombinethreshold",         &setstakecombinethreshold,      {"threshold"} },
     { "wallet",             "setstakesplitthreshold",           &setstakesplitthreshold,        {"threshold"} },
     { "wallet",             "settxfee",                         &settxfee,                      {"amount"} },
     { "wallet",             "setwalletflag",                    &setwalletflag,                 {"flag","value"} },

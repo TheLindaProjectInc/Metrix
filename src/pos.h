@@ -58,8 +58,6 @@ bool CheckKernel(CBlockIndex* pindexPrev, unsigned int nBits, uint32_t nTimeBloc
 
 unsigned int GetStakeMaxCombineInputs();
 
-int64_t GetStakeCombineThreshold();
-
 unsigned int GetStakeSplitOutputs();
 
 bool GetMPoSOutputs(std::vector<CTxOut>& mposOutputList, int64_t nRewardPiece, int nHeight, const Consensus::Params& consensusParams);

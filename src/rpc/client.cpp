@@ -208,6 +208,7 @@ static const CRPCConvertParam vRPCConvertParams[] = {
     { "reservebalance", 0, "reserve"},
     { "reservebalance", 1, "amount"},
     { "setstakesplitthreshold", 0, "threshold"},
+    { "setstakecombinethreshold", 0, "threshold"},
     { "listcontracts", 0, "start" },
     { "listcontracts", 1, "maxDisplay" },
     { "listallcontracts", 0, "height" },

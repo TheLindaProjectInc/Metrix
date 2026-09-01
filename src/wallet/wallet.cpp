@@ -3271,7 +3271,7 @@ bool CWallet::CreateCoinStake(interfaces::Chain::Lock& locked_chain, const Filla
             if (nCredit + pcoin.first->tx->vout[pcoin.second].nValue > nBalance - m_reserve_balance)
                 break;
             // Do not add additional significant input
-            if (pcoin.first->tx->vout[pcoin.second].nValue >= GetStakeCombineThreshold())
+            if (pcoin.first->tx->vout[pcoin.second].nValue >= nStakeCombineThreshold)
                 continue;
 
             txNew.vin.push_back(CTxIn(pcoin.first->GetHash(), pcoin.second));
@@ -4313,6 +4313,12 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(interfaces::Chain& chain,
     if (gArgs.IsArgSet("-stakesplitthreshold")) {
         if (!ParseMoney(gArgs.GetArg("-stakesplitthreshold", ""), walletInstance->nStakeSplitThreshold)) {
             chain.initError(AmountErrMsg("stakesplitthreshold", gArgs.GetArg("-stakesplitthreshold", "")).translated);
+            return nullptr;
+        }
+    }
+    if (gArgs.IsArgSet("-stakecombinethreshold")) {
+        if (!ParseMoney(gArgs.GetArg("-stakecombinethreshold", ""), walletInstance->nStakeCombineThreshold)) {
+            chain.initError(AmountErrMsg("stakecombinethreshold", gArgs.GetArg("-stakecombinethreshold", "")).translated);
             return nullptr;
         }
     }

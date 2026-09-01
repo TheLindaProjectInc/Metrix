@@ -89,6 +89,8 @@ static const bool DEFAULT_USE_CHANGE_ADDRESS = true;
 static const CAmount DEFAULT_RESERVE_BALANCE = 0;
 //! Default threshold above which staking outputs will be split (in satoshis)
 static const CAmount DEFAULT_STAKE_SPLIT_THRESHOLD = 1000000 * COIN;
+//! Default threshold below which additional inputs will be combined into a coinstake (in satoshis)
+static const CAmount DEFAULT_STAKE_COMBINE_THRESHOLD = 500000 * COIN;
 //! -maxtxfee default
 constexpr CAmount DEFAULT_TRANSACTION_MAXFEE{10000 * DEFAULT_TRANSACTION_MINFEE};
 //! Discourage users to set fees higher than this amount (in satoshis) per kB
@@ -999,6 +1001,7 @@ public:
     bool m_use_change_address{DEFAULT_USE_CHANGE_ADDRESS};
     CAmount m_reserve_balance{DEFAULT_RESERVE_BALANCE};
     CAmount nStakeSplitThreshold{DEFAULT_STAKE_SPLIT_THRESHOLD};
+    CAmount nStakeCombineThreshold{DEFAULT_STAKE_COMBINE_THRESHOLD};
     int64_t m_last_coin_stake_search_time{0};
     int64_t m_last_coin_stake_search_interval{0};
     std::atomic<bool> m_enabled_staking{false};
