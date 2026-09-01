@@ -41,6 +41,7 @@ const std::string ORDERPOSNEXT{"orderposnext"};
 const std::string POOL{"pool"};
 const std::string PURPOSE{"purpose"};
 const std::string SETTINGS{"settings"};
+const std::string STAKE_SPLIT_THRESHOLD{"stakeSplitThreshold"};
 const std::string TX{"tx"};
 const std::string VERSION{"version"};
 const std::string WATCHMETA{"watchmeta"};
@@ -162,6 +163,11 @@ bool WalletBatch::ReadBestBlock(CBlockLocator& locator)
 bool WalletBatch::WriteOrderPosNext(int64_t nOrderPosNext)
 {
     return WriteIC(DBKeys::ORDERPOSNEXT, nOrderPosNext);
+}
+
+bool WalletBatch::WriteStakeSplitThreshold(const CAmount& nStakeSplitThreshold)
+{
+    return WriteIC(DBKeys::STAKE_SPLIT_THRESHOLD, nStakeSplitThreshold);
 }
 
 bool WalletBatch::ReadPool(int64_t nPool, CKeyPool& keypool)
@@ -388,6 +394,8 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             }
         } else if (strType == DBKeys::ORDERPOSNEXT) {
             ssValue >> pwallet->nOrderPosNext;
+        } else if (strType == DBKeys::STAKE_SPLIT_THRESHOLD) {
+            ssValue >> pwallet->nStakeSplitThreshold;
         } else if (strType == DBKeys::DESTDATA) {
             std::string strAddress, strKey, strValue;
             ssKey >> strAddress;

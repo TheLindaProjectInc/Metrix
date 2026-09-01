@@ -3047,6 +3047,52 @@ static UniValue reservebalance(const JSONRPCRequest& request)
     return result;
 }
 
+static UniValue setstakesplitthreshold(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+            RPCHelpMan{"setstakesplitthreshold",
+            "\nSet the threshold above which staking outputs will be split into two outputs."
+            "\nIf no parameter is provided the current setting is printed.\n",
+            {
+                {"threshold", RPCArg::Type::AMOUNT, RPCArg::Optional::OMITTED, "the new threshold, in " + CURRENCY_UNIT + "."},
+            },
+            RPCResult{
+                       "{\n"
+                       "  \"threshold\": xxxx,        (numeric) The new threshold in " + CURRENCY_UNIT + "\n"
+                       "  \"saved\": true|false       (boolean) 'true' if setting was saved to the wallet, 'false' otherwise\n"
+                       "}\n"
+                   },
+             RPCExamples{
+            "\nSet the threshold to 100\n"
+            + HelpExampleCli("setstakesplitthreshold", "100") +
+            "\nGet the current threshold\n"
+            + HelpExampleCli("setstakesplitthreshold", "")			},
+            }.Check(request);
+
+    UniValue result(UniValue::VOBJ);
+
+    if (request.params.size() > 0)
+    {
+        CAmount nStakeSplitThreshold = AmountFromValue(request.params[0]);
+        if (nStakeSplitThreshold < 0)
+            throw std::runtime_error("threshold cannot be negative.\n");
+
+        LOCK(pwallet->cs_wallet);
+        pwallet->nStakeSplitThreshold = nStakeSplitThreshold;
+        WalletBatch batch(pwallet->GetDBHandle());
+        result.pushKV("saved", batch.WriteStakeSplitThreshold(nStakeSplitThreshold));
+    }
+
+    result.pushKV("threshold", ValueFromAmount(pwallet->nStakeSplitThreshold));
+    return result;
+}
+
 static UniValue lockunspent(const JSONRPCRequest& request)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
@@ -3362,6 +3408,7 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
             "  \"unlocked_until\": ttt,             (numeric) the timestamp in seconds since epoch (midnight Jan 1 1970 GMT) that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
             "  \"encryption_status\": ttt,          (string) the encryption status of the wallet\n"
             "  \"paytxfee\": x.xxxx,                (numeric) the transaction fee configuration, set in " + CURRENCY_UNIT + "/kB\n"
+            "  \"stakesplitthreshold\": x.xxxx,     (numeric) the threshold above which staking outputs will be split, set in " + CURRENCY_UNIT + "\n"
             "  \"hdseedid\": \"<hash160>\"          (string, optional) the Hash160 of the HD seed (only present when HD is enabled)\n"
             "  \"private_keys_enabled\": true|false (boolean) false if privatekeys are disabled for this wallet (enforced watch-only wallet)\n"
             "  \"avoid_reuse\": true|false          (boolean) whether this wallet tracks clean/dirty coins in terms of reuse\n"
@@ -3428,6 +3475,7 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
         obj.pushKV("encryption_status", "Unencrypted");
     }
     obj.pushKV("paytxfee", ValueFromAmount(pwallet->m_pay_tx_fee.GetFeePerK()));
+    obj.pushKV("stakesplitthreshold", ValueFromAmount(pwallet->nStakeSplitThreshold));
     obj.pushKV("private_keys_enabled", !pwallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS));
     obj.pushKV("avoid_reuse", pwallet->IsWalletFlagSet(WALLET_FLAG_AVOID_REUSE));
     if (pwallet->IsScanning()) {
@@ -5365,6 +5413,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "sendtoaddress",                    &sendtoaddress,                 {"address","amount","comment","comment_to","subtractfeefromamount","replaceable","conf_target","estimate_mode","avoid_reuse","senderAddress","changeToSender"} },
     { "wallet",             "sethdseed",                        &sethdseed,                     {"newkeypool","seed"} },
     { "wallet",             "setlabel",                         &setlabel,                      {"address","label"} },
+    { "wallet",             "setstakesplitthreshold",           &setstakesplitthreshold,        {"threshold"} },
     { "wallet",             "settxfee",                         &settxfee,                      {"amount"} },
     { "wallet",             "setwalletflag",                    &setwalletflag,                 {"flag","value"} },
     { "wallet",             "signmessage",                      &signmessage,                   {"address","message"} },
