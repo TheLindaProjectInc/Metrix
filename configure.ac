@@ -325,6 +325,26 @@ fi
 
 CPPFLAGS="$CPPFLAGS -DQTUM_BUILD"
 
+# Newer Boost (>=1.69) has its own std::hash<boost::asio::ip::address> specialization,
+# which collides with the one vendored in src/cpp-ethereum/libp2p/Common.h. Rather than
+# patch the cpp-ethereum submodule, tell Boost.Asio to skip its own via its documented
+# opt-out macro, leaving the submodule's copy as the sole definition.
+CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_STD_HASH"
+
+# Newer Boost (>=1.74 or so) turns <boost/timer.hpp> into a hard #error since it's
+# deprecated. cpp-ethereum/libethereum/Executive.cpp still includes it; rather than
+# patch the submodule, use Boost's own documented opt-out to keep the deprecated
+# header usable.
+CPPFLAGS="$CPPFLAGS -DBOOST_TIMER_ENABLE_DEPRECATED"
+
+# Boost >= 1.73 dropped the internal helper boost::exception_detail::throw_exception_,
+# which src/cpp-ethereum/libdevcore/Common.cpp calls directly by its fully qualified
+# name. There is no documented Boost opt-out for this one (it's a removed internal
+# symbol, not a deprecation flag), so restore it via a force-included compat shim
+# (src/qtum/boost_compat.h) instead of patching the submodule. See that file for
+# details; revisit patching cpp-eth-metrix upstream if this becomes hard to carry.
+CPPFLAGS="$CPPFLAGS -include $(cd "$srcdir" && pwd)/src/qtum/boost_compat.h"
+
 ERROR_CXXFLAGS=
 if test "x$enable_werror" = "xyes"; then
   if test "x$CXXFLAG_WERROR" = "x"; then
@@ -1349,7 +1369,7 @@ fi
 # These packages don't provide pkgconfig config files across all
 # platforms, so we use older autoconf detection mechanisms:
 AC_CHECK_HEADER([gmp.h],,AC_MSG_ERROR(libgmp headers missing))
-AC_CHECK_LIB([gmp],[[__gmpn_sub_n]],GMP_LIBS=-lgmp, [AC_MSG_ERROR(libgmp missing)])
+AC_CHECK_LIB([gmp],[__gmpn_sub_n],GMP_LIBS=-lgmp, [AC_MSG_ERROR(libgmp missing)])
 
 AC_CHECK_HEADER([gmpxx.h],,AC_MSG_ERROR(libgmpxx headers missing))
 AC_CHECK_LIB([gmpxx],[main],GMPXX_LIBS=-lgmpxx, [AC_MSG_ERROR(libgmpxx missing)])

@@ -3271,7 +3271,7 @@ bool CWallet::CreateCoinStake(interfaces::Chain::Lock& locked_chain, const Filla
             if (nCredit + pcoin.first->tx->vout[pcoin.second].nValue > nBalance - m_reserve_balance)
                 break;
             // Do not add additional significant input
-            if (pcoin.first->tx->vout[pcoin.second].nValue >= GetStakeCombineThreshold())
+            if (pcoin.first->tx->vout[pcoin.second].nValue >= nStakeCombineThreshold)
                 continue;
 
             txNew.vin.push_back(CTxIn(pcoin.first->GetHash(), pcoin.second));
@@ -3304,7 +3304,7 @@ bool CWallet::CreateCoinStake(interfaces::Chain::Lock& locked_chain, const Filla
         }
    }
 
-    if (nCredit >= GetStakeSplitThreshold())
+    if (nCredit >= nStakeSplitThreshold)
     {
         for(unsigned int i = 0; i < GetStakeSplitOutputs() - 1; i++)
             txNew.vout.push_back(CTxOut(0, txNew.vout[1].scriptPubKey)); //split stake
@@ -4310,6 +4310,18 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(interfaces::Chain& chain,
     walletInstance->m_signal_rbf = gArgs.GetBoolArg("-walletrbf", DEFAULT_WALLET_RBF);
     if(!ParseMoney(gArgs.GetArg("-reservebalance", FormatMoney(DEFAULT_RESERVE_BALANCE)), walletInstance->m_reserve_balance))
         walletInstance->m_reserve_balance = DEFAULT_RESERVE_BALANCE;
+    if (gArgs.IsArgSet("-stakesplitthreshold")) {
+        if (!ParseMoney(gArgs.GetArg("-stakesplitthreshold", ""), walletInstance->nStakeSplitThreshold)) {
+            chain.initError(AmountErrMsg("stakesplitthreshold", gArgs.GetArg("-stakesplitthreshold", "")).translated);
+            return nullptr;
+        }
+    }
+    if (gArgs.IsArgSet("-stakecombinethreshold")) {
+        if (!ParseMoney(gArgs.GetArg("-stakecombinethreshold", ""), walletInstance->nStakeCombineThreshold)) {
+            chain.initError(AmountErrMsg("stakecombinethreshold", gArgs.GetArg("-stakecombinethreshold", "")).translated);
+            return nullptr;
+        }
+    }
     walletInstance->m_use_change_address = gArgs.GetBoolArg("-usechangeaddress", DEFAULT_USE_CHANGE_ADDRESS);
 
     walletInstance->WalletLogPrintf("Wallet completed loading in %15dms\n", GetTimeMillis() - nStart);
