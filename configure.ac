@@ -343,7 +343,13 @@ CPPFLAGS="$CPPFLAGS -DBOOST_TIMER_ENABLE_DEPRECATED"
 # symbol, not a deprecation flag), so restore it via a force-included compat shim
 # (src/qtum/boost_compat.h) instead of patching the submodule. See that file for
 # details; revisit patching cpp-eth-metrix upstream if this becomes hard to carry.
-CPPFLAGS="$CPPFLAGS -include $(cd "$srcdir" && pwd)/src/qtum/boost_compat.h"
+#
+# This goes into CXXFLAGS rather than CPPFLAGS deliberately: src/Makefile.am's .rc.o
+# rule forwards $(CPPFLAGS) straight to windres for the win64 build's resource file,
+# and windres doesn't understand -include (a GCC-only flag) -- it barfs with a usage
+# dump and a nonzero exit. CXXFLAGS reaches every C++ compile the same way CPPFLAGS
+# does but is never passed to windres, and the shim is already a no-op for C anyway.
+CXXFLAGS="$CXXFLAGS -include $(cd "$srcdir" && pwd)/src/qtum/boost_compat.h"
 
 ERROR_CXXFLAGS=
 if test "x$enable_werror" = "xyes"; then
