@@ -6,3 +6,4 @@ src/clientversion.cpp export-subst
 *.guess eol=lf
 *.sub eol=lf
 *.sh eol=lf
+depends/config.site.in eol=lf

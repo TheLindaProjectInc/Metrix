@@ -1,0 +1,125 @@
+name: Test Release Builds
+
+# Builds standalone metrixd/metrix-cli/metrix-tx binaries for each historically
+# supported OS/arch, using the depends cross-compile system (see depends/README.md),
+# so external testers can download real, portable binaries from a PR's checks.
+#
+# Only runs on pull requests targeting the Test branch.
+on:
+  pull_request:
+    branches: [ "Testing" ]
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    # depends pins very old packages (Boost 1.70, OpenSSL 1.0.1k) that do not compile
+    # with a modern glibc/GCC (confirmed: fails on ubuntu-24.04's GCC 13/glibc 2.39,
+    # specifically Boost.Thread hitting glibc's PTHREAD_STACK_MIN change). Gitian builds
+    # these on Ubuntu 18.04 (see contrib/gitian-descriptors, suites: bionic), which also
+    # builds them cleanly here -- but GitHub Actions itself needs to run a Node.js 20+
+    # runtime inside this container for actions/checkout, actions/cache, etc., and Node
+    # 20+ requires glibc >= 2.28, which 18.04 (2.27) doesn't have. 20.04 (glibc 2.31) is
+    # confirmed new enough for Actions' own tooling while still old enough to build
+    # depends cleanly (same packages, verified below).
+    container:
+      image: ubuntu:20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: x86_64-linux-gnu
+            name: linux-x86_64
+            packages: ""
+            bin_ext: ""
+          - host: x86_64-w64-mingw32
+            name: windows-x86_64
+            packages: "g++-mingw-w64-x86-64"
+            bin_ext: ".exe"
+          - host: x86_64-apple-darwin14
+            name: macos-x86_64
+            packages: "librsvg2-bin libtiff-tools imagemagick libcap-dev libz-dev libbz2-dev python3-setuptools"
+            bin_ext: ""
+    env:
+      HOST: ${{ matrix.host }}
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      # The container image is bare (no git), and actions/checkout needs git present
+      # before it can run, so install it (and everything else depends/README.md and
+      # doc/build-*.md call for) up front.
+      - name: Install build & cross-compile toolchain packages
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git ca-certificates curl \
+            make automake cmake libtool binutils-gold bsdmainutils \
+            pkg-config python3 patch lbzip2 g++-multilib \
+            ${{ matrix.packages }}
+
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Use posix threading model for mingw (win64 only)
+        if: matrix.host == 'x86_64-w64-mingw32'
+        run: update-alternatives --set x86_64-w64-mingw32-g++ $(which x86_64-w64-mingw32-g++-posix)
+
+      # macOS cross-compilation needs Apple's SDK headers. This fetches them from
+      # bitcoincore.org's long-standing CI mirror (the same source contrib's gitian
+      # descriptors and ci/test/05_before_script.sh use) rather than requiring anyone
+      # to extract them from Xcode manually.
+      - name: Fetch macOS SDK (macOS only)
+        if: startsWith(matrix.host, 'x86_64-apple-darwin')
+        run: |
+          mkdir -p depends/SDKs depends/sdk-sources
+          curl --location --fail https://bitcoincore.org/depends-sources/sdks/MacOSX10.11.sdk.tar.gz \
+            -o depends/sdk-sources/MacOSX10.11.sdk.tar.gz
+          tar -C depends/SDKs -xf depends/sdk-sources/MacOSX10.11.sdk.tar.gz
+
+      # The slow part: depends builds Boost/OpenSSL/BDB/libevent/etc from source for
+      # this HOST. Cache it keyed on the HOST and the package recipes/patches, so a PR
+      # only pays this cost again when depends/ actually changes.
+      - name: Cache depends build
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+            depends/${{ matrix.host }}
+          key: depends-${{ matrix.host }}-${{ hashFiles('depends/packages/*.mk', 'depends/patches/**') }}
+
+      - name: Build depends (${{ matrix.host }})
+        run: make -C depends HOST=${{ matrix.host }} NO_QT=1 -j$(nproc)
+
+      - name: autogen
+        run: ./autogen.sh
+
+      - name: configure
+        run: |
+          ./configure --prefix=$(pwd)/depends/${{ matrix.host }} \
+            --disable-tests --disable-bench --disable-gui-tests \
+            --enable-reduce-exports \
+            $( [ "${{ matrix.host }}" = "x86_64-linux-gnu" ] && echo --enable-glibc-back-compat )
+
+      - name: make
+        run: make -j$(nproc)
+
+      - name: Collect binaries
+        run: |
+          mkdir -p artifacts
+          for b in metrixd metrix-cli metrix-tx metrix-wallet; do
+            f="src/$b${{ matrix.bin_ext }}"
+            if [ -f "$f" ]; then
+              strip "$f" || true
+              cp "$f" "artifacts/"
+            fi
+          done
+          ls -la artifacts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: metrix-${{ matrix.name }}
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 90
