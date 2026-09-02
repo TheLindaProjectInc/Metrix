@@ -38,7 +38,10 @@ jobs:
             bin_ext: ".exe"
           - host: x86_64-apple-darwin14
             name: macos-x86_64
-            packages: "librsvg2-bin libtiff-tools imagemagick libcap-dev libz-dev libbz2-dev python3-setuptools"
+            # libtinfo5: depends' native_cctools downloads a prebuilt clang+llvm binary
+            # built for Ubuntu 18.04, which is dynamically linked against libtinfo.so.5;
+            # 20.04 (this job's container) only ships libtinfo6 by default.
+            packages: "librsvg2-bin libtiff-tools imagemagick libcap-dev libz-dev libbz2-dev python3-setuptools libtinfo5"
             bin_ext: ""
     env:
       HOST: ${{ matrix.host }}
@@ -53,7 +56,7 @@ jobs:
           apt-get install -y --no-install-recommends \
             git ca-certificates curl \
             make automake cmake libtool binutils-gold bsdmainutils \
-            pkg-config python3 patch lbzip2 g++-multilib \
+            pkg-config python3 patch lbzip2 xz-utils g++-multilib \
             ${{ matrix.packages }}
 
       - uses: actions/checkout@v5
